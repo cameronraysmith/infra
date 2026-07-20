@@ -595,6 +595,9 @@ Under the ZFS path that edge was explicit at `zfs.nix:162-165` and is what guara
 The cryptsetup unit is generator-produced and its ordering has not been read, so the stage-1 verdict records this as a residual rather than a settled property.
 If the edge is absent the prompt can be issued before the keyboard is live, which the unbounded ZFS timeout previously made harmless and which `systemd-cryptsetup`'s own timeout behaviour may not.
 
+How each of the three is discharged is recorded here rather than left as an obligation no executing artifact imposes: the first by task 3.11's VM test, whose `test -e /dev/disk/by-id/dm-name-cryptroot` under the unforced `boot.zfs.devNodes` fails exactly when the rule file is absent; the second by D24's construction, which makes a wrong instance name harmless; and the third as an accepted residual, because the unit is generator-produced at boot rather than a file in the image and so is not answerable by the directory listing the paragraph above assumes.
+Its mitigations are the prerequisite that the external keyboard be in the room before the install starts rather than sourced after a prompt appears, the runbook's requirement that the operator be at the machine across the reboot, and a recovery that costs a power cycle with the SSD still attached rather than the disk.
+
 ### Predicted: pyrite cannot boot unattended after this change
 
 This is a prediction about the enrollment task 7.3 will perform, not an observed property of a container that does not exist yet, and it is recorded here rather than as a decision for that reason.
