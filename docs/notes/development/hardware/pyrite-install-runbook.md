@@ -314,6 +314,17 @@ nix-shell -p libfido2 yubikey-manager --run 'fido2-token -L; ykman fido info'
 ```
 
 Require `fido2-token -L` to list exactly one device, and `ykman fido info` to report a PIN-attempt count, which is what confirms the client PIN is set.
+
+Two lines that read as failures precede that output and are expected here, and this gate is a hard stop, so read them before treating them as one:
+
+```
+WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+ERROR: Unable to list devices for connection
+```
+
+`pcscd` runs on neither the installer ISO nor the installed system — nothing in this repository enables `services.pcscd` and the graphical installer profile does not either — so `ykman`'s CCID transport is unavailable and says so, while the OTP/HID transport it actually uses here works.
+`ykman` exits 0 regardless, and the lines below these two, reporting the token and its PIN-attempt count, are the gate's answer.
+Do not abort on the `ERROR:` line: it is a statement about a transport this procedure does not use, and treating it as a failed gate stops the install on a check that passed.
 Exactly one, because disko passes no device path and `systemd-cryptenroll --fido2-device=auto` resolves only where the choice is unambiguous; the second token is enrolled after the install, by the "Enrolling the second token" block in the key-lifecycle section below, and not by the "Replacing a lost token" procedure beside it, whose `--wipe-slot` prerequisite must not run here.
 With no network on the installer, `systemd-cryptenroll --fido2-device=list` is the in-closure substitute, since systemd is built `withFido2` and the call needs no privilege.
 It answers the device-presence half and not the client-PIN half, so a pass on it alone leaves the PIN unverified and has to be recorded as such.
@@ -735,7 +746,9 @@ It is readable from stibnite with `clan vars get pyrite zfs/key` and from the `p
 part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
 
 # Read B's serial while it is the only token answering. This is the value the
-# slot inventory records against the index the enrollment returns.
+# slot inventory records against the index the enrollment returns. The two
+# PC/SC lines this prints first are expected here for the same reason they were
+# at the pre-wipe gate; the serial line below them is the answer.
 nix-shell -p yubikey-manager --run 'ykman list'
 
 # Enroll it. This prompts for an existing credential first -- the passphrase --
@@ -838,7 +851,7 @@ shred -u /dev/shm/pyrite-luks-header.img
 
 ### The slot inventory and its provenance
 
-Both YubiKey 5C Nano tokens report the same AAGUID and are physically identical, so once both are enrolled `systemd-cryptenroll "$part2"` lists two `fido2` slots with nothing in the header telling them apart (D25).
+Both YubiKey 5C Nano tokens report the same AAGUID — `ff4dac45-ede8-4ec2-aced-cf66103f4335`, read from `ykman fido info` on both on 2026-07-20 — and are physically identical, so once both are enrolled `systemd-cryptenroll "$part2"` lists two `fido2` slots with nothing in the header telling them apart (D25).
 The slot index is therefore the only discriminator, and it cannot be reconstructed after the fact.
 Record in the same `pyrite/zfs-root` Bitwarden entry the mapping from slot index to credential — YubiKey-A's serial, YubiKey-B's serial, and the passphrase slot — reading the actual indices back from `systemd-cryptenroll "$part2"` at the moment each is enrolled.
 Record alongside it the capture date and container UUID of the header backup currently attached, so the entry names both which credential occupies which slot and which `luksFormat` the stored backup belongs to.
