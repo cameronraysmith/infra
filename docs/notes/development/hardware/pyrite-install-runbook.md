@@ -572,6 +572,7 @@ This section is two boots, not one, and the second is the one that matters.
 
 The first of the two has already started by the time this section is read.
 The install's reboot phase fires it about six seconds after the install phase completes, unattended, with YubiKey-A still seated and the external installer SSD still attached — so when stibnite prints "Done!" the operator's next move is to go to the machine, not to power anything on.
+Better still, do not leave: the disko phase above already requires the operator to be at the machine, and that presence extends through the install phase and across this reboot, so the stage-1 prompt below is answered when it appears rather than found afterward having already timed out.
 The installer SSD cannot be removed before this boot, because the ISO on it is the running root right up to the reboot.
 Which device the machine comes back on is therefore not settled in advance.
 If it reaches the stage-1 unlock prompt on its own panel, that is the installed system and the boot under test; answer the prompt as below.
