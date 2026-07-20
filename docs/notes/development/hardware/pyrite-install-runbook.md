@@ -12,6 +12,7 @@ This note records the re-runnable bare-metal install path for `pyrite`, an Apple
 It is the recorded artifact Phase 6 of the pyrite-baremetal-nixos change (CAM-32) requires: the install is a recorded procedure in the repository, not something performed ad hoc.
 The mechanics below were established by the change's design (see `openspec/changes/pyrite-baremetal-nixos/design.md`, decisions D8, D13, D18, D19) and its `bare-metal-install-path` spec, and they hold for nixos-anywhere 1.13.0, the version resolved through `clan-core.inputs.nixpkgs` at the current `flake.lock` (D13).
 Do not run `nix flake update` before the install; an update can move nixos-anywhere's version with no visible entry in the lock, and every mechanic here was read from 1.13.0 (Phase 8, D13).
+Every line number cited below against a `clan_lib/` or `clan_cli/` path is keyed to the clan-core revision pinned in `flake.lock`, `d332b6935fbebebc0ca151efe0b3144f8dcd9d96`, and not to whatever a local clone has checked out; the same holds for `src/nixos-anywhere.sh` at 1.13.0 and for disko at the revision that lock resolves.
 
 This document is the working-note home for the path.
 Promoting it to published reference documentation under `docs/reference/` is a separate, deferred follow-on change and is out of scope for Phase 6.
@@ -291,7 +292,7 @@ sudo nix store info --store ssh-ng://builder@magnetite
 Require the `Version:` and `Trusted:` lines to appear.
 A non-zero exit, or an `ssh: connect to host` line, means there is no reachable x86_64-linux builder; restore ZeroTier connectivity to magnetite before proceeding.
 This is checked rather than assumed because the failure is silent in the expensive direction, and the mechanism is worth stating exactly, since the fallback is decided by a probe rather than by a setting.
-clan passes no `--build-on` unless the operator supplies one (`clan_lib/machines/install.py:193-194`), so nixos-anywhere runs at its default `auto`, and `checkBuildLocally` (`src/nixos-anywhere.sh:611-652` at 1.13.0) resolves it by attempting a trivial `x86_64-linux` derivation on stibnite.
+clan passes no `--build-on` unless the operator supplies one (`clan_lib/machines/install.py:215-216`), so nixos-anywhere runs at its default `auto`, and `checkBuildLocally` (`src/nixos-anywhere.sh:611-652` at 1.13.0) resolves it by attempting a trivial `x86_64-linux` derivation on stibnite.
 If any x86_64-linux builder answers that attempt the mode becomes `local`; if none does, it becomes `remote`, which in nixos-anywhere means the target machine — the installer ISO, whose disk has just been discarded, over WiFi, in a tmpfs-backed live environment, fetching pyrite's entire closure.
 Two builders can satisfy the probe: magnetite over the mesh, which this gate checks, and stibnite's local `nix-rosetta-builder`, which advertises `x86_64-linux` but is stopped by default on this machine and is not started by the install.
 So with magnetite unreachable and the Rosetta builder stopped, the fallback is the ISO and not stibnite.
@@ -360,7 +361,7 @@ Do not read the absence of a visible error as the pass, and do not add an exit-s
 `set -euo pipefail` is what makes the first three statements stop the run: they carry no `|| exit` of their own, so without it a missing or misnamed `sops/secrets/pyrite-age.key/secret` prints one error line, falls through into the loop, and terminates on `clan vars check pyrite`, whose exit status is independent of `sops/secrets/` — leaving the operator looking at a successful last command having just walked through the early-return branch this gate exists to close.
 
 The machine age key is the branch this gate exists to close.
-clan supplies `--extra-files` itself — `clan_lib/machines/install.py:162-168` passes it unconditionally, populated at `:141-147` into the machine's `clan.core.vars.sops.secretUploadDirectory`, which pyrite evaluates to `/var/lib/sops-nix`, the same path `config.sops.age.keyFile` reads `key.txt` from — so the delivery is by construction.
+clan supplies `--extra-files` itself — `clan_lib/machines/install.py:160-167` passes it unconditionally, populated at `:143-148` into the machine's `clan.core.vars.sops.secretUploadDirectory`, which pyrite evaluates to `/var/lib/sops-nix`, the same path `config.sops.age.keyFile` reads `key.txt` from — so the delivery is by construction.
 What is not by construction is the one branch that skips it without raising: `clan_lib/vars/secret_modules/sops.py:250-260` returns early when `has_secret` is false, and `has_secret` is the literal predicate `(secret_path / "secret").exists()` (`clan_cli/secrets/secrets.py:371-372`), so a missing or misnamed `sops/secrets/pyrite-age.key/secret` writes no `key.txt`, raises nothing, and takes the install green.
 With no `key.txt` on the installed machine sops-nix decrypts nothing: the deployed ZeroTier identity secret is unreadable, so `zerotierone` starts with no identity and mints a fresh one that cinnabar has not authorized, and `pyrite.zt` resolves to an address no live node holds.
 The fleet WiFi vars fail by the same silent path and compound it, because WiFi is this machine's only NIC — `clanServices/wifi/default.nix:126-141` reads the sops-nix paths at runtime into the NetworkManager secrets file, an unreadable file yields empty strings, and the interface never associates with no assertion and no eval-time error.
@@ -369,7 +370,7 @@ A file that exists but does not decrypt is loud instead, since `decrypt_secret` 
 
 The recipient arm is not redundant with the decrypt arm, and that distinction is the point of the check rather than a flourish: a var the operator can read but pyrite cannot is exactly the shape of the WiFi failure above, and only the recipient arm catches it.
 Two secrets correctly lack `pyrite` as a recipient and must not be added to one to make a naive sweep pass — `sops/secrets/pyrite-age.key` is admin-only by design, which is the chicken-and-egg `--extra-files` exists to break, and `vars/per-machine/pyrite/emergency-access/password` carries `deploy = false`.
-`zfs/key` is in the list for a different reason than the others: it travels the separate automatic `--disk-encryption-keys` channel (`install.py:170-182`), and if it is absent `run_generators` mints a fresh passphrase, so the container is created under a credential the operator never recorded and cannot type at the initrd prompt.
+`zfs/key` is in the list for a different reason than the others: it travels the separate automatic `--disk-encryption-keys` channel (`install.py:169-182`), and if it is absent `run_generators` mints a fresh passphrase, so the container is created under a credential the operator never recorded and cannot type at the initrd prompt.
 `openssh/ssh.id_ed25519` is in the list because `modules/system/ssh-known-hosts.nix:66-72` and `modules/home/core/ssh.nix:107-110` both pin `pyrite.zt` to the public half read back out of the flake, so a host key that fails to land yields a machine that is up and on the mesh and that the admin box refuses on key mismatch.
 
 The third records the GUID of the pool now on the disk, which is the baseline the post-install create-path check compares against:
@@ -558,8 +559,8 @@ Phase 5.2 front-loads vars generation precisely so this ordering is already righ
 ### The install ends by rebooting pyrite
 
 The last phase of the install reboots the machine, and it does so on its own rather than on the operator's initiative.
-`clan machines install` passes `--no-reboot` only when it is asked for: `no_reboot` defaults to `False` (`clan_lib/machines/install.py:53`) and the flag is appended only when it is set (`:162-163`).
-With no `--phases` given either, clan runs `kexec`, `disko`, `install`, `reboot` in turn as four separate invocations (`:224`), so the reboot phase is part of every install this path performs.
+`clan machines install` passes `--no-reboot` only when it is asked for: `no_reboot` defaults to `False` (`clan_lib/machines/install.py:75`) and the flag is appended only when it is set (`:184-185`).
+With no `--phases` given either, clan runs `kexec`, `disko`, `install`, `reboot` in turn as four separate invocations (`:253`), so the reboot phase is part of every install this path performs.
 nixos-anywhere's reboot phase (`src/nixos-anywhere.sh:915-929` at 1.13.0) unmounts `/mnt`, disables swap, exports the pools so the next boot needs no forced import, then backgrounds `nohup sh -c 'sleep 6 && reboot'` at `:924` and blocks until the machine stops answering ssh.
 About six seconds after the install phase reports done, therefore, pyrite reboots itself, and stibnite prints "Waiting for the machine to become unreachable due to reboot" and then "Done!" for a machine that is already booting.
 That reboot is the first boot, and it is what the next section is about.
