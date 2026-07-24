@@ -1046,11 +1046,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782118436,
-        "narHash": "sha256-D3235b8FejTfyJAfkE3iirKjzD7sG6Qmi6qvkv1ptWM=",
+        "lastModified": 1784885833,
+        "narHash": "sha256-lFVOrWD561vjDSYuW0lVDYB+KdvgJzMPThceCgdsBBM=",
         "owner": "arnarg",
         "repo": "nixidy",
-        "rev": "65cea8784aaf6d0f9cdeeeda2b7eabde375e2a2b",
+        "rev": "4682f760ddcae469bd4e6eec7aeb70e20505a4ed",
         "type": "github"
       },
       "original": {
