@@ -19,6 +19,7 @@
           "aldente"
           "alt-tab"
           "betterdisplay"
+          "block-buzz"
           "calibre"
           "chatgpt"
           "claude"
