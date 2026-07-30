@@ -134,7 +134,7 @@ in
         machine.succeed("zpool get -H -o value ashift zroot | grep -x 12")
         machine.succeed("zfs get -H -o value encryption zroot/root | grep -x off")
         machine.succeed("zfs get -H -o value xattr zroot/root | grep -x sa")
-        machine.succeed("zfs get -H -o value acltype zroot/root | grep -x posixacl")
+        machine.succeed("zfs get -H -o value acltype zroot/root | grep -x posix")
         machine.succeed("echo -n additionalSecret > /tmp/additionalSecret.key")
         machine.succeed("cryptsetup open --test-passphrase --key-file=/tmp/additionalSecret.key /dev/vda2")
       '';
@@ -150,7 +150,8 @@ nix build --impure --expr 'import /root/pyrite-luks-vmtest.nix' -L \
 echo "exit=${PIPESTATUS[0]}"
 ```
 
-The criterion is `exit=0` with `/root/pyrite-luks-vmtest-result` resolving to a store path containing `log.html`.
+The criterion is `exit=0` with no failing assertion in `/root/pyrite-luks-vmtest.log`.
+`/root/pyrite-luks-vmtest-result` resolves to a store path that is empty, because this nixpkgs revision's NixOS test driver writes no `log.html` into `$out`, so the out-link's contents are not a criterion.
 The test driver aborts the derivation on the first failing step, so a non-zero exit names the failing command in the log and there is nothing to interpret in a green run.
 `meta.timeout = 600` in disko's harness is a Hydra hint that `nix build` does not enforce; the enforced limits are the driver's 900-second per-command defaults, so an OCR misread of the passphrase prompt surfaces as a fifteen-minute hang rather than an error.
 
@@ -665,7 +666,8 @@ Two `password` rows would be the anomaly.
 An occupied slot 0 is a failure of the wipe rather than benign residue: `SLOT_ZERO_TO_DELETE=true` (`:242`) adds `--wipe-slot=0` to the same `systemd-cryptenroll` invocation on every fresh format, so slot 0 surviving means the format guard skipped, which cannot happen against a disk that carried no LUKS header before the wipe.
 
 `zfs get encryption zroot/root` must return `off`, and that is a positive check rather than an absence: it is what distinguishes D1's layout from LUKS layered underneath a still-encrypted dataset.
-`ashift` must return `12`, and `xattr` and `acltype` must return `sa` and `posixacl`.
+`ashift` must return `12`, and `xattr` and `acltype` must return `sa` and `posix`.
+OpenZFS accepts `posixacl` as an input alias for `acltype` and reports the property as `posix`, so `posix` is the value to require.
 `luksUUID` is recorded rather than compared — this disk carried no LUKS header before the install, so there is no earlier UUID for it to differ from — and it is what the header-backup filename and the `pyrite/zfs-root` entry name the container by, which is how a stale backup is identified without decrypting it.
 
 ## clan subcommands that are skipped, and why
