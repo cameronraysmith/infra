@@ -309,6 +309,10 @@ in
         libfido2
       ];
 
+      # Increase MaxAuthTries to accommodate agent forwarding with many keys
+      # Default is 6, but Bitwarden SSH agent may have 10+ keys loaded
+      services.openssh.settings.MaxAuthTries = 20;
+
       # Bridge NixOS-level sops to home-manager for user secret key delivery.
       # sopsIdentity defaults to flake.users.cameron.meta.sopsAgeKeyId
       # ("crs58" via alias-fold inheritance).
