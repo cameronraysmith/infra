@@ -28,6 +28,44 @@ in
         ssh-known-hosts
       ]);
 
+      # A disabledModules path that matches nothing is silently ignored, so a
+      # nixos-hardware bump that moves or renames this module would restore the duplicate
+      # i915 params with no signal. The first assertion below is the tripwire for that.
+      disabledModules = [ "${inputs.nixos-hardware}/common/gpu/intel/kaby-lake" ];
+
+      # Restored from the module disabled above rather than introduced here. Dropping
+      # computeRuntime = "legacy" swaps intel-compute-runtime-legacy1 for
+      # intel-compute-runtime, which does not target this Gen9 Iris Plus 640.
+      hardware.intelgpu = {
+        computeRuntime = "legacy";
+        vaapiDriver = "intel-media-driver";
+      };
+
+      assertions = [
+        {
+          assertion =
+            !(lib.elem "i915.enable_fbc=1" config.boot.kernelParams)
+            && !(lib.elem "i915.enable_psr=2" config.boot.kernelParams);
+          message = ''
+            nixos-hardware's kaby-lake GPU i915 parameters are on pyrite's kernel command
+            line again, so the disabledModules entry in
+            modules/machines/nixos/pyrite/default.nix no longer matches that module's path.
+            Locate common/gpu/intel/kaby-lake in the current nixos-hardware input and
+            re-point the entry at it.
+          '';
+        }
+        {
+          assertion = lib.elem "root=fstab" config.boot.kernelParams;
+          message = ''
+            root=fstab is absent from pyrite's boot.kernelParams, which under a systemd
+            initrd leaves stage 1 with no root filesystem to mount. A lib.mkForce on
+            boot.kernelParams in modules/machines/nixos/pyrite/default.nix discards every
+            other module's contribution and produces exactly this; use lib.mkBefore or
+            lib.mkAfter instead.
+          '';
+        }
+      ];
+
       # Make flake available to all modules (required by ssh-known-hosts)
       _module.args.flake = inputs.self;
 
@@ -274,21 +312,21 @@ in
       boot.kernel.sysctl."kernel.panic" = 20;
 
       # Suspend/resume kernel params for the s2idle/display half (untested; documented
-      # 14,1 recipe, validated on the same reboot as the Layer 1 d3cold hook). lib.mkAfter
-      # (merge order 1500) concatenates these AFTER the nixos-hardware kaby-lake GPU
-      # profile's plain-assignment boot.kernelParams (order 1000), so for the i915 params
-      # the profile also sets, this later occurrence is the one the kernel's module-param
-      # parser keeps (last wins). The profile ships i915.enable_psr=2 / enable_fbc=1;
-      # PSR/FBC/DC across resume are the documented cause of the "display never returns"
-      # variant. The nvme params disable APST and the ACPI D3 path; pci=noaer keeps the
-      # D3cold->D0 restore log readable.
-      boot.kernelParams = lib.mkAfter [
-        "i915.enable_psr=0"
-        "i915.enable_fbc=0"
-        "i915.enable_dc=0"
-        "nvme_core.default_ps_max_latency_us=0"
-        "nvme.noacpi=1"
-        "pci=noaer"
+      # 14,1 recipe, validated on the same reboot as the Layer 1 d3cold hook). PSR/FBC/DC
+      # across resume are the documented cause of the "display never returns" variant. The
+      # nvme params disable APST and the ACPI D3 path; pci=noaer keeps the D3cold->D0
+      # restore log readable. i915.enable_guc=2 is restored from the kaby-lake GPU module
+      # disabled above rather than introduced here.
+      boot.kernelParams = lib.mkMerge [
+        (lib.mkBefore [ "i915.enable_guc=2" ])
+        (lib.mkAfter [
+          "i915.enable_psr=0"
+          "i915.enable_fbc=0"
+          "i915.enable_dc=0"
+          "nvme_core.default_ps_max_latency_us=0"
+          "nvme.noacpi=1"
+          "pci=noaer"
+        ])
       ];
 
       # Local GNOME desktop under GDM (D19), the two lines nixpkgs seeds into
