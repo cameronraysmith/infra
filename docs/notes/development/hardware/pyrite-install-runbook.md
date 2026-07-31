@@ -455,7 +455,10 @@ lsblk /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1   # no dm holde
 #     the booted installer -- over ssh from stibnite or at pyrite's own
 #     console -- never in a stibnite shell, where the same command finds
 #     stibnite's own devices.
-blkdiscard /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1
+#     -f is part of the command rather than an escalation to reach for if the
+#     plain form is rejected: without it blkdiscard refuses a disk that still
+#     carries a partition signature and discards nothing. See below.
+blkdiscard -f /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1
 ```
 
 Verify the wipe took, before running the install and while the machine can still be looked at:
@@ -501,13 +504,13 @@ The by-id form is used there as everywhere else in this note, including for the 
 `/dev/nvme0n1` and `/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1` name the same device on pyrite, but the short name is a kernel enumeration order rather than an identity, it resolves on stibnite to a different disk entirely, and the controller exposes a second namespace whose by-id name ends `_2` and must never be written.
 A measurement taken against a name that does not identify the disk is not evidence about the disk, even when it is read-only.
 
-`blkdiscard` from util-linux 2.42 prints `/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1: contains existing partition (gpt).` and then performs the discard.
-This is a warning, not a refusal, and it reads exactly like one — the message names the obstacle and offers no result, so an operator reasonably reads it as the reason nothing happened.
-It was observed on the install of 2026-07-19 and the wipe was verified complete afterward: zero non-zero bytes in the first 64 MiB, no filesystem or pool signatures, no GPT, and the offset that run's APFS container occupied reading zeros.
+`blkdiscard` from util-linux 2.42 refuses the bare invocation against a disk that still carries a signature, and `-f` is what makes it run.
+Without the flag it prints the signature line — `contains existing partition (gpt).` — then `This is destructive operation, data will be lost! Use the -f option to override.`, and exits having discarded nothing.
+With the flag it prints `Operation forced, data will be lost!` and performs the discard.
+Both lines are warnings in form and only one of them reports something that happened, so the refusal is the easier of the two to walk past: it names the obstacle, offers no result, and leaves behind a disk carrying every signature the wipe exists to destroy.
+The wipe of 2026-07-19 was verified complete afterward: zero non-zero bytes in the first 64 MiB, no filesystem or pool signatures, no GPT, and the offset that run's APFS container occupied reading zeros.
 That APFS observation describes the disk as it stood before that install and not as it stands now — that install is what replaced APFS, and what p2 holds today is stated under "Why the wipe is a step, not an assumption" below.
-Do not go looking for a `--force` flag on the strength of this message.
-There is nothing to force and re-running the command changes nothing.
-The check that settles it is the post-wipe verification above, not the command's output.
+The check that settles whether a wipe took is the post-wipe verification above, not the command's output.
 
 The wipe uses `blkdiscard`, not `sgdisk --zap-all` and not `wipefs -a` on the whole disk.
 This follows the form clan-core's own encrypted-root guide prescribes at `docs/src/guides/disk-encryption.md:84-88`.
