@@ -73,16 +73,12 @@ in
       # The container is named cryptroot in disko.nix, which is what fixes this unit name.
       # boot.initrd.luks.fido2Support is deliberately NOT set: it selects the legacy
       # fido2luks path and luksroot.nix asserts systemd.enable -> !fido2Support, failing
-      # eval. systemd-cryptsetup does not read the FIDO2 slot out of the header:
-      # determine_token_type returns TOKEN_FIDO2 only when arg_fido2_device or
-      # arg_fido2_device_auto is set (systemd 260.2 src/cryptsetup/cryptsetup.c:2550-2554),
-      # and only the crypttab fido2-device= option sets either (:393-405). With neither it
-      # falls through to the key file and the passphrase. That option comes from disko's
-      # crypttabExtraOpts (lib/types/luks.nix:348), which is mkIf enrollFido2 and so emits
-      # nothing while disko.nix defers enrollment to first boot. Adding it is what turns
-      # token unlock on, and it must follow the enrollment rather than precede it. The same
-      # claim this corrects appears in nixpkgs at
-      # nixos/modules/system/boot/luksroot.nix:614.
+      # eval. A FIDO2 token in the header is not self-activating: determine_token_type
+      # returns TOKEN_FIDO2 only when a crypttab option has set arg_fido2_device or
+      # arg_fido2_device_auto — fido2-device=, or fido2-cid= as a documented side effect
+      # (systemd 260.2 src/cryptsetup/cryptsetup.c:2551-2560, :394-405, :424-426). Adding
+      # fido2-device=auto through crypttabExtraOpts is what turns token unlock on, and
+      # it must follow the enrollment; see disko.nix.
       boot.initrd.systemd.services."zfs-import-zroot" = {
         after = [ "systemd-cryptsetup@cryptroot.service" ];
         wants = [ "cryptsetup.target" ];
