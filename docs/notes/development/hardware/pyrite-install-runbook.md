@@ -17,7 +17,9 @@ Every line number cited below against a `clan_lib/` or `clan_cli/` path is keyed
 This document is the working-note home for the path.
 Promoting it to published reference documentation under `docs/reference/` is a separate, deferred follow-on change and is out of scope for Phase 6.
 
-Phase 7 of the change is where this path is executed, once: there is exactly one destructive install (task 7.3), and the second proving install that once followed it is dropped because the install of 2026-07-19 already demonstrated the path (D29). This note records the path and the reasons its steps are shaped as they are.
+Phase 7 of the change is where this path is executed: the change plans one destructive install (task 7.3), and the second proving install that once followed it is dropped because the install of 2026-07-19 already demonstrated the path (D29).
+The attempt of 2026-07-30 ran that step and aborted at the FIDO2 enrollment, so task 7.3 is re-run against the disk that attempt left behind; what it left, and what the re-run therefore has to clear, is stated under "Why the wipe is a step, not an assumption" below.
+This note records the path and the reasons its steps are shaped as they are.
 
 ## Prerequisites before the first install
 
@@ -34,20 +36,20 @@ The gate does not rest on the answer, and it holds harder if the wait turns out 
 Confirm the keyboard or adapter is on hand before booting the installer, not after a prompt goes unanswered.
 The mechanism, and why the two keyboards reach the initrd by different routes, is in "USB-C keyboard is a first-boot prerequisite" below.
 
-YubiKey-A — serial `32720759` — must be seated in pyrite before the disko phase begins and must stay seated through it, and this is as hard a gate as the keyboard.
-It is named here rather than only in "Key lifecycle: YubiKey enrollment, header backup, and revocation" — the last section of this note — because the token has to be in the machine long before that section is reached.
-disko enrolls it during the install itself, at an unannounced moment inside the disko phase, and the touch it asks for is a physical press on the token in the machine.
-The pre-wipe gate confirms it is the only token seated and that its client PIN is set; the second token stays in stibnite and is not brought near pyrite until the post-install enrollment.
-An install started with no token seated does not fail early — disko's own guard passes on this machine's SPI keyboard alone — it fails after `luksFormat` has already replaced the container, on a machine with no fallback OS.
+Neither YubiKey is needed for the install, and neither should be seated in pyrite while it runs.
+`enrollFido2 = false` (`modules/machines/nixos/pyrite/disko.nix:106`) keeps every FIDO2 step out of the generated disko script, so the install neither reads a token nor asks for one.
+Both tokens are enrolled afterward, on the booted machine, by "Key lifecycle: YubiKey enrollment, header backup, and revocation" below — YubiKey-A by "Enrolling the first token", YubiKey-B by the subsection after it.
+The reasons for that shape, and the recorded failure that produced it, are under "The install is non-interactive after the wipe" below.
 
-YubiKey-A's FIDO2 client PIN must be in the operator's possession before the disko phase begins, and this is a gate of the same order as the token and the keyboard.
-The pre-wipe `ykman fido info` gate establishes that a PIN is set on the token; it does not establish that the person at the machine knows it, and those are different facts.
-Nothing in this repository records the PIN itself: it is not a clan var, and the `pyrite/zfs-root` password-manager entry holds the ZFS passphrase, the slot inventory, and the header backup rather than the token's PIN.
-The PIN is the operator's to bring, and there is no place to look it up once the install has started.
-The prompt for it lands on stibnite in the middle of the disko phase, after the wipe, so an operator who set that PIN months ago and did not carry it to the install reaches the prompt with macOS already gone: `systemd-cryptenroll` cannot enroll, disko exits under the `set -efux` established at `lib/default.nix:1012` with `luksFormat` (`lib/types/luks.nix:244`) having already replaced the container, and recovery is a second `blkdiscard` and a full reinstall over WiFi.
-Wrong guesses are budgeted rather than free.
-The attempt count `ykman fido info` prints at the pre-wipe gate is that budget — read as eight remaining on both tokens — and exhausting it blocks the token's FIDO2 application, after which the token can satisfy neither this enrollment nor a later unlock until that application is reset, which erases the credentials it holds.
-The same PIN is typed again at the first boot, on pyrite's own keyboard, so it has to survive the install rather than only reach it.
+The clan-vars ZFS root passphrase must be in the operator's possession, at the machine, before the install's reboot lands, and this is a gate of the same order as the keyboard.
+It is the container's only credential until the first token is enrolled, and it is typed at pyrite's own stage-1 prompt, on a machine that has no network, no shell, and nothing to read it off.
+It is readable from stibnite with `clan vars get pyrite zfs/key` and from the `pyrite/zfs-root` password-manager entry; retrieve it before starting the install rather than after the prompt is on screen.
+The install reboots the machine on its own about six seconds after the install phase reports done ("The install ends by rebooting pyrite" below), so the window between starting the install and needing the passphrase is the length of the install and no longer.
+
+The tokens' FIDO2 client PINs are needed at the post-boot enrollments and not during the install.
+Nothing in this repository records a PIN: it is not a clan var, and the `pyrite/zfs-root` password-manager entry holds the ZFS passphrase, the slot inventory, and the header backup rather than the tokens' PINs.
+Wrong guesses are budgeted rather than free — `ykman fido info` prints the remaining attempt count, read as eight of eight on both tokens on 2026-07-30 — and exhausting it blocks the token's FIDO2 application until that application is reset, which erases the credentials it holds.
+An exhausted or forgotten PIN now costs a failed enrollment on a running machine rather than a post-wipe abort, which is what deferring the enrollment bought.
 
 The install is driven from the admin box (stibnite).
 The internal disk's namespace-explicit device path is `/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1` — the `_1` namespace, matching the disko layout's `device`.
@@ -72,13 +74,13 @@ It must run before the installer ISO is booted, since booting the ISO takes away
 pyrite is the only host in the fleet that can run it.
 The derivation carries `requiredSystemFeatures = kvm nixos-test` and builds for `x86_64-linux`; `modules/system/magnetite-builder.nix:31-41` deliberately does not advertise `kvm`, so the scheduler will not route there, and the rosetta builder is an aarch64 VM that cannot KVM-accelerate an x86_64 guest.
 
-The naive invocation does not work, and the reason is worth recording because three of the four obstacles are silent rather than loud.
+The naive invocation does not work, and the reason is worth recording because one of the two obstacles is silent rather than loud.
 `nix build .#nixosConfigurations.pyrite.config.system.build.installTest` fails at evaluation on a `boot.zfs.devNodes` conflict — `disko/lib/tests.nix:201` sets `/dev` at normal priority against the host module's `/dev/disk/by-id`.
 Behind that, `passwordFile` and `additionalKeyFiles` both name `/run/partitioning-secrets/zfs/key`, which clan-cli materialises only during a real install, so `cryptsetup luksAddKey` would read a file that does not exist.
-And `enrollFido2 = true` sends `disko/lib/types/luks.nix:275-302` into `wait_for_token`, which polls `ls /dev/hidraw*` forever; `installTest` passes no `enableCanokey`, so the test VM has no token to find and the run hangs rather than failing.
-disko's own FIDO2 coverage sets `enableCanokey = true` explicitly and `installTest` has no way to.
+A third obstacle applied while `enrollFido2` was true and no longer does: `disko/lib/types/luks.nix:275-302` sent the script into `wait_for_token`, which polls `ls /dev/hidraw*`, and `installTest` passes no `enableCanokey` — disko's own FIDO2 coverage sets it explicitly and `installTest` has no way to — so the test VM had no token to find and the run hung rather than failing.
+With `enrollFido2 = false` that block is not emitted at all, and the `enrollFido2` line in the expression below is a restatement of the real configuration's value rather than a divergence from it, retained so the test stays runnable if enrollment is ever moved back into the install.
 
-The test therefore runs against a configuration that overrides exactly those four things and nothing else.
+The test therefore runs against a configuration that overrides exactly those four attributes and nothing else, of which three are live divergences and one is a restatement.
 pyrite has no checkout of this repository, so the tree has to be put there first — pushing the bookmark and cloning it is what leaves a revision the runbook can name, which `rsync` does not:
 
 ```bash
@@ -158,12 +160,16 @@ The test driver aborts the derivation on the first failing step, so a non-zero e
 Each override is a stated divergence rather than a convenience.
 `boot.zfs.devNodes` resolves the conflict in pyrite's favour and not the harness's, which is the point: keeping `/dev/disk/by-id` is what forces the booted VM's `zfs-import-zroot` to find the pool through the dm udev rules' `dm-name-cryptroot` symlink, and forcing the harness value `/dev` would sidestep the mechanism the test exists to check.
 disko justifies `/dev` on the grounds that `/dev/disk/by-id` is empty in QEMU VMs, which holds for virtio disks, whose by-id entries QEMU does not supply, and not for device-mapper nodes, whose symlinks the dm udev rules produce.
-`boot.initrd.systemd.enable` is restored explicitly because `enrollFido2` was the only thing setting it, and the prompt under test is systemd's `systemd-ask-password` rather than the scripted initrd's.
-The two key files are deliberately different so that the `cryptsetup luksAddKey` branch stays live instead of short-circuiting on `--test-passphrase`; the harness writes both with `echo -n`, which is what makes the post-boot `--test-passphrase` check severe against the trailing-newline failure D27 turns on.
+`boot.initrd.systemd.enable` is stated explicitly to name the property under test — the prompt is systemd's `systemd-ask-password` rather than the scripted initrd's — and not because anything else would leave it off.
+disko does set it, at `lib/types/luks.nix:354` under `lib.mkIf config.enrollFido2`, which emits nothing here; but it was never the only definition site, and an earlier revision of this note said it was.
+`modules/system/initrd-networking.nix:7` sets it plainly in `flake.modules.nixos.base`, which pyrite imports at `modules/machines/nixos/pyrite/default.nix:26`, so the real machine has systemd stage 1 with or without the enrollment.
+The two key files are deliberately different so that the `cryptsetup luksAddKey` branch stays live instead of short-circuiting on `--test-passphrase`, and under `enrollFido2 = false` that is a branch the real install does not take: the same file fills `passwordFile` and `additionalKeyFiles`, so `luks.nix:258`'s guard succeeds against the slot `luksFormat` just created and `:259` never runs.
+The harness writes both with `echo -n`, which is what makes the post-boot `--test-passphrase` check severe against the trailing-newline failure D27 turns on — a failure that now surfaces as an extra keyslot rather than a dead one, per the keyslot criterion under `## Verifying the install` below.
 
 What a green run establishes is bounded, and the boundary matters.
 It establishes that the LUKS2 container is created on the ESP's sibling with the nested `zfs` content registering `/dev/mapper/cryptroot` as the pool's vdev, that a passphrase slot added through `additionalKeyFiles` opens the container, that stage 1 renders the prompt and the typed passphrase unlocks it, that `zpool import -d /dev/disk/by-id` finds the pool, and that `ashift`, `xattr`, `acltype`, and `encryption=off` read back as declared.
-It establishes nothing about the FIDO2 tap: `enrollFido2` is off, so `systemd-cryptenroll`, the `--wipe-slot=0` that removes the throwaway format key, and the `fido2-device=auto` crypttab option are all absent, and because `enrollFido2` is what turns on the autogenerated format password, the test formats directly with the passphrase and never exercises the format-then-add-then-wipe ordering.
+It establishes nothing about the FIDO2 tap, and neither does the install: with `enrollFido2 = false` the `systemd-cryptenroll` call, the `--wipe-slot=0` that removed the throwaway format key, and the `fido2-device=auto` crypttab option are absent from both, and the container is formatted directly with the passphrase rather than through the format-then-add-then-wipe ordering.
+The token path is exercised for the first time by the post-boot enrollment in "Key lifecycle" below, on hardware, and nothing before that point says anything about it.
 It establishes nothing about the clan vars path, since `passwordFile` is redirected away from it, nor about the `_1` namespace, Apple's ESP-by-type discovery, the SPI keyboard, the i915 framebuffer, `blkdiscard`, or the 4096-byte sector premise behind `ashift = 12` — QEMU reports 512-byte sectors and the check passes only because the value is explicit.
 One reading is actively misleading: the harness asserts that a second format against a surviving container leaves the data intact, which is the same `luks.nix:202` skip the recorded `blkdiscard` exists to foreclose, asserted here as a pass.
 A green run says nothing about the wipe and points the wrong way if read as such.
@@ -192,7 +198,7 @@ Select `NixOS 26.05.5092.4382ed2b7a68 Installer GNOME (Linux LTS)` at the GRUB m
 This is not cosmetic and it is the one menu choice that can destroy the disk.
 The image presents four entries, read from `/iso/EFI/BOOT/grub.cfg` at `:68`, `:78`, `:88`, and `:98`: GNOME (Linux LTS), GNOME (Linux 7.1.3), Plasma (Linux LTS), and Plasma (Linux 7.1.3).
 The two `7.1.3` entries are the `*_latest_kernel` specialisations, which import `nixos/modules/installer/cd-dvd/latest-kernel.nix`, whose `:4` sets `boot.supportedFilesystems.zfs = false` — so on those entries there is no `zfs` kernel module and no `zpool` on PATH.
-Booting one of them and proceeding would run the `blkdiscard`, destroy macOS, and then fail at `zpool create` with nothing to fall back to.
+Booting one of them and proceeding would run the `blkdiscard` and then fail at `zpool create`, on a machine that has nothing to fall back to.
 The LTS entries carry `zfs.ko.xz`, `spl.ko.xz`, and `zpool` from `zfs-user-2.4.2` on kernel 6.18.38.
 The GNOME LTS entry is GRUB's default — the config sets no `set default`, so entry 0 is selected, and `set timeout=10` means an unattended boot lands on it — but the menu is presented for ten seconds and a keypress can move off it, so the selection is confirmed rather than assumed.
 The Plasma LTS entry would also pass the ZFS check; it is not chosen because it changes the desktop the recon was performed under for no gain.
@@ -206,7 +212,7 @@ uname -r      # must report 6.18.38 -- NOT 7.1.3
 ```
 
 `6.18.38` is the LTS entry and is the only value that permits the operator to continue.
-`7.1.3` means the machine came up on a `*_latest_kernel` specialisation, on which `boot.supportedFilesystems.zfs = false` leaves no `zfs` module and no `zpool`: proceeding from there runs the `blkdiscard`, destroys macOS, and then fails at `zpool create` on a machine with no fallback OS and nothing to boot.
+`7.1.3` means the machine came up on a `*_latest_kernel` specialisation, on which `boot.supportedFilesystems.zfs = false` leaves no `zfs` module and no `zpool`: proceeding from there runs the `blkdiscard` and then fails at `zpool create` on a machine with no fallback OS and nothing to boot.
 If `uname -r` reports `7.1.3`, reboot onto the LTS entry and repeat the key authorization below, which does not survive the reboot.
 This one command stands in for the two positive checks it implies, `modprobe zfs` succeeding and `command -v zpool` resolving, and it is cheaper than either.
 
@@ -263,26 +269,35 @@ The path's first step wipes the disk explicitly, at every offset rather than onl
 The three steps do not run on one host: step 0 and step 2 run on stibnite, and step 1 runs on pyrite's booted installer.
 They are written as separate blocks for that reason, and step 1 — together with the post-wipe verification that immediately follows it, which also runs on the installer — is the part that destroys a disk.
 
-This install cannot be driven hands-off, and the operator has to plan on being at the machine for the whole disko phase rather than starting it and walking away.
-Two prompts land in the middle of it and neither can be scheduled.
-The FIDO2 enrollment asks for the token's PIN, and it asks on stibnite, over the pty `ssh -t` allocates for the disko phase — so the terminal that started the install has to stay attended.
-That routing is conditional in two ways, and both are worth stating rather than assuming.
+### The install is non-interactive after the wipe
 
-nixos-anywhere decides the flag once at startup from `[ -t 0 ]` (`src/nixos-anywhere.sh:35-38`) and re-passes it on every `runSsh` (`:472-482`), which is what carries the disko script at `:854`; clan inherits its own fd 0 into that process, since `clan_lib/cmd/__init__.py:388-399` leaves `input` at `None` and sets `needs_user_terminal=True`.
-So the prompt lands on stibnite only while the install is launched from an interactive terminal.
-Under `nohup`, a redirect, a `tmux send-keys` pipeline, or a CI runner, the flag becomes `-T` and `systemd-cryptenroll` falls through `ask_password_auto` (`ask-password-api.c:1141-1145`) to the ask-password agent, which prompts on pyrite's own console and waits with `until = USEC_INFINITY` rather than returning an error.
-Neither branch aborts the script: a missing tty produces the same indefinite wait the touch does, not a post-wipe exit under `set -efux`.
-Launch the install from an attended terminal and neither question arises.
+Nothing in the disko phase prompts for anything, and the terminal that starts the install does not have to stay attended.
+`enrollFido2 = false` (`modules/machines/nixos/pyrite/disko.nix:106`) removes every interactive element from the generated script: read against the built `disko --mode disko` for this machine, `systemd-cryptenroll`, `--wipe-slot`, `wait_for_token`, `/dev/hidraw`, `SLOT_ZERO_TO_DELETE`, `openssl rand`, and `systemd-ask-password` each occur zero times in its 564 lines.
+The container is formatted with the clan-vars passphrase directly — `cryptsetup -q luksFormat "/dev/disk/by-partlabel/disk-primary-zfs" --key-file <(set +x; echo -n "$(cat /run/partitioning-secrets/zfs/key)"; set -x)` — and the `additionalKeyFiles` branch that follows is dormant, because its `cryptsetup open --test-passphrase` guard (`lib/types/luks.nix:258`) succeeds against the slot `luksFormat` just created.
+The four `fido2` strings that remain in the script are inert `enrollFido2=''` and `declare -a extraFido2EnrollArgs=()` declarations that disko emits for every option name regardless of value.
 
-Whether a PIN is asked for at all depends on the token rather than on the configuration.
-`cryptenroll.c:62` requests PIN and user presence both, and the layout passes no `extraFido2EnrollArgs` to change it, but `libfido2-util.c:802-804` clears the PIN requirement when the token reports its `clientPin` option false — which is what an authenticator that supports PINs but has none set reports.
-A token with no client PIN set therefore prompts only for the touch.
-This runs in the safe direction, one fewer blocking prompt rather than one more, and the pre-wipe `ykman fido info` gate below is what settles it in advance: it is there to confirm the PIN is set, and its answer is also the answer to how many prompts to expect.
+What the operator's presence is required for is the reboot that ends the install, not the install itself.
+The stage-1 passphrase prompt appears about six seconds after the install phase reports done ("The install ends by rebooting pyrite" below), on a machine with no network and no shell, and it is answered by hand.
+Be at the machine, with the passphrase, before the install finishes.
 
-The touch is unconditional.
-It is a physical press on the token seated in pyrite, at a moment that depends on how long `luksFormat` takes and is not announced in advance.
-Both prompts fall after the wipe.
-An unattended run reaches the touch, waits, and leaves the machine with a formatted container, no enrolled token, and no operating system.
+The enrollment was deferred rather than declined, and the reason is a recorded failure.
+On 2026-07-30 the install ran with `enrollFido2 = true` and `systemd-cryptenroll` returned `FIDO_ERR_OPERATION_DENIED` (0x27) after the token had already accepted the PIN, leaving a formatted container, no enrolled token, and no operating system.
+Several explanations are excluded by evidence: a wrong PIN would have returned `FIDO_ERR_PIN_INVALID`, a touch timeout has a dedicated `FIDO_ERR_ACTION_TIMEOUT` branch in systemd that did not fire, resident-key storage was not requested, exactly one FIDO2 device answered, and post-hoc `ykman fido info` on that token reported eight of eight PIN attempts remaining, no forced PIN change, a minimum PIN length of 4, and 99 credential slots free.
+The leading explanation is a declined or timed-out user-presence check: the operator was present, but the touch had to land on the token in pyrite while the PIN prompt was relayed over ssh to stibnite, and which machine's token to press was not clear at the time.
+That is not decisively established, and the deferral does not rest on establishing it.
+What the deferral rests on is the shape of the failure rather than its cause: disko runs the enrollment as a bare body command under the `set -efux` of `lib/default.nix:1012`, after `luksFormat` at `:244` has already replaced the container, with no retry and no fallback, so any failure of the tap is unrecoverable in place on a machine with no fallback OS.
+Run on the booted system instead, the same failure costs one re-run.
+
+disko's own guard is not what makes an install-time enrollment safe, and it should not be read as a reason to move the enrollment back.
+`wait_for_token` (`lib/types/luks.nix:277-292`) gates on `ls /dev/hidraw* &>/dev/null` at `:283`, a bare node-existence test with no capability check of any kind, which would pass on a mouse or a wireless receiver.
+On this machine with no token seated it does not false-pass, and an earlier revision of this note said it did: pyrite's internal Apple SPI keyboard has no `hidraw` node at all — it appears in `/proc/bus/input/devices` with `Phys=applespi/input0` and handlers `sysrq kbd event5 leds` — so with nothing seated the loop polls forever and the install hangs after the wipe rather than aborting after it.
+During the 2026-07-30 attempt both `/dev/hidraw0` and `/dev/hidraw1` were the YubiKey itself, and the trace line `+ ls /dev/hidraw0 /dev/hidraw1` is post-glob expansion under `set -x` rather than evidence of a second device.
+Both outcomes are post-wipe and neither is recoverable in place.
+A correct guard would be `systemd-cryptenroll --fido2-device=list` or `fido2-token -L`, and reaching it needs a change to disko rather than an `extraFido2EnrollArgs` value, which cannot influence the guard.
+
+### The gates, the wipe, and the install
+
+The first gate confirms a build host answers before anything is destroyed:
 
 ```bash
 # host: stibnite
@@ -300,42 +315,12 @@ So with magnetite unreachable and the Rosetta builder stopped, the fallback is t
 If this gate fails and the install is to proceed anyway, start the Rosetta builder first and confirm it answers; do not reason past the gate on the assumption that stibnite will build it locally regardless.
 `ping6 -c 3 fddb:4344:343b:14b9:399:930f:39db:40d2` is a cheaper liveness check that needs no sudo, but ICMP does not prove the store is answering and does not replace the probe above.
 
-Four further gates precede the wipe, and all four are hard stops rather than advisories: if any does not pass, do not run the `blkdiscard`.
+Three further gates precede the wipe, and all three are hard stops rather than advisories: if any does not pass, do not run the `blkdiscard`.
 They are stated here in full because the operator standing at the machine is reading this page and nothing else.
+No token gate appears among them.
+The install neither reads a token nor asks for one, and the token checks that used to stand here — exactly one device answering, and its remaining PIN-attempt count — have moved to "Enrolling the first token" in the key-lifecycle section below, where they are read immediately before the enrollment they gate.
 
-The first confirms that exactly one FIDO2 token is seated and answering:
-
-```bash
-# host: pyrite (installer)
-# The stock graphical ISO ships neither libfido2 nor yubikey-manager, so the
-# tools are fetched into a shell. This needs network but no experimental-features
-# flag. `nix run nixpkgs#libfido2` does not work at all -- the package declares no
-# meta.mainProgram; the flake form is `nix shell nixpkgs#libfido2 -c fido2-token -L`.
-nix-shell -p libfido2 yubikey-manager --run 'fido2-token -L; ykman fido info'
-```
-
-Require `fido2-token -L` to list exactly one device, and `ykman fido info` to report a PIN-attempt count, which is what confirms the client PIN is set.
-
-Two lines that read as failures precede that output and are expected here, and this gate is a hard stop, so read them before treating them as one:
-
-```
-WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
-ERROR: Unable to list devices for connection
-```
-
-`pcscd` runs on neither the installer ISO nor the installed system — nothing in this repository enables `services.pcscd` and the graphical installer profile does not either — so `ykman`'s CCID transport is unavailable and says so, while the OTP/HID transport it actually uses here works.
-`ykman` exits 0 regardless, and the lines below these two, reporting the token and its PIN-attempt count, are the gate's answer.
-Do not abort on the `ERROR:` line: it is a statement about a transport this procedure does not use, and treating it as a failed gate stops the install on a check that passed.
-Exactly one, because disko passes no device path and `systemd-cryptenroll --fido2-device=auto` resolves only where the choice is unambiguous; the second token is enrolled after the install, by the "Enrolling the second token" block in the key-lifecycle section below, and not by the "Replacing a lost token" procedure beside it, whose `--wipe-slot` prerequisite must not run here.
-With no network on the installer, `systemd-cryptenroll --fido2-device=list` is the in-closure substitute, since systemd is built `withFido2` and the call needs no privilege.
-It answers the device-presence half and not the client-PIN half, so a pass on it alone leaves the PIN unverified and has to be recorded as such.
-
-This is checked positively, and checked here, because disko's own guard does not hold on this machine and it fails in the direction that looks like success.
-`wait_for_token` (`lib/types/luks.nix:277-292`) gates on `ls /dev/hidraw* &>/dev/null` at `:283`, a bare node-existence test with no capability check of any kind, and this machine's internal Apple SPI keyboard registers a `hidraw` node independently of any token — so the guard passes immediately with nothing seated at all.
-`systemd-cryptenroll --fido2-device=auto` at `:295-300` then resolves nothing, and because that call is a body command rather than a condition, the script exits under the `set -efux` established at disko `lib/default.nix:1012` — after the `luksFormat` at `:244` has already replaced the container.
-On a machine with no fallback OS that is an unrecoverable post-wipe abort, produced by the guard that appears to prevent it.
-
-The second proves on the admin box that every secret whose silent absence costs pyrite its network or its remote access is present, decryptable, and encrypted to pyrite:
+The first proves on the admin box that every secret whose silent absence costs pyrite its network or its remote access is present, decryptable, and encrypted to pyrite:
 
 Save it to a file and run it with an explicit `bash`; do not paste it into the shell.
 stibnite's interactive shell is fish, which supports neither the `<<'SH'` heredoc an earlier revision of this block used nor `$?`, so a pasted form errors on its first line and a `$?` result line reports nothing.
@@ -385,24 +370,28 @@ Two secrets correctly lack `pyrite` as a recipient and must not be added to one 
 `zfs/key` is in the list for a different reason than the others: it travels the separate automatic `--disk-encryption-keys` channel (`install.py:169-182`), and if it is absent `run_generators` mints a fresh passphrase, so the container is created under a credential the operator never recorded and cannot type at the initrd prompt.
 `openssh/ssh.id_ed25519` is in the list because `modules/system/ssh-known-hosts.nix:66-72` and `modules/home/core/ssh.nix:107-110` both pin `pyrite.zt` to the public half read back out of the flake, so a host key that fails to land yields a machine that is up and on the mesh and that the admin box refuses on key mismatch.
 
-The third records the GUID of the pool now on the disk, which is the baseline the post-install create-path check compares against:
+The second records the identity of whatever is on the disk now, which is the baseline the post-install create-path checks compare against:
 
 ```bash
 # host: pyrite (installer)
-# Lists importable pools and their GUIDs from the on-disk labels. Reads only:
-# it needs no key and it does not import. Record the id printed for zroot.
-zpool import
+# Both read only: neither needs a key and neither imports or opens anything.
+# Record whatever each prints, including nothing.
+zpool import                                    # importable pools and their GUIDs
+cryptsetup luksUUID /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
 ```
 
-Take it here because after the wipe there is nothing left to read it from.
-Write the GUID down somewhere that is not the installer: on stibnite, or on paper.
-The block above is labelled `host: pyrite (installer)`, and this note sanctions running installer blocks at pyrite's own console — so a GUID that exists only in that console's scrollback is destroyed by the reboot into the installed system, which is precisely when the post-install comparison needs it.
+Take both here because after the wipe there is nothing left to read them from.
+Write the values down somewhere that is not the installer: on stibnite, or on paper.
+The block above is labelled `host: pyrite (installer)`, and this note sanctions running installer blocks at pyrite's own console — so a value that exists only in that console's scrollback is destroyed by the reboot into the installed system, which is precisely when the post-install comparison needs it.
 A tmpfs-backed live environment keeps no file across that reboot either, so a redirect into the installer's filesystem is not a record.
-It is a real baseline rather than a formality: the disk carries a live pre-D1 `zroot` today, so a `blkdiscard` that does not reach the media leaves that pool's labels in place, disko's `lib/types/zpool.nix:298` `zpool import -N -f "zroot"` succeeds, and `:299` logs "not creating zpool zroot as a pool with that name already exists" while never applying `ashift`.
-With the baseline recorded, the post-install `zpool get -H -o value guid zroot` discriminates that outcome from a genuine create; without it, that reading is a number with nothing to compare to.
-There is no analogous baseline for `cryptsetup luksUUID` and none is invented, because this disk carries no LUKS header before the install.
 
-The fourth confirms the installer is on the network and stays there:
+The `luksUUID` arm is the live one on the install ahead, and it is new to this revision.
+The attempt of 2026-07-30 reached `luksFormat` before it aborted, so p2 carries a LUKS2 container: a `blkdiscard` that does not reach the media leaves that header probing, disko's format gate `! blkid || ! cryptsetup isLuks` (`lib/types/luks.nix:202`) evaluates false, `luksFormat` is skipped, and the install proceeds inside the old container under a UUID the post-install check can catch and nothing else on this page can.
+The `zpool import` arm may now print nothing, and that is a recording rather than a failure: that same attempt wiped the disk and reformatted p2, and no pool was created inside the new container, since the nested `zfs` content's `_create` is spliced after the enrollment that aborted (`:303`).
+Whether any of the pre-D1 pool's tail labels survived that sequence has not been established, which is exactly why the arm is still read.
+If it does list a `zroot`, the surviving-pool skip described under "Why the wipe is a step" below is live and the GUID is the only thing that discriminates it.
+
+The third confirms the installer is on the network and stays there:
 
 ```bash
 # host: pyrite (installer)
@@ -428,15 +417,28 @@ nix build --no-link /nix/store/2svzjf9qgwn6m2i69mqpjlb5n94dgm5g-nixos-anywhere-1
 nix path-info /nix/store/2svzjf9qgwn6m2i69mqpjlb5n94dgm5g-nixos-anywhere-1.13.0
 ```
 
+The wipe has a precondition it did not have before, and skipping it fails the wipe rather than corrupting it.
+disko opens the container with `--persistent` immediately after `luksFormat`, and the 2026-07-30 abort left `cryptroot` active as `dm-0`; `blkdiscard` refuses a device that has an open device-mapper holder.
+The mapping exists only in the installer session that aborted, so a reboot clears it and `cryptsetup status cryptroot` reporting no such device is the pass either way.
+
 ```bash
 # host: pyrite (installer)
-# 1. Wipe the target disk at every offset. THIS IS THE POINT OF NO RETURN:
-#    macOS on the internal disk is destroyed here. This is the last step
-#    whose success the operator can observe before the install commits.
-#    This by-id path names pyrite's internal NVMe. Run it in a shell on
-#    the booted installer -- over ssh from stibnite or at pyrite's own
-#    console -- never in a stibnite shell, where the same command finds
-#    stibnite's own devices.
+# 1a. Close the mapping the 2026-07-30 attempt left open. Harmless if nothing
+#     is open: `close` on an absent mapping is a no-op error, and the lsblk
+#     line is what settles it. blkdiscard fails on a busy device.
+cryptsetup status cryptroot
+cryptsetup close cryptroot || true
+lsblk /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1   # no dm holder
+
+# 1b. Wipe the target disk at every offset. THIS IS THE POINT OF NO RETURN.
+#     This is the last step whose success the operator can observe before the
+#     install commits, and it is what destroys the LUKS2 header the 2026-07-30
+#     attempt left behind -- without which disko skips luksFormat entirely and
+#     the install lands inside the old container.
+#     This by-id path names pyrite's internal NVMe. Run it in a shell on
+#     the booted installer -- over ssh from stibnite or at pyrite's own
+#     console -- never in a stibnite shell, where the same command finds
+#     stibnite's own devices.
 blkdiscard /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1
 ```
 
@@ -475,7 +477,7 @@ clan machines install pyrite \
 
 Step 0 is ordered ahead of the wipe rather than left to the install to resolve, because nixos-anywhere is fetched lazily and is first needed strictly after the point of no return.
 clan resolves it at install time from a runtime-deps flake vendored inside the clan-cli derivation, not from the admin box's environment — `CLAN_PROVIDED_PACKAGES` is `age:git:nix` and does not include it — and the store path was not realised locally when this was checked.
-A network failure at that moment would land after macOS is already destroyed, on a machine whose only NIC is wireless, which is a worse place to discover a missing 78.9 MiB than before the wipe.
+A network failure at that moment would land after the disk is already discarded, on a machine whose only NIC is wireless, which is a worse place to discover a missing 78.9 MiB than before the wipe.
 `nix path-info` exiting 0 against the path is the confirmation; the operator realised it ahead of the install, so this is a recorded step of the path rather than an open action.
 
 `blkdiscard` is on the installer's PATH (it ships in `util-linux`, folded into every NixOS system's `environment.systemPackages`); Phase 7 confirms this on the machine with a two-command check before relying on it, together with `blockdev --getss /dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1` to record the logical sector size the `ashift = "12"` decision assumes.
@@ -496,7 +498,8 @@ This follows the form clan-core's own encrypted-root guide prescribes at `docs/s
 Under D1's container the reason is restated rather than carried across from the ZFS-native layout, because what survives a partial wipe is no longer a pool.
 Partition 2's `fstype` is now `crypto_LUKS` and not `zfs_member`, so disko's `disk-deactivate.jq` cannot reach its `zpool destroy -f` and `zpool labelclear -f` branch at `:7-9` for that partition at all — the branch is unreachable by type.
 What runs instead is the bare `wipefs --all -f` partition arm at `:42-45`, which erases the primary LUKS2 signature while leaving the secondary header and the whole 16 MiB keyslot area intact, so the old passphrase and the old FIDO2 enrollment survive a wipe that reads as complete.
-Zapping the GPT first is worse still: with no partition table there are no children for `lsblk` to report, so even that arm never runs, and the next install finds a valid header, skips `luksFormat` (`lib/types/luks.nix:202`), and skips the FIDO2 enrollment (`:276`) — the tautological green the create-path criterion forbids, produced by the step meant to prevent it.
+Zapping the GPT first is worse still: with no partition table there are no children for `lsblk` to report, so even that arm never runs, and the next install finds a valid header and skips `luksFormat` (`lib/types/luks.nix:202`) — the tautological green the create-path criterion forbids, produced by the step meant to prevent it.
+The FIDO2 skip at `:276` that an earlier revision named alongside it is not in the script at all under `enrollFido2 = false`; the enrollment is now a post-boot step, which lands on whatever header is live and cannot itself distinguish a fresh container from a survivor.
 `blkdiscard` against the `_1` namespace path destroys the header, the keyslot area, and every label at every offset, and has no such hole.
 
 If `blkdiscard` is ever unavailable, the fallback order is absolute, and under D1's container it is no longer the ZFS one.
@@ -518,9 +521,11 @@ wipefs -a "$disk"
 ```
 
 The block serves two disk states and only one of them is the disk in front of the operator today, so two of its steps are each a no-op in the other's state and that is deliberate rather than redundant.
-On this install p2 holds a live pre-D1 `zroot` with ZFS labels and no LUKS header (task 7.16), so `labelclear` is the live arm and `luksErase` reports that the device is not a valid LUKS device.
-On any later reinstall p2 holds a LUKS2 container instead, so `luksErase` is the live arm and `labelclear` finds no label — the pool's labels are then inside the container and unreachable without opening it.
-Run both in the order given; neither destroys the magic the other probes for, because the two states are mutually exclusive.
+p2 now holds the LUKS2 container the 2026-07-30 attempt created (task 7.16), so `luksErase` is the live arm.
+`labelclear` is retained because whether any of the pre-D1 pool's tail labels survived that reformat has not been established, and on a disk where they did it is the only arm that reaches them.
+On a disk in the other state — a pre-D1 `zroot` with no header — the arms swap and `luksErase` reports that the device is not a valid LUKS device.
+Run both in the order given; neither destroys the magic the other probes for.
+Close `cryptroot` first here too, for the same reason the `blkdiscard` block does: `luksErase` and the overwrite both act on a partition an open mapping is holding.
 
 `labelclear` is first because it is the only step in this block that reaches the tail of the partition, and it is the step whose omission produces the failure the wipe exists to foreclose.
 ZFS writes four vdev labels: L0 and L1 at the head, L2 and L3 at the tail.
@@ -548,16 +553,18 @@ The explicit wipe is also the only step whose success the operator can independe
 And clan-core's own encrypted-root guide prescribes a manual `blkdiscard` before `clan machines install` for exactly this scenario, so upstream treats a pre-wipe as normal practice here rather than as belt-and-braces.
 
 There is a fourth reason, and on any run where the previous install's container could survive it is stronger than the three above.
-Under D1 the surviving artifact is the LUKS2 header rather than a pool, and it gates three create-path skips in sequence.
-`lib/types/luks.nix:202` skips `luksFormat` against a header that still probes; `:257-258`'s `cryptsetup open --test-passphrase` then adds no key, because the old passphrase already opens the container; and `:276`'s `systemd-cryptenroll | grep -qw fido2` skips the FIDO2 enrollment against a token already recorded in that header.
-So the second install can appear to have enrolled a token it never touched, which is a false green about the machine's own unlock credential.
+Under D1 the surviving artifact is the LUKS2 header rather than a pool, and it gates two create-path skips in sequence.
+`lib/types/luks.nix:202` skips `luksFormat` against a header that still probes, and `:258`'s `cryptsetup open --test-passphrase` then adds no key, because the surviving container already opens under the same clan-vars passphrase the new format would have used.
+So the install can complete, boot, and unlock with the expected passphrase while running inside a container a previous attempt created, and no credential check anywhere on this page distinguishes the two.
+A third skip existed while `enrollFido2` was true — `:276`'s `systemd-cryptenroll | grep -qw fido2` — and it is not emitted now.
+Deferring the enrollment removes that particular false green and leaves the container's identity as the only thing that catches the rest, which is why `cryptsetup luksUUID` is now read before the wipe as well as after.
 Only once the container opens does the pool question arise at all — the vdev is `/dev/mapper/cryptroot`, which does not exist while the container is closed — and there disko's `lib/types/zpool.nix:298` tries `zpool import -N -f "zroot"` before it considers creating anything, and `:299` logs "not creating zpool zroot as a pool with that name already exists" while never re-applying `ashift`.
 The wipe is what forecloses the whole chain, which makes it load-bearing rather than belt-and-braces on any run that follows an earlier install.
-Which arm of that chain is live on this machine depends on what the disk actually holds, and it is not what an earlier revision of this note claimed.
-The disk does not hold APFS: the install of 2026-07-19 replaced it, and p2 today carries a live pre-D1 `zroot` with ZFS labels and no LUKS header at all (task 7.16).
-So none of the three container skips can occur on the single install ahead — they are recorded here as properties of the layout, for whoever reinstalls this machine later — while the pool arm is live, because a `blkdiscard` that does not reach the media leaves those labels in place.
-The discriminating check is therefore `zpool history zroot` opening with a create entry timestamped inside the install session, and the pool GUID differing from the pre-wipe baseline task 7.2c records off `zpool import`'s listing before the disk is touched.
-There is no `cryptsetup luksUUID` comparison to make, because there is no earlier container UUID on this disk; the UUID is recorded as the container's identity for the header-backup filename instead.
+Which arm of that chain is live on this machine depends on what the disk actually holds, and that has changed twice.
+The disk does not hold APFS: the install of 2026-07-19 replaced it with a pre-D1 `zroot` (task 7.16), and the attempt of 2026-07-30 replaced that in turn — it wiped the disk and reformatted p2 as a LUKS2 container before aborting at the enrollment, leaving a valid header with the clan-vars passphrase in a keyslot and no pool inside it.
+So the container arm is the live one on the install ahead, and it is live in both of its steps: a `blkdiscard` that does not reach the media leaves that header probing, `luksFormat` is skipped, and the `--test-passphrase` guard then adds nothing because the surviving slot already opens under the same credential.
+The discriminating check is therefore `cryptsetup luksUUID` differing from the pre-wipe baseline, which is why that reading was added to the second pre-wipe gate above.
+The pool arm may or may not be live: whether any of the pre-D1 pool's tail labels survived the 2026-07-30 sequence has not been established, so `zpool import` is still read before the wipe, and `zpool history zroot` opening with a create entry timestamped inside the install session is still required afterward.
 
 ### What `--yes` does and does not do, and how the keys are supplied
 
@@ -577,50 +584,54 @@ nixos-anywhere's reboot phase (`src/nixos-anywhere.sh:915-929` at 1.13.0) unmoun
 About six seconds after the install phase reports done, therefore, pyrite reboots itself, and stibnite prints "Waiting for the machine to become unreachable due to reboot" and then "Done!" for a machine that is already booting.
 That reboot is the first boot, and it is what the next section is about.
 
-## The first boot, and proving both unlock paths
+## The first boot, and proving the passphrase path
 
-The install leaves behind a machine that has never been unlocked, and both of its unlock paths have to be exercised before anything in the key-lifecycle section below is run (task 7.5).
-This section is two boots, not one, and the second is the one that matters.
+The install leaves behind a machine that has never been unlocked and exactly one credential able to unlock it: the clan-vars ZFS root passphrase, in the single keyslot `luksFormat` created.
+That credential has to be exercised before anything in the key-lifecycle section below is run (task 7.5).
+There is no token path to exercise yet — the header carries no FIDO2 credential and the crypttab carries no `fido2-device=auto` — so this is one boot rather than two, and the token path is proven later, under "Turning on token unlock at boot".
 
-The first of the two has already started by the time this section is read.
-The install's reboot phase fires it about six seconds after the install phase completes, unattended, with YubiKey-A still seated and the external installer SSD still attached — so when stibnite prints "Done!" the operator's next move is to go to the machine, not to power anything on.
-Better still, do not leave: the disko phase above already requires the operator to be at the machine, and that presence extends through the install phase and across this reboot, so the stage-1 prompt below is answered when it appears rather than found afterward having already timed out.
+The boot has already started by the time this section is read.
+The install's reboot phase fires it about six seconds after the install phase completes, unattended, with the external installer SSD still attached and no token anywhere near the machine — so when stibnite prints "Done!" the operator's next move is to go to the machine, not to power anything on.
+Better still, be there before it fires: the disko phase no longer requires the operator's presence, so nothing else in this procedure puts a person at the machine, and the stage-1 prompt has to be answered when it appears rather than found afterward having already timed out.
 The installer SSD cannot be removed before this boot, because the ISO on it is the running root right up to the reboot.
 Which device the machine comes back on is therefore not settled in advance.
 If it reaches the stage-1 unlock prompt on its own panel, that is the installed system and the boot under test; answer the prompt as below.
 If it returns to the installer's GNOME session instead, that is a boot-device selection rather than a failed install: shut down, remove the SSD, and boot again, and the choice is then unambiguous.
-The SSD comes out at the shutdown between the two boots either way.
+The SSD comes out at the next shutdown either way.
 
-YubiKey-A — serial `32720759`, the token that was in the machine across the install — stays seated for this first boot.
+No token is seated for this boot, and none is needed.
 
-Stage 1 renders a `systemd-ask-password` prompt on the internal panel, and answering it takes two things in sequence.
-First the token's FIDO2 client PIN, typed at the keyboard; the PIN is asked for because the pre-wipe `ykman fido info` gate confirmed a client PIN is set on this token, and `libfido2-util.c:802-804` drops the PIN requirement only for a token that reports `clientPin` false.
-Then a physical touch on the token itself.
-The touch is not announced and the prompt does not change when the PIN is accepted, so a boot that appears to hang after the PIN is a boot waiting for a finger.
+Stage 1 renders a `systemd-ask-password` prompt on the internal panel and it asks for the passphrase directly.
+It does not ask for a PIN, it does not wait for a token, and there is no pause before it appears.
+That is what a correct install looks like here, and an earlier revision of this note described the opposite — PIN, then touch, then a second boot whose thirty seconds of silence read as the fallback working — so an operator following that text would read a correct install as a failed one.
+`crypttabExtraOpts` evaluates to `[]`, because disko gates it on `enrollFido2` (`lib/types/luks.nix:348`), so no `fido2-device=auto` reaches the crypttab.
+`determine_token_type` then returns `_TOKEN_TYPE_INVALID` rather than `TOKEN_FIDO2`, since it selects FIDO2 only when `arg_fido2_device` or `arg_fido2_device_auto` is set (systemd 260.2 `src/cryptsetup/cryptsetup.c:2551-2560`, the return at `:2555`), and the unlock falls through to the key file and the passphrase with no token attempt of any kind.
+The thirty-second silence and the "Timed out waiting for security device" message belong to a later configuration, after "Turning on token unlock at boot" below has shipped that option; on this boot they would mean the option shipped early, which is a configuration error rather than a fallback.
+
+Answering the prompt is the first exercise of the human path: a mixed-case hyphenated six-word string typed at the Apple SPI keyboard through `systemd-ask-password-console`, with plymouth deliberately off (D11).
+The credential itself is proven byte-exact against the repository — `cryptsetup open --test-passphrase` against the header still on this disk returned "Key slot 1 unlocked" for a keyfile whose sha256 matches `clan vars get pyrite zfs/key` — so a prompt that refuses the passphrase is evidence about the typing or the keyboard rather than about the var.
 The USB-C keyboard or adapter has to be in the room already rather than sourced now: if the internal SPI keyboard does not bind on this boot, the external keyboard is the only way to answer the prompt, and until it is answered the machine has no reachable state at all.
 Do not count on the prompt waiting indefinitely while the keyboard is fetched — how long `systemd-cryptsetup` waits under this configuration was never measured, and the ZFS-native design's unbounded wait does not carry over to it.
 
-Then shut down, physically remove YubiKey-A — and the installer SSD, if it is still attached — and boot a second time with no token seated at all.
-Stage 1 asks for a passphrase, and the clan-vars ZFS root passphrase must unlock the container.
-The passphrase prompt does not arrive immediately, and the wait before it is expected rather than a fault.
-The crypttab entry carries `fido2-device=auto`, so with no token seated `systemd-cryptsetup` first waits on a udev monitor for a security device to appear, for `arg_token_timeout_usec` — default `30*USEC_PER_SEC` (`src/cryptsetup/cryptsetup.c:124`).
-When that expires it logs "Timed out waiting for security device, aborting security device based authentication attempt." (`:1467`) and returns `EAGAIN`; the main loop then clears `arg_fido2_device_auto` and retries (`:2815-2819`), and that retry is what produces the passphrase prompt.
-So roughly half a minute of silence followed by a message reading as an abort is the fallback working, not failing.
 This boot is not optional and it is not a formality.
-The passphrase is the only recovery credential this machine has — a token can be lost, and the header holds nothing else a person can supply — so an unverified fallback is indistinguishable from an absent one until the token is gone, at which point the pool is unrecoverable.
-The failure class is concrete rather than hypothetical: D27's trailing-newline defect lands exactly here, and the VM test in "Validating the LUKS2 layout in a VM" above exercises it only against the harness's own key file, never against the clan var that is actually in slot 1 of this container.
+Until the first token is enrolled the passphrase is the container's only credential, so an install whose passphrase has not been typed once is an install whose recoverability is assumed rather than observed.
+The failure class is concrete rather than hypothetical: D27's trailing-newline defect lands exactly here, and the VM test in "Validating the LUKS2 layout in a VM" above exercises it only against the harness's own key files, never against the clan var that fills this container's keyslots.
+Under `enrollFido2 = false` that defect changes shape rather than disappearing: `luksFormat` strips a trailing newline through `$(cat ...)` while `luks.nix:258`'s guard hands the same file to `cryptsetup` verbatim, so a newline-bearing artifact adds a second, dead keyslot instead of making the only one dead.
+The typed passphrase opens the container either way, and the keyslot criterion under `## Verifying the install` is where the difference shows up.
 
-Carry the passphrase to the machine before starting this second boot rather than looking it up once the prompt is on screen: a machine sitting at the stage-1 prompt has no network, no shell, and no way to read anything off itself.
+Carry the passphrase to the machine before the install finishes rather than looking it up once the prompt is on screen: a machine sitting at the stage-1 prompt has no network, no shell, and no way to read anything off itself.
 It is readable from stibnite with `clan vars get pyrite zfs/key` and from the `pyrite/zfs-root` password-manager entry.
 
-Both boots must have succeeded before `## Verifying the install` is read as a pass, and before any block in "Key lifecycle" below is run.
-The enrollment block in that section removes YubiKey-A and leaves the passphrase as the only credential able to authorize the enrollment, so an operator who reaches it without having exercised the passphrase here is giving up a proven credential for an unproven one.
+This boot must have succeeded before `## Verifying the install` is read as a pass, and before any block in "Key lifecycle" below is run.
+Every enrollment in that section authorizes itself with the passphrase — `systemd-cryptenroll --fido2-device=auto` does not add a slot to a container it cannot open — so an operator who reaches those blocks without having typed the passphrase once is building on a credential that has never been demonstrated.
 
 ## Verifying the install
 
 These checks run on the installed machine after the first boot, and they are what decides whether the install is accepted at all.
 They are here rather than only in `tasks.md` because the operator standing at the machine is reading this page.
-Checks 2 and 3 are the create-path discrimination and they are the ones that can fail in the direction that looks like success: if `blkdiscard` did not reach the media, the install imports the pre-D1 `zroot` that is on the disk today, disko logs "not creating zpool zroot as a pool with that name already exists", never applies `ashift`, and the machine boots green on a pool created under the old design.
+Checks 2, 3, and 7 are the create-path discrimination and they are the ones that can fail in the direction that looks like success.
+Check 7 is the sharpest of them on this run: if `blkdiscard` does not reach the media, the LUKS2 header the 2026-07-30 attempt left behind still probes, `luksFormat` is skipped, and the install lands inside that container under its original UUID.
+Checks 2 and 3 cover the pool arm, which is live only if any of the pre-D1 pool's tail labels survived that attempt — unestablished, which is why the pre-wipe `zpool import` is recorded and compared rather than assumed empty.
 
 ```bash
 # host: pyrite (installed), in a root shell (sudo -i)
@@ -637,38 +648,52 @@ zpool history zroot | head -5
 # 3. The pool GUID differs from the pre-wipe baseline recorded off the installer.
 zpool get -H -o value guid zroot
 
-# 4. The keyslot set. Exactly two rows: one `password` at slot 1, one `fido2`.
+# 4. The keyslot set. One `password` row at slot 0 and no `fido2` row. See
+#    below on the second `password` row a trailing newline would add.
 systemd-cryptenroll "$part2"
 
-# 5. The container. LUKS2, with exactly one `systemd-fido2` token.
+# 5. The container. LUKS2, with no tokens at all -- both tokens are enrolled
+#    later, on the running system.
 cryptsetup luksDump "$part2"
 
 # 6. Pool and dataset properties.
 zpool get ashift zroot
 zfs get xattr,acltype,encryption zroot/root
 
-# 7. The container's identity, for the header-backup filename.
+# 7. The container's identity: the header-backup filename, and the discriminator
+#    against the header the 2026-07-30 attempt left on this disk. It must differ
+#    from the pre-wipe baseline recorded off the installer.
 cryptsetup luksUUID "$part2"
 ```
 
 `zpool history` is the severe arm rather than a formality: ZFS stores the history inside the pool, so it is provenance that survives export and import rather than a log of the current session.
 Under the surviving-pool failure no `zpool create` runs at all, the opening entry is the pre-D1 create carrying its older timestamp, and this run appears only as import and `zfs set` entries.
 The GUID reading corroborates it from the other side, because `zpool create` mints a fresh GUID: a value equal to the pre-wipe baseline means the pool was reused whatever else the run reports.
-That baseline is the one the third pre-wipe gate above records, which is why it has to have been written down off the installer — the reboot into this system destroys the installer's console scrollback.
+That baseline is the one the second pre-wipe gate above records, which is why it has to have been written down off the installer — the reboot into this system destroys the installer's console scrollback.
 
 Every check above reaches the container through `$part2`.
 `tasks.md` 7.6 states the keyslot gate against `/dev/disk/by-partlabel/disk-primary-zfs` instead; the two are the same partition, since disko's partlabel is `${_parent.type}-${_parent.name}-${name}` (`lib/types/gpt.nix:146`), which for this layout is `disk-primary-zfs`.
 Either name is correct and the by-id one is used here so that one variable names the container throughout the page.
 
-The keyslot gate is two rows and not one, and both naive readings of it are wrong.
-There is no duplicate passphrase slot to look for despite `passwordFile` and `additionalKeyFiles` naming the same generator file: `enrollFido2 = true` makes `autogeneratedPassword = enrollFido2` (`lib/types/luks.nix:12`), which resolves `formatKeyFile` to an ephemeral `openssl rand -hex 32` (`:32-33`, `:235`) rather than to `passwordFile`, so slot 0 holds the throwaway hex and `additionalKeyFiles` puts the generator passphrase in slot 1 authorized by it (`:256-262`).
-Two `password` rows would be the anomaly.
-An occupied slot 0 is a failure of the wipe rather than benign residue: `SLOT_ZERO_TO_DELETE=true` (`:242`) adds `--wipe-slot=0` to the same `systemd-cryptenroll` invocation on every fresh format, so slot 0 surviving means the format guard skipped, which cannot happen against a disk that carried no LUKS header before the wipe.
+The expected keyslot reading is one `password` row at slot 0 and nothing else, and that expectation rests on one assumption worth naming.
+`enrollFido2 = false` makes `autogeneratedPassword` false (`lib/types/luks.nix:12`), which resolves `formatKeyFile` to the `passwordFile` form rather than to an ephemeral `openssl rand -hex 32` (`:32-33`), so `luksFormat` puts the clan-vars passphrase itself in slot 0; there is no throwaway hex, no `SLOT_ZERO_TO_DELETE`, and no `--wipe-slot=0`.
+`passwordFile` and `additionalKeyFiles` then name the same file, so `:258`'s `cryptsetup open --test-passphrase` succeeds against the slot just created and `:259`'s `luksAddKey` never runs.
+That last step holds only if clan-cli materialises the var to `/run/partitioning-secrets/zfs/key` byte-identically to what the generator wrote, which strips the trailing newline with `tr -d "\n"` (`disko.nix:46`), and whether it does has not been verified.
+
+A second `password` row is therefore a measurement rather than a failed install.
+It means the guard failed, `luksAddKey` ran, and the materialised file carried a trailing newline that the format path had already stripped through `$(cat ...)` — so slot 0 holds the typeable passphrase and slot 1 holds a variant that opens for nobody.
+The first boot has already settled which is live, since what was typed at the prompt is the stripped form.
+If two rows appear, confirm the live slot with `cryptsetup open --test-passphrase --key-slot=0 "$part2"`, wipe the dead one with `systemd-cryptenroll "$part2" --wipe-slot=1`, and record the correction in the `pyrite/zfs-root` slot inventory before the header backup is taken.
+Either layout is recoverable with the passphrase; only the slot map differs, which is why the inventory rather than the row count is what has to be right.
+
+The keyslot reading is not a wipe discriminator under this shape and must not be read as one.
+An occupied slot 0 is what a correct format produces here, so the arms that discriminate a skipped format are check 7's `luksUUID` against the pre-wipe baseline and, if the pre-wipe `zpool import` listed anything, checks 2 and 3.
 
 `zfs get encryption zroot/root` must return `off`, and that is a positive check rather than an absence: it is what distinguishes D1's layout from LUKS layered underneath a still-encrypted dataset.
 `ashift` must return `12`, and `xattr` and `acltype` must return `sa` and `posix`.
 OpenZFS accepts `posixacl` as an input alias for `acltype` and reports the property as `posix`, so `posix` is the value to require.
-`luksUUID` is recorded rather than compared — this disk carried no LUKS header before the install, so there is no earlier UUID for it to differ from — and it is what the header-backup filename and the `pyrite/zfs-root` entry name the container by, which is how a stale backup is identified without decrypting it.
+`luksUUID` is both recorded and compared, which is a change from an earlier revision of this note: the disk carries the LUKS2 container the 2026-07-30 attempt created, so there is an earlier UUID for it to differ from, and a post-install value equal to the pre-wipe baseline means `luksFormat` was skipped against a surviving header (`lib/types/luks.nix:202`) and the container in front of the operator is the old one.
+It is also what the header-backup filename and the `pyrite/zfs-root` entry name the container by, which is how a stale backup is identified without decrypting it.
 
 ## clan subcommands that are skipped, and why
 
@@ -721,23 +746,76 @@ part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
 Every block in this section runs on pyrite, on the installed system, against that path — with the single exception of the Bitwarden upload and the transfer that feeds it, which happen at stibnite and are called out where they appear.
 Every `cryptsetup` and `systemd-cryptenroll` call below requires root, so enter a root shell once with `sudo -i` and run the pyrite blocks inside it; `$part2` is a shell variable and does not survive a change of shell, and neither does the `$HOME` these paths would otherwise resolve against.
 
-The order of the two subsections that follow is normative rather than editorial, and it is stated in `specs/encrypted-zfs-root/spec.md`: the header backup is taken once the container's keyslots reach their intended state, which is after the second token is enrolled and not before.
-A backup frozen ahead of that enrollment records a two-slot container, and restoring it later silently un-enrolls YubiKey-B (D26) while the `pyrite/zfs-root` slot inventory continues to describe a container the attached backup does not match.
-Enroll first, then capture.
+The order of the subsections that follow is normative rather than editorial, and the rule is stated in `specs/encrypted-zfs-root/spec.md`: the header backup is taken once the container's keyslots reach their intended state, which is after both tokens are enrolled and not before.
+The install now leaves the header with a single passphrase slot, so a backup taken early records a container with no token in it at all, and restoring it later silently un-enrolls both (D26) while the `pyrite/zfs-root` slot inventory continues to describe a container the attached backup does not match.
+Enroll A, enroll B, turn token unlock on and prove both paths, then capture.
+
+### Enrolling the first token
+
+The install leaves the container with no FIDO2 credential at all, so this is the enrollment that creates the token path, and it runs on the booted machine rather than inside the install.
+Its whole value over the install-time form is that a failed touch costs one re-run: `systemd-cryptenroll` here is a command in a root shell on a working system, not a bare body command under disko's `set -efux` with a freshly formatted container behind it.
+
+Three preconditions hold before the block runs, and each is a stop rather than an advisory.
+The machine has booted and the passphrase has unlocked it, per "The first boot, and proving the passphrase path" above: the passphrase is the credential this enrollment authorizes itself with, and `--fido2-device=auto` does not add a slot to a container it cannot open.
+`## Verifying the install` has passed against that container.
+YubiKey-A is the only token seated and YubiKey-B is still in stibnite, because `--fido2-device=auto` resolves only where exactly one token answers and this layout passes no device path; with both seated the enrollment either refuses or lands against whichever token it resolved, and the slot map is then recorded wrong in a way the header cannot be re-read to correct (D25).
+
+```bash
+# host: pyrite (installed), in a root shell (sudo -i), with YubiKey-A the only
+# token seated.
+part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
+
+# Confirm exactly one FIDO2 device answers, and read its remaining PIN-attempt
+# count before typing a PIN. libfido2 is in this machine's closure
+# (modules/machines/nixos/pyrite/default.nix:301-315); yubikey-manager is
+# deliberately not, so ykman is fetched.
+fido2-token -L
+nix-shell -p yubikey-manager --run 'ykman list; ykman fido info'
+
+# Enroll it. This prompts for an existing credential first -- the passphrase --
+# then for the token's FIDO2 client PIN, then for a physical touch on the token
+# in pyrite. The touch is not announced and the prompt does not change when the
+# PIN is accepted, so a run that appears to hang after the PIN is waiting for a
+# finger.
+systemd-cryptenroll "$part2" --fido2-device=auto
+
+# Read the slot set back. One fido2 row must now be listed where none was.
+systemd-cryptenroll "$part2"
+```
+
+Two lines that read as failures precede `ykman`'s output and are expected:
+
+```
+WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+ERROR: Unable to list devices for connection
+```
+
+`pcscd` runs on neither the installer ISO nor the installed system — nothing in this repository enables `services.pcscd` — so `ykman`'s CCID transport is unavailable and says so, while the OTP/HID transport it actually uses here works.
+`ykman` exits 0 regardless, and the lines below these two, reporting the token and its PIN-attempt count, are the answer.
+Do not abort on the `ERROR:` line: it is a statement about a transport this procedure does not use.
+Read the attempt count before typing a PIN rather than after, because exhausting it blocks the token's FIDO2 application until that application is reset, which erases the credentials it holds.
+
+Whether a PIN is asked for at all depends on the token rather than on the configuration.
+`cryptenroll.c:62` requests PIN and user presence both, and this call passes no argument to change it, but `libfido2-util.c:802-804` clears the PIN requirement when the token reports its `clientPin` option false — which is what an authenticator that supports PINs but has none set reports.
+A token with no client PIN set therefore prompts only for the touch.
+
+If the enrollment fails, nothing is lost.
+The container is unchanged, the passphrase still opens it, and the command can be run again — which is the property the deferral was made to obtain, and the property the 2026-07-30 attempt did not have.
+Record the index the read-back reports against YubiKey-A's serial in the `pyrite/zfs-root` entry, per the slot inventory below; both tokens report the same AAGUID, so the index is the only discriminator and it cannot be reconstructed afterward.
 
 ### Enrolling the second token
 
 Two YubiKey 5C Nano tokens unlock this container, and they are designated here so the slot inventory below has names to record against.
-YubiKey-A is serial `32720759`, the token seated in pyrite across the install, which disko enrolls during the install itself.
-YubiKey-B is the token resident in stibnite, which the install never touches and which is enrolled by the block below afterward.
-The install enrolls only the first, because disko's guard at `lib/types/luks.nix:276` skips enrollment once any `fido2` slot exists, so this is an operation on the running system rather than a step of the install.
+YubiKey-A is serial `32720759`, enrolled by "Enrolling the first token" above.
+YubiKey-B is the token resident in stibnite, which is brought to pyrite only for this block.
+The install touches neither: both enrollments are operations on the running system, for the reason recorded under "The install is non-interactive after the wipe".
 
 This is not the "Replacing a lost token" procedure below, and that procedure's `--wipe-slot` must not be run here.
 Nothing is being revoked at this point, and wiping YubiKey-A's slot to make room for B destroys a working credential.
 
 Three preconditions hold before the block runs, and each is a stop rather than an advisory.
-The container exists and both of its unlock paths have been exercised: the token path and the passphrase path, on the two boots "The first boot, and proving both unlock paths" above requires, and `## Verifying the install` has passed against the container those boots opened.
-This one is first because the block below asks the operator to remove their only proven credential, and it is only proven if the second of those boots actually happened.
+YubiKey-A is enrolled and the passphrase path has been exercised: the enrollment above read back a `fido2` row, and the passphrase unlocked the machine on the boot "The first boot, and proving the passphrase path" above requires, against a container `## Verifying the install` has passed.
+This one is first because the block below asks the operator to remove YubiKey-A, which leaves the passphrase as the only credential still able to authorize anything.
 YubiKey-A is physically removed and YubiKey-B is the only token seated, because `systemd-cryptenroll --fido2-device=auto` resolves only where exactly one token answers and this layout passes no device path; with both seated the enrollment either refuses or lands against whichever token it resolved, and the slot map is then recorded wrong in a way the header cannot be re-read to correct (D25).
 The clan-vars passphrase is in hand, at the machine, before the block starts: `--fido2-device=auto` does not add a slot to a container it cannot open, it prompts for an existing credential first, and with A removed the passphrase is the only credential still able to authorize the enrollment.
 It is readable from stibnite with `clan vars get pyrite zfs/key` and from the `pyrite/zfs-root` password-manager entry, but it is typed at pyrite's own console, so it has to be carried there deliberately rather than looked up from the console after the prompt appears.
@@ -750,11 +828,11 @@ part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
 # Read B's serial while it is the only token answering. This is the value the
 # slot inventory records against the index the enrollment returns. The two
 # PC/SC lines this prints first are expected here for the same reason they were
-# at the pre-wipe gate; the serial line below them is the answer.
+# at A's enrollment above; the serial line below them is the answer.
 nix-shell -p yubikey-manager --run 'ykman list'
 
 # Enroll it. This prompts for an existing credential first -- the passphrase --
-# and then for a touch on B.
+# then for B's FIDO2 client PIN, then for a touch on B.
 systemd-cryptenroll "$part2" --fido2-device=auto
 
 # Read the slot set back. Two fido2 slots must now be listed where one was
@@ -767,9 +845,35 @@ Both tokens report the same AAGUID, so once B is enrolled the header says nothin
 Record the index against B's serial in the `pyrite/zfs-root` entry per the slot inventory below.
 The keyslots have now reached their intended state, which is the condition the header backup waits on, so the capture section that follows runs next.
 
+### Turning on token unlock at boot
+
+Enrolling a token puts a credential in the header; it does not make stage 1 use it, and these are separate steps with a mandatory order between them.
+`systemd-cryptsetup` does not read the FIDO2 slot out of the header: `determine_token_type` returns `TOKEN_FIDO2` only when `arg_fido2_device` or `arg_fido2_device_auto` is set (systemd 260.2 `src/cryptsetup/cryptsetup.c:2551-2560`, the return at `:2555`), and with neither set the unlock falls through to the key file and the passphrase.
+Those variables are set by the crypttab option `fido2-device=` (`:394-405`) and, as a documented side effect, by `fido2-cid=` (`:424-426`).
+disko emits `fido2-device=auto` from `crypttabExtraOpts` (`lib/types/luks.nix:348`), which is `lib.mkIf config.enrollFido2` and so emits nothing while enrollment is deferred.
+Turning token unlock on therefore means adding the option by hand, in `modules/machines/nixos/pyrite/default.nix`:
+
+```nix
+boot.initrd.luks.devices.cryptroot.crypttabExtraOpts = [ "fido2-device=auto" ];
+```
+
+followed by `clan machines update pyrite` from stibnite.
+
+Do not ship it before the header carries a FIDO2 credential, and that ordering is a stop rather than a preference.
+Against a header with no `systemd-fido2` token, systemd's direct FIDO2 path returns `-ENXIO` with no passphrase fallback, while the libcryptsetup-plugin path degrades to the passphrase prompt; which of the two pyrite's initrd takes has not been determined, so an option shipped early can produce a machine that a person standing in front of it cannot unlock at all.
+Enroll both tokens first, then add the option.
+Upstream nixpkgs states at `nixos/modules/system/boot/luksroot.nix:614` that "usually, systemd will automatically detect the configuration at runtime, but if necessary, configure the corresponding crypttab(5) options with `boot.initrd.luks.devices.<name>.crypttabExtraOpts`"; for a FIDO2 slot the "usually" branch does not apply, since `determine_token_type` consults only those two variables, and the "if necessary" branch is the whole of it.
+The comment at `modules/machines/nixos/pyrite/default.nix:74-81` records that against this machine.
+
+Then prove both paths, on two boots.
+With a token seated — either one, since both are enrolled by this point — stage 1 asks for its PIN and then waits for a touch, and the pool imports.
+Then shut down, remove every token, and boot again: `systemd-cryptsetup` first waits on a udev monitor for a security device to appear, for `arg_token_timeout_usec`, default `30*USEC_PER_SEC` (`src/cryptsetup/cryptsetup.c:122`); when that expires it logs "Timed out waiting for security device, aborting security device based authentication attempt." (`:1469-1470`) and returns `EAGAIN`, and the main loop clears `arg_fido2_device_auto` and retries (`:2793-2797`), which is what produces the passphrase prompt.
+Roughly half a minute of silence followed by a message reading as an abort is the fallback working here, and that reading applies only once the option above has shipped — on the install's own first boot it would mean the option shipped early.
+Both readings are required before the header backup below is taken.
+
 ### Capturing and storing the header backup
 
-This runs after the enrollment above, never before it, so that the captured header is the three-credential one — YubiKey-A, YubiKey-B, and the passphrase — rather than a two-slot snapshot that a later restore would un-enroll B from.
+This runs after both enrollments above and after the unlock proof, never before them, so that the captured header is the three-credential one — YubiKey-A, YubiKey-B, and the passphrase — rather than the single-slot snapshot the install leaves, which a later restore would un-enroll both tokens from.
 The backup is roughly 16 MiB — the LUKS2 header and its keyslot area — and it is key material, because it contains the keyslots themselves.
 Capture it to RAM-backed tmpfs, encrypt the copy that leaves the machine to the `&admin-user` recovery recipient, then remove the plaintext.
 The whole block runs in a root shell — enter one with `sudo -i` first and stay in it for the entire block — rather than under per-command `sudo`.
@@ -863,7 +967,7 @@ Record alongside it the capture date and container UUID of the header backup cur
 A header backup freezes the keyslot set exactly as it stood when taken, so restoring one that predates a revocation reinstates the revoked slot verbatim and decrypts the disk again (D26).
 The backup is thus itself an enrolled credential, and the retention rule is not "keep them all": after any change to the enrolled set, take a fresh backup, upload it, and delete the superseded Bitwarden attachment, because a stale attachment is an un-revoked credential sitting in storage.
 The triggers are every enrollment change without exception — any revocation, any future token added, and any credential removed — and each re-runs the capture above and updates the slot inventory.
-Task 7.12a's second-YubiKey enrollment is not among them, because the ordering above puts that enrollment ahead of the first capture: the initial backup already records both tokens and the passphrase, so there is nothing to re-take for it.
+Neither post-install enrollment is among them, because the ordering above puts both ahead of the first capture: the initial backup already records both tokens and the passphrase, so there is nothing to re-take for either.
 
 Revocation removes one slot from the live header:
 
