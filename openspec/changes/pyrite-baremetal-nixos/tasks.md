@@ -58,6 +58,15 @@
   Memory is the tight resource rather than disk — 16 G total with roughly 3 G available under a live GNOME session, against `max-jobs = 4` — so run with the desktop idle or `display-manager` stopped, and drop to `-j 2` if it swaps.
   The run touches neither `zroot` nor the ESP and is not a `clan machines update`
 
+  The harness ran and finished at 2026-07-30T20:28:28Z, taking 197.02 seconds and reporting `exit=0` with eight of eight assertions passing — the same count as the `machine.succeed` calls the expression's `disko.tests.extraChecks` block carries.
+  The out-link was `/nix/store/dyhwlg1iq3cpsrdayi5hbl5dma4hj0cc-vm-test-run-disko-pyrite-disko` and it no longer resolves: 7.3's reinstall of 2026-07-31 recreated `zroot`, and the store that held it went with the pool.
+  Nothing else of the run survives on the machine either — neither `/home/cameron/projects/vanixiets` nor `/home/cameron/pyrite-luks-vmtest.nix` exists there today — so the result above is recorded from the run's own output rather than from an artifact this change can cite.
+  Losing the out-link costs the criterion nothing, since this task already states that its contents are not a criterion; what is gone is the log the exit status and the assertion count were read out of.
+  Three details of how the run was made differ from the form this task and the runbook state.
+  The tree was the `02f2bc4b` clone named above, checked out at `/home/cameron/projects/vanixiets` rather than at the `/root/vanixiets` both documents name, and the expression was `/home/cameron/pyrite-luks-vmtest.nix` rather than `/root/pyrite-luks-vmtest.nix`.
+  The build was issued under an explicit `bash`, which the pass criterion's `${PIPESTATUS[0]}` requires.
+  And the overlay's `enrollFido2 = lib.mkForce false` was a live divergence at the time it ran rather than the restatement this task calls it: `modules/machines/nixos/pyrite/disko.nix` still carried `true` for a further four hours, so the harness exercised the value D30 settled on before the tree carried it and validated a configuration that did not yet exist.
+
 ## 4. Phase 4 — Registration
 
 - [x] 4.1 Add `pyrite` to `modules/clan/machines.nix`
