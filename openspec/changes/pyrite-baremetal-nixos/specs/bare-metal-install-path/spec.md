@@ -77,7 +77,8 @@ The install this change performs is therefore the first exercise of the LUKS cre
 - **AND** the token criterion is stated as zero rather than one because `enrollFido2 = false` (D30): no throwaway `openssl rand` key is minted, `SLOT_ZERO_TO_DELETE` is never exported, and no `--wipe-slot=0` runs, so the passphrase occupies slot 0 directly and a `fido2` row at this point would mean a pre-existing enrollment survived the wipe
 - **AND** either one or two `password` rows is accepted, because a trailing newline in the materialized `/run/partitioning-secrets/zfs/key` would fail the `cryptsetup open --test-passphrase --key-file=<path>` guard at `lib/types/luks.nix:258` and re-activate the `luksAddKey` at `:259`, yielding a stripped slot 0 and a raw slot 1; recovery and non-interactivity hold in both layouts and only the slot numbering differs, so the layout observed is recorded rather than required
 - **AND** `cryptsetup luksUUID <device>-part2` is recorded as the container's identity for the header-backup filename rather than as a discriminator, because no earlier UUID exists on this disk for it to differ from
-- **AND** both tokens' enrollments, the crypttab `fido2-device=auto` option, and the LUKS2 header backup are created against this container afterward, because disko enrolls no token under D30 and no header backup can predate the container or usefully predate the keyslot set it freezes
+- **AND** both tokens' enrollments and the LUKS2 header backup are created against this container afterward, because disko enrolls no token under D30 and no header backup can predate the container or usefully predate the keyslot set it freezes
+- **AND** no crypttab `fido2-device=auto` option joins them, because token unlock works against the enrolled header with `crypttabExtraOpts` unset; see the boot-time-unlock scenario in `encrypted-zfs-root`
 
 ---
 
@@ -215,11 +216,11 @@ The pre-wipe token gate an earlier revision of this requirement imposed is retir
 - **AND** it confirms exactly one token is seated, because `--fido2-device=auto` resolves a device only where the choice is unambiguous
 - **AND** the check runs before each of the two enrollments rather than once before the install, because under D30 the install enrolls nothing and both enrollments are manual
 
-#### Scenario: both tokens are post-install steps, and the crypttab option is a third
+#### Scenario: both tokens are post-install steps, and no crypttab option follows them
 
 - **WHEN** two tokens are to be enrolled
 - **THEN** the install enrolls neither, because `enrollFido2 = false` means `lib/types/luks.nix:275-302` is not emitted at all, and both are enrolled by hand on the booted machine
 - **AND** they are enrolled sequentially with the other token physically removed, because `--fido2-device=auto` resolves a device only where exactly one is present — the same constraint that, under the previous shape, limited disko to enrolling one
 - **AND** the LUKS slot index each token occupies is recorded at enrollment, because both report the same AAGUID and nothing distinguishes them afterward
-- **AND** the enrollments are inert at boot until `boot.initrd.luks.devices.cryptroot.crypttabExtraOpts = [ "fido2-device=auto" ]` is added by hand, because disko emits that option under `lib.mkIf config.enrollFido2` (`lib/types/luks.nix:348`) and `systemd-cryptsetup` selects the FIDO2 path only from `arg_fido2_device` or `arg_fido2_device_auto` rather than from the header
-- **AND** that option MUST NOT be added before an enrollment exists, because against a header carrying no token systemd's direct path yields `-ENXIO` with no passphrase fallback, and the empty libcryptsetup plugin directory recorded in `design.md` points at the direct path, on a measurement not verified at runtime
+- **AND** the enrollments are live at boot with no further configuration, and the `boot.initrd.luks.devices.cryptroot.crypttabExtraOpts = [ "fido2-device=auto" ]` line an earlier revision of this scenario required is not added: `systemd-cryptsetup` reads the header through the libcryptsetup token-plugin path at `src/cryptsetup/cryptsetup.c:2691` before it consults `arg_fido2_device` at all, and nixpkgs' `relative-token-path.patch` resolves the plugin on the loader search path where the initrd already carries it — token unlock was exercised with both tokens seated and with each alone against a configuration whose `crypttabExtraOpts` evaluates to `[]`
+- **AND** `crypttabExtraOpts` stays at `[]` permanently rather than being added afterward, because setting `fido2-device=auto` would move the unlock onto systemd's own FIDO2 path, which is not the path this machine's token unlock and passphrase fallback were verified on, and because leaving it unset degrades to the passphrase prompt if a future nixpkgs moves the plugin off the loader search path

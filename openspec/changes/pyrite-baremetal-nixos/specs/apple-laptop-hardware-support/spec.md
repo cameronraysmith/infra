@@ -72,7 +72,8 @@ The initrd SHALL force-load `applespi`, `spi_pxa2xx_platform`, `intel_lpss_pci`,
 The facter report MUST NOT be relied upon for these, and the fleet's `base` module MUST NOT be relied upon for these.
 The dependency is at least as strong under a LUKS container as it was under a typed ZFS passphrase, in both of the states this change passes through.
 Between the install and the enrollment of a token (D30), every boot is the committed clan-vars passphrase typed on this keyboard and there is no other credential.
-After enrollment and after the crypttab `fido2-device=auto` option lands, every boot is a FIDO2 client PIN typed on this keyboard followed by a touch, because both tokens carry a client PIN and `systemd-cryptenroll` defaults to `--fido2-with-client-pin=yes`, with the passphrase as the fallback typed on the same keyboard.
+After both tokens are enrolled, every boot is a FIDO2 client PIN typed on this keyboard followed by a touch, because both tokens carry a client PIN and `systemd-cryptenroll` defaults to `--fido2-with-client-pin=yes`, with the passphrase as the fallback typed on the same keyboard.
+The fallback is reached by pressing Enter on an empty PIN at the token prompt, which is itself a keypress on this keyboard, so no credential path on this machine avoids it.
 The requirement is decidable by `nix eval` of `.#nixosConfigurations.pyrite.config.boot.initrd.kernelModules` against the built configuration and does not require the hardware.
 
 #### Scenario: the profile supplies the modules that base does not
@@ -117,20 +118,20 @@ The runbook SHALL state that a USB-C keyboard or a USB-C-to-USB-A adapter is on 
 The passphrase is the prerequisite rather than a token, because under D30 the install enrolls none and the crypttab names none, so the first boot has exactly one credential and it is typed.
 Read it with `clan vars get pyrite zfs/key` on the admin box before rebooting: the prompt offers no shell and no clipboard, and plymouth is deliberately off.
 A first boot without it strands the machine at the stage-1 prompt with no fallback OS, which is the same class of failure the keyboard prerequisite exists to prevent.
-A seated token becomes a prerequisite of the later boots only, once both tokens are enrolled and the crypttab `fido2-device=auto` option has landed.
+A seated token becomes the ordinary credential of the later boots once either token is enrolled, and the keyboard is the prerequisite in both states rather than the token: with no token seated the prompt asks for a LUKS2 token PIN, and an Enter pressed on the empty PIN falls through to the passphrase prompt, both typed on this keyboard.
 
 #### Scenario: the USB recovery path rests on udev autoloading, not force-loading
 
 - **WHEN** an external keyboard is used to answer the stage-1 unlock prompt — the FIDO2 client PIN, or the passphrase fallback — because the internal keyboard is not yet bound
 - **THEN** it is recorded that `usbhid`, `hid-generic`, and `hid-apple` reach the initrd through `availableKernelModules` and udev autoloading rather than through the force-loading `boot.initrd.kernelModules`, so the path depends on udev probing the device rather than on an unconditional modprobe
-- **AND** the ZFS-specific ground previously recorded here — that the ZFS initrd unit requests credentials with an unbounded timeout — is retracted, because the credential query is now `systemd-cryptsetup`'s, driven by the crypttab entry disko emits through `boot.initrd.luks.devices.<name>.crypttabExtraOpts = [ "fido2-device=auto" ]` (disko `lib/types/luks.nix:348`)
-- **AND** how long that query waits before failing is NOT asserted here, because it was not verified against this configuration; it is an on-hardware observation of the first boot rather than a property inherited from the ZFS path
+- **AND** the ZFS-specific ground previously recorded here — that the ZFS initrd unit requests credentials with an unbounded timeout — is retracted, because the credential query is now `systemd-cryptsetup`'s, driven by the crypttab entry disko emits for `boot.initrd.luks.devices.<name>` and by the `systemd-fido2` tokens in the header, with `crypttabExtraOpts` empty
+- **AND** that query does not fail on its own: with no token seated the prompt reads "Please enter LUKS2 token PIN" and waits, with no device-absent timeout, and pressing Enter on an empty PIN is what falls through to the passphrase prompt — verified on the hardware, which supersedes the earlier note that the waiting behaviour was unasserted
 
 #### Scenario: the machine has no USB-A port
 
 - **WHEN** the recovery keyboard is selected
 - **THEN** the runbook states that a MacBookPro14,1 has USB-C ports only, so a USB-C keyboard or an adapter must be physically present before the wipe rather than sourced after a failed boot
-- **AND** the two Thunderbolt 3 ports are the whole budget, and the USB-C token the end-state unlock needs occupies one of them, so a keyboard, a token, and power cannot all be seated at once — which bites at the two enrollment steps and at every boot after the crypttab option lands, and is a reason to plan the port budget before the enrollments rather than discover the contention at a prompt
+- **AND** the two Thunderbolt 3 ports are the whole budget, and the USB-C token the end-state unlock needs occupies one of them, so a keyboard, a token, and power cannot all be seated at once — which bites at the two enrollment steps and at every boot once the tokens are enrolled, and is a reason to plan the port budget before the enrollments rather than discover the contention at a prompt
 
 ---
 

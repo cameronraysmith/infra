@@ -21,6 +21,20 @@ Phase 7 of the change is where this path is executed: the change plans one destr
 The attempt of 2026-07-30 ran that step and aborted at the FIDO2 enrollment, so task 7.3 is re-run against the disk that attempt left behind; what it left, and what the re-run therefore has to clear, is stated under "Why the wipe is a step, not an assumption" below.
 This note records the path and the reasons its steps are shaped as they are.
 
+## Booting with no token in hand: an empty PIN reaches the passphrase prompt
+
+This is stated ahead of everything about the install because the operator who needs it is standing at a locked machine rather than working down the page.
+
+With both tokens enrolled and neither one seated, stage 1 does not ask for the passphrase and it does not fail.
+It renders `Please enter LUKS2 token PIN` on the internal panel, and it stays there: there is no device-absent timeout, nothing falls through on its own, and the prompt names no credential other than the PIN.
+Press Enter on an empty PIN.
+The passphrase prompt appears in its place, the clan-vars ZFS root passphrase unlocks the container, and the machine boots normally.
+This was performed on the machine with neither token present.
+
+The keypress is the whole of the fallback, so a prompt naming only the PIN is not evidence that the passphrase path is gone, and a machine whose tokens are lost or left behind is not a machine that cannot be booted.
+The passphrase is readable from stibnite with `clan vars get pyrite zfs/key` and from the `pyrite/zfs-root` password-manager entry, and it is typed at pyrite's own console, which has no network and no shell until the prompt is answered, so it has to be carried to the machine rather than looked up from it.
+The USB-C keyboard prerequisite below applies to this boot exactly as it applies to the install's first boot: if the internal SPI keyboard does not bind, the keypress is unreachable without an external keyboard.
+
 ## Prerequisites before the first install
 
 The fleet SSID must be broadcasting and the machine's clan vars must be generated and committed before the install runs.
@@ -590,7 +604,7 @@ That reboot is the first boot, and it is what the next section is about.
 
 The install leaves behind a machine that has never been unlocked and exactly one credential able to unlock it: the clan-vars ZFS root passphrase, in the single keyslot `luksFormat` created.
 That credential has to be exercised before anything in the key-lifecycle section below is run (task 7.5).
-There is no token path to exercise yet — the header carries no FIDO2 credential and the crypttab carries no `fido2-device=auto` — so this is one boot rather than two, and the token path is proven later, under "Turning on token unlock at boot".
+There is no token path to exercise yet, because the header carries no FIDO2 credential, so this is one boot rather than two and the token path is proven later, under "Proving the token unlock and the passphrase fallback".
 
 The boot has already started by the time this section is read.
 The install's reboot phase fires it about six seconds after the install phase completes, unattended, with the external installer SSD still attached and no token anywhere near the machine — so when stibnite prints "Done!" the operator's next move is to go to the machine, not to power anything on.
@@ -606,11 +620,12 @@ No token is seated for this boot, and none is needed.
 Stage 1 renders a `systemd-ask-password` prompt on the internal panel and it asks for the passphrase directly.
 It does not ask for a PIN, it does not wait for a token, and there is no pause before it appears.
 That is what a correct install looks like here, and an earlier revision of this note described the opposite — PIN, then touch, then a second boot whose thirty seconds of silence read as the fallback working — so an operator following that text would read a correct install as a failed one.
-`crypttabExtraOpts` evaluates to `[]`, because disko gates it on `enrollFido2` (`lib/types/luks.nix:348`), so no `fido2-device=auto` reaches the crypttab.
-`determine_token_type` then returns `_TOKEN_TYPE_INVALID` rather than `TOKEN_FIDO2`, since it selects FIDO2 only when `arg_fido2_device` or `arg_fido2_device_auto` is set (systemd 260.2 `src/cryptsetup/cryptsetup.c:2551-2560`, the return at `:2555`), and the unlock falls through to the key file and the passphrase.
-The token-plugin path at `:2691` still runs ahead of that loop, and it has nothing to find: the header carries no FIDO2 credential at this point, and the plugin directory is empty in any case, per "Turning on token unlock at boot" below.
+The header holds one keyslot and it is a `password` slot, so neither of the two paths that could read a token out of it has anything to read.
+The token-plugin path at systemd 260.2 `src/cryptsetup/cryptsetup.c:2691` runs first and is attempted, since both its gates hold on this machine, and it finds no `systemd-fido2` token in the header, so it falls through.
+`determine_token_type` then returns `_TOKEN_TYPE_INVALID` rather than `TOKEN_FIDO2`, since it selects FIDO2 only when `arg_fido2_device` or `arg_fido2_device_auto` is set (`:2551-2560`, the return at `:2555`) and `crypttabExtraOpts` evaluates to `[]`, so the unlock falls through to the key file and the passphrase.
+It is the empty header rather than the empty crypttab that makes this a passphrase boot: after the enrollments in "Key lifecycle" below, the same `[]` crypttab produces a PIN-and-touch boot.
 Neither shows the operator anything, so the prompt described above is what this boot looks like.
-The thirty-second silence and the "Timed out waiting for security device" message belong to a later configuration, after "Turning on token unlock at boot" below has shipped that option; on this boot they would mean the option shipped early, which is a configuration error rather than a fallback.
+The thirty-second silence and the "Timed out waiting for security device" message belong to systemd's own FIDO2 path, which no state of this machine takes, so they are not expected on this boot or on any later one.
 
 Answering the prompt is the first exercise of the human path: a mixed-case hyphenated six-word string typed at the Apple SPI keyboard through `systemd-ask-password-console`, with plymouth deliberately off (D11).
 The credential itself is proven byte-exact against the repository — `cryptsetup open --test-passphrase` against the header still on this disk returned "Key slot 1 unlocked" for a keyfile whose sha256 matches `clan vars get pyrite zfs/key` — so a prompt that refuses the passphrase is evidence about the typing or the keyboard rather than about the var.
@@ -752,7 +767,7 @@ Every `cryptsetup` and `systemd-cryptenroll` call below requires root, so enter 
 
 The order of the subsections that follow is normative rather than editorial, and the rule is stated in `specs/encrypted-zfs-root/spec.md`: the header backup is taken once the container's keyslots reach their intended state, which is after both tokens are enrolled and not before.
 The install now leaves the header with a single passphrase slot, so a backup taken early records a container with no token in it at all, and restoring it later silently un-enrolls both (D26) while the `pyrite/zfs-root` slot inventory continues to describe a container the attached backup does not match.
-Enroll A, enroll B, turn token unlock on and prove both paths, then capture.
+Enroll A, enroll B, prove both unlock paths, then capture.
 
 ### Enrolling the first token
 
@@ -848,41 +863,36 @@ The read-back is what produces the record rather than what confirms it.
 Both tokens report the same AAGUID, so once B is enrolled the header says nothing about which index holds which serial, and an index not written down at this moment cannot be recovered afterward.
 Record the index against B's serial in the `pyrite/zfs-root` entry per the slot inventory below.
 The keyslots have now reached their intended state, which is the condition the header backup waits on.
-The capture does not follow immediately: "Turning on token unlock at boot" comes next, and the two-boot proof that section ends with is the last prerequisite the backup depends on, per the order stated at the head of this section.
+The capture does not follow immediately: "Proving the token unlock and the passphrase fallback" comes next, and the two-boot proof that section ends with is the last prerequisite the backup depends on, per the order stated at the head of this section.
 
-### Turning on token unlock at boot
+### Proving the token unlock and the passphrase fallback
 
-Enrolling a token puts a credential in the header; it does not make stage 1 use it, and these are separate steps with a mandatory order between them.
-Two code paths in `systemd-cryptsetup` could read a FIDO2 slot out of the header, and on this machine neither reaches it.
+Enrolling a token both puts a credential in the header and makes stage 1 use it; there is no second step and no configuration change between the enrollment and the next boot.
+Two code paths in `systemd-cryptsetup` could read a FIDO2 slot out of the header, and on this machine the first of them does.
 The first runs ahead of the unlock loop: `if (!key_file && use_token_plugins())` (systemd 260.2 `src/cryptsetup/cryptsetup.c:2691`) calls `crypt_activate_by_token_pin_ask_password`, which tries `crypt_activate_by_token_pin(..., CRYPT_ANY_TOKEN, ...)` at `:1557` and returns 0 on success without ever reaching the loop.
 Both of its gates hold here: `boot.initrd.luks.devices.cryptroot.keyFile` evaluates to `null`, so the crypttab key-file field is `-`, and `use_token_plugins` (`:1484-1516`) returns `crypt_token_external_path()` at `:1512`, which is non-`NULL` because nixpkgs passes `--disable-external-tokens` only under `stdenv.hostPlatform.isStatic` (`pkgs/by-name/cr/cryptsetup/package.nix`).
-What defeats it is a path mismatch, measured on 2026-07-30 against this machine's closure: libcryptsetup's compiled token directory, read out of `libcryptsetup.so.12` with `strings`, is `/nix/store/ga7hgba1656wk4hbpyphflnjq2x2997r-cryptsetup-2.8.6/lib/cryptsetup`, and that directory is empty, while nixpkgs installs `libcryptsetup-token-systemd-fido2.so` under the systemd prefix at `/nix/store/rd05syhv5v5999907a2n1r37sgi19vpd-systemd-260.2/lib/cryptsetup/`.
-The plugin is in the initrd and off libcryptsetup's search path at the same time, so the attempt at `:2691` loads no token module and falls through to the loop.
-That mismatch is measured and has not been verified at runtime — nobody has executed `systemd-cryptsetup` against this header — and what would settle it is a stage-1 boot with `systemd.log_level=debug` showing whether the token module loads.
-The second path is the loop's own: `determine_token_type` at `:2723` returns `TOKEN_FIDO2` only when `arg_fido2_device` or `arg_fido2_device_auto` is set (`:2551-2560`, the return at `:2555`), and with neither set the unlock falls through to the key file and the passphrase.
-Those two variables are set by the crypttab option `fido2-device=` (`:394-405`) and, as a documented side effect, by `fido2-cid=` (`:424-426`).
-disko emits `fido2-device=auto` from `crypttabExtraOpts` (`lib/types/luks.nix:348`), which is `lib.mkIf config.enrollFido2` and so emits nothing while enrollment is deferred.
-Turning token unlock on therefore means adding the option by hand, in `modules/machines/nixos/pyrite/default.nix`:
-
-```nix
-boot.initrd.luks.devices.cryptroot.crypttabExtraOpts = [ "fido2-device=auto" ];
-```
-
-followed by `clan machines update pyrite` from stibnite.
-
-Do not ship it before the header carries a FIDO2 credential, and that ordering is a stop rather than a preference.
-Against a header with no `systemd-fido2` token, systemd's direct FIDO2 path returns `-ENXIO` with no passphrase fallback, while the libcryptsetup-plugin path degrades to the passphrase prompt.
-The empty plugin directory measured above points at the direct path, which is the one with no fallback, so an option shipped early can produce a machine that a person standing in front of it cannot unlock at all.
-That inference inherits the measurement's status: it indicates the direct path rather than establishing it, and the ordering rule holds either way.
-Enroll both tokens first, then add the option.
+The plugin then loads, because nixpkgs patches the lookup rather than the install path: `package.nix:45-48` applies `relative-token-path.patch`, which rewrites `crypt_token_load_external` in `lib/luks2/luks2_token.c` from a path built with `crypt_token_external_path()` to the bare `libcryptsetup-token-%s.so` and drops the following `assert(*buf == '/')`, so the `dlopen` resolves on the loader search path.
+`nixos/modules/system/boot/systemd/fido2.nix:26-30` has already put `libcryptsetup-token-systemd-fido2.so` and `libfido2.so.1` into the initrd, under `boot.initrd.systemd.fido2.enable`, which defaults to `boot.initrd.systemd.package.withFido2` at `:12-15` and evaluates true here.
+`crypt_token_external_path()` therefore decides whether external tokens are attempted at all, and no longer decides where the plugin is found.
+An earlier revision of this section read that compile-time directory out of `libcryptsetup.so.12` with `strings`, found it empty, and concluded the plugin path could not apply.
+The string is still there and still empty, and the patched code builds no path from it, so the measurement was of a value the load does not use.
+The installed machine settles it: boots -5 through 0 log `Asking FIDO2 token for authentication` and `Please confirm presence on security token to unlock` while `crypttabExtraOpts` evaluates to `[]` and the generated crypttab carries no `fido2-device=`.
+The second path is the loop's own, and this machine never reaches it with a FIDO2 device set: `determine_token_type` at `:2723` returns `TOKEN_FIDO2` only when `arg_fido2_device` or `arg_fido2_device_auto` is set (`:2551-2560`, the return at `:2555`), and those two variables are set by the crypttab option `fido2-device=` (`:394-405`) and, as a documented side effect, by `fido2-cid=` (`:424-426`).
+disko emits `fido2-device=auto` from `crypttabExtraOpts` (`lib/types/luks.nix:348`) under `lib.mkIf config.enrollFido2`, so it emits nothing here, and the option is not added by hand either.
+That is a decision rather than an omission, and an earlier revision of this section prescribed the opposite: it gave the line to add and told the reader to ship it after the enrollments.
+Its purpose was to enable something that turns out to be already enabled, and setting it now would give `determine_token_type` a `TOKEN_FIDO2` to return and move the unlock onto systemd's own FIDO2 path, which is a different code path from the one both proofs below are taken on.
+If a future nixpkgs moves the plugin off the loader search path, token unlock stops and the boot degrades to the passphrase prompt, which the second proof below establishes is reachable.
 Upstream nixpkgs states at `nixos/modules/system/boot/luksroot.nix:614` that "usually, systemd will automatically detect the configuration at runtime, but if necessary, configure the corresponding crypttab(5) options with `boot.initrd.luks.devices.<name>.crypttabExtraOpts`".
-The "usually" branch names the token-plugin path at `:2691`, which is real machinery rather than a figure of speech; here it is the empty plugin directory measured above that keeps that branch from applying, which is what leaves the "if necessary" branch as the whole of the mechanism on this machine.
-The comment at `modules/machines/nixos/pyrite/default.nix:74-86` records that against this machine.
+The "usually" branch names the token-plugin path at `:2691`, and on this machine it is that branch that applies, leaving the "if necessary" branch unneeded.
+The comment at `modules/machines/nixos/pyrite/default.nix:74-85` records against this machine both that `boot.initrd.luks.fido2Support` is unset and that `crypttabExtraOpts` is unset, and why each is deliberate.
 
 Then prove both paths, on two boots.
 With a token seated — either one, since both are enrolled by this point — stage 1 asks for its PIN and then waits for a touch, and the pool imports.
-Then shut down, remove every token, and boot again: `systemd-cryptsetup` first waits on a udev monitor for a security device to appear, for `arg_token_timeout_usec`, default `30*USEC_PER_SEC` (`src/cryptsetup/cryptsetup.c:122`); when that expires it logs "Timed out waiting for security device, aborting security device based authentication attempt." (`:1469-1470`) and returns `EAGAIN`, and the main loop clears `arg_fido2_device_auto` and retries (`:2793-2797`), which is what produces the passphrase prompt.
-Roughly half a minute of silence followed by a message reading as an abort is the fallback working here, and that reading applies only once the option above has shipped — on the install's own first boot it would mean the option shipped early.
+Then shut down, remove every token, and boot again.
+The prompt reads "Please enter LUKS2 token PIN", and there is no device-absent timeout behind it: press Enter on an empty PIN and the passphrase prompt appears, after which the machine boots normally.
+That keypress is the whole of the fallback and nothing on the screen names it, so it belongs in whatever the operator has in hand at the machine.
+An operator holding the passphrase but neither token, reading a prompt that asks only for a PIN, could reasonably conclude the machine is unbootable.
+The thirty-second udev wait on `arg_token_timeout_usec` (`src/cryptsetup/cryptsetup.c:122`) and the "Timed out waiting for security device" message that an earlier revision of this section described belong to systemd's own FIDO2 path, which this configuration does not take.
 Both readings are required before the header backup below is taken.
 
 ### Capturing and storing the header backup
