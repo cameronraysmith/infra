@@ -340,6 +340,25 @@ in
       services.displayManager.gdm.enable = true;
       services.desktopManager.gnome.enable = true;
 
+      # settings carries no locks attribute, deliberately: locking these keys would grey
+      # out the matching GNOME Settings controls, and a change made there has to win over
+      # what is set here. The generated /etc/dconf/profile/user lists user-db:user ahead of
+      # the file-db, which is what makes it win. Every integer carries the constructor for
+      # its schema type — "u" for idle-delay, "i" for the sleep timeouts — because
+      # lib.gvariant.mkValue refuses to infer a width from a bare Nix integer and throws
+      # during the keyfile generation rather than at the option's type check.
+      programs.dconf.profiles.user.databases = [
+        {
+          settings = {
+            "org/gnome/desktop/session".idle-delay = lib.gvariant.mkUint32 1800;
+            "org/gnome/settings-daemon/plugins/power" = {
+              sleep-inactive-ac-timeout = lib.gvariant.mkInt32 0;
+              sleep-inactive-battery-timeout = lib.gvariant.mkInt32 1800;
+            };
+          };
+        }
+      ];
+
       # Encrypted-root administration tools, in the closure rather than fetched on demand.
       # The reinstall is the deploy, so a tool absent here is absent on the machine that
       # comes back, and every post-install check (sgdisk -p, cryptsetup luksDump, the
