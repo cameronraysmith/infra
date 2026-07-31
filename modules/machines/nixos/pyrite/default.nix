@@ -73,17 +73,16 @@ in
       # The container is named cryptroot in disko.nix, which is what fixes this unit name.
       # boot.initrd.luks.fido2Support is deliberately NOT set: it selects the legacy
       # fido2luks path and luksroot.nix asserts systemd.enable -> !fido2Support, failing
-      # eval. A FIDO2 token in the header does not activate itself here, by way of two
-      # paths that both stop short (systemd 260.2 src/cryptsetup/cryptsetup.c). The
-      # libcryptsetup token-plugin path at :2691 is attempted, since keyFile is null and
-      # use_token_plugins is true, and it loads nothing because libcryptsetup compiled
-      # token directory is empty while nixpkgs ships the plugin under the systemd prefix
-      # — measured against this closure, not verified at runtime. determine_token_type
-      # (:2551-2560, called at :2723) returns TOKEN_FIDO2 only when a crypttab option has
-      # set arg_fido2_device or arg_fido2_device_auto — fido2-device=, or fido2-cid= as a
-      # documented side effect (:394-405, :424-426). Adding fido2-device=auto through
-      # crypttabExtraOpts is what turns token unlock on, and it must follow the
-      # enrollment; see disko.nix and D30 in the openspec change design.md.
+      # eval. crypttabExtraOpts is deliberately NOT set either, and that is the
+      # counterintuitive one, because token unlock works without it. An enrolled header is
+      # read by the libcryptsetup token-plugin path (systemd 260.2
+      # src/cryptsetup/cryptsetup.c:2691) ahead of the unlock loop, and nixpkgs'
+      # relative-token-path.patch makes that plugin load resolve on the loader search
+      # path, where boot/systemd/fido2.nix:26-30 has already put it in the initrd. Setting
+      # fido2-device=auto would instead route the unlock through determine_token_type
+      # (:2551-2560) onto systemd's own FIDO2 path, which is not the path this machine's
+      # token unlock and passphrase fallback were verified on. See D24 and D30 in the
+      # openspec change design.md.
       boot.initrd.systemd.services."zfs-import-zroot" = {
         after = [ "systemd-cryptsetup@cryptroot.service" ];
         wants = [ "cryptsetup.target" ];
