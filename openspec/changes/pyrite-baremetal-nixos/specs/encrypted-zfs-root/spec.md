@@ -88,10 +88,10 @@ The device MUST NOT be named by any prefix or glob over the by-id family.
 
 ---
 
-### Requirement: The pool sits inside a LUKS2 container unlocked by a FIDO2 token, with a clan-vars passphrase in a second keyslot
+### Requirement: The pool sits inside a LUKS2 container holding the clan-vars passphrase in slot 0 and a FIDO2 token in each of slots 1 and 2
 
 The disko layout SHALL wrap the 100% partition in `content = { type = "luks"; }` carrying `enrollFido2 = false`, and the `zroot` pool SHALL take the resulting `/dev/mapper` device as its vdev.
-The container SHALL reach an end state holding at least two keyslots: one holding a human-typeable passphrase supplied as a clan vars partitioning secret, and one enrolled to a FIDO2 token by `systemd-cryptenroll`.
+The container SHALL reach an end state holding three keyslots: slot 0 holding a human-typeable passphrase supplied as a clan vars partitioning secret under argon2id, and slots 1 and 2 each carrying a `systemd-fido2` token that `systemd-cryptenroll` writes for one of the two YubiKey 5C Nano tokens.
 It reaches that end state in two stages (D30): the install creates the container with the passphrase alone, and the tokens are enrolled afterward on the booted machine.
 The container as the install leaves it SHALL hold the passphrase and no FIDO2 token, and that is compliance rather than an incomplete result.
 `settings.allowDiscards` and `settings.bypassWorkqueues` SHALL both be `true`, and `enrollRecovery` SHALL be `false`.
@@ -176,7 +176,7 @@ The design SHALL record what moving from ZFS native encryption to a LUKS2 contai
 #### Scenario: there are several keyslots and a defined recovery path
 
 - **WHEN** the container is created and enrolled
-- **THEN** it is recorded that LUKS2 holds several independent keyslots, and that this design occupies at least two of them — a FIDO2 token and the clan-vars passphrase — so losing one credential does not lose the disk
+- **THEN** it is recorded that LUKS2 holds several independent keyslots, and that this design occupies three of them — two FIDO2 tokens and the clan-vars passphrase — so losing one credential does not lose the disk
 - **AND** it is recorded that the passphrase is a committed, sops-encrypted clan var, which makes it the recovery credential and closes the escrow gap the ZFS-native design accepted
 - **AND** it is recorded that the second YubiKey, and any later TPM enrollment on a machine that had one, are `systemd-cryptenroll` operations against the existing container requiring no re-install, which is exactly the property ZFS native encryption structurally could not offer, since it permits one key per encryption root and `zfs change-key` replaces rather than adds
 
@@ -213,11 +213,13 @@ Revoking a credential SHALL wipe its slot and re-take the header backup.
 - **THEN** it is recorded that the restore reinstates the revoked keyslot verbatim, because a header backup freezes the keyslot set as of the moment it was taken and carries no notion of a later revocation
 - **AND** the procedure is therefore to re-take the backup after every enrollment change and destroy the superseded copy, rather than to accumulate backups
 
-#### Scenario: the two tokens are indistinguishable after enrollment unless the slot index is written down
+#### Scenario: `systemd-cryptenroll`'s listing does not tell the two tokens apart, and the map is recoverable by other means
 
 - **WHEN** both YubiKey 5C Nano tokens are enrolled and `systemd-cryptenroll <device>` lists the resulting slots
-- **THEN** the slot index each token occupies is recorded as it is enrolled, because the two report the same AAGUID and the listing offers nothing else that tells them apart
-- **AND** without that record, revoking one lost token means revoking both and re-enrolling the survivor, or guessing
+- **THEN** the slot index each token occupies is recorded as it is enrolled, because the two report the same AAGUID and that listing offers nothing else that tells them apart
+- **AND** the map is nonetheless reconstructable after the fact, and the claim an earlier revision recorded that it is not is withdrawn: each `systemd-fido2` token names the keyslot it belongs to, which `cryptsetup token export --token-id <n>` prints, and `ykman list` reports the serial of whichever token is seated, so seating one token alone pairs a serial with a slot
+- **AND** the record is taken anyway, because it costs one line and the reconstruction needs both tokens in hand, which is the condition a lost token removes
+- **AND** the map as recorded is YubiKey A serial `32720759` at keyslot 1, YubiKey B serial `32720546` at keyslot 2, and keyslot 0 holding the clan-vars passphrase under argon2id
 
 #### Scenario: revocation is a slot wipe followed by a fresh header backup
 

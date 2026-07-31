@@ -777,7 +777,7 @@ Its whole value over the install-time form is that a failed touch costs one re-r
 Three preconditions hold before the block runs, and each is a stop rather than an advisory.
 The machine has booted and the passphrase has unlocked it, per "The first boot, and proving the passphrase path" above: the passphrase is the credential this enrollment authorizes itself with, and `--fido2-device=auto` does not add a slot to a container it cannot open.
 `## Verifying the install` has passed against that container.
-YubiKey-A is the only token seated and YubiKey-B is still in stibnite, because `--fido2-device=auto` resolves only where exactly one token answers and this layout passes no device path; with both seated the enrollment either refuses or lands against whichever token it resolved, and the slot map is then recorded wrong in a way the header cannot be re-read to correct (D25).
+YubiKey-A is the only token seated and YubiKey-B is still in stibnite, because `--fido2-device=auto` resolves only where exactly one token answers and this layout passes no device path; with both seated the enrollment either refuses or lands against whichever token it resolved, and the serial recorded against the new index is then wrong, which no later reading of the header corrects, since the header carries the index and not the serial (D25).
 
 ```bash
 # host: pyrite (installed), in a root shell (sudo -i), with YubiKey-A the only
@@ -820,7 +820,7 @@ A token with no client PIN set therefore prompts only for the touch.
 
 If the enrollment fails, nothing is lost.
 The container is unchanged, the passphrase still opens it, and the command can be run again — which is the property the deferral was made to obtain, and the property the 2026-07-30 attempt did not have.
-Record the index the read-back reports against YubiKey-A's serial in the `pyrite/zfs-root` entry, per the slot inventory below; both tokens report the same AAGUID, so the index is the only discriminator and it cannot be reconstructed afterward.
+Record the index the read-back reports against YubiKey-A's serial in the `pyrite/zfs-root` entry, per the slot inventory below; both tokens report the same AAGUID, so the serial is what the record adds to what the header already carries, which is the keyslot each enrolled token authorizes.
 
 ### Enrolling the second token
 
@@ -835,7 +835,7 @@ Nothing is being revoked at this point, and wiping YubiKey-A's slot to make room
 Three preconditions hold before the block runs, and each is a stop rather than an advisory.
 YubiKey-A is enrolled and the passphrase path has been exercised: the enrollment above read back a `fido2` row, and the passphrase unlocked the machine on the boot "The first boot, and proving the passphrase path" above requires, against a container `## Verifying the install` has passed.
 This one is first because the block below asks the operator to remove YubiKey-A, which leaves the passphrase as the only credential still able to authorize anything.
-YubiKey-A is physically removed and YubiKey-B is the only token seated, because `systemd-cryptenroll --fido2-device=auto` resolves only where exactly one token answers and this layout passes no device path; with both seated the enrollment either refuses or lands against whichever token it resolved, and the slot map is then recorded wrong in a way the header cannot be re-read to correct (D25).
+YubiKey-A is physically removed and YubiKey-B is the only token seated, because `systemd-cryptenroll --fido2-device=auto` resolves only where exactly one token answers and this layout passes no device path; with both seated the enrollment either refuses or lands against whichever token it resolved, and the serial recorded against the new index is then wrong, which no later reading of the header corrects, since the header carries the index and not the serial (D25).
 The clan-vars passphrase is in hand, at the machine, before the block starts: `--fido2-device=auto` does not add a slot to a container it cannot open, it prompts for an existing credential first, and with A removed the passphrase is the only credential still able to authorize the enrollment.
 It is readable from stibnite with `clan vars get pyrite zfs/key` and from the `pyrite/zfs-root` password-manager entry, but it is typed at pyrite's own console, so it has to be carried there deliberately rather than looked up from the console after the prompt appears.
 
@@ -859,8 +859,8 @@ systemd-cryptenroll "$part2" --fido2-device=auto
 systemd-cryptenroll "$part2"
 ```
 
-The read-back is what produces the record rather than what confirms it.
-Both tokens report the same AAGUID, so once B is enrolled the header says nothing about which index holds which serial, and an index not written down at this moment cannot be recovered afterward.
+The read-back ties the new index to B's serial at the one moment B is the only token seated.
+Both tokens report the same AAGUID and the header carries no serial for either index, so that association is what the record adds; the index itself is written into the `systemd-fido2` token each enrollment creates and can be read back at any time, as the slot inventory below sets out.
 Record the index against B's serial in the `pyrite/zfs-root` entry per the slot inventory below.
 The keyslots have now reached their intended state, which is the condition the header backup waits on.
 The capture does not follow immediately: "Proving the token unlock and the passphrase fallback" comes next, and the two-boot proof that section ends with is the last prerequisite the backup depends on, per the order stated at the head of this section.
@@ -981,9 +981,26 @@ shred -u /dev/shm/pyrite-luks-header.img
 
 ### The slot inventory and its provenance
 
-Both YubiKey 5C Nano tokens report the same AAGUID — `ff4dac45-ede8-4ec2-aced-cf66103f4335`, read from `ykman fido info` on both on 2026-07-20 — and are physically identical, so once both are enrolled `systemd-cryptenroll "$part2"` lists two `fido2` slots with nothing in the header telling them apart (D25).
-The slot index is therefore the only discriminator, and it cannot be reconstructed after the fact.
-Record in the same `pyrite/zfs-root` Bitwarden entry the mapping from slot index to credential — YubiKey-A's serial, YubiKey-B's serial, and the passphrase slot — reading the actual indices back from `systemd-cryptenroll "$part2"` at the moment each is enrolled.
+Both YubiKey 5C Nano tokens report the same AAGUID — `ff4dac45-ede8-4ec2-aced-cf66103f4335`, read from `ykman fido info` on both on 2026-07-20 — and are physically identical, so once both are enrolled `systemd-cryptenroll "$part2"` lists two `fido2` slots and prints nothing that tells them apart.
+The header does tell them apart, and an earlier revision of this note said it could not.
+Each enrollment writes a `systemd-fido2` token naming the keyslot it authorizes, and both the token list and that binding are readable at any time, with no token seated and without unlocking anything:
+
+```bash
+# host: pyrite (installed), in a root shell (sudo -i)
+# The assignment is repeated here rather than inherited: this block is read back
+# long after the enrollments, in a shell where nothing above it ran.
+part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
+
+cryptsetup luksDump "$part2"                    # the Tokens block names each token's keyslot
+cryptsetup token export --token-id 0 "$part2"   # the same binding, with the credential
+nix-shell -p yubikey-manager --run 'ykman list' # the serial of whichever token is seated
+```
+
+Read against the live container on 2026-07-31, `luksDump` reports token 0 binding keyslot 1 and token 1 binding keyslot 2, and each `token export` prints the matching `"keyslots":["1"]` and `"keyslots":["2"]` beside a `fido2-credential` that only the authenticator holding it can answer.
+What the header does not carry is the serial, which is what `ykman list` supplies for whichever token is in hand, and the two are joined by the enrollment order this section imposes: each token is enrolled alone, YubiKey-A before YubiKey-B, so the first token entry is A's and the second is B's.
+
+The map for this container is therefore that keyslot 0 holds the clan-vars ZFS root passphrase under argon2id, keyslot 1 holds YubiKey-A, serial `32720759`, and keyslot 2 holds YubiKey-B, serial `32720546`.
+Record the same mapping in the `pyrite/zfs-root` Bitwarden entry, reading the indices back from `systemd-cryptenroll "$part2"` at the moment each token is enrolled (D25); the record is read without the machine, which the header is not.
 Record alongside it the capture date and container UUID of the header backup currently attached, so the entry names both which credential occupies which slot and which `luksFormat` the stored backup belongs to.
 
 ### Re-taking after enrollment changes, and revocation
