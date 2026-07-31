@@ -24,7 +24,7 @@ niri and its Wayland shell assembly are NOT part of this capability; niri is the
 - **THEN** the GDM greeter renders on the internal Retina panel, and an operator authenticating as cameron with the clan-generated user password (`clan vars get pyrite user-password-cameron/user-password`) reaches an interactive GNOME shell whose Activities overview responds
 - **AND** `systemctl is-active display-manager` returning `active` is necessary but NOT sufficient evidence, because GDM reports `active` while `i915` KMS leaves the panel blank on the installed 6.18.37 kernel and while a session restart-loops back to the greeter — so the criterion is discharged only by a rendered greeter plus a reached, interactive shell observed at the machine
 - **AND** the check depends on no audio, which is a Non-Goal, and on no network, since the login is local — which is what travel-readiness requires
-- **AND** travel-readiness now also depends on a physical credential, because reaching this login means first passing the stage-1 unlock: an enrolled token seated with its client PIN typed, or the committed clan-vars passphrase typed as fallback
+- **AND** travel-readiness now also depends on a credential typed before the desktop exists, because reaching this login means first passing the stage-1 unlock: the committed clan-vars passphrase, which is the only credential the installed machine carries until D30's post-boot enrollment and crypttab option land, and thereafter an enrolled token seated with its client PIN typed, with the passphrase as fallback
 
 #### Scenario: enabling GDM does not perturb the stage-1 unlock prompt
 

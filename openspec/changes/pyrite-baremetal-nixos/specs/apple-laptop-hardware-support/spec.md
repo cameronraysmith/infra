@@ -70,7 +70,9 @@ Every scenario below is decidable by `nix eval` against the built configuration;
 
 The initrd SHALL force-load `applespi`, `spi_pxa2xx_platform`, `intel_lpss_pci`, and `applesmc` via `boot.initrd.kernelModules`, which the imported profile supplies at `apple/macbook-pro/14-1/default.nix:19-24`.
 The facter report MUST NOT be relied upon for these, and the fleet's `base` module MUST NOT be relied upon for these.
-The dependency is stronger under a LUKS container unlocked by FIDO2 than it was under a typed ZFS passphrase, because both enrolled tokens carry a FIDO2 client PIN, so `systemd-cryptenroll`'s default `--fido2-with-client-pin=yes` makes every boot a typed PIN plus a touch, and the committed clan-vars passphrase is a fallback typed on the same keyboard.
+The dependency is at least as strong under a LUKS container as it was under a typed ZFS passphrase, in both of the states this change passes through.
+Between the install and the enrollment of a token (D30), every boot is the committed clan-vars passphrase typed on this keyboard and there is no other credential.
+After enrollment and after the crypttab `fido2-device=auto` option lands, every boot is a FIDO2 client PIN typed on this keyboard followed by a touch, because both tokens carry a client PIN and `systemd-cryptenroll` defaults to `--fido2-with-client-pin=yes`, with the passphrase as the fallback typed on the same keyboard.
 The requirement is decidable by `nix eval` of `.#nixosConfigurations.pyrite.config.boot.initrd.kernelModules` against the built configuration and does not require the hardware.
 
 #### Scenario: the profile supplies the modules that base does not
@@ -109,10 +111,13 @@ The virtio entries `base` contributes SHALL be left in place.
 
 ---
 
-### Requirement: A USB-C keyboard and a seated FIDO2 token are prerequisites of the first boot, not recoveries improvised afterward
+### Requirement: A USB-C keyboard and the clan-vars passphrase are prerequisites of the first boot, not recoveries improvised afterward
 
-The runbook SHALL state that a USB-C keyboard or a USB-C-to-USB-A adapter is on hand before the first boot after the install, and that at least one enrolled token is seated.
-A first boot with neither the token nor the passphrase to hand strands the machine at the stage-1 prompt with no fallback OS, which is the same class of failure the keyboard prerequisite exists to prevent.
+The runbook SHALL state that a USB-C keyboard or a USB-C-to-USB-A adapter is on hand before the first boot after the install, and that the clan-vars passphrase is readable off the machine before it is rebooted.
+The passphrase is the prerequisite rather than a token, because under D30 the install enrolls none and the crypttab names none, so the first boot has exactly one credential and it is typed.
+Read it with `clan vars get pyrite zfs/key` on the admin box before rebooting: the prompt offers no shell and no clipboard, and plymouth is deliberately off.
+A first boot without it strands the machine at the stage-1 prompt with no fallback OS, which is the same class of failure the keyboard prerequisite exists to prevent.
+A seated token becomes a prerequisite of the later boots only, once both tokens are enrolled and the crypttab `fido2-device=auto` option has landed.
 
 #### Scenario: the USB recovery path rests on udev autoloading, not force-loading
 
@@ -125,7 +130,7 @@ A first boot with neither the token nor the passphrase to hand strands the machi
 
 - **WHEN** the recovery keyboard is selected
 - **THEN** the runbook states that a MacBookPro14,1 has USB-C ports only, so a USB-C keyboard or an adapter must be physically present before the wipe rather than sourced after a failed boot
-- **AND** the two Thunderbolt 3 ports are the whole budget, and the USB-C token the unlock now needs occupies one of them, so a keyboard, a token, and power cannot all be seated at once — which is a reason to verify the token before the wipe rather than discover the contention after a failed boot
+- **AND** the two Thunderbolt 3 ports are the whole budget, and the USB-C token the end-state unlock needs occupies one of them, so a keyboard, a token, and power cannot all be seated at once — which bites at the two enrollment steps and at every boot after the crypttab option lands, and is a reason to plan the port budget before the enrollments rather than discover the contention at a prompt
 
 ---
 
