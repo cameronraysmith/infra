@@ -149,56 +149,74 @@ The strength is SHOULD NOT rather than MUST NOT because the ground — that clan
 
 ---
 
-### Requirement: The profile's dormant NVMe d3cold workaround is activated deliberately
+### Requirement: The sleep path is gated by three units the machine module defines itself
 
-The pyrite host module SHALL define a `systemd.services.disable-nvme-d3cold` unit running `nixos-hardware`'s `apple/macbook-pro/14-1/disable-nvme-d3cold.sh`, `Type = "oneshot"`, ordered `before` `suspend.target` and `wantedBy` both `multi-user.target` and `suspend.target`, matching the block the profile carries commented out at `apple/macbook-pro/14-1/default.nix:60-68`.
-Importing the profile does NOT activate it: that block is commented out upstream under "[Enable only if needed!]", so the machine defines its own.
-The observable is that `/sys/bus/pci/devices/0000:01:00.0/d3cold_allowed` reads `0` after boot; it reads `1` on the machine as currently installed.
+The pyrite host module SHALL define `disable-d3cold-all`, a `Type = "oneshot"` unit writing `0` to every `/sys/bus/pci/devices/*/d3cold_allowed` node, ordered `before` and `wantedBy` `systemd-suspend.service`, `systemd-hybrid-sleep.service`, and `systemd-suspend-then-hibernate.service`.
+It SHALL define `nvme-d3cold-suspend-guard`, a `oneshot` ordered `after` that sweep, `before` those same three units and `requiredBy` them, exiting non-zero unless `/sys/bus/pci/devices/0000:01:00.0/d3cold_allowed` reads `0`.
+It SHALL define `disable-lid-wakeup`, a `oneshot` with `RemainAfterExit`, `wantedBy` `multi-user.target`, writing `disabled` to the `power/wakeup` attribute of the ACPI lid device `PNP0C0D:00`.
+The profile's own `systemd.services.disable-nvme-d3cold` block, which it carries commented out at `apple/macbook-pro/14-1/default.nix:60-68` under "[Enable only if needed!]", MUST NOT be enabled in their place: importing the profile activates nothing, and the single endpoint it names is not sufficient on this machine.
 
-#### Scenario: the upstream script applies to this machine unmodified
+#### Scenario: the sweep covers every PCI device, because clearing the storage endpoint alone does not resume
 
-- **WHEN** `disable-nvme-d3cold.sh:3` hardcodes `driver_path=/sys/bus/pci/devices/0000:01:00.0`
-- **THEN** it is used as-is rather than forked, patched, or reimplemented, because that is exactly this machine's NVMe controller address — the same device the disko layout reaches through `/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1`
-- **AND** the script's only reachable failure is `:5-7`, which exits 1 when that path is absent, which is the failure worth having: it fires when the controller has moved and the workaround would otherwise silently target nothing
+- **WHEN** `disable-nvme-d3cold.sh:3` hardcodes `driver_path=/sys/bus/pci/devices/0000:01:00.0`, which is this machine's NVMe controller — the same device the disko layout reaches through `/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1`
+- **THEN** the sweep iterates `/sys/bus/pci/devices/*/d3cold_allowed` rather than taking that address, because a resume with the Alpine Ridge Thunderbolt switch at `0000:04:00.0`, its `05:0x.0` bridges, and the BCM4350 WiFi still at `d3cold_allowed = 1` wedges, and clearing the attribute on every PCI device is what lets the machine come back
+- **AND** iterating the tree at transition time rather than naming a fixed address also survives PCI renumbering
+- **AND** the sweep is best-effort: a node that rejects the write is logged and skipped, because refusing an unsafe transition is the guard's job rather than the sweep's
 
-#### Scenario: the script's driver guard is fail-open and is not relied upon
+#### Scenario: the guard is fail-closed and is scoped to the storage controller
 
-- **WHEN** `disable-nvme-d3cold.sh:12` reads `if [[ "$driver" -ne "nvme" ]]`, applying bash arithmetic `-ne` to string operands
-- **THEN** the guard can never fire, because non-numeric operands evaluate to `0` in arithmetic context and the comparison is always `0 -ne 0`
-- **AND** nothing in this specification depends on that guard; the address check at `:5-7` is the only check relied upon, and the defect is recorded so a later reader does not mistake the guard for protection
+- **WHEN** `nvme-d3cold-suspend-guard` runs and finds `/sys/bus/pci/devices/0000:01:00.0/d3cold_allowed` reading anything other than `0`
+- **THEN** it exits non-zero, which aborts the sleep transition that requires it, rather than letting the machine suspend with the controller still able to enter d3cold
+- **AND** it is ordered `after` the sweep, so what it validates is the post-sweep state rather than the state the sweep was asked to correct
+- **AND** it asserts over that one address rather than over the whole tree, because the on-board NVMe is soldered and its address is stable, while a whole-tree assertion would let any transiently-unwritable node block suspend indefinitely
+- **AND** the storage controller is the scope because its failure is the unrecoverable one: the pool sits behind it and ZFS's default `failmode=wait` turns its loss into an indefinite whole-system block, which no other endpoint on this machine produces
 
-#### Scenario: d3cold_allowed reads 0 on the running machine
+#### Scenario: the sysfs attribute is a residue of a completed transition rather than a boot-time observable
 
-- **WHEN** the machine has booted and the workaround is checked
-- **THEN** `cat /sys/bus/pci/devices/0000:01:00.0/d3cold_allowed` returns `0`
-- **AND** the sysfs read is the criterion rather than `systemctl is-active disable-nvme-d3cold`, because a `Type=oneshot` unit reports `inactive (dead)` in the correct steady state, and a unit that ran and wrote nothing reports success exactly as one that wrote `0` does
+- **WHEN** `cat /sys/bus/pci/devices/0000:01:00.0/d3cold_allowed` is read on a machine that has booted but not yet slept
+- **THEN** it returns the kernel default `1`, because the sweep is wanted by the three sleep units rather than by `multi-user.target` and has not run
+- **AND** the criterion is therefore the ordering and the run — both units logging `Finished` immediately ahead of each `PM: suspend entry` in `journalctl -b -0`, across the whole `/sys/bus/pci/devices/*` tree rather than at the one endpoint — because on a machine that has slept the guard makes any other reading impossible
+- **AND** `systemctl is-active` is not the criterion either, because a `Type = "oneshot"` unit reports `inactive (dead)` in the correct steady state, and a unit that ran and wrote nothing reports success exactly as one that wrote `0` does
+
+#### Scenario: the lid switch is removed from the S3 wake sources
+
+- **WHEN** the machine is suspended with the lid open
+- **THEN** the ACPI lid device `PNP0C0D:00` does not wake it, because `disable-lid-wakeup` has written `disabled` to that device's `power/wakeup` attribute, and it is otherwise an active wake source that fires seconds into the transition
+- **AND** `/sys/kernel/debug/wakeup_sources` is where the active sources are read back, which is what identifies the lid rather than another device
+- **AND** the write is idempotent, which is what makes this a boot-time unit with `RemainAfterExit` rather than a toggle against `/proc/acpi/wakeup`
+- **AND** the unit exits non-zero when neither candidate path exists, so a kernel or firmware change that moves the attribute surfaces as a failed unit rather than as a machine that resumes seconds after it suspends
+- **AND** the power button and the keyboard remain wake sources, so the machine is still resumable by hand
 
 ---
 
 ### Requirement: Suspend is entered through the systemd-sleep path and resumes with the pool intact
 
-Suspend and resume SHALL be exercised through `systemctl suspend` — the `systemd-sleep` path the `before = [ "suspend.target" ]` ordering hooks — rather than through a lid close, so the d3cold workaround is demonstrated to have run before the transition rather than assumed to.
+Suspend and resume SHALL be exercised through `systemctl suspend` — the `systemd-sleep` path the sweep and the guard are ordered against — rather than through a lid close, so both units are demonstrated to have run before the transition rather than assumed to.
 Until a resume is demonstrated, `services.logind.settings.Login.HandleLidSwitch` and `HandleLidSwitchExternalPower` SHALL remain `"lock"` and `HandleLidSwitchDocked` `"ignore"`, so a lid close cannot reach the suspend path.
 Restoring the lid handlers to `"suspend"` is gated on the resume criterion below.
 
 #### Scenario: the resume criterion is a surviving journal, not a lit screen
 
 - **WHEN** the machine is suspended with `systemctl suspend` and resumed after several minutes
-- **THEN** `journalctl -b -0` carries a resume line followed by continued logging with timestamps on the far side of the suspended interval, which is the criterion, because the failure this workaround addresses is precisely an absence: the pre-fix journal ends at the instant of suspend and carries nothing for the tens of minutes the machine demonstrably kept running, though journald's default `SyncIntervalSec` of five minutes would have committed several times
+- **THEN** `journalctl -b -0` carries a resume line followed by continued logging with timestamps on the far side of the suspended interval, which is the criterion, because the failure these units address is precisely an absence: the pre-fix journal ends at the instant of suspend and carries nothing for the tens of minutes the machine demonstrably kept running, though journald's default `SyncIntervalSec` of five minutes would have committed several times
 - **AND** a lit screen is NOT sufficient evidence, because the pre-fix failure left the machine running with every process blocked in `TASK_UNINTERRUPTIBLE` behind a dead NVMe, which a display test does not distinguish from a healthy resume
 - **AND** `zpool status zroot` reports no errors and the dm-crypt mapping is still open, since the pool now sits inside a LUKS container whose backing device is the controller that failed to resume
 
-#### Scenario: the i915 PSR hypothesis is retracted rather than carried
+#### Scenario: the display and storage kernel parameters are carried without their contribution being separated
 
-- **WHEN** `i915.enable_psr=2` is proposed as the fix for a dark panel after resume
-- **THEN** it is rejected on direct observation, because the panel on this unit reports "PSR = no, Panel Replay = no", so the parameter is inert here and setting it would be a change with no mechanism
-- **AND** the dark panel is recorded as a consequence of every process blocking on I/O rather than as a display fault, alongside the fans going to full speed because `mbpfan` — which holds the SMC in manual mode with `fan1_manual=1` — blocked in D state and stopped feeding its heartbeat, so the SMC reverted to its thermal-safety default
+- **WHEN** `nix eval --json .#nixosConfigurations.pyrite.config.boot.kernelParams` is evaluated
+- **THEN** it carries `i915.enable_psr=0`, `i915.enable_fbc=0`, `i915.enable_dc=0`, `nvme_core.default_ps_max_latency_us=0`, `nvme.noacpi=1`, and `pci=noaer`, which address the resume variant in which the kernel returns and the panel does not
+- **AND** they reached the machine on the same boot as the d3cold sweep, so nothing here separates their contribution from it
+- **AND** `nixos-hardware`'s `common/gpu/intel/kaby-lake` module, whose `default.nix:5-7` sets `i915.enable_guc=2`, `i915.enable_fbc=1`, and `i915.enable_psr=2`, is dropped through `disabledModules` with only `enable_guc=2` restored to the command line by hand, so the profile's PSR and FBC enables do not sit alongside the zeros above
+- **AND** enabling PSR is not a candidate mechanism in the other direction, because the panel on this unit reports "PSR = no, Panel Replay = no"
+- **AND** a dark panel is NOT by itself a display fault, because the failure these units address left every process blocked in `TASK_UNINTERRUPTIBLE` behind a dead NVMe, which also stopped `mbpfan` feeding the heartbeat that holds the SMC in manual mode with `fan1_manual=1`, so the fans reverted to their thermal-safety default
 
-#### Scenario: the deep and s2idle states are discriminated rather than assumed equivalent
+#### Scenario: the sleep state is recorded with the result and a pass in one state does not cover the other
 
-- **WHEN** the two recorded pre-fix failures are compared — deep S3, the kernel default on this unit, whose boots ended at "PM: suspend entry (deep)" with no resume line, and s2idle, which resumed the kernel and briefly restored networking before the machine died about a minute later
-- **THEN** the resume criterion is exercised against whichever state `cat /sys/power/mem_sleep` reports as active, and that state is recorded with the result
-- **AND** the two are NOT asserted to share the d3cold cause, because a dead NVMe produces the same journal silence in both and the journal cannot discriminate them; a pass in one state and a failure in the other is a finding rather than a contradiction
+- **WHEN** the resume criterion is exercised
+- **THEN** whichever state `cat /sys/power/mem_sleep` reports as active is recorded alongside the result, because `mem_sleep_default` is left unpinned
+- **AND** a pass in one state is NOT taken as covering the other: without these units deep S3, the kernel default on this unit, ended the boot at "PM: suspend entry (deep)" with no resume line, while s2idle resumed the kernel and briefly restored networking before the machine died about a minute later
+- **AND** the two are NOT asserted to share a cause either, because a dead NVMe produces the same journal silence in both and the journal cannot discriminate them; a pass in one state and a failure in the other is a finding rather than a contradiction
 
 ---
 
