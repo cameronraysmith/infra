@@ -228,10 +228,11 @@ That is a decision on the evidence recorded below rather than a permanent exclus
 
 ---
 
-### Requirement: A hang that outlives the disk is recorded through EFI pstore, because every other channel is unavailable on this machine
+### Requirement: A panic that outlives the disk is recorded through EFI pstore, because every other channel is unavailable on this machine
 
-The pyrite host module SHALL configure panic-on-hang with automatic reboot and SHALL keep the `pstore` filesystem and `systemd-pstore` archival available, so a repeat of the resume failure leaves a record.
-The record MUST reach a medium that does not depend on the NVMe controller, which is the component whose failure is under investigation.
+The pyrite host module SHALL set `boot.kernel.sysctl."kernel.panic"` to a nonzero timeout, so a panic reboots the machine rather than leaving it dark, and SHALL leave the `pstore` filesystem and `systemd-pstore` archival at the nixpkgs defaults that mount `efi_pstore` and run the archival unit.
+It MUST NOT carry `kernel.hung_task_panic`, `kernel.softlockup_panic`, or `kernel.hardlockup_panic` in the built configuration: those turn a long ZFS scrub or a long nix build into a reboot, which is not a behaviour a daily driver can carry, and they are set by hand for the duration of a supervised test instead.
+The record MUST reach a medium that does not depend on the NVMe controller, which is the component whose failure it records.
 The operator procedure for reading a captured record back belongs in the runbook rather than here; this requirement covers only what the built configuration carries.
 
 #### Scenario: EFI pstore is chosen because the failure destroys every disk-backed channel
@@ -240,11 +241,12 @@ The operator procedure for reading a captured record back belongs in the runbook
 - **THEN** `efi_pstore` is the recording channel, because it writes to EFI variables in the machine's SPI boot ROM rather than to the disk, which is why it survives the failure that erases the journal
 - **AND** the alternatives are recorded as unavailable rather than untried: no hardware watchdog exists, since `iTCO_wdt` is disabled by Apple firmware and no `/dev/watchdog` is present; no serial console exists, since the machine has USB-C ports only and no UART; and netconsole is unavailable, since `brcmfmac` implements no `ndo_poll_controller`
 
-#### Scenario: the configuration half is decidable off the hardware and the recording half is not
+#### Scenario: the configuration is what this requirement asserts, and a captured record is a separate claim
 
-- **WHEN** `nix eval --json .#nixosConfigurations.pyrite.config.boot.kernelParams` and `nix eval --json .#nixosConfigurations.pyrite.config.boot.kernel.sysctl` are evaluated
-- **THEN** the panic-on-hang and auto-reboot settings are present in the built configuration, discharging the eval half without touching the machine
-- **AND** the eval does NOT discharge the requirement, because a setting that is present and a record that is actually written are different claims, and only a deliberately induced hang distinguishes them
+- **WHEN** `nix eval --json .#nixosConfigurations.pyrite.config.boot.kernel.sysctl` is evaluated
+- **THEN** `kernel.panic` carries the reboot timeout and the three panic-on-hang keys are absent, which is the whole of what this requirement asserts
+- **AND** the reboot timeout is a sysctl rather than a kernel parameter, so `boot.kernelParams` does not carry it — that list holds the sleep and display parameters instead
+- **AND** a record actually written to EFI variables and archived is a different claim from a setting being present, and only a deliberately induced hang distinguishes them
 
 #### Scenario: the auto-reboot is not a remote-recovery claim
 
