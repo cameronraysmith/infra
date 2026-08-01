@@ -129,9 +129,9 @@
     url = "https://registry.npmjs.org/@astrojs/sitemap/-/sitemap-3.7.2.tgz";
     hash = "sha512-PqkzkcZTb5ICiyIR8VoKbIAP/laNRXi5tw616N1Ckk+40oNB8Can1AzVV56lrbC5GKSZFCyJYUVYqVivMisvpA==";
   };
-  "@astrojs/starlight@0.41.3" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/starlight/-/starlight-0.41.3.tgz";
-    hash = "sha512-8xsG6UpK581TJmtOc7/pnxHKEbP16rV06VLWaVa7FOyE/VEwnaHOsLtL+miifCEfuiuv0Wn+j8u3JSluRQesMQ==";
+  "@astrojs/starlight@0.41.6" = fetchurl {
+    url = "https://registry.npmjs.org/@astrojs/starlight/-/starlight-0.41.6.tgz";
+    hash = "sha512-Dt0/wY2JbFGUpxMgclw1j2Iqks2GG0LHYKgP7TfBXsFrs4LIbKvQ596lzyhXLz6nFcnPdIB9ZRFyDJeuVcx3Ug==";
   };
   "@astrojs/telemetry@3.3.0" = fetchurl {
     url = "https://registry.npmjs.org/@astrojs/telemetry/-/telemetry-3.3.0.tgz";
