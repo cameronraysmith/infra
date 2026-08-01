@@ -766,7 +766,7 @@ part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
 ```
 
 Every block in this section runs on pyrite, on the installed system, against that path — with the single exception of the Bitwarden upload and the transfer that feeds it, which happen at stibnite and are called out where they appear.
-Every `cryptsetup` and `systemd-cryptenroll` call below requires root, so enter a root shell once with `sudo -i` and run the pyrite blocks inside it; `$part2` is a shell variable and does not survive a change of shell, and neither does the `$HOME` these paths would otherwise resolve against.
+Every `cryptsetup` and `systemd-cryptenroll` call below requires root, so enter a root shell once with `sudo -i` and run the pyrite blocks inside it; `$part2` is a shell variable and does not survive a change of shell.
 
 The order of the subsections that follow is normative rather than editorial, and the rule is stated in `specs/encrypted-zfs-root/spec.md`: the header backup is taken once the container's keyslots reach their intended state, which is after both tokens are enrolled and not before.
 The install now leaves the header with a single passphrase slot, so a backup taken early records a container with no token in it at all, and restoring it later silently un-enrolls both (D26) while the `pyrite/zfs-root` slot inventory continues to describe a container the attached backup does not match.
@@ -902,82 +902,80 @@ Both readings are required before the header backup below is taken.
 
 This runs after both enrollments above and after the unlock proof, never before them, so that the captured header is the three-credential one — YubiKey-A, YubiKey-B, and the passphrase — rather than the single-slot snapshot the install leaves, which a later restore would un-enroll both tokens from.
 The backup is roughly 16 MiB — the LUKS2 header and its keyslot area — and it is key material, because it contains the keyslots themselves.
-Capture it to RAM-backed tmpfs, encrypt the copy that leaves the machine to the `&admin-user` recovery recipient, then remove the plaintext.
-The whole block runs in a root shell — enter one with `sudo -i` first and stay in it for the entire block — rather than under per-command `sudo`.
-`luksUUID`, `luksHeaderBackup`, and `shred` all require root, so per-command `sudo` would run them correctly and still leave `$HOME` bound to the operator's own home, writing the `.age` to `/home/cameron` while every later step in this section reaches for `/root`.
-The destination is written out as a literal `/root` path rather than left to `$HOME` so that the block is correct even if it is run some other way:
+Capture it to RAM-backed tmpfs, transfer it off the machine from there, and remove it once the upload has landed.
+The image is uploaded to the `pyrite/zfs-root` password-manager entry in the form it was captured, with no `age` layer over it (D31), so the file that leaves pyrite is the header itself and it carries the container's keyslots at every point on the way.
+It therefore stays on tmpfs for the whole of its life on this machine.
+Writing it to `/root` instead would put it on the pool, where `shred` cannot erase it: ZFS is copy-on-write, so an overwrite lands in new blocks and the original ones keep the data until they are reused.
+The whole block runs in a root shell — enter one with `sudo -i` first and stay in it for the entire block — rather than under per-command `sudo`, because `luksUUID`, `luksHeaderBackup`, and `shred` all require root:
 
 ```bash
 # host: pyrite (installed), in a root shell (sudo -i)
 uuid=$(cryptsetup luksUUID "$part2")   # provenance: the container UUID
 today=$(date +%F)                      # provenance: the capture date, YYYY-MM-DD
-backup=/root/pyrite-luks-header-$today-$uuid.age
 
 # cryptsetup opens the backup target with O_CREAT|O_EXCL and refuses a path that
 # already exists, so the target must not pre-exist -- which rules out /dev/stdout.
-# /dev/shm is tmpfs, so the plaintext header never touches persistent storage.
-tmp=/dev/shm/pyrite-luks-header.$$.img
-cryptsetup luksHeaderBackup "$part2" --header-backup-file "$tmp"
+# /dev/shm is tmpfs, so the image never touches persistent storage on pyrite.
+backup=/dev/shm/pyrite-luks-header-$today-$uuid.img
+cryptsetup luksHeaderBackup "$part2" --header-backup-file "$backup"
 
-age -r age1vn8fpkmkzkjttcuc3prq3jrp7t5fsrdqey74ydu5p88keqmcupvs8jtmv8 \
-  -o "$backup" "$tmp"
-
-shred -u "$tmp"
 ls -l "$backup"
 ```
 
-The trailing `ls -l` is the check that the file landed where the transfer below will look for it.
-It is worth the one line because the failure it catches is quiet and its consequence is not: a `.age` written to `/home/cameron` leaves the `scp` failing against `/root`, and the `rm` at the end of this section then deletes from whichever home the operator was not in, retiring a file that is still on the disk.
+The trailing `ls -l` is the check that the file landed at the literal path the transfer below pulls from, and that its size is the roughly 16 MiB a LUKS2 header and keyslot area occupy.
+It is worth the one line because the transfer runs from the other host, where a missing or truncated file appears only as an `scp` that failed for no stated reason.
 
-The recipient is the `&admin-user` recovery key, the same human key that decrypts the machine's vars and that task 5.3 records as the sole human recipient of the passphrase var.
-A header backup is worthless unless it can be decrypted, and the `&admin-user` private half is the one demonstrably in our custody, while the offline `&admin` key's private half is not reliably held.
-Encrypting to `&admin-user` puts the header backup and the passphrase var under one key, which is acceptable here: an `&admin-user` compromise already yields the passphrase directly, the passphrase is itself a full unlock credential, so the header backup adds no incremental exposure.
-On tmpfs the RAM backing is the real protection and `shred` is belt-and-suspenders — a plain `rm` would remove it as well — but the plaintext is gone before the operator moves on either way.
-The capture date and container UUID travel in the filename so a stale backup is identifiable without decrypting it, and the UUID ties the backup to one `luksFormat`: a re-install mints a new UUID (task 7.6 records it), so a backup whose UUID no longer matches the live container restores nothing.
+The image is uploaded in the form it was captured, with no `age` layer over it, and that absence is a decision rather than an omission (D31).
+Bitwarden encrypts attachments at rest, so the header is not stored unprotected; what it does not have is a factor independent of the vault, because the credential that opens the entry opens both the passphrase and the header on it.
+That is accepted because the passphrase by itself opens the container, so whoever reaches the entry has the disk with or without the header.
+An `age` layer would also be a second way to lose the header: it would encrypt the off-repository copy to the same key `vars/per-machine/pyrite/zfs/key/secret` is already encrypted to, putting it under exactly the dependency task 5.3 exists to break.
+The capture date and container UUID travel in the filename so a stale attachment is identifiable from the entry's file list alone, and the UUID ties the backup to one `luksFormat`: a re-install mints a new UUID (task 7.6 records it), so a backup whose UUID no longer matches the live container restores nothing.
 
-The `.age` is written on pyrite, and the Bitwarden upload happens at stibnite, so the file has to cross between the two hosts before anything can be uploaded or deleted:
+The image is captured on pyrite and the Bitwarden upload happens at stibnite, so it has to cross between the two hosts before anything can be uploaded or removed:
 
 ```bash
 # host: stibnite
-scp 'root@pyrite.zt:/root/pyrite-luks-header-*.age' ~/
+scp 'root@pyrite.zt:/dev/shm/pyrite-luks-header-*.img' ~/
 ```
 
-The remote path is spelled out as `/root` rather than `~` because the shell that expands it is root's on pyrite and the two only agree when the capture block above ran in a root shell, which is the condition its own `ls -l` established.
+The glob is expanded by root's shell on pyrite, and the path is quoted so that the local shell does not consume it first; `/dev/shm` is where the capture block put the file, which is the condition its own `ls -l` established.
 
-The `.age` file is ciphertext, so an ordinary copy over the mesh is sufficient and it can sit in the operator's home directory on stibnite until it is uploaded.
-Upload it to the machine's Bitwarden entry — the same `pyrite/zfs-root` entry that holds the passphrase — as a file attachment, so that entry holds only ciphertext; the header is never committed to this repository and never placed in sops.
+`scp` encrypts the transfer, so the mesh hop needs nothing added to it.
+What the transfer does not cover is the copy it lands: the file arriving on stibnite is the header image with nothing over it, and it is a full set of the container's keyslots for as long as it sits there, so upload it and remove it in one sitting rather than leaving it in the home directory.
+Upload it to the machine's Bitwarden entry — the same `pyrite/zfs-root` entry that holds the passphrase — as a file attachment; the header is never committed to this repository and never placed in sops.
 Bitwarden file attachments require a paid plan and the ~16 MiB backup is well within the per-attachment size limit, so confirm the account allows attachments before relying on this path.
 
-Once the upload succeeds, delete the `.age` on both hosts — the copy on stibnite and the original on pyrite:
+Once the upload succeeds, remove the image from both hosts — the copy on stibnite and the original on pyrite's tmpfs:
 
 ```bash
 # host: stibnite
-rm ~/pyrite-luks-header-*.age
+rm ~/pyrite-luks-header-*.img
 ```
 
 ```bash
 # host: pyrite (installed), in a root shell (sudo -i)
-rm /root/pyrite-luks-header-*.age
+shred -u /dev/shm/pyrite-luks-header-*.img
 ```
 
-Both deletions are tidiness rather than a security step, since the `.age` is ciphertext throughout; the plaintext was already destroyed by the `shred` above, on tmpfs, before the file left the machine.
+Both removals are a security step rather than tidiness, since each file is the keyslot set itself and a copy left behind is a credential that opens the container.
+On pyrite the file is on tmpfs, so `shred` is belt-and-suspenders — a plain `rm` releases the RAM backing as well — while on stibnite `rm` unlinks without overwriting, which is why the copy there is uploaded and removed in one sitting rather than left to be tidied later.
 Stating both is what keeps a stray copy from being left on whichever host the operator was not thinking about.
 
 ### Restoring the header
 
-Restoration reverses the capture and keeps the same tmpfs hygiene, since the decrypted header is again key material.
-It needs the `&admin-user` identity, the same key that decrypts the machine's vars, and a tmpfs mount, which `/dev/shm` and `/run` both provide on any NixOS or rescue environment:
+Restoration reverses the capture and keeps the same tmpfs hygiene, since the image is key material on the way in as much as on the way out.
+It needs the attachment off the `pyrite/zfs-root` entry and a tmpfs mount on the machine holding the container, which `/dev/shm` and `/run` both provide on any NixOS or rescue environment.
+The attachment is downloaded wherever the vault is reachable and carried to that machine by whatever route it has — over the network if the machine is up, on removable media if it is not — and it is the container's keyslots for the whole of that journey, so it is removed from every hop once the restore has run:
 
 ```bash
-# host: pyrite (installed), or whatever rescue environment holds the container.
-# The assignment is repeated here rather than inherited: this block can run in a
-# rescue shell in which the section's opening block never ran.
+# host: pyrite (installed), or whatever rescue environment holds the container,
+# as root. The assignments are repeated here rather than inherited: this block
+# can run in a rescue shell in which the section's opening block never ran.
 part2=/dev/disk/by-id/nvme-APPLE_SSD_AP0512J_C08843605KKHV4MAK_1-part2
+img=/dev/shm/pyrite-luks-header.img   # the downloaded attachment, placed on tmpfs
 
-age -d -i <admin-user-identity> pyrite-luks-header-<YYYY-MM-DD>-<luksUUID>.age \
-  > /dev/shm/pyrite-luks-header.img
-cryptsetup luksHeaderRestore "$part2" --header-backup-file /dev/shm/pyrite-luks-header.img
-shred -u /dev/shm/pyrite-luks-header.img
+cryptsetup luksHeaderRestore "$part2" --header-backup-file "$img"
+shred -u "$img"
 ```
 
 `luksHeaderRestore` reads the backup file rather than creating it, so it carries none of the `O_EXCL` constraint the capture does, and it prompts before it overwrites the live header.
