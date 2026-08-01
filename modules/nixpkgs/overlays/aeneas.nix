@@ -47,19 +47,19 @@
       let
         lib = prev.lib;
 
-        tag = "nightly-2026.07.04-45061fa";
+        tag = "nightly-2026.07.31-3a8586f";
         assets = {
           aarch64-darwin = {
             name = "aeneas-macos-aarch64.tar.gz";
-            hash = "8f228800ead5d45cf6c709ad9322a49e118ed6b2fef0bfd88dd4c5300849ce29";
+            hash = "7b4b85bec0f8e841a1b1e97065078af8cb7b1b8c4546cd65b9869c5825c0b7db";
           };
           x86_64-linux = {
             name = "aeneas-linux-x86_64.tar.gz";
-            hash = "21e138b6367186257a3b1b8829b0def3a4ba09d66930db73b4e5fe276a0227e4";
+            hash = "2526822d14c845b6df9e9ab6da4ed0bc909cd20e9f148c66aa5950dcc363c756";
           };
           aarch64-linux = {
             name = "aeneas-linux-aarch64.tar.gz";
-            hash = "a581a0f190dc0d35d6e2c46ac6df0580996603678fa5c6d6c4c960998af44e61";
+            hash = "f2b01829c3eaa20cf9c786551f7c6635886fad198abeb6d61375ad06fd1e7dc2";
           };
         };
 
