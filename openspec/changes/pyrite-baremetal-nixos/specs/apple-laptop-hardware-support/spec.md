@@ -98,7 +98,7 @@ The virtio entries `base` contributes SHALL be left in place.
 
 - **WHEN** the intent is to drop `base`'s cloud-VM `virtio_pci` and `virtio_net` entries, for which `lib.mkForce [ ... ]` is the natural-looking mechanism
 - **THEN** it MUST NOT be used, because the option accumulates from an open set of sources this specification does not close over — `base`'s virtio pair, the profile's `applespi`/`spi_pxa2xx_platform`/`intel_lpss_pci`/`applesmc`, `common/gpu/intel`'s `i915`, facter's `brcmfmac`, facter's own `i915` (`nixos/modules/hardware/facter/graphics/default.nix:33`), and stock nixpkgs modules that no configuration imports deliberately, among them `dm_mod` (`nixos/modules/system/boot/kernel.nix:379`), `af_packet` (`nixos/modules/system/boot/initrd-network.nix:124`), and `zfs` (`nixos/modules/tasks/filesystems/zfs.nix:726`) — and `mkForce` discards every definition it does not name
-- **AND** the openness of that set is the ground for the prohibition rather than a gap in it, since a prohibition that does not depend on enumerating the contributors cannot be defeated by finding another one, and the enumeration has already been wrong twice
+- **AND** the openness of that set is the ground for the prohibition rather than a gap in it, since a prohibition that does not depend on enumerating the contributors cannot be defeated by finding another one
 - **AND** the stock contributions are decidable by `nix eval` without pyrite's hardware: `nix eval --json .#nixosConfigurations.cinnabar.config.boot.initrd.kernelModules` returns `["af_packet","dm_mod","virtio_balloon","virtio_console","virtio_gpu","virtio_net","virtio_pci","virtio_rng","zfs"]` on a machine that imports no nixos-hardware profile
 - **AND** compliance is decidable by `nix eval` of `.#nixosConfigurations.pyrite.config.boot.initrd.kernelModules` against the built configuration, which SHALL contain the four SPI/SMC modules, `i915`, and `base`'s virtio pair
 - **AND** the resulting configuration would evaluate cleanly, build cleanly, and boot to an unlock prompt that is invisible or unanswerable, on a machine with no macOS to fall back to
@@ -124,8 +124,8 @@ A seated token becomes the ordinary credential of the later boots once either to
 
 - **WHEN** an external keyboard is used to answer the stage-1 unlock prompt — the FIDO2 client PIN, or the passphrase fallback — because the internal keyboard is not yet bound
 - **THEN** it is recorded that `usbhid`, `hid-generic`, and `hid-apple` reach the initrd through `availableKernelModules` and udev autoloading rather than through the force-loading `boot.initrd.kernelModules`, so the path depends on udev probing the device rather than on an unconditional modprobe
-- **AND** the ZFS-specific ground previously recorded here — that the ZFS initrd unit requests credentials with an unbounded timeout — is retracted, because the credential query is now `systemd-cryptsetup`'s, driven by the crypttab entry disko emits for `boot.initrd.luks.devices.<name>` and by the `systemd-fido2` tokens in the header, with `crypttabExtraOpts` empty
-- **AND** that query does not fail on its own: with no token seated the prompt reads "Please enter LUKS2 token PIN" and waits, with no device-absent timeout, and pressing Enter on an empty PIN is what falls through to the passphrase prompt — verified on the hardware, which supersedes the earlier note that the waiting behaviour was unasserted
+- **AND** the credential query is `systemd-cryptsetup`'s rather than the ZFS initrd unit's, driven by the crypttab entry disko emits for `boot.initrd.luks.devices.<name>` and by the `systemd-fido2` tokens in the header, with `crypttabExtraOpts` empty
+- **AND** that query does not fail on its own: with no token seated the prompt reads "Please enter LUKS2 token PIN" and waits, with no device-absent timeout, and pressing Enter on an empty PIN is what falls through to the passphrase prompt
 
 #### Scenario: the machine has no USB-A port
 
@@ -139,7 +139,7 @@ A seated token becomes the ordinary credential of the later boots once either to
 
 Hardware facts for pyrite SHALL come from the committed facter report.
 A `machines/pyrite/hardware-configuration.nix` SHOULD NOT be created.
-The strength is SHOULD NOT rather than MUST NOT because the ground — that clan-core warns when a `hardware-configuration.nix` coexists with a facter report — is recorded uncited and is tracked as an open risk in design.md; the previously-recorded second ground, that `nixos-generate-config` misdetects this machine's WiFi as b43, is false and is retracted there.
+The strength is SHOULD NOT rather than MUST NOT because the ground — that clan-core warns when a `hardware-configuration.nix` coexists with a facter report — is recorded uncited and is tracked as an open risk in design.md.
 
 #### Scenario: the repository carries a facter report and no generated hardware module
 

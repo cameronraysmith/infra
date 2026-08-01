@@ -983,7 +983,7 @@ shred -u "$img"
 ### The slot inventory and its provenance
 
 Both YubiKey 5C Nano tokens report the same AAGUID — `ff4dac45-ede8-4ec2-aced-cf66103f4335`, read from `ykman fido info` on both on 2026-07-20 — and are physically identical, so once both are enrolled `systemd-cryptenroll "$part2"` lists two `fido2` slots and prints nothing that tells them apart.
-The header does tell them apart, and an earlier revision of this note said it could not.
+The header does tell them apart.
 Each enrollment writes a `systemd-fido2` token naming the keyslot it authorizes, and both the token list and that binding are readable at any time, with no token seated and without unlocking anything:
 
 ```bash
