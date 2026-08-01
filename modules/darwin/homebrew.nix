@@ -29,6 +29,7 @@
           "factory"
           "fork"
           "ghostty"
+          "handy"
           "helium-browser"
           "itsycal"
           "hewigovens/tap/jayjay"
