@@ -190,16 +190,14 @@ in
       # already force-loads it adds only coretemp.
       services.mbpfan.aggressive = false;
 
-      # Suspend is broken on this hardware in both available sleep states, so the lid must
-      # not reach the suspend path. Deep S3 (the kernel default here) hangs immediately:
-      # two recorded attempts each ended their boot at "PM: suspend entry (deep)" with no
-      # resume line. s2idle resumes the kernel and briefly restores networking, but the
-      # display never comes back and the machine dies about a minute later. This machine's
-      # only remote access is ZeroTier over WiFi and it cannot be rebooted remotely
-      # (initrd networking is disabled above and the ZFS root needs a typed passphrase at
-      # stage 1), so a lid-triggered suspend costs physical intervention. lock keeps the
-      # session locked while the machine stays up. These are the current option names;
-      # services.logind.lidSwitch* are settingsRename aliases (nixpkgs
+      # Held at "lock": suspend and resume work here (the units below), but suspend
+      # followed by a warm reboot does not — the warm reboot loses the Alpine Ridge
+      # Thunderbolt subtree, and dmesg carries "Unable to change power state from D3cold
+      # to D0, device inaccessible" on pcieport 0000:00:1c.4 and the 05:0x.0 ports
+      # after each resume. A lid close is the most common suspend trigger, so "suspend"
+      # here would put that failure on the ordinary path; restore these once a warm
+      # reboot taken after a suspend leaves the subtree intact. These are the current
+      # option names; services.logind.lidSwitch* are settingsRename aliases (nixpkgs
       # nixos/modules/system/boot/systemd/logind.nix:104-106).
       services.logind.settings.Login = {
         HandleLidSwitch = "lock";
