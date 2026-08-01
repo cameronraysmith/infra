@@ -11,7 +11,10 @@ teams:
     name: "Cameron Smith"
 projects:
   "cognee-memory-layer":
-    id: "40537fb1-dadc-4405-ad3c-e5ed5dd7b66d"
+    # slugId, not the project UUID (40537fb1-dadc-4405-ad3c-e5ed5dd7b66d): `linear
+    # document list --project` silently returns zero nodes with exit 0 for a UUID,
+    # so the archive-time UPSERT's title scan misses and duplicates every document.
+    id: "5c2059d671db"
     name: "Use knowledge graph for agent memory layer"
     teams: ["CAM"]
     archive_documents: {}
