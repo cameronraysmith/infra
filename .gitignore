@@ -8,7 +8,9 @@ external-references
 .pre-commit-config.yaml
 .*rules*
 node_modules/
-archive/
+# Anchored: an unanchored `archive/` also matches openspec/changes/archive/,
+# whose archived change artifacts must stay tracked.
+/archive/
 
 # TypeScript/npm build artifacts
 dist/
