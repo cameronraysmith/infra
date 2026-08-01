@@ -192,8 +192,9 @@ The profile's own `systemd.services.disable-nvme-d3cold` block, which it carries
 ### Requirement: Suspend is entered through the systemd-sleep path and resumes with the pool intact
 
 Suspend and resume SHALL be exercised through `systemctl suspend` — the `systemd-sleep` path the sweep and the guard are ordered against — rather than through a lid close, so both units are demonstrated to have run before the transition rather than assumed to.
-Until a resume is demonstrated, `services.logind.settings.Login.HandleLidSwitch` and `HandleLidSwitchExternalPower` SHALL remain `"lock"` and `HandleLidSwitchDocked` `"ignore"`, so a lid close cannot reach the suspend path.
-Restoring the lid handlers to `"suspend"` is gated on the resume criterion below.
+`services.logind.settings.Login.HandleLidSwitch` and `HandleLidSwitchExternalPower` SHALL be `"lock"` and `HandleLidSwitchDocked` `"ignore"`, so a lid close locks the session and leaves the machine running.
+They SHALL NOT be set to `"suspend"` while a warm reboot taken after a suspend loses the Thunderbolt subtree, because a lid close is the most common suspend trigger and moving the handlers would put that failure on the ordinary path.
+That is a decision on the evidence recorded below rather than a permanent exclusion: it is revisited when a suspend followed by a warm reboot leaves the subtree intact.
 
 #### Scenario: the resume criterion is a surviving journal, not a lit screen
 
@@ -217,6 +218,13 @@ Restoring the lid handlers to `"suspend"` is gated on the resume criterion below
 - **THEN** whichever state `cat /sys/power/mem_sleep` reports as active is recorded alongside the result, because `mem_sleep_default` is left unpinned
 - **AND** a pass in one state is NOT taken as covering the other: without these units deep S3, the kernel default on this unit, ended the boot at "PM: suspend entry (deep)" with no resume line, while s2idle resumed the kernel and briefly restored networking before the machine died about a minute later
 - **AND** the two are NOT asserted to share a cause either, because a dead NVMe produces the same journal silence in both and the journal cannot discriminate them; a pass in one state and a failure in the other is a finding rather than a contradiction
+
+#### Scenario: the lid handlers are held at "lock" by the warm-reboot failure, not by the resume observation
+
+- **WHEN** `nix eval --json .#nixosConfigurations.pyrite.config.services.logind.settings.Login` is evaluated
+- **THEN** `HandleLidSwitch` and `HandleLidSwitchExternalPower` read `"lock"` and `HandleLidSwitchDocked` reads `"ignore"`, so a lid close locks the session and leaves the machine running
+- **AND** a demonstrated suspend and resume does NOT release them, because that is a different claim from a suspend followed by a warm reboot: the Alpine Ridge Thunderbolt subtree does not survive that reboot, and `dmesg` carries "Unable to change power state from D3cold to D0, device inaccessible" against `pcieport 0000:00:1c.4` and the `05:0x.0` ports after each resume
+- **AND** holding the handlers is what keeps that failure off the ordinary path, since a lid close is the most common suspend trigger, so they move when a suspend followed by a warm reboot leaves the subtree intact and not before
 
 ---
 

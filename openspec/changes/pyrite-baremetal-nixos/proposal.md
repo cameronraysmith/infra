@@ -65,6 +65,7 @@ It establishes a pattern for bare-metal installation of NixOS onto GUI-enabled A
 Audio is out of scope: the only out-of-tree module carrying the CS8409 amplifier init tops out below this repository's pinned kernel, and pinning the kernel backward for audio is ruled out.
 If mainline lands that init, sound arrives on a routine kernel bump at no cost; the hardware inventory note carries it as an upstream watch-item.
 Suspend/resume and the `d3cold` workaround are in scope: journal forensics established the failure — a storage controller inaccessible on resume, which ZFS's default `failmode=wait` converts into an indefinite whole-system block — and the workaround the profile carries is scoped to one endpoint, so the machine defines its own units and deferring them would leave the artifacts disagreeing with the code.
+Moving the lid handlers off `"lock"` is not in scope.
 Hibernation remains deferred and is a distinct thing — it is suspend-to-disk, it is what keeping `base`'s `boot.zfs.forceImportRoot = true` forecloses, and bringing suspend-to-RAM into scope does not reopen that decision.
 The correction of `base`'s cloud-VM initrd assumptions for the fleet remains out of scope and is left to a separate change.
 
