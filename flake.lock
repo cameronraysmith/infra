@@ -219,11 +219,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1783134081,
-        "narHash": "sha256-q2oZfm38KIIxKJ3rc8WijFAF2hH2Hc8NJppnjFDnmKs=",
+        "lastModified": 1785621387,
+        "narHash": "sha256-9hDAgrJDTDvvT9CYwQcu1NV3Cn3Tmhu7TfE3KzmqY3E=",
         "owner": "cameronraysmith",
         "repo": "cognee-nix",
-        "rev": "46144987927fcc19fece1a4d8a39f5591442d6bd",
+        "rev": "ae554ce698da8a7a4a8a7cd2c4340a83b1a5c7da",
         "type": "github"
       },
       "original": {
