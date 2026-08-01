@@ -3,17 +3,19 @@ linear_story_id: CAM-32
 linear_story_identifier: CAM-32
 linear_story_title: "Bare-metal install path for the vanixiets clan"
 linear_story_url: https://linear.app/cameronraysmith/issue/CAM-32
-linear_story_state: In Progress
+linear_story_state: Done
 linear_team: CAM
 linear_project: pyrite-baremetal-nixos
-last_synced_state: In Progress
-last_synced_at: "2026-07-18T00:17:22Z"
+last_synced_state: Done
+last_synced_at: "2026-08-01T17:49:38Z"
 review_round: 0
 max_review_rounds: 3
 attempt_log:
   - { at: "2026-07-16T00:00:00Z", transition: "Backlog->Todo", outcome: "dropped", note: "artifacts authored offline; T1 bind not posted (no network in authoring session)." }
   - { at: "2026-07-17T22:06:54Z", transition: "Backlog->Todo", outcome: "posted", note: "T1 bind posted; CAM-32 description seeded from proposal.md business content, state Backlog->Todo." }
   - { at: "2026-07-18T00:17:22Z", transition: "Todo->In Progress", outcome: "posted", note: "T2 apply-gate: first tasks.md checkboxes (1.1/1.2, nixos-hardware flake input) landed; CAM-32 Todo->In Progress, apply-begun comment posted." }
+  - { at: "2026-08-01T17:49:38Z", transition: "archive->mirror", outcome: "posted", note: "Document UPSERT against project slugId 48b4123d589b; the project held zero prior documents, so all four capability specs resolved to creates (apple-laptop-hardware-support, bare-metal-install-path, encrypted-zfs-root, graphical-desktop-session). Returned document ids were not written back to openspec/linear.yaml archive_documents; the next archive takes the deterministic title-scan fallback." }
+  - { at: "2026-08-01T17:49:38Z", transition: "In Progress->Done", outcome: "posted", note: "T4 archive-gate catch-up: the change was merged and archived while Linear still read In Progress, so a single transition fired straight to the local Done phase rather than walking the In Review crossing. Closing comment posted; no comment backfilled for the skipped crossing." }
 ---
 
 ## Why
