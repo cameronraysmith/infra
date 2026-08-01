@@ -9,13 +9,7 @@
 # the python3Packages rebind would still need to live somewhere — splitting
 # further is out of scope here.
 #
-# Contained:
-#   - pygame: SDL2 surface flag tests fail on Python 3.13
-#     Upstream: https://github.com/libsdl-org/SDL/issues/14424
-#     Failing: test_fill_rle, test_make_surface__subclassed_surface
-#     TODO: Remove when nixpkgs skip-rle-tests.patch covers these tests
-#     Date added: 2026-01-24
-#
+# Contained:#
 #   - duckdb cross-reference: route python3Packages.duckdb through the by-name
 #     python-duckdb package (pkgs/by-name/python-duckdb/), which has tests
 #     disabled and tracks the by-name C++ duckdb version. On machines (via
@@ -32,11 +26,6 @@
     (final: prev: {
       python3 = prev.python3.override {
         packageOverrides = pyFinal: pyPrev: {
-          pygame = pyPrev.pygame.overrideAttrs {
-            doCheck = false;
-            doInstallCheck = false;
-          };
-
           duckdb = final.python-duckdb or pyPrev.duckdb;
         };
       };
