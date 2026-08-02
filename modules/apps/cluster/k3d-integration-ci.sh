@@ -11,9 +11,9 @@
 #                       does NOT add a top-level `${SOPS_AGE_KEY:?…}` guard
 #                       so that local-dev runs using the file-branch
 #                       ($HOME/.config/sops/age/keys.txt) remain usable.
-#   Optional (config, defaulted inside this script):
-#     ARGOCD_REPO_URL   defaults to file:///manifests; callers may override
-#                       for remote-repo testing.
+#   No optional config: the manifest source is selected by building the
+#   local-k3d-ci nixidy environment (see modules/nixidy.nix), not by an
+#   environment variable.
 #
 #   Caller mechanisms:
 #     - Local dev:      .envrc dotenv or file-branch ($HOME/.config/sops/...)
@@ -36,7 +36,7 @@ case "${1:-}" in
 Usage: k3d-integration-ci [--help]
 
 Phases:
-  1. nixidy-build with ARGOCD_REPO_URL=file:///manifests
+  1. nixidy-build of the local-k3d-ci environment (file:///manifests)
   2. Stage /tmp/k3d-manifests as a fresh git repo (cluster volume mount target)
   3. k3d-full (ctlptl create + kluctl deploy)
   4. k3d-wait-ready (foundation + infra Ready)
@@ -54,12 +54,15 @@ repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
 
 echo "=== Phase 1: Build manifests with local repo URL ==="
-# ARGOCD_REPO_URL default applied via `:=` bash parameter expansion so
-# callers can override via env for remote-repo testing without editing
-# this script. See env-var contract header for the caller mechanisms.
-: "${ARGOCD_REPO_URL:=file:///manifests}"
-export ARGOCD_REPO_URL
-just nixidy-build
+just nixidy-build local-k3d-ci
+
+# A rendered Application pointing at the remote means the environment
+# selection regressed and the run would silently test the remote repo
+# against whatever credential happens to be valid, rather than the mount.
+if grep -rq 'github.com/cameronraysmith/local-k3d' result/; then
+  echo "Error: rendered manifests reference the remote repo; expected file:///manifests" >&2
+  exit 1
+fi
 
 echo ""
 echo "=== Phase 2: Prepare local git repo (before cluster for volume mount) ==="
@@ -87,7 +90,7 @@ just k3d-wait-ready
 
 echo ""
 echo "=== Phase 5: Bootstrap ArgoCD (syncs from file:///manifests) ==="
-just nixidy-bootstrap
+just nixidy-bootstrap local-k3d-ci
 
 echo ""
 echo "=== Phase 6: Wait for ArgoCD sync ==="

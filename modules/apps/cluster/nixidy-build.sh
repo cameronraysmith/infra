@@ -6,16 +6,17 @@ set -euo pipefail
 case "${1:-}" in
   -h|--help)
     cat <<'EOF'
-Usage: nixidy-build [--help]
+Usage: nixidy-build [ENVIRONMENT] [--help]
 
-Invokes `nixidy build .#local-k3d`, producing a ./result/ symlink at the
+Invokes `nixidy build .#ENVIRONMENT`, producing a ./result/ symlink at the
 working directory that materializes the rendered manifest tree.
-ARGOCD_REPO_URL may be set in the environment to override the default
-remote repo URL baked into the rendered Application resources (see
-modules/nixidy.nix and the ARGOCD_REPO_URL env hook in kubernetes/nixidy).
+
+ENVIRONMENT defaults to local-k3d, which targets the private manifest repo.
+Pass local-k3d-ci to target the file:///manifests mount instead; the two are
+defined side by side in modules/nixidy.nix.
 EOF
     exit 0
     ;;
 esac
 
-exec nixidy build .#local-k3d
+exec nixidy build ".#${1:-local-k3d}"

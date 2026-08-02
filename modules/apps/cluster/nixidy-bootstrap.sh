@@ -5,18 +5,20 @@ set -euo pipefail
 case "${1:-}" in
   -h|--help)
     cat <<'EOF'
-Usage: nixidy-bootstrap [--help]
+Usage: nixidy-bootstrap [ENVIRONMENT] [--help]
 
 Equivalent to:
-  nixidy bootstrap .#local-k3d | kubectl apply -f -
+  nixidy bootstrap .#ENVIRONMENT | kubectl apply -f -
 
 Transitions Phase 3 (kluctl-driven) infrastructure to Phase 4 (ArgoCD
-app-of-apps). ArgoCD must already be Available before invoking, and it
-must have credentials to access the local-k3d manifest repo referenced
-by the rendered Application CR.
+app-of-apps). ArgoCD must already be Available before invoking.
+
+ENVIRONMENT defaults to local-k3d, whose rendered Application CR points at
+the private manifest repo, so ArgoCD needs credentials for it. local-k3d-ci
+points at the file:///manifests mount and needs none.
 EOF
     exit 0
     ;;
 esac
 
-nixidy bootstrap .#local-k3d | kubectl apply -f -
+nixidy bootstrap ".#${1:-local-k3d}" | kubectl apply -f -
