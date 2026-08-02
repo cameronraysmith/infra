@@ -923,6 +923,9 @@ container-release VERSION="1.0.0" TAGS="":
 # Note: DNS configuration happens in k3d-deploy after Cilium CNI is ready
 [group('k3d')]
 k3d-up:
+  # cluster.yaml volume-mounts this host path at /manifests; k3d only warns
+  # when it is absent, leaving the mount unusable for the rest of the run.
+  @mkdir -p /tmp/k3d-manifests
   ctlptl apply -f kubernetes/clusters/local-k3d/cluster.yaml
   @just k3d-bootstrap-secrets
 
@@ -1049,36 +1052,12 @@ k3d-wait-argocd-sync *ARGS:
   {{nix_cmd}} run --no-warn-dirty .#k3d-wait-argocd-sync -- {{ARGS}}
 
 # Full integration test: cluster creation, deployment, GitOps sync, and validation
+# Alias for k3d-integration-ci so local and CI runs exercise one code path.
+# Integration testing deliberately does not go through the ADR-006 private repo:
+# it needs no clone, no PAT, and no network. Use nixidy-full for the deploy path.
 [group('k3d')]
-k3d-integration:
-  #!/usr/bin/env bash
-  set -euo pipefail
-
-  echo "=== Phase 1: Cluster Bootstrap ==="
-  just k3d-full
-
-  echo ""
-  echo "=== Phase 2: Wait for Infrastructure Ready ==="
-  just k3d-wait-ready
-
-  echo ""
-  echo "=== Phase 3: GitOps Sync ==="
-  just nixidy-sync
-
-  echo ""
-  echo "=== Phase 4: ArgoCD Bootstrap ==="
-  just nixidy-bootstrap
-
-  echo ""
-  echo "=== Phase 5: Wait for ArgoCD Sync ==="
-  just k3d-wait-argocd-sync
-
-  echo ""
-  echo "=== Phase 6: Integration Tests ==="
-  just k3d-test-coverage
-
-  echo ""
-  echo "=== Integration complete ==="
+k3d-integration *ARGS:
+  @just k3d-integration-ci {{ARGS}}
 
 # Full CI integration test: local manifests, cluster, GitOps sync, tests
 # Uses file:///manifests instead of remote repo - no GitHub credentials needed
