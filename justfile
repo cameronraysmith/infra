@@ -1069,10 +1069,11 @@ k3d-integration-ci *ARGS:
 
 ## nixidy (Phase 4 GitOps)
 # Per ADR-006: Rendered manifests are pushed to separate private repos per cluster.
-# local-k3d manifests → ~/projects/nix-workspace/local-k3d (github.com/cameronraysmith/local-k3d)
+# local-k3d manifests → github.com/cameronraysmith/local-k3d, checked out as a
+# sibling of this worktree. nixidy-push clones it if it is not there yet.
 
-# Path to local-k3d manifest repository
-local_k3d_repo := env("LOCAL_K3D_REPO", home_directory() / "projects/nix-workspace/local-k3d")
+# Path to local-k3d manifest repository; keep in sync with nixidy-push.sh
+local_k3d_repo := env("LOCAL_K3D_REPO", parent_directory(justfile_directory()) / "local-k3d")
 
 # Build nixidy manifests for local-k3d environment (renders to ./result)
 # Body lives in modules/apps/cluster/nixidy-build.{nix,sh}.
