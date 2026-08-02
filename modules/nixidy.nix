@@ -10,6 +10,9 @@
 #   nix run .#nixidy -- bootstrap .#local-k3d    # Output bootstrap Application CR
 #   nix run .#nixidy-build-local-k3d             # Convenience wrapper for build
 #
+# Environments: local-k3d targets the private manifest repo (ADR-006);
+# local-k3d-ci targets the file:///manifests mount used by integration tests.
+#
 # Direct nix build (alternative):
 #   nix build .#nixidyEnvs.aarch64-darwin.local-k3d.environmentPackage  # Full environment
 #   nix build .#nixidyEnvs.aarch64-darwin.local-k3d.bootstrapPackage    # Bootstrap Application CR
@@ -20,24 +23,33 @@
     system:
     let
       pkgs = import inputs.nixpkgs { inherit system; };
+      extraSpecialArgs = {
+        inherit (inputs)
+          cilium-src
+          step-ca-src
+          sops-secrets-operator-src
+          argocd-src
+          argocd-helm-src
+          gateway-api-src
+          ;
+      };
+      mkLocalK3d =
+        extraModules:
+        inputs.nixidy.lib.mkEnv {
+          inherit pkgs extraSpecialArgs;
+          charts = inputs.nixhelm.chartsDerivations.${system};
+          modules = [ ../kubernetes/nixidy/local-k3d ] ++ extraModules;
+        };
     in
     {
-      local-k3d = inputs.nixidy.lib.mkEnv {
-        inherit pkgs;
-        charts = inputs.nixhelm.chartsDerivations.${system};
-        modules = [ ../kubernetes/nixidy/local-k3d ];
-        # Pass flake inputs for charts not available in nixhelm
-        extraSpecialArgs = {
-          inherit (inputs)
-            cilium-src
-            step-ca-src
-            sops-secrets-operator-src
-            argocd-src
-            argocd-helm-src
-            gateway-api-src
-            ;
-        };
-      };
+      local-k3d = mkLocalK3d [ ];
+
+      # Integration-test variant: ArgoCD reads the manifests mounted into the
+      # cluster at /manifests instead of the private remote, so the test needs
+      # no GitHub credential. Selected explicitly by attribute name rather than
+      # by an environment variable, because nixidy evaluates the environment
+      # purely and builtins.getEnv would silently yield "".
+      local-k3d-ci = mkLocalK3d [ { nixidy.target.repository = "file:///manifests"; } ];
     }
   );
 
