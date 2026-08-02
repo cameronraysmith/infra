@@ -45,6 +45,12 @@
         "@playwright/test"
       ],
       "rangeStrategy": "pin"
+    },
+    {
+      "description": "The rust nightly channel is a derived constraint (aeneas -> charon pin -> required nightly), not a free-floating dependency; surface drift on the dependency dashboard but never open a PR automatically",
+      "matchManagers": ["rust-toolchain"],
+      "matchFileNames": ["modules/nixpkgs/overlays/rust-toolchain"],
+      "dependencyDashboardApproval": true
     }
   ]
 }
