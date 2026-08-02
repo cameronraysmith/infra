@@ -20,12 +20,6 @@
 #     Machine shadowing is gated by modules/nixpkgs/duckdb-local.nix; when its
 #     toggle withholds the pair, the `or pyPrev.duckdb` fallback routes through
 #     nixpkgs everywhere.
-#   - lancedb cross-reference: route python3Packages.lancedb through the by-name
-#     python-lancedb package (pkgs/by-name/python-lancedb/), which tracks 0.36.0
-#     because nixpkgs' 0.32.0 fails to compile; see that package for the ethnum
-#     E0512 rationale and the removal trigger. Ungated, so the shadow applies on
-#     every machine; the `or pyPrev.lancedb` fallback covers the perSystem
-#     context where customPackages are absent.
 { ... }:
 {
   nixpkgsOverlays = [
@@ -33,7 +27,6 @@
       python3 = prev.python3.override {
         packageOverrides = pyFinal: pyPrev: {
           duckdb = final.python-duckdb or pyPrev.duckdb;
-          lancedb = final.python-lancedb or pyPrev.lancedb;
         };
       };
       python3Packages = final.python3.pkgs;
