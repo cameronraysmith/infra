@@ -40,6 +40,7 @@
           "obs"
           "obsidian"
           "orbstack"
+          "pomatez"
           "podman-desktop"
           "raindropio"
           "raycast"
