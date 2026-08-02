@@ -39,7 +39,7 @@
             fi
             export LOG_LEVEL="''${LOG_LEVEL:-ERROR}"
             export COGNEE_LOG_FILE="''${COGNEE_LOG_FILE:-false}"
-            exec ${pkgs.python313Packages.cognee}/bin/cognee-cli \
+            exec ${pkgs.python3Packages.cognee}/bin/cognee-cli \
               --api-url "${saasApiUrl}" \
               --api-key "$api_key" \
               "$@"
@@ -47,7 +47,7 @@
           meta.description = "cognee CLI wrapper baking the hosted SaaS --api-url and the per-host sops --api-key";
         })
         # raw, unwrapped cognee-cli on PATH (no baked SaaS flags/env) for ad-hoc/testing
-        pkgs.python313Packages.cognee
+        pkgs.python3Packages.cognee
       ];
     };
 }
