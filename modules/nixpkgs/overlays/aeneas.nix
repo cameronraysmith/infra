@@ -169,6 +169,14 @@
             # charon-driver's librustc_driver is resolved from the slim toolchain.
             runtimeDependencies = lib.optionals prev.stdenv.hostPlatform.isLinux [ slimRustToolchain ];
 
+            # Consumed by modules/checks/aeneas-toolchain.nix, which asserts the
+            # marker channel equals the channel inside this platform's bundle.
+            # Exposed here so the check reads the values this overlay actually
+            # uses rather than re-deriving them from the same sources.
+            passthru = {
+              inherit bundle rustChannel;
+            };
+
             meta = {
               description = "Charon frontend (prebuilt) for the Aeneas verification toolchain";
               platforms = builtins.attrNames assets;
