@@ -2,9 +2,8 @@
 {
   nixpkgsOverlays = [
     (final: prev: {
-      texliveWithPackages = prev.texlive.combine {
-        inherit (prev.texlive)
-          scheme-small
+      texliveWithPackages = prev.texliveSmall.withPackages (
+        ps: with ps; [
           algorithm2e
           algorithmicx
           algorithms
@@ -33,8 +32,8 @@
           vruler
           wrapfig
           xurl
-          ;
-      };
+        ]
+      );
     })
   ];
 }
