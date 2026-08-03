@@ -89,5 +89,8 @@
       ]
     ],
     "npmPublish": false
+  },
+  "overrides": {
+    "@cloudflare/vite-plugin": "^1.50.0"
   }
 }
