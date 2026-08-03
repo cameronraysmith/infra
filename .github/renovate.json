@@ -51,6 +51,14 @@
       "matchManagers": ["rust-toolchain"],
       "matchFileNames": ["modules/nixpkgs/overlays/rust-toolchain"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "@cloudflare/vite-plugin bundles an exact wrangler and emits config fields that a mismatched wrangler CLI rejects; bumping either alone breaks the docs build",
+      "matchPackageNames": [
+        "wrangler",
+        "@cloudflare/vite-plugin"
+      ],
+      "groupName": "cloudflare-workers-tooling"
     }
   ]
 }
