@@ -22,6 +22,14 @@ let
         ]
         ++ [
           flake.inputs.niks3.packages.${pkgs.stdenv.hostPlatform.system}.niks3
+        ]
+        ++ [
+          # On PATH for per-repository opt-in ergonomics: gpg.x509.program is
+          # written by hand in a repo-local config, and the alternative is
+          # pasting a store path that goes stale on the next update. Nothing
+          # invokes it until someone opts in. The credential helper needs no
+          # such entry — generated config references it by absolute store path.
+          pkgs.buzz-git-sign-nostr
         ];
 
       # Inject linear-cli's bundled skill (a single linear-cli/ dir with one
@@ -135,9 +143,19 @@ let
       programs.git.settings = {
         user.name = flake.users.crs58.meta.fullname;
         user.email = flake.users.crs58.meta.email;
-      }
-      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+
+        # buzz-nsec keeps the default sops path while git-credentials and
+        # aws-credentials at :77-84 set explicit ones. That asymmetry is two
+        # different requirements, not an inconsistency: those two consumers need
+        # a fixed location, whereas an explicit `path` materializes a per-secret
+        # symlink and git-sign-nostr's open_keyfile
+        # (crates/git-sign-nostr/src/lib.rs) opens with O_NOFOLLOW. The default
+        # materializes a regular file inside a symlinked generation directory,
+        # and O_NOFOLLOW constrains only the trailing component, so it is
+        # accepted. Nothing invokes git-sign-nostr today, so this constrains no
+        # active path; it applies the moment anyone opts in per-repository.
         nostr.keyfile = config.sops.secrets.buzz-nsec.path;
+
         # `*` matches exactly one label, so this covers every community on
         # communities.buzz.xyz. The leading "" clears the inherited generic
         # helper chain from development/git.nix, whose `store --file` helper is
@@ -145,7 +163,7 @@ let
         credential."https://*.communities.buzz.xyz/git" = {
           helper = [
             ""
-            "/Applications/Buzz.app/Contents/MacOS/git-credential-nostr"
+            (lib.getExe' pkgs.buzz-git-credential-nostr "git-credential-nostr")
           ];
           useHttpPath = true;
         };
