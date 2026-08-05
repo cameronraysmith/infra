@@ -4238,9 +4238,9 @@
     url = "https://registry.npmjs.org/semantic-release-plugin-decorators/-/semantic-release-plugin-decorators-4.0.0.tgz";
     hash = "sha512-5eqaITbgGJu7AWCqY/ZwDh3TCS84Q9i470AImwP9vw3YcFRyR8sEb499Zbnqa076bv02yFUn88GtloQMXQsBrg==";
   };
-  "semantic-release@25.0.8" = fetchurl {
-    url = "https://registry.npmjs.org/semantic-release/-/semantic-release-25.0.8.tgz";
-    hash = "sha512-w/iZ0bur36rKffXZYmIUmy068eoBY3Ij1DCCddx2JwWEM5Tg+eU9ld/E9qSInVvPASyyR2Ln/XGfQ9OZrMlhtw==";
+  "semantic-release@25.0.9" = fetchurl {
+    url = "https://registry.npmjs.org/semantic-release/-/semantic-release-25.0.9.tgz";
+    hash = "sha512-bxve7csK0/Txr++CkfrmV+X1r4jqiSOw2WsSad9E2S68R+ZfLBwDn8IceM8WfiOmKQIHgsQc1cNA8Dzg7U75pg==";
   };
   "semver-regex@4.0.5" = fetchurl {
     url = "https://registry.npmjs.org/semver-regex/-/semver-regex-4.0.5.tgz";
