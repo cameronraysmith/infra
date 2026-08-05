@@ -85,10 +85,6 @@
     url = "https://registry.npmjs.org/@astrojs/internal-helpers/-/internal-helpers-0.10.0.tgz";
     hash = "sha512-Ry2R3VPeIN4uPCSA4xQc+e+vsJXkalKpEbDc07hV+a/o5Bs2N/s/uDcPJH/05L19DKh9tAy7e6JM3YZ6Cxfezw==";
   };
-  "@astrojs/internal-helpers@0.10.1" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/internal-helpers/-/internal-helpers-0.10.1.tgz";
-    hash = "sha512-5phcroT/vmOOrYuuAxtkbPixy5hePtlz9i8K4OeDv3dNK6/UQRuXPOSRTxIOBbUY5Sonw2UaxjbuVc43Mcir6Q==";
-  };
   "@astrojs/internal-helpers@0.10.2" = fetchurl {
     url = "https://registry.npmjs.org/@astrojs/internal-helpers/-/internal-helpers-0.10.2.tgz";
     hash = "sha512-yt7fMgPYqSM4Tmr+taTW6Per+hjJ8Pk6lA1PAcDyqzOt8HzJ6Kje5WzCxA2Sd+9wsUW7uhkLeoTMK0cXPwH9rQ==";
@@ -101,10 +97,6 @@
     url = "https://registry.npmjs.org/@astrojs/markdown-remark/-/markdown-remark-6.3.9.tgz";
     hash = "sha512-hX2cLC/KW74Io1zIbn92kI482j9J7LleBLGCVU9EP3BeH5MVrnFawOnqD0t/q6D1Z+ZNeQG2gNKMslCcO36wng==";
   };
-  "@astrojs/markdown-remark@7.2.0" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/markdown-remark/-/markdown-remark-7.2.0.tgz";
-    hash = "sha512-+YxmVQu1Bd+MFfSzjq1rOJvD9+nIOJzz5YIIhdIH01RrxRkKbyKoEgyIqP3yv51MhzMDgd79QaPv+kCVPT8vHw==";
-  };
   "@astrojs/markdown-remark@7.2.2" = fetchurl {
     url = "https://registry.npmjs.org/@astrojs/markdown-remark/-/markdown-remark-7.2.2.tgz";
     hash = "sha512-FGfmK84zSNcrsBd0dl1gXE9JvZYElp8EXQa2jpHVAxG4deGKAp43wspxFupjADJX7MSsMRHwYCnfT6EyVmgeFQ==";
@@ -113,17 +105,13 @@
     url = "https://registry.npmjs.org/@astrojs/markdown-satteri/-/markdown-satteri-0.3.2.tgz";
     hash = "sha512-feXuUPy41gVfeM7EHT1ciUim8ozGr+YHXab9uUBc1Hk8y60DQosO8ldL+AoPXnCAoGj1OChwHfvXmmJ6XVnY9A==";
   };
-  "@astrojs/markdown-satteri@0.3.3" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/markdown-satteri/-/markdown-satteri-0.3.3.tgz";
-    hash = "sha512-Lje33Ittd8UQGgbIIWQvhPkj5X5c4b1sZnZWX3JQV/AWpfbuQGxVi2ONt6+ScydcwfR4egilslEWyczMclrJ1g==";
-  };
   "@astrojs/markdown-satteri@0.3.5" = fetchurl {
     url = "https://registry.npmjs.org/@astrojs/markdown-satteri/-/markdown-satteri-0.3.5.tgz";
     hash = "sha512-CvWVEFAbay7YO+i9SaqDJubipA5ckiVB89QWoMJ5XC0m5CtFg8JwZ7Kau6X9sYY7FZURH0w2l03ISH2jOS/RDQ==";
   };
-  "@astrojs/mdx@7.0.0" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/mdx/-/mdx-7.0.0.tgz";
-    hash = "sha512-LKwNA8nnLtEM0auoP6OfH/UnlKe1Ub59qZjbcYkZjPBGw6PkJewWkA/1qwLpECvV6gMDd6TR6eqV9p/VYZrcrQ==";
+  "@astrojs/mdx@7.0.5" = fetchurl {
+    url = "https://registry.npmjs.org/@astrojs/mdx/-/mdx-7.0.5.tgz";
+    hash = "sha512-wEM/HH1RiEntyPVagdiF+yArzfcYLKBB0C1RZspVidKZ97rRMbaqP1Nbl/GR0sJs8zwaceqxRymw8aOKKJRdYw==";
   };
   "@astrojs/prism@3.3.0" = fetchurl {
     url = "https://registry.npmjs.org/@astrojs/prism/-/prism-3.3.0.tgz";
@@ -133,13 +121,13 @@
     url = "https://registry.npmjs.org/@astrojs/prism/-/prism-4.0.2.tgz";
     hash = "sha512-KTivpmnz6lDsC6o9H4+DNm2SrE/GHzw8cNAvEJwAvUT+eoaEnn/4NtbDNfRRaxaJHdp15gf+tfHAWiXR4wB3BA==";
   };
-  "@astrojs/sitemap@3.7.2" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/sitemap/-/sitemap-3.7.2.tgz";
-    hash = "sha512-PqkzkcZTb5ICiyIR8VoKbIAP/laNRXi5tw616N1Ckk+40oNB8Can1AzVV56lrbC5GKSZFCyJYUVYqVivMisvpA==";
+  "@astrojs/sitemap@3.7.3" = fetchurl {
+    url = "https://registry.npmjs.org/@astrojs/sitemap/-/sitemap-3.7.3.tgz";
+    hash = "sha512-f8euLVsyeAmAkSm/1M2Kb8sL8byQmfgbvBNaHFItCheTj/IpiJYSEWVcqDHZ/yEHxiS7+w87mQkzwZaPHmk5GA==";
   };
-  "@astrojs/starlight@0.41.6" = fetchurl {
-    url = "https://registry.npmjs.org/@astrojs/starlight/-/starlight-0.41.6.tgz";
-    hash = "sha512-Dt0/wY2JbFGUpxMgclw1j2Iqks2GG0LHYKgP7TfBXsFrs4LIbKvQ596lzyhXLz6nFcnPdIB9ZRFyDJeuVcx3Ug==";
+  "@astrojs/starlight@0.41.7" = fetchurl {
+    url = "https://registry.npmjs.org/@astrojs/starlight/-/starlight-0.41.7.tgz";
+    hash = "sha512-579VJuZgo20UpNQPm9EIez5W3DFSrD16uiV2YX6rUlpLtjgKSdnc69TxVTZXn4AtI2B731TI2qhW1O3K+vwtrQ==";
   };
   "@astrojs/telemetry@3.3.0" = fetchurl {
     url = "https://registry.npmjs.org/@astrojs/telemetry/-/telemetry-3.3.0.tgz";
