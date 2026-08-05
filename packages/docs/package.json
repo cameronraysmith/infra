@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",
-    "@cloudflare/vite-plugin": "^1.50.0",
+    "@cloudflare/vite-plugin": "^1.51.0",
     "@playwright/test": "1.61.1",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/git": "^11.0.1",
@@ -61,7 +61,7 @@
     "starlight-katex": "^0.0.4",
     "starlight-links-validator": "0.25.2",
     "vitest": "^4.1.10",
-    "wrangler": "^4.118.0"
+    "wrangler": "^4.119.0"
   },
   "release": {
     "extends": "semantic-release-monorepo",
