@@ -17,6 +17,14 @@ in
       lib,
       ...
     }:
+    let
+      omnigraphCookbooks = pkgs.fetchFromGitHub {
+        owner = "ModernRelay";
+        repo = "omnigraph-cookbooks";
+        rev = "7978b30199c8172b5fba612aef3c5b42f15f5e72";
+        hash = "sha256-zdh4RPcZjASYaorsl1LAfvBLZ6WYfxiCbVKjxhCbtfQ=";
+      };
+    in
     {
       imports = [
         inputs.srvos.nixosModules.server
@@ -39,6 +47,7 @@ in
         docker
         kanidm
         matrix
+        omnigraph
         effects-vanixiets-secrets
         effects-ironstar-secrets
       ]);
@@ -244,6 +253,107 @@ in
         "d /nix/var/nix/builds 0755 root root 1d -"
       ];
 
+      # Cloudflare R2 S3 credentials scoped to the sciexp bucket, delivered as an
+      # EnvironmentFile. object_store has no shared-credentials-file provider, so
+      # process environment variables are the only source omnigraph resolves.
+      clan.core.vars.generators.omnigraph-r2 = {
+        prompts.access-key = {
+          description = ''
+            Cloudflare R2 S3 access key ID with read and write scope on bucket
+            sciexp. Minted in the Cloudflare dashboard; distinct from the
+            niks3-s3 token, which is scoped to sciexp-nix-cache.
+          '';
+          type = "hidden";
+          persist = true;
+          display = {
+            group = "omnigraph";
+            label = "AWS_ACCESS_KEY_ID";
+          };
+        };
+
+        prompts.secret-key = {
+          description = "Cloudflare R2 S3 secret access key paired with the access key ID above.";
+          type = "hidden";
+          persist = true;
+          display = {
+            group = "omnigraph";
+            label = "AWS_SECRET_ACCESS_KEY";
+          };
+        };
+
+        files.access-key.deploy = false;
+        files.secret-key.deploy = false;
+
+        files."env" = {
+          restartUnits = [ "omnigraph-server.service" ];
+        };
+
+        script = ''
+          {
+            printf 'AWS_ACCESS_KEY_ID=%s\n' "$(cat "$prompts/access-key")"
+            printf 'AWS_SECRET_ACCESS_KEY=%s\n' "$(cat "$prompts/secret-key")"
+          } > "$out/env"
+        '';
+      };
+
+      clan.core.vars.generators.omnigraph-bearer-tokens = {
+        files."tokens.json" = {
+          restartUnits = [ "omnigraph-server.service" ];
+        };
+        runtimeInputs = [
+          pkgs.openssl
+          pkgs.jq
+        ];
+        script = ''
+          jq -n --arg token "$(openssl rand -hex 32)" '{admin: $token}' > "$out/tokens.json"
+        '';
+      };
+
+      services.omnigraph = {
+        enable = true;
+
+        storageUri = "s3://sciexp/omnigraph/clusters/dev-graph";
+
+        s3 = {
+          endpointUrl = "https://1ece4a9a8f092f8cbdd679d22b9ecb1f.r2.cloudflarestorage.com";
+          region = "auto";
+        };
+
+        bindAddress = magnetite.zt;
+        port = 8090;
+        requireAllGraphs = true;
+
+        environmentFile = config.clan.core.vars.generators.omnigraph-r2.files."env".path;
+        bearerTokensFile =
+          config.clan.core.vars.generators.omnigraph-bearer-tokens.files."tokens.json".path;
+
+        cluster = {
+          settings = {
+            metadata.name = "dev-graph";
+            graphs.dev = {
+              schema = "schema.pg";
+              queries = "queries/";
+            };
+          };
+
+          extraFiles = {
+            "schema.pg" = "${omnigraphCookbooks}/dev-graph/schema.pg";
+            "queries" = "${omnigraphCookbooks}/dev-graph/queries";
+          };
+
+          actor = "magnetite";
+        };
+      };
+
+      # Ad-hoc `omnigraph cluster status` and `cluster force-unlock <LOCK_ID>`:
+      # a held state lock has no TTL and no liveness check, and recovery needs
+      # the exact lock id read out of status.
+      environment.systemPackages = [ pkgs.omnigraph ];
+
+      # Permit binding magnetite's ZeroTier-assigned IPv6 before zerotierone
+      # settles on cold boot (mirrors modules/machines/nixos/cinnabar/caddy.nix).
+      boot.kernel.sysctl."net.ipv6.ip_nonlocal_bind" = 1;
+
       # srvos hardware-hetzner-cloud sets useNetworkd=true and useDHCP=false; configure primary interface explicitly.
       systemd.network.networks."10-uplink" = {
         matchConfig.Name = "en*";
@@ -265,7 +375,7 @@ in
         ];
         # Admin and internal services accessible via ZeroTier only
         interfaces."zt+" = {
-          allowedTCPPorts = [ ]; # populated by service modules later
+          allowedTCPPorts = [ 8090 ]; # omnigraph; further ports added by service modules
         };
       };
 
