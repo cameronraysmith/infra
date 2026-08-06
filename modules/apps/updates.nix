@@ -59,5 +59,10 @@
         type = "app";
         program = "${config.packages.buzz-source.updateScript}";
       };
+
+      apps.update-omnigraph = {
+        type = "app";
+        program = "${config.packages.omnigraph.updateScript}";
+      };
     };
 }
