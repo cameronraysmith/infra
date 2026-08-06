@@ -357,11 +357,6 @@ in
         };
       };
 
-      # Ad-hoc `omnigraph cluster status` and `cluster force-unlock <LOCK_ID>`:
-      # a held state lock has no TTL and no liveness check, and recovery needs
-      # the exact lock id read out of status.
-      environment.systemPackages = [ pkgs.omnigraph ];
-
       # Permit binding magnetite's ZeroTier-assigned IPv6 before zerotierone
       # settles on cold boot (mirrors modules/machines/nixos/cinnabar/caddy.nix).
       boot.kernel.sysctl."net.ipv6.ip_nonlocal_bind" = 1;
