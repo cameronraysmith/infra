@@ -334,11 +334,23 @@ in
               schema = "schema.pg";
               queries = "queries/";
             };
+            policies = {
+              dev = {
+                file = "policies/dev.policy.yaml";
+                applies_to = [ "dev" ];
+              };
+              server = {
+                file = "policies/server.policy.yaml";
+                applies_to = [ "cluster" ];
+              };
+            };
           };
 
           extraFiles = {
             "schema.pg" = "${omnigraphCookbooks}/dev-graph/schema.pg";
             "queries" = "${omnigraphCookbooks}/dev-graph/queries";
+            "policies/dev.policy.yaml" = ./omnigraph/dev.policy.yaml;
+            "policies/server.policy.yaml" = ./omnigraph/server.policy.yaml;
           };
 
           actor = "magnetite";
