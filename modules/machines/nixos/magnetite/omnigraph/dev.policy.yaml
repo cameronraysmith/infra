@@ -1,0 +1,23 @@
+version: 1
+groups:
+  operators: [admin]
+  cluster: [magnetite]
+rules:
+  # Loading any policy engine replaces the default-deny fallback that
+  # implicitly permits `read`, so omitting `read` here revokes all access.
+  - id: operator-data
+    allow:
+      actors: { group: operators }
+      actions: [read, export, change, invoke_query]
+  - id: operator-branches
+    allow:
+      actors: { group: operators }
+      actions: [schema_apply, branch_create, branch_delete, branch_merge]
+  - id: operator-streams
+    allow:
+      actors: { group: operators }
+      actions: [stream_ingest, stream_manage]
+  - id: cluster-apply-streams
+    allow:
+      actors: { group: cluster }
+      actions: [stream_manage]
