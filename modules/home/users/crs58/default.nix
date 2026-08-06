@@ -12,6 +12,18 @@ let
       flake, # from extraSpecialArgs
       ...
     }:
+    let
+      # Alias set from the dev-graph cookbook's omnigraph-config.example.yaml,
+      # retargeted from its `local` server to our magnetite deployment.
+      devGraphAlias =
+        query: args:
+        {
+          server = "magnetite";
+          graph = "dev";
+          inherit query;
+        }
+        // lib.optionalAttrs (args != [ ]) { inherit args; };
+    in
     {
       home.stateVersion = "23.11";
 
@@ -19,7 +31,6 @@ let
         with pkgs;
         [
           gh # GitHub CLI (keep from baseline)
-          omnigraph
         ]
         ++ [
           flake.inputs.niks3.packages.${pkgs.stdenv.hostPlatform.system}.niks3
@@ -52,6 +63,75 @@ let
       # config.json) is provided by the opt-in programs.openspec module in
       # modules/home/ai/openspec/default.nix.
       programs.openspec.enable = true;
+
+      programs.omnigraph = {
+        enable = true;
+        settings = {
+          servers.magnetite.url = "http://[fddb:4344:343b:14b9:399:930f:39db:40d2]:8090";
+
+          defaults = {
+            server = "magnetite";
+            default_graph = "dev";
+          };
+
+          aliases = {
+            issue = devGraphAlias "issue_lookup" [ "slug" ];
+            epic = devGraphAlias "epic_lookup" [ "slug" ];
+            pr = devGraphAlias "pr_lookup" [ "slug" ];
+
+            ready = devGraphAlias "ready" [ ];
+            blocked = devGraphAlias "blocked" [ ];
+            blocked-parent = devGraphAlias "blocked_by_parent" [ ];
+            blocked-epic = devGraphAlias "blocked_by_epic" [ ];
+            blocked-gate = devGraphAlias "blocked_by_gate" [ ];
+            blocked-wait = devGraphAlias "blocked_by_wait" [ ];
+            blocked-upstream = devGraphAlias "blocked_on_upstream" [ ];
+            stale = devGraphAlias "stale_candidates" [ ];
+
+            epic-issues = devGraphAlias "epic_issues" [ "epic" ];
+            epic-open = devGraphAlias "epic_open_issues" [ "epic" ];
+
+            release-prs = devGraphAlias "release_prs" [ "release" ];
+            issue-prs = devGraphAlias "issue_implementations" [ "issue" ];
+            prs-comp = devGraphAlias "prs_for_component" [ "component" ];
+            issues-comp = devGraphAlias "issues_for_component" [ "component" ];
+
+            incident-cause = devGraphAlias "incident_root_cause" [ "incident" ];
+            incident-blast = devGraphAlias "incident_components" [ "incident" ];
+            learnings-incident = devGraphAlias "learnings_for_incident" [ "incident" ];
+
+            unheld-invariants = devGraphAlias "unheld_invariants" [ ];
+            gaps = devGraphAlias "gaps_undermining_invariants" [ ];
+            assumptions = devGraphAlias "assumptions" [ ];
+            caps-tier = devGraphAlias "capabilities_by_tier" [ "tier" ];
+            decisions-comp = devGraphAlias "decisions_for_component" [ "component" ];
+            no-spec = devGraphAlias "components_without_spec" [ ];
+            no-cap-impl = devGraphAlias "capabilities_without_component" [ ];
+
+            open-epics = devGraphAlias "open_epics" [ ];
+            epic-counts = devGraphAlias "epic_issue_counts" [ "epic" ];
+            issue-detail = devGraphAlias "issue_detail" [ "issue" ];
+            issue-blockers = devGraphAlias "issue_blockers" [ "issue" ];
+            issue-parents = devGraphAlias "issue_parents" [ "issue" ];
+            issue-epic-parent = devGraphAlias "issue_parent_epic" [ "issue" ];
+            issue-gates = devGraphAlias "issue_gates" [ "issue" ];
+            issue-waits-on = devGraphAlias "issue_waits_on" [ "issue" ];
+            issue-comments = devGraphAlias "issue_comments" [ "issue" ];
+
+            sem-issue = devGraphAlias "search_issues" [ "q" ];
+            sem-epic = devGraphAlias "search_epics" [ "q" ];
+            sem-spec = devGraphAlias "search_specs" [ "q" ];
+            sem-decision = devGraphAlias "search_decisions" [ "q" ];
+            sem-learning = devGraphAlias "search_learnings" [ "q" ];
+            sem-invariant = devGraphAlias "search_invariants" [ "q" ];
+            sem-principle = devGraphAlias "search_principles" [ "q" ];
+            sem-gap = devGraphAlias "search_gaps" [ "q" ];
+            sem-cap = devGraphAlias "search_capabilities" [ "q" ];
+            sem-pr = devGraphAlias "search_prs" [ "q" ];
+            sem-incident = devGraphAlias "search_incidents" [ "q" ];
+          };
+        };
+      };
 
       # sops-nix configuration for crs58/cameron user
       # 15 secrets: development + ai + shell aggregates
