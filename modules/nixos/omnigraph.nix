@@ -64,6 +64,27 @@
         '';
       };
 
+      readinessProbe = pkgs.writeShellApplication {
+        name = "omnigraph-server-wait-ready";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.curl
+        ];
+        text = ''
+          url="http://${bindTarget}/healthz"
+          deadline=$(( $(date +%s) + ${toString cfg.readinessTimeout} ))
+          until curl --fail --silent --max-time 5 --output /dev/null "$url"; do
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              printf 'omnigraph-server did not answer %s within %s seconds\n' \
+                "$url" '${toString cfg.readinessTimeout}' >&2
+              curl --fail --silent --show-error --max-time 5 --output /dev/null "$url" || true
+              exit 1
+            fi
+            sleep 2
+          done
+        '';
+      };
+
       hardening = {
         CapabilityBoundingSet = [ "" ];
         DeviceAllow = "";
@@ -155,6 +176,28 @@
             Fail startup when any applied graph is quarantined or fails to open.
             By default a graph-local failure is logged and the healthy graphs
             still serve.
+          '';
+        };
+
+        readinessTimeout = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 600;
+          description = ''
+            Seconds the readiness probe waits for `/healthz` to answer before
+            failing the `omnigraph-server` start job.
+
+            `omnigraph-server` opens every dataset in the cluster from storage
+            before it binds its listener, and it implements no `sd_notify`
+            handshake, so systemd would otherwise report the unit active for
+            the whole of that window while the port still refuses connections.
+            An `ExecStartPost` probe closes the gap, which makes this bound the
+            unit's effective startup budget: `TimeoutStartSec` is derived from
+            it with five minutes of headroom, so that an unready server fails
+            through the probe's own diagnostic rather than through systemd's
+            generic timeout.
+
+            Scale it with the cluster. Startup cost grows with the number of
+            datasets and with the latency of the store they are read from.
           '';
         };
 
@@ -450,6 +493,7 @@
               ++ lib.optional cfg.requireAllGraphs "--require-all-graphs"
               ++ cfg.extraFlags
             );
+            ExecStartPost = lib.getExe readinessProbe;
             EnvironmentFile = environmentFiles;
             LoadCredential = lib.optional (
               cfg.bearerTokensFile != null
@@ -460,6 +504,10 @@
             Group = cfg.group;
             Restart = "on-failure";
             RestartSec = 10;
+            # Load-bearing: the readiness probe runs inside the start job, and
+            # opening the datasets outruns systemd's 90s default, which would
+            # kill a healthy server into a Restart=on-failure loop.
+            TimeoutStartSec = cfg.readinessTimeout + 300;
             TimeoutStopSec = 120;
           };
         };
