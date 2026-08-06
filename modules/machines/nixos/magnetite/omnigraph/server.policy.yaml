@@ -1,0 +1,9 @@
+version: 1
+kind: server
+groups:
+  operators: [admin]
+rules:
+  - id: operator-graph-list
+    allow:
+      actors: { group: operators }
+      actions: [graph_list]
