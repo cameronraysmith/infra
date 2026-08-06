@@ -59,8 +59,71 @@
             jq -e '.diagnostics[]? | select(.code == "state_already_exists")' \
               <<<"$importOutput" >/dev/null
           fi
-          omnigraph --as ${lib.escapeShellArg cfg.cluster.actor} \
-            cluster apply --config ${clusterConfigDir} --json
+          applyStatus=0
+          applyOutput=$(omnigraph --as ${lib.escapeShellArg cfg.cluster.actor} \
+            cluster apply --config ${clusterConfigDir} --json) || applyStatus=$?
+          printf '%s\n' "$applyOutput"
+
+          # `ok` is `!has_errors`, so the warnings that leave changes unapplied
+          # — approval_required, apply_dependency_blocked,
+          # dependency_not_applied, cluster_recovery_pending — all exit 0. Each
+          # rides a Blocked disposition and leaves a residual, which `converged`
+          # catches. cluster_recovery_pending also fires standalone out of the
+          # recovery sweep, which only marks the graph Drifted and leaves the
+          # ledger digests `converged` compares untouched — yet the server
+          # quarantines that graph — so that code needs its own check.
+          if [ "$applyStatus" -ne 0 ] \
+            || ! jq -e '.ok and .converged and ([.diagnostics[]?
+                        | select(.code == "cluster_recovery_pending")] | length == 0)' \
+              <<<"$applyOutput" >/dev/null; then
+            printf 'omnigraph cluster apply did not converge (exit %s)\n' \
+              "$applyStatus" >&2
+            jq -r '.diagnostics[]? | "\(.severity) \(.code) \(.path): \(.message)"' \
+              <<<"$applyOutput" >&2 || true
+            jq -r '.changes[]? | select(.disposition != "applied" and .disposition != "derived")
+                   | "\(.disposition // "unplanned") \(.resource): \(.reason // "")"' \
+              <<<"$applyOutput" >&2 || true
+            exit 1
+          fi
+        '';
+      };
+
+      clusterEtcName = "omnigraph/cluster";
+      clusterEtcPath = "/etc/${clusterEtcName}";
+
+      clusterCli = pkgs.writeShellApplication {
+        name = "omnigraph-cluster";
+        runtimeInputs = [
+          cfg.package
+          pkgs.coreutils
+        ];
+        text = ''
+          ${lib.concatLines (
+            lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg value}") storageEnvironment
+          )}
+          ${lib.optionalString (cfg.environmentFile != null) ''
+            if [ ! -r ${lib.escapeShellArg (toString cfg.environmentFile)} ]; then
+              printf 'omnigraph-cluster: cannot read %s, which holds the storage credentials. Re-run as root: sudo omnigraph-cluster %s\n' \
+                ${lib.escapeShellArg (toString cfg.environmentFile)} "$*" >&2
+              exit 1
+            fi
+            # Read as data, the way systemd reads the same file for the units.
+            # Sourcing it would evaluate `$`, backticks and quotes in a
+            # credential as shell, as root.
+            while IFS='=' read -r credentialKey credentialValue || [ -n "$credentialKey" ]; do
+              case "$credentialKey" in
+                "" | "#"*) continue ;;
+              esac
+              export "$credentialKey=$credentialValue"
+            done < ${lib.escapeShellArg (toString cfg.environmentFile)}
+          ''}
+          # Matches OMNIGRAPH_HOME on the units, which keeps operator
+          # configuration under /root out of a recovery run.
+          OMNIGRAPH_HOME=$(mktemp -d)
+          export OMNIGRAPH_HOME
+          trap 'rm -rf -- "$OMNIGRAPH_HOME"' EXIT
+          cd ${lib.escapeShellArg clusterEtcPath}
+          omnigraph --as ${lib.escapeShellArg cfg.cluster.actor} cluster "$@"
         '';
       };
 
@@ -84,6 +147,16 @@
           done
         '';
       };
+
+      serverRestartSec = 60;
+      serverStartLimitBurst = 5;
+      serverTimeoutStartSec = cfg.readinessTimeout + 300;
+      serverTimeoutStopSec = 120;
+
+      # Wall time of one failed start at its worst: the start job burns its
+      # whole budget, the stop job burns its whole budget killing it, then
+      # RestartSec elapses before the next attempt.
+      serverStartCycleSec = serverTimeoutStartSec + serverTimeoutStopSec + serverRestartSec;
 
       hardening = {
         CapabilityBoundingSet = [ "" ];
@@ -173,9 +246,24 @@
           type = lib.types.bool;
           default = false;
           description = ''
-            Fail startup when any applied graph is quarantined or fails to open.
-            By default a graph-local failure is logged and the healthy graphs
-            still serve.
+            Refuse to serve unless the cluster boots entirely clean.
+
+            Broader than the quarantine framing upstream's server documentation
+            gives it: the server bails whenever the boot snapshot carries any
+            diagnostic at all, of any severity and about any resource, before it
+            has opened a single dataset. A warning that leaves every graph
+            healthy is fatal too. Skipped graphs and graphs that fail to open
+            are then also fatal, at the later stages that detect them.
+
+            By default those same diagnostics are logged as warnings and the
+            healthy graphs still serve.
+
+            None of them clear by retrying — they clear through a cluster
+            `refresh` or `apply` — so enabling this also caps `omnigraph-server`
+            at five start attempts, after which it stays `failed` until
+            `systemctl reset-failed`. Left off, the unit is left to restart
+            indefinitely, because the failures it can then still fail on are
+            transient ones that do clear.
           '';
         };
 
@@ -269,6 +357,21 @@
               `omnigraph-cluster-apply` unit that converges the storage root to
               it.
 
+              Also exposes that directory at `${clusterEtcPath}` and installs
+              the `omnigraph` CLI along with an `omnigraph-cluster` wrapper, so
+              that the recovery commands (`status`, `refresh`, `force-unlock
+              <LOCK_ID>`) are runnable ad hoc. Every `omnigraph cluster`
+              subcommand is addressed by configuration directory alone — there
+              is no storage-URI form — and the rendered directory is an
+              anonymous store path. The wrapper runs from `${clusterEtcPath}`,
+              passes
+              {option}`services.omnigraph.cluster.actor` as `--as`, and reads
+              {option}`services.omnigraph.environmentFile` for the storage
+              credentials, which omnigraph accepts only from the process
+              environment. That file is readable by root alone, so the wrapper
+              must run as root; it refuses with that instruction rather than
+              falling through to the instance metadata service and hanging.
+
               Disable to serve a cluster whose configuration is applied from
               elsewhere; {option}`services.omnigraph.storageUri` alone is then
               enough to serve.
@@ -357,11 +460,17 @@
               and again whenever the rendered configuration directory changes.
 
               Left off, converging is an operator action
-              (`systemctl start omnigraph-cluster-apply.service`, then restart
-              `omnigraph-server`). That is the safer default because apply
-              creates a missing graph without ceremony: were the storage root
-              lost out of band, an automatic apply would recreate it empty and
-              report an ordinary create.
+              (`systemctl restart omnigraph-cluster-apply.service`, then restart
+              `omnigraph-server`). The verb is `restart`, not `start`: the unit
+              sets `RemainAfterExit`, without which a changed configuration
+              directory could never re-trigger it, so once it has run it stays
+              `active (exited)` and `start` returns 0 without converging
+              anything.
+
+              Off is the safer default because apply creates a missing graph
+              without ceremony: were the storage root lost out of band, an
+              automatic apply would recreate it empty and report an ordinary
+              create.
             '';
           };
         };
@@ -459,6 +568,15 @@
           }
         ];
 
+        environment.systemPackages = lib.optionals cfg.cluster.enable [
+          cfg.package
+          clusterCli
+        ];
+
+        environment.etc = lib.mkIf cfg.cluster.enable {
+          ${clusterEtcName}.source = clusterConfigDir;
+        };
+
         services.omnigraph.cluster.settings = {
           storage = lib.mkDefault cfg.storageUri;
           metadata = lib.mkDefault { };
@@ -503,13 +621,29 @@
             User = cfg.user;
             Group = cfg.group;
             Restart = "on-failure";
-            RestartSec = 10;
+            RestartSec = serverRestartSec;
             # Load-bearing: the readiness probe runs inside the start job, and
             # opening the datasets outruns systemd's 90s default, which would
             # kill a healthy server into a Restart=on-failure loop.
-            TimeoutStartSec = cfg.readinessTimeout + 300;
-            TimeoutStopSec = 120;
+            TimeoutStartSec = serverTimeoutStartSec;
+            TimeoutStopSec = serverTimeoutStopSec;
           };
+
+          # systemd's start rate limiter is a tumbling window opened by the
+          # first attempt in it, so the attempt that trips the limit is the
+          # (burst + 1)th, arriving one whole burst of cycles in. Anything
+          # shorter — including systemd's 10s default, which is shorter than a
+          # single cycle here — reopens the window first and retries forever.
+          # Sizing the window at (burst + 1) cycles leaves a full cycle of
+          # margin even when every attempt burns its entire budget.
+          unitConfig =
+            if cfg.requireAllGraphs then
+              {
+                StartLimitIntervalSec = (serverStartLimitBurst + 1) * serverStartCycleSec;
+                StartLimitBurst = serverStartLimitBurst;
+              }
+            else
+              { StartLimitIntervalSec = 0; };
         };
 
         systemd.services.omnigraph-cluster-apply = lib.mkIf cfg.cluster.enable {
