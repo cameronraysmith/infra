@@ -1,0 +1,535 @@
+{ ... }:
+{
+  flake.modules.nixos.omnigraph =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      cfg = config.services.omnigraph;
+
+      yaml = pkgs.formats.yaml { };
+
+      bindTarget =
+        if lib.hasInfix ":" cfg.bindAddress then
+          "[${cfg.bindAddress}]:${toString cfg.port}"
+        else
+          "${cfg.bindAddress}:${toString cfg.port}";
+
+      storageEnvironment =
+        lib.optionalAttrs (cfg.s3.region != null) { AWS_REGION = cfg.s3.region; }
+        // lib.optionalAttrs (cfg.s3.endpointUrl != null) {
+          AWS_ENDPOINT_URL = cfg.s3.endpointUrl;
+          AWS_ENDPOINT_URL_S3 = cfg.s3.endpointUrl;
+        };
+
+      environmentFiles = lib.optional (cfg.environmentFile != null) cfg.environmentFile;
+
+      clusterConfigDir =
+        pkgs.runCommand "omnigraph-cluster-config"
+          {
+            nativeBuildInputs = [ cfg.package ];
+            clusterYaml = yaml.generate "cluster.yaml" cfg.cluster.settings;
+          }
+          ''
+            export HOME="$NIX_BUILD_TOP"
+            mkdir -p "$out"
+            cp "$clusterYaml" "$out/cluster.yaml"
+            ${lib.concatLines (
+              lib.mapAttrsToList (name: source: ''
+                mkdir -p "$(dirname "$out/${name}")"
+                cp -rL ${source} "$out/${name}"
+              '') cfg.cluster.extraFiles
+            )}
+            chmod -R u+rwX "$out"
+            omnigraph cluster validate --config "$out"
+          '';
+
+      applyScript = pkgs.writeShellApplication {
+        name = "omnigraph-cluster-apply";
+        runtimeInputs = [
+          cfg.package
+          pkgs.jq
+        ];
+        text = ''
+          if ! importOutput=$(omnigraph cluster import --config ${clusterConfigDir} --json); then
+            printf '%s\n' "$importOutput"
+            jq -e '.diagnostics[]? | select(.code == "state_already_exists")' \
+              <<<"$importOutput" >/dev/null
+          fi
+          omnigraph --as ${lib.escapeShellArg cfg.cluster.actor} \
+            cluster apply --config ${clusterConfigDir} --json
+        '';
+      };
+
+      hardening = {
+        CapabilityBoundingSet = [ "" ];
+        DeviceAllow = "";
+        DevicePolicy = "closed";
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        NoNewPrivileges = true;
+        PrivateDevices = true;
+        PrivateTmp = true;
+        PrivateUsers = true;
+        ProcSubset = "pid";
+        ProtectClock = true;
+        ProtectControlGroups = true;
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectProc = "invisible";
+        ProtectSystem = "strict";
+        RemoveIPC = true;
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        SystemCallArchitectures = "native";
+        SystemCallFilter = [
+          "@system-service"
+          "~@resources"
+          "~@privileged"
+        ];
+        UMask = "0077";
+      };
+    in
+    {
+      options.services.omnigraph = {
+        enable = lib.mkEnableOption "omnigraph, a lakehouse graph database server";
+
+        package = lib.mkPackageOption pkgs "omnigraph" { };
+
+        storageUri = lib.mkOption {
+          type = lib.types.str;
+          example = "s3://bucket/prefix/clusters/dev-graph";
+          description = ''
+            Cluster storage root URI, and the sole boot source of
+            `omnigraph-server`. Everything the cluster stores lives beneath it:
+            the state ledger and lock under `__cluster/`, the content-addressed
+            resource catalog, approval artifacts, and the derived graph roots at
+            `<storageUri>/graphs/<id>.omni`.
+
+            A directory path serves a filesystem-backed cluster; an `s3://` URI
+            serves from object storage, with credentials supplied exclusively
+            through the `AWS_*` process environment — see
+            {option}`services.omnigraph.environmentFile`.
+
+            Exactly one `omnigraph-server` may serve a given storage root.
+            Omnigraph is a single-writer store, and a second writer over the
+            same prefix corrupts the graph.
+
+            The server reads the applied cluster revision once, at startup.
+            Applying a new revision therefore requires a server restart before
+            it serves.
+          '';
+        };
+
+        bindAddress = lib.mkOption {
+          type = lib.types.str;
+          default = "127.0.0.1";
+          description = ''
+            Address the HTTP API listens on. An IPv6 literal is bracketed
+            automatically when the `--bind` argument is assembled.
+          '';
+        };
+
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 8080;
+          description = "Port the HTTP API listens on.";
+        };
+
+        requireAllGraphs = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Fail startup when any applied graph is quarantined or fails to open.
+            By default a graph-local failure is logged and the healthy graphs
+            still serve.
+          '';
+        };
+
+        bearerTokensFile = lib.mkOption {
+          type = lib.types.nullOr lib.types.path;
+          default = null;
+          description = ''
+            Path to a JSON file mapping actor names to bearer tokens, for
+            example `{"admin": "…"}`. Passed to the server through systemd
+            credentials, so the file is read by the service manager before
+            privilege drop and need not be readable by the service user.
+
+            The server refuses to start without at least one bearer token, so
+            this is required.
+          '';
+        };
+
+        environmentFile = lib.mkOption {
+          type = lib.types.nullOr lib.types.path;
+          default = null;
+          description = ''
+            Path to a systemd `EnvironmentFile` holding the S3 credentials for
+            an `s3://` storage root, as `AWS_ACCESS_KEY_ID=…` and
+            `AWS_SECRET_ACCESS_KEY=…` lines.
+
+            Process environment variables are the only credential source
+            omnigraph resolves. It builds its object store with
+            `object_store`'s `from_env`, which has no shared-credentials-file
+            provider: `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE` are
+            silently discarded and the process then falls through to the
+            instance metadata service.
+          '';
+        };
+
+        s3 = {
+          endpointUrl = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            example = "https://accountid.r2.cloudflarestorage.com";
+            description = ''
+              Endpoint of an S3-compatible object store. Exported as both
+              `AWS_ENDPOINT_URL_S3` and `AWS_ENDPOINT_URL`: omnigraph's own
+              storage adapter prefers the former, while the datasets underneath
+              resolve their store through `object_store`'s environment key
+              table, and which variable that table honours is version-dependent.
+
+              Leave unset to address AWS S3 itself.
+            '';
+          };
+
+          region = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            example = "auto";
+            description = ''
+              Value of `AWS_REGION`. Unset, `object_store` defaults to
+              `us-east-1`, which most S3-compatible stores reject.
+            '';
+          };
+        };
+
+        cluster = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = ''
+              Whether to render the cluster configuration directory from
+              {option}`services.omnigraph.cluster.settings` and provide the
+              `omnigraph-cluster-apply` unit that converges the storage root to
+              it.
+
+              Disable to serve a cluster whose configuration is applied from
+              elsewhere; {option}`services.omnigraph.storageUri` alone is then
+              enough to serve.
+            '';
+          };
+
+          settings = lib.mkOption {
+            type = lib.types.submodule {
+              freeformType = yaml.type;
+
+              options = {
+                version = lib.mkOption {
+                  type = lib.types.ints.unsigned;
+                  default = 1;
+                  description = "Cluster configuration schema version.";
+                };
+
+                storage = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    Storage root the cluster converges. Defaults to
+                    {option}`services.omnigraph.storageUri`, and an assertion
+                    holds the two equal so that the applied revision and the
+                    served revision cannot diverge.
+                  '';
+                };
+              };
+            };
+            default = { };
+            example = lib.literalExpression ''
+              {
+                metadata.name = "dev-graph";
+                graphs.dev = {
+                  schema = "schema.pg";
+                  queries = "queries/";
+                };
+              }
+            '';
+            description = ''
+              Contents of `cluster.yaml`, rendered into a store directory that
+              `omnigraph cluster apply` reads. See
+              <https://github.com/ModernRelay/omnigraph/blob/main/docs/user/clusters/config.md>.
+
+              Paths under `graphs.<id>.schema`, `graphs.<id>.queries`, and
+              `policies.<name>.file` resolve relative to that directory; supply
+              their contents through
+              {option}`services.omnigraph.cluster.extraFiles`.
+
+              The file carries no credentials and is world-readable in the Nix
+              store. Omnigraph rejects an inline `api_key` under
+              `providers.embedding.<name>`; use `''${VAR}` interpolation
+              resolved from the server's environment instead.
+            '';
+          };
+
+          extraFiles = lib.mkOption {
+            type = lib.types.attrsOf lib.types.path;
+            default = { };
+            example = lib.literalExpression ''
+              {
+                "schema.pg" = ./schema.pg;
+                "queries" = ./queries;
+              }
+            '';
+            description = ''
+              Files and directories copied into the rendered cluster
+              configuration directory under the given relative names, alongside
+              the generated `cluster.yaml`.
+            '';
+          };
+
+          actor = lib.mkOption {
+            type = lib.types.str;
+            default = "system";
+            description = ''
+              Actor recorded against every change `omnigraph cluster apply`
+              executes, and against the approval artifacts it consumes.
+            '';
+          };
+
+          apply.auto = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              Whether to run `omnigraph cluster apply` automatically: at boot,
+              and again whenever the rendered configuration directory changes.
+
+              Left off, converging is an operator action
+              (`systemctl start omnigraph-cluster-apply.service`, then restart
+              `omnigraph-server`). That is the safer default because apply
+              creates a missing graph without ceremony: were the storage root
+              lost out of band, an automatic apply would recreate it empty and
+              report an ordinary create.
+            '';
+          };
+        };
+
+        optimize = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = ''
+              Whether to run `omnigraph optimize` on a timer. Omnigraph commits
+              with Lance's automatic cleanup disabled, so fragment and index
+              maintenance is entirely operator-driven and storage otherwise
+              grows monotonically.
+
+              The command is non-destructive: it compacts fragments, restores
+              index coverage, and builds declared-but-missing indexes, but never
+              collects old versions. Reclaiming versions needs `omnigraph
+              cleanup`, which is destructive and is deliberately not automated
+              here.
+            '';
+          };
+
+          graphs = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = lib.attrNames (cfg.cluster.settings.graphs or { });
+            defaultText = lib.literalExpression ''
+              lib.attrNames config.services.omnigraph.cluster.settings.graphs
+            '';
+            description = "Graph ids to optimize.";
+          };
+
+          interval = lib.mkOption {
+            type = lib.types.str;
+            default = "weekly";
+            description = "`OnCalendar` expression driving the optimize timer.";
+          };
+        };
+
+        extraEnvironment = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          default = { };
+          example = {
+            RUST_LOG = "info";
+          };
+          description = "Extra environment variables for every omnigraph unit.";
+        };
+
+        extraFlags = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = "Extra command-line arguments for `omnigraph-server`.";
+        };
+
+        user = lib.mkOption {
+          type = lib.types.str;
+          default = "omnigraph";
+          description = "User the omnigraph units run as.";
+        };
+
+        group = lib.mkOption {
+          type = lib.types.str;
+          default = "omnigraph";
+          description = "Group the omnigraph units run as.";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        assertions = [
+          {
+            assertion = cfg.bearerTokensFile != null;
+            message = ''
+              services.omnigraph.bearerTokensFile is not set. omnigraph-server
+              refuses to start with neither bearer tokens nor a policy bundle,
+              rather than serve an open API.
+            '';
+          }
+          {
+            assertion = !(lib.hasPrefix "s3://" cfg.storageUri) || cfg.environmentFile != null;
+            message = ''
+              services.omnigraph.storageUri is an s3:// URI but
+              services.omnigraph.environmentFile is not set. S3 credentials
+              reach omnigraph only as process environment variables; without
+              them the process falls through to the instance metadata service
+              and hangs rather than failing.
+            '';
+          }
+          {
+            assertion = !cfg.cluster.enable || cfg.cluster.settings.storage == cfg.storageUri;
+            message = ''
+              services.omnigraph.cluster.settings.storage
+              (${cfg.cluster.settings.storage}) differs from
+              services.omnigraph.storageUri (${cfg.storageUri}). The applied
+              revision would then live somewhere the server never reads.
+            '';
+          }
+        ];
+
+        services.omnigraph.cluster.settings = {
+          storage = lib.mkDefault cfg.storageUri;
+          metadata = lib.mkDefault { };
+          state = lib.mkDefault {
+            backend = "cluster";
+            lock = true;
+          };
+        };
+
+        systemd.services.omnigraph-server = {
+          description = "omnigraph graph database server";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          restartTriggers = lib.optional (cfg.cluster.enable && cfg.cluster.apply.auto) clusterConfigDir;
+
+          environment = {
+            OMNIGRAPH_SERVER_BEARER_TOKENS_FILE = "%d/bearer-tokens";
+          }
+          // storageEnvironment
+          // cfg.extraEnvironment;
+
+          serviceConfig = hardening // {
+            ExecStart = lib.escapeShellArgs (
+              [
+                (lib.getExe' cfg.package "omnigraph-server")
+                "--cluster"
+                cfg.storageUri
+                "--bind"
+                bindTarget
+              ]
+              ++ lib.optional cfg.requireAllGraphs "--require-all-graphs"
+              ++ cfg.extraFlags
+            );
+            EnvironmentFile = environmentFiles;
+            LoadCredential = lib.optional (
+              cfg.bearerTokensFile != null
+            ) "bearer-tokens:${cfg.bearerTokensFile}";
+            StateDirectory = "omnigraph";
+            DynamicUser = true;
+            User = cfg.user;
+            Group = cfg.group;
+            Restart = "on-failure";
+            RestartSec = 10;
+            TimeoutStopSec = 120;
+          };
+        };
+
+        systemd.services.omnigraph-cluster-apply = lib.mkIf cfg.cluster.enable {
+          description = "Converge the omnigraph cluster to its declared configuration";
+          before = [ "omnigraph-server.service" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          wantedBy = lib.optional cfg.cluster.apply.auto "multi-user.target";
+          restartTriggers = lib.optional cfg.cluster.apply.auto clusterConfigDir;
+
+          environment = {
+            OMNIGRAPH_HOME = "%T/omnigraph";
+          }
+          // storageEnvironment
+          // cfg.extraEnvironment;
+
+          serviceConfig = hardening // {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = lib.getExe applyScript;
+            EnvironmentFile = environmentFiles;
+            StateDirectory = "omnigraph";
+            DynamicUser = true;
+            User = cfg.user;
+            Group = cfg.group;
+          };
+        };
+
+        systemd.services.omnigraph-optimize = lib.mkIf (cfg.optimize.enable && cfg.optimize.graphs != [ ]) {
+          description = "Compact and reindex omnigraph graph storage";
+
+          environment = {
+            OMNIGRAPH_HOME = "%T/omnigraph";
+          }
+          // storageEnvironment
+          // cfg.extraEnvironment;
+
+          serviceConfig = hardening // {
+            Type = "oneshot";
+            ExecStart = map (
+              graph:
+              lib.escapeShellArgs [
+                (lib.getExe cfg.package)
+                "--cluster"
+                cfg.storageUri
+                "--graph"
+                graph
+                "optimize"
+                "--json"
+              ]
+            ) cfg.optimize.graphs;
+            EnvironmentFile = environmentFiles;
+            StateDirectory = "omnigraph";
+            DynamicUser = true;
+            User = cfg.user;
+            Group = cfg.group;
+          };
+        };
+
+        systemd.timers.omnigraph-optimize = lib.mkIf (cfg.optimize.enable && cfg.optimize.graphs != [ ]) {
+          description = "Periodic omnigraph storage maintenance";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = cfg.optimize.interval;
+            Persistent = true;
+            RandomizedDelaySec = "1h";
+          };
+        };
+      };
+    };
+}
