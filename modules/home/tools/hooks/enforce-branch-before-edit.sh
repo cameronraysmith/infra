@@ -16,19 +16,21 @@ if [ -z "$FILE_PATH" ]; then
   exit 0
 fi
 
-# Allow list: always permit edits to these paths
-if echo "$FILE_PATH" | grep -qE '(/\.claude/|CLAUDE\.md$|CLAUDE\.local\.md$|/plans/|/\.beads/)'; then
+# Allow list: always permit edits to these paths. `/.worktrees/` is the
+# git-native isolation convention described in
+# ~/.claude/skills/preferences-git-version-control/01-git-native-mode.md, where
+# the branch checked out in the worktree carries the ID-descriptor name; the
+# path allowance covers editing such a tree from a session whose own cwd is the
+# primary. The harness places its own worktrees under `.claude/worktrees/`,
+# already covered by `/.claude/`.
+ALLOWED_PATHS='(/\.claude/|/\.worktrees/|CLAUDE\.md$|CLAUDE\.local\.md$|/plans/|/\.beads/)'
+if [[ "$FILE_PATH" =~ $ALLOWED_PATHS ]]; then
   exit 0
 fi
 
-# Allow edits within .worktrees/ (worktrees are the standard isolation mechanism)
-if echo "$FILE_PATH" | grep -qE '/\.worktrees/'; then
-  exit 0
-fi
-
-# Allow if CWD is inside a .worktrees/ directory
-CWD=$(pwd)
-if echo "$CWD" | grep -qE '/\.worktrees/'; then
+# Allow if the session sits inside a linked worktree; isolation branches there
+# are named by the worktree tooling and are never main/master.
+if hook_in_linked_worktree "$(pwd)"; then
   exit 0
 fi
 
@@ -47,7 +49,7 @@ fi
 # Block edits on main or master
 if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
   cat << EOF
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Cannot edit files on $BRANCH branch.\nIf you haven't already, invoke the /issues-beads-prime skill for beads command reference (e.g. bd update <id> --status in_progress).\nThen create a worktree for your bead:\n  git worktree add .worktrees/{ID}-descriptor -b {ID}-descriptor\n  cd .worktrees/{ID}-descriptor\n(e.g. git worktree add .worktrees/nix-btd-2-my-task -b nix-btd-2-my-task)\nOr create a feature branch:\n  git checkout -b {ID}-descriptor\nThen retry the edit."}}
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Cannot edit files on $BRANCH. Create a working branch named for the Linear story or OpenSpec change this implements -- git checkout -b <ID>-descriptor -- then retry the edit. See ~/.claude/skills/preferences-git-version-control/SKILL.md (branch workflow)."}}
 EOF
   exit 0
 fi

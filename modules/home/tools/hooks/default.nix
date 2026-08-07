@@ -28,6 +28,16 @@
           in
           "(https?://|[[:space:]])(${alternation})(/|:|[[:space:]]|$)";
 
+      # Prepended to the hooks that resolve repository context. Shell has no
+      # import, and these are single-file writeShellApplication derivations, so
+      # sharing means textual composition at build time.
+      repoContextLib = builtins.readFile ./lib-repo-context.sh;
+
+      # Each consumer of repoContextLib calls a subset of its helpers, so
+      # shellcheck reports the remainder as uninvoked (SC2329) in every
+      # composed script. writeShellApplication fails the build on any finding.
+      repoContextShellChecks = [ "SC2329" ];
+
       memory-capture = pkgs.writeShellApplication {
         name = "memory-capture";
         runtimeInputs = with pkgs; [
@@ -57,7 +67,8 @@
           git
           jq
         ];
-        text = builtins.readFile ./enforce-branch-before-edit.sh;
+        excludeShellChecks = repoContextShellChecks;
+        text = repoContextLib + builtins.readFile ./enforce-branch-before-edit.sh;
       };
 
       session-start = pkgs.writeShellApplication {
@@ -114,9 +125,11 @@
         name = "gate-worktree-surfaces";
         runtimeInputs = with pkgs; [
           jq
+          git
           coreutils
         ];
-        text = builtins.readFile ./gate-worktree-surfaces.sh;
+        excludeShellChecks = repoContextShellChecks;
+        text = repoContextLib + builtins.readFile ./gate-worktree-surfaces.sh;
       };
 
       jj-worktree-create = pkgs.writeShellApplication {
@@ -145,21 +158,24 @@
         name = "gate-git-worktree";
         runtimeInputs = with pkgs; [
           jq
-          gnugrep
+          git
           coreutils
         ];
-        text = builtins.readFile ./gate-git-worktree.sh;
+        excludeShellChecks = repoContextShellChecks;
+        text = repoContextLib + builtins.readFile ./gate-git-worktree.sh;
       };
 
       verify-diamond-before-edit = pkgs.writeShellApplication {
         name = "verify-diamond-before-edit";
         runtimeInputs = with pkgs; [
           jujutsu
+          git
           coreutils
           gnused
           gnugrep
         ];
-        text = builtins.readFile ./verify-diamond-before-edit.sh;
+        excludeShellChecks = repoContextShellChecks;
+        text = repoContextLib + builtins.readFile ./verify-diamond-before-edit.sh;
       };
 
       gate-dangerous-commands = pkgs.writeShellApplication {

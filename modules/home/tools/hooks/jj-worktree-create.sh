@@ -4,13 +4,12 @@
 # worktree-isolation entry paths (the --worktree launch flag, the EnterWorktree
 # tool, and subagent isolation="worktree").
 #
-# In a jj-managed repository, a raw git worktree is NEVER created:
-#   - default: abort isolation (exit 1) so work happens in place in the
-#     colocated working copy (the jj development join).
-#   - CLAUDE_JJ_WORKSPACE_ISOLATION=1: redirect isolation to a jj workspace
-#     created under <jj_root>/.claude/worktrees/<name>.
-# In a pure-git repository, reproduce the documented default: create a git
-# worktree under <git_root>/.claude/worktrees/<name>.
+# Every repository gets a git worktree under <root>/.claude/worktrees/<name> on
+# a fresh branch worktree-<name>. In a jj-managed repository, setting
+# CLAUDE_JJ_WORKSPACE_ISOLATION=1 selects a jj workspace at that path instead.
+# A jj workspace has no .git, so nix flake evaluation there degrades to a
+# revisionless path: source (jj-vcs/jj#4436); a git worktree keeps flake
+# fidelity, which is why it is the default in both modes.
 #
 # Stdin is JSON: {session_id, transcript_path, cwd, hook_event_name, name}.
 # Success: print the created worktree's absolute path on stdout, exit 0.
@@ -55,8 +54,25 @@ if [ -n "$JJ_ROOT" ]; then
     echo "$DEST"
     exit 0
   fi
-  echo "Worktree isolation is disabled in jj-managed repositories -- work in place in the colocated working copy (the jj development join), or set CLAUDE_JJ_WORKSPACE_ISOLATION=1 to use a jj workspace, or run 'jj workspace add' manually. NEVER a git worktree." >&2
-  exit 1
+  # Colocation means .git sits beside .jj at the same root. Tested by existence
+  # rather than by comparing `git rev-parse --show-toplevel` against JJ_ROOT:
+  # git resolves symlinks in that output and JJ_ROOT comes from the payload cwd
+  # unresolved, so the string comparison rejects every colocated repository
+  # reached through a symlinked path. A jj workspace or a non-colocated repo has
+  # no .git here and is still rejected, as is a .jj nested inside an outer git
+  # repository whose root lies further up.
+  if [ ! -e "$JJ_ROOT/.git" ]; then
+    echo "WorktreeCreate: jj repository '$JJ_ROOT' is not colocated with git, so it has no git worktrees." >&2
+    exit 1
+  fi
+  # worktree-<name> is branched from the primary's detached HEAD, so it can sit
+  # on a commit jj later rewrites; jj then moves the bookmark and this worktree's
+  # HEAD detaches at the old commit, files and index untouched. Reattach with
+  # `git symbolic-ref HEAD refs/heads/worktree-<name>` -- never `git checkout -f`,
+  # which discards uncommitted work.
+  git -C "$JJ_ROOT" worktree add -b "worktree-$NAME" "$DEST" >&2
+  echo "$DEST"
+  exit 0
 fi
 
 # --- pure-git repository ---

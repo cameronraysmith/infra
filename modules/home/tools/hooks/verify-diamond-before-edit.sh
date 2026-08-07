@@ -45,6 +45,14 @@ if [ -z "$JJ_ROOT" ]; then
   exit 0  # not a jj repo
 fi
 
+# A linked worktree of a colocated repo lives under the jj root, so the walk
+# above finds .jj even though jj is unavailable here and no diamond exists to
+# verify. Without this, an operation allowed at the worktree-creation layer is
+# re-blocked at the edit layer by a prompt the occupant cannot resolve.
+if hook_in_linked_worktree "$(pwd)"; then
+  exit 0
+fi
+
 # --- Tier 3 detection: any multi-parent commit in mutable() with description "join N=..." ---
 JOIN_CHANGE=$(jj log -r 'mutable()' --no-graph \
                 -T 'if(parents.len() > 1 && description.starts_with("join N="), change_id ++ "\n", "")' \

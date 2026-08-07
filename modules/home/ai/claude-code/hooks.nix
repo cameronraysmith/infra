@@ -48,7 +48,11 @@
               ];
             }
             {
-              matcher = "Task";
+              # Subagent dispatch surfaces as tool_name "Agent". Across
+              # ~/.claude/projects transcripts, the last tool_use block named
+              # "Task" is dated 2026-02-28 and blocks named "Agent" run from
+              # that day onward.
+              matcher = "Agent";
               hooks = [
                 {
                   type = "command";
@@ -57,7 +61,7 @@
               ];
             }
             {
-              matcher = "EnterWorktree|ExitWorktree";
+              matcher = "EnterWorktree";
               hooks = [
                 {
                   type = "command";
