@@ -378,7 +378,7 @@ jj log -r 'mine() & ~bookmarks()'
 
 2. Need PR/CI validation via buildbot flake checks (multi-platform fleet matrix, large change benefiting from unified PR review, or fleet-wide gate before trunk)?
    → Tier 2: single named bookmark created retroactively on the chain.
-   `jj bookmark create <name> -r <change-id>` then `jj git push --bookmark <name> --allow-new`; follow `~/.claude/skills/nix-flake-pr-cycle/SKILL.md`.
+   `jj bookmark create <name> -r <change-id>` then `jj git push --bookmark <name>`; follow `~/.claude/skills/nix-flake-pr-cycle/SKILL.md`.
 
 3. Multiple independent work streams in flight (multiple beads issues within an epic, parallel agent dispatch, parallel experiments to compose)?
    → Tier 3: diamond workflow via development join over the chains' bookmarks.

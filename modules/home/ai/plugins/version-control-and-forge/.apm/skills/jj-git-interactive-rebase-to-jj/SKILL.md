@@ -512,8 +512,8 @@ jj split -r <commit> -- file1.txt -m "Part 1"
 |------|----------------|
 | Change commit message | `jj describe -r <commit> -m "message"` |
 | Open editor for message | `jj describe -r <commit>` |
-| Change author | `jj describe -r <commit> --author "Name <email>"` |
-| Reset author to self | `jj describe -r <commit> --reset-author` |
+| Change author | `jj metaedit -r <commit> --author "Name <email>"` |
+| Reset author to self | `jj metaedit -r <commit> --update-author` |
 
 #### Commit Combination
 

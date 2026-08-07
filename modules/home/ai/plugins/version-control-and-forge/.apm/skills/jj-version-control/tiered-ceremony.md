@@ -43,7 +43,7 @@ Operations to enter (retroactive bookmark creation on an existing anonymous chai
 
 ```bash
 jj bookmark create <name> -r <change-id>   # or -r @- for the chain tip
-jj git push --bookmark <name> --allow-new
+jj git push --bookmark <name>
 ```
 
 Then follow `~/.claude/skills/nix-flake-pr-cycle/SKILL.md` for the canonical draft-PR / buildbot-monitor / ready / Mergify sequence.
@@ -113,7 +113,7 @@ Tier 1 → tier 2 (retroactive bookmark on an existing anonymous chain):
 
 ```bash
 jj bookmark create <name> -r <change-id>   # or -r @- for the chain tip
-jj git push --bookmark <name> --allow-new
+jj git push --bookmark <name>
 ```
 
 Tier 2 → tier 3 (add a second parent to create `[merge]`, then layer `[wip]` on top):
