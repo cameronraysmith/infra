@@ -33,7 +33,7 @@ Usage:
   jj-stack-submit --help
 
 Pushes the N chain bookmarks and the aggregate bookmark to --remote in a
-single atomic `jj git push --allow-new` invocation, then opens N+1 pull
+single atomic `jj git push` invocation, then opens N+1 pull
 requests on the resolved forge:
 
   - N chain PRs in stacked-base order: chain[1] targets --base, chain[k]
@@ -449,7 +449,7 @@ push_bookmarks() {
   args+=(--bookmark "${aggregate}")
 
   if "${dry_run}"; then
-    local line="DRY-RUN: jj git push --remote ${remote} --allow-new"
+    local line="DRY-RUN: jj git push --remote ${remote}"
     local a
     for a in "${args[@]}"; do
       line+=" ${a}"
@@ -457,7 +457,7 @@ push_bookmarks() {
     echo "${line}" >&2
     return 0
   fi
-  jj git push --remote "${remote}" --allow-new "${args[@]}"
+  jj git push --remote "${remote}" "${args[@]}"
 }
 
 submit() {
@@ -600,7 +600,7 @@ run_scenario_dry_run_gh() {
     fi
     # Assertions on output structure.
     local pass=true
-    if ! grep -q "DRY-RUN: jj git push --remote origin --allow-new --bookmark c1 --bookmark c2 --bookmark c3 --bookmark agg" <<<"${out}"; then
+    if ! grep -q "DRY-RUN: jj git push --remote origin --bookmark c1 --bookmark c2 --bookmark c3 --bookmark agg" <<<"${out}"; then
       pass=false
       echo "FAIL dry-run-gh: missing or malformed push line"
     fi

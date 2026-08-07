@@ -118,7 +118,7 @@ Post-condition:
   top of --base and the aggregate bookmark points at the final tip. The
   working copy @ is repositioned onto the aggregate bookmark (a fresh empty
   commit descending from it), and the state is ready for
-  `jj git push --allow-new --bookmark ...` and forge PR creation.
+  `jj git push --bookmark ...` and forge PR creation.
 
   With --keep-remaining, the script additionally rebases each remaining
   chain onto the aggregate tip and reconstructs a smaller development join
@@ -524,7 +524,7 @@ print_summary() {
     push_args+=" --bookmark ${chains[i]}"
   done
   push_args+=" --bookmark ${aggregate}"
-  echo "next: jj git push --allow-new ${push_args}"
+  echo "next: jj git push ${push_args}"
   if [[ ${#remaining[@]} -gt 0 ]]; then
     echo "verify diamond: jj log -r '@ | @- | parents(@-)'"
   fi
