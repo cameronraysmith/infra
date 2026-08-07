@@ -44,6 +44,11 @@
             # each changelog-detected update; the store path is replaced by
             # home-manager, so every generation bump would emit one.
             enableInstallTelemetry = false;
+
+            # Pinned against pi 0.80.9 while we run 0.83.0. The consequence is
+            # confined to the catch fallback in src/remote-compaction.ts, whose
+            # compact() call passes arguments shifted against 0.83.0's signature.
+            packages = [ "${pkgs.pi-openai-server-compaction}" ];
           };
         };
 
