@@ -106,6 +106,13 @@ Dependencies: `git`, `bd`, `jq`.
 
 ## Worktree workflow convention
 
+Status as of 2026-08-06: superseded.
+This section records the git-native convention this plan assumed in February 2026, before the repository moved to jj-colocated mode.
+The per-bead worktree is no longer the standard path for starting work on a unit.
+Parallel chains now use the diamond workflow's development join in a single working copy, and a separate tree is reserved for cases where something outside the session needs one — an external agent framework driving its own process, a long-running build, a side-by-side comparison.
+The worktree-creating surfaces are ask-gated rather than denied, and the governing discipline (exclusive branch ownership, return-by-ref, the operations that must not run against a jj primary) is in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
+The rest of this section is retained as a record of the original plan.
+
 Each bead task gets a dedicated worktree at `.worktrees/bd-{BEAD_ID}/` created via `git worktree add .worktrees/bd-{BEAD_ID} -b bd-{BEAD_ID}`.
 The `.worktrees/` directory should be listed in `.gitignore` to avoid tracking worktree checkouts.
 

@@ -2,7 +2,8 @@
 
 Working branch isolation recipes for jj mode.
 jj provides a development join (multi-parent working copy) that achieves the same simultaneous multi-branch editing as GitButler's applied-branches model.
-All bookmarks coexist in a single working tree — no worktrees are needed.
+All bookmarks coexist in a single working tree, so parallel chains need no worktree, and the development join is the default technique for them.
+A linked git worktree remains available and is warranted when a separate filesystem tree is itself the requirement — an external agent framework driving its own process, a long-running build, side-by-side comparison — under the ownership and return-by-ref discipline in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
 
 ## Creating a multi-parent working copy
 
@@ -103,9 +104,10 @@ jj squash --into {epic-b}-descriptor -u -- <path>
 
 ## Subagent dispatch in jj mode
 
-In jj mode, subagents do not create bookmarks or worktrees.
+In jj mode, subagents do not create bookmarks, and dispatch omits the `isolation` parameter by default.
 All agents — including parallel agents — edit files directly in the shared `@` working copy.
 The orchestrator routes changes to the correct chain via `jj absorb` or `jj squash --into <target> -u -- <path>` after each subagent completes.
+Requesting `isolation: "worktree"` raises an ask rather than a denial; answer it affirmatively only when the subagent genuinely needs its own filesystem tree, and follow the discipline in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" when it does.
 
 When working in the development join, use a join + wip structure (two-commit pattern).
 The development join integrates all parent bookmarks and has a description to prevent auto-abandonment.

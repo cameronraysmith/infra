@@ -30,7 +30,7 @@ That firing also seeds the Linear issue description from the committed proposal.
 The proposal.md anchor is more substantive than brainstorm.md: a transition firing before the change has a committed proposal is weaker visibility for little gain.
 
 The apply gate fires Todo to In Progress on the first tasks.md `- [x]` checkbox marked complete.
-The first checkbox is the grep-detectable anchor that survives the jj worktree substitution; the using-git-worktrees and jj-diamond acts are fallback heuristics only.
+The first checkbox is the grep-detectable anchor and is independent of which isolation mechanism the apply phase chose; the using-git-worktrees and jj-diamond acts are fallback heuristics only.
 
 The In-Review gate fires In Progress to In Review when verify.md is created for an in-progress change.
 This is the best-grounded of the four anchors because verify.md is one of the two signals machine-enforced in the bridge PRECHECKs.

@@ -415,26 +415,32 @@ Disadvantages:
 - Cannot run tests in parallel
 - Cannot compare files side-by-side easily
 
-## Workspace creation (explicit user request only)
+## Workspace creation
 
-Workspace creation is reserved for cases where the user explicitly requests workspace isolation in-session.
-Parallel related work in jj mode uses the diamond workflow's development join, not workspace creation.
+Workspace creation is reserved for cases where a separate filesystem tree is itself the requirement, or where the user explicitly requests isolation in-session.
+Parallel related work in jj mode uses the diamond workflow's development join, which remains the default.
+
+In a flake repository the separate tree must be a `git worktree add` rather than a `jj workspace add`, because a jj workspace has no `.git` and flake evaluation there degrades to a `path:` source with no revision.
+The `jj workspace add` mechanics below therefore apply to non-flake repositories; for the git-worktree path and the discipline that governs it, see `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
 
 Cross-references:
-- `~/.claude/skills/jj-version-control/tiered-ceremony.md` — policy authority for when ceremony escalates from anonymous chain to bookmarked chain to workspace.
-- `~/.claude/skills/jj-version-control/diamond-workflow.md` — canonical parallel-work alternative using multi-parent `@`.
-- `~/.claude/skills/jj-version-control/SKILL.md` "Development join" — the multi-parent working-copy entity that replaces workspaces for parallel work.
+- `~/.claude/skills/jj-version-control/tiered-ceremony.md` — policy authority for when ceremony escalates from anonymous chain to bookmarked chain, and for why a separate working copy is not a tier.
+- `~/.claude/skills/jj-version-control/diamond-workflow.md` — default parallel-work technique using multi-parent `@`.
+- `~/.claude/skills/jj-version-control/SKILL.md` "Development join" — the multi-parent working-copy entity that carries parallel work in one tree.
+- `~/.claude/skills/jj-version-control/SKILL.md` "Worktree interop" — the git-worktree alternative, its ownership rules, and its recovery commands.
 
 ### Trigger condition
 
-The agent creates a workspace only when the user explicitly requests it in-session.
-Explicit request means an utterance naming `worktree`, `workspace`, `isolate`, or `separate working copy`, or a path form such as `.worktrees/X` or `../myproject-exp-1`.
-In the absence of such an utterance, parallel related work uses the development join described in the diamond workflow, and serial work uses anonymous chains or bookmarks on a single working copy.
+Either trigger suffices.
+The first is that something outside this session needs its own tree: an external agent framework driving its own process, a long-running build that must not observe ongoing edits, or a side-by-side comparison of two states.
+The second is an explicit in-session request, meaning an utterance naming `worktree`, `workspace`, `isolate`, or `separate working copy`, or a path form such as `.worktrees/X` or `../myproject-exp-1`.
+Absent either, parallel related work uses the development join described in the diamond workflow, and serial work uses anonymous chains or bookmarks on a single working copy.
 
-Examples of why a human might request workspace isolation (long-running builds undisturbed by editing, side-by-side file comparison in editors, divergent sparse-checkout patterns) are informative context for the human's decision, not classification criteria the agent evaluates.
-For example, a user may request a workspace to keep a long-running build process undisturbed by ongoing edits, but the trigger remains the explicit request, not the inferred build duration.
+The first trigger asks whether a separate tree is the requirement, not whether it would be faster.
+Speed is never the discriminator: routing through the development join is the default precisely because a second tree buys nothing when only this session is editing.
+Divergent sparse-checkout patterns are an additional reason a human may want a separate tree, and remain informative context for their decision.
 
-### Creating a workspace when requested
+### Creating a workspace
 
 ```bash
 # Create workspace at user-specified path, starting from the requested commit or bookmark

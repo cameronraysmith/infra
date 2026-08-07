@@ -1,15 +1,14 @@
 ---
 name: worktree-sparsity-eval
 description: >-
-  Evaluate repository size metrics to determine whether worktrees should use sparse checkout.
-  **Invoke only in git-native mode (no `.jj/` directory) when creating a `git worktree`, OR
-  in jj mode when the user has explicitly requested workspace isolation by name and only to
-  size a `jj workspace add` invocation.** `git worktree add` is hook-blocked in jj-managed
-  repositories (see the no-worktree-in-jj-mode directive in the global CLAUDE.md); this
-  skill does not apply to that case. In jj mode without an explicit workspace request,
-  parallel work uses the diamond workflow's development join, not worktrees — see
-  `~/.claude/skills/jj-version-control/tiered-ceremony.md`. Also invoke for periodic
-  re-evaluation when a repo has grown significantly.
+  Evaluate repository size metrics to determine whether a separate working copy should use
+  sparse checkout. **Invoke when a separate working copy is already warranted — a
+  `git worktree` in any mode, or a `jj workspace add` in a non-flake jj repository — and
+  only to size that invocation.** It does not decide whether to create one. In jj mode the
+  diamond workflow's development join remains the default for parallel chains and needs no
+  sparsity evaluation; see `~/.claude/skills/jj-version-control/tiered-ceremony.md` for the
+  triggers and `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" for the
+  discipline. Also invoke for periodic re-evaluation when a repo has grown significantly.
 ---
 
 # Worktree sparsity evaluation
@@ -17,9 +16,10 @@ description: >-
 Collect repository metrics and determine whether worktrees should use sparse checkout.
 Three conditions must all hold for sparse checkout to be recommended.
 
-In jj mode, this skill applies ONLY to `jj workspace add` sizing when the user has explicitly requested workspace isolation by name.
-`git worktree add` is hook-blocked in jj-managed repositories (no-worktree-in-jj-mode directive in the global CLAUDE.md); this skill does not apply to that case.
-In jj mode without an explicit workspace request, parallel work uses the diamond workflow's development join in a single working copy — see `~/.claude/skills/jj-version-control/tiered-ceremony.md`.
+This skill sizes a separate working copy that is already warranted; it does not decide whether to create one.
+That decision belongs to `~/.claude/skills/jj-version-control/tiered-ceremony.md`, whose default in jj mode is the diamond workflow's development join in a single working copy — which needs no sparsity evaluation.
+In a flake repository the separate working copy must be a `git worktree add` rather than `jj workspace add`, so the sparse-checkout recipes below apply directly; the `jj workspace add` form applies only in non-flake jj repositories.
+Before creating a worktree in a jj-colocated repository, read `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" for the branch-ownership and return-by-ref discipline.
 
 ## Thresholds
 
@@ -80,11 +80,10 @@ The commit goes in `<target-repo>` against `<resolved-claude-md>`.
 
 ### 4. Worktree creation
 
-When sparse checkout is recommended, use this command template instead of plain `git worktree add`:
-
 Create a working branch per the working branch isolation conventions in git-preferences.
 When sparse checkout is recommended, additionally configure sparse checkout with cone mode and set paths relevant to the task.
 
-For guidance on choosing paths for sparse checkout, see `references/sparse-checkout-patterns.md`.
+In a jj-colocated repository the branch the worktree checks out must be one the jj primary does not hold: never a bookmark on or under the primary's `@`, and never one a live development join includes.
+Point the worktree at a stable base or at nothing.
 
 For guidance on choosing paths for `git sparse-checkout set`, see `references/sparse-checkout-patterns.md`.

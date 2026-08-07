@@ -104,11 +104,12 @@ The compose-by-delegation contract, the AFK handoff act and its bounded open dis
 
 ## Isolation under jj mode
 
-The HIL apply phase reaches superpowers:using-git-worktrees, which resolves to a raw git worktree add that is hook-blocked in this jj-mode environment.
-The jj diamond development join is the worktree substitute, with the env-gated CLAUDE_JJ_WORKSPACE_ISOLATION jj-workspace hatch as an alternative.
-The choice between them is an apply-gate open point and input to a separate jj-policy follow-up; the router bakes in no git worktree add.
+The HIL apply phase reaches superpowers:using-git-worktrees, which resolves to a raw git worktree add.
+In this jj-mode environment that surface is ask-gated rather than denied, so the router states which mechanism to choose rather than assuming either outcome.
+The default is the jj diamond development join: the apply unit routes onto its chain inside the one working copy, and no separate tree is created.
+A git worktree is the correct answer only when a separate filesystem tree is itself the requirement, and CLAUDE_JJ_WORKSPACE_ISOLATION=1 switches the harness's WorktreeCreate path to a jj workspace for non-flake repositories.
 Integration is jj-native and user-gated, with no autonomous PR.
-The isolation guidance, the apply-gate confirmation, and orchestrator-routed commits onto the chain are in references/hil-isolation.md.
+The isolation policy, the apply-gate confirmation, and orchestrator-routed commits onto the chain are in references/hil-isolation.md.
 
 In a development join every editor edits the same empty `@`=`[wip]`, which is the shared coordination surface that keeps concurrent editors safe, and routes completed content downward into the owning chain.
 Never `jj describe @` into content and never relocate `@` with a positional `jj rebase -r @`; either dissolves the surface the others are concurrently writing.
@@ -122,7 +123,7 @@ Defer the full canon to jj-version-control/SKILL.md invariant (iii-b)/(vi).
 | references/board-and-gates.md | The seven Linear-canonical states, the four forward transitions, the In-Review sub-gates, the shared re-queue, the bounded-retries policy, and the router walkthrough |
 | references/board-and-gates.md#spec-and-feature-alignment-pre-apply | The mode-agnostic pre-apply spec-and-feature alignment sub-gate at Todo to In Progress, its stepped-versus-fast-forward trigger, Gate 1 modality routing, the recommended safeadt tag-and-guard convention, and the before-archive reconciliation owned by openspec-verify-change |
 | references/board-state-machine.mermaid | The stateDiagram-v2 rendering of the seven-state board, its four file-anchored forward transitions, the execution-mode fork, the two ordered In-Review sub-gates, the shared re-queue, and the inert terminals |
-| references/hil-isolation.md | The jj diamond development join as the worktree substitute and the CLAUDE_JJ_WORKSPACE_ISOLATION hatch, confirmed at the apply gate |
+| references/hil-isolation.md | The jj diamond development join as the default apply-phase isolation, the git-worktree and CLAUDE_JJ_WORKSPACE_ISOLATION alternatives and when each applies, and the apply-gate confirmation |
 | references/delegation.md | The compose-by-delegation contract, the abstract In-Review gates, and the statement that the router re-implements none of orient/plan/review/checkpoint |
 | references/codex-review.md | The codex code-review gate runbook binding the abstract roborev sub-gate to a concrete, diamond-safe, advisory inline codex review |
 | references/collaborators.md | The four-collaborator map naming the PM hub, this router, the openspec plus superpowers-bridge flow, and openspec-linear-sync, with the ownership-by-layer one-liner and a pointer back to the front-door quickstart |

@@ -386,15 +386,16 @@ jj log -r 'mine() & ~bookmarks()'
    - Mid-diamond commit belongs on `<base>` below all chains → splice-below-join (see `~/.claude/skills/jj-version-control/SKILL.md` §"Splice-below-join")
    - Remote `<base>` advanced during diamond work → diamond integration on remote advance (see `~/.claude/skills/jj-version-control/SKILL.md` §"Diamond integration on remote advance")
 
-4. Did the user explicitly request workspace isolation (utterance naming `worktree`, `workspace`, `isolate`, `separate working copy`, or path forms like `.worktrees/X`)?
-   → `jj workspace add <path> -r <change>` mechanics; otherwise stay at tier 3 and parallelize via the development join in a single working copy.
-   In jj mode, `EnterWorktree`, `ExitWorktree`, and `Task` dispatches with `isolation: "worktree"` are hook-blocked by `gate-worktree-surfaces`; parallel work uses the diamond development join, not worktrees.
-   The explicit-workspace path is `jj workspace add` and applies only when the user names workspace isolation specifically.
+4. Does something outside this session need its own filesystem tree (an external framework driving its own agent process, a long-running build, side-by-side comparison), or did the user explicitly request isolation by name (`worktree`, `workspace`, `isolate`, `separate working copy`, or path forms like `.worktrees/X`)?
+   → Create a separate tree; otherwise stay at tier 3 and parallelize via the development join in a single working copy, which remains the default for parallel chains.
+   In a flake repository that tree is a `git worktree add`, not `jj workspace add`, because a jj workspace has no `.git` and flake evaluation there loses the revision.
+   `EnterWorktree`, `git worktree add` against a jj-colocated repository, and subagent dispatch (tool name `Agent`) with `isolation: "worktree"` each raise an ask; `ExitWorktree` is ungated.
+   Before creating one, read `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" — exclusive branch ownership and return-by-ref are the load-bearing rules.
 
 **Should I read jj-workflow.md?**
 1. Never used jj? → Read "Core philosophy" and "Foundation"
 2. Need parallel experiments? → Read "Parallel experimentation" and `jj-version-control/tiered-ceremony.md` tier 3
-3. User explicitly requested workspace isolation? → Read "Graduating to workspaces"
+3. A separate filesystem tree is warranted? → Read "Workspace creation" there, and `jj-version-control/SKILL.md` §"Worktree interop" for the git-worktree form a flake repository requires
 4. Working on 2+ independent chains? → Tier 3 development join over per-chain bookmarks; see `~/.claude/skills/jj-version-control/SKILL.md` for mechanics and `tiered-ceremony.md` for the policy.
 5. Cleaning history? → Read "History refinement"
 6. Integrating work? → Read "Advanced patterns"

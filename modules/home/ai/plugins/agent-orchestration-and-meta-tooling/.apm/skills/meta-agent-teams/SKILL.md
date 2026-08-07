@@ -38,12 +38,14 @@ For agent team teammates, spawn prompts should include equivalent identity conte
 ## Teammate file-editing protocol
 
 Teammates spawned in agent teams cannot edit files directly.
-The harness gates direct Edit, Write, and MultiEdit calls for teammate-class agents, surfacing this as an EnterWorktree prompt that should never be satisfied by creating a worktree in jj-mode workspaces.
+The harness gates direct Edit, Write, and MultiEdit calls for teammate-class agents, surfacing this as an EnterWorktree prompt.
+Creating a worktree is the wrong way to satisfy that prompt in jj mode: the gate exists to force the edit through a subagent, and a second tree adds filesystem state without addressing it.
 Instead, teammates dispatch a subagent Task for every file edit.
 The subagent inherits the teammate's working directory and operates against the same jj working copy, so no worktree is needed and no parallel-filesystem state arises.
 
-Dispatched subagent Task input MUST NOT set `isolation: "worktree"`.
-In jj-mode repositories this parameter is hook-blocked at the Agent tool surface, but teammates should omit it unconditionally to keep behavior consistent across modes.
+Dispatched subagent Task input omits `isolation: "worktree"`.
+In jj-mode repositories setting it raises an ask at the Agent tool surface, and the answer is normally no: the subagent inherits the shared `@` and the orchestrator routes its diff, so a second tree would fragment the coordination surface rather than protect it.
+Teammates omit the parameter unconditionally to keep behavior consistent across modes, and reach for a worktree only when something outside the team needs its own filesystem tree, per `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
 The subagent edits at `@` (which in tier 3 is the wip commit atop the development join, per `~/.claude/skills/jj-version-control/SKILL.md`'s composite maintenance invariant), and the orchestrator routes the resulting changes to the appropriate chain via the route-and-extend recipe (`jj new -A <chain-tip> --no-edit -m "..."` then `jj squash --from @ --into <new-change-id> --keep-emptied` then `jj bookmark move <name> --to <new-change-id>`).
 All teammates edit that same `@`=`[wip]`, which is the shared coordination surface that makes N concurrent editors safe by construction; routing the diff downward with `--keep-emptied` is load-bearing because it leaves `@` an empty `[wip]` in place for the others still writing it.
 Never `jj describe @` into content and never relocate `@` below the join via positional `jj rebase -r @ --insert-before/--insert-after` (nor the `--revisions @` form); both drift the shared surface off `[wip]`.

@@ -2,37 +2,43 @@
 
 The HIL mode delegates to the openspec-* and superpowers skills via the superpowers-bridge.
 The bridge apply node reaches superpowers:using-git-worktrees, which resolves to a raw git worktree add.
-In this jj-mode environment that surface is hook-blocked, so the router carries isolation guidance rather than assuming git worktree add succeeds.
+In this jj-mode environment that surface is ask-gated rather than denied, so the router states which mechanism the apply phase should use rather than letting the bridge's default decide.
 
-This file owns the isolation guidance for the HIL apply phase.
+This file owns the isolation policy for the HIL apply phase.
 The board states and gates live in references/board-and-gates.md; the per-mode entry criteria live in references/execution-modes.md.
 
-## Why git worktree add does not apply here
+## How git worktree add behaves here
 
 The repository runs jujutsu in colocated mode.
-The harness denies the worktree-creating tool surfaces under jj: EnterWorktree and ExitWorktree are denied, Task dispatches requesting worktree isolation are denied, and the raw git worktree add is denied unconditionally.
-superpowers:using-git-worktrees already prefers the harness's native worktree tool over git worktree add and its step 0 detects existing isolation, so under jj the git-worktree path does not apply and the reader is directed to the jj substitute.
+The harness ask-gates the worktree-creating surfaces when the target repository is jj-colocated: `git worktree add`, EnterWorktree, and subagent dispatch (tool name `Agent`) with `isolation: "worktree"` each raise an ask, and ExitWorktree is ungated.
+The harness's WorktreeCreate path creates a real git worktree under `<jj-root>/.claude/worktrees/<name>`; with CLAUDE_JJ_WORKSPACE_ISOLATION=1 it creates an in-tree jj workspace instead.
+superpowers:using-git-worktrees already prefers the harness's native worktree tool over raw git worktree add and its step 0 detects existing isolation, so the ask usually surfaces at the harness tool rather than at the shell command.
 
-## The jj diamond development join as the worktree substitute
+## The jj diamond development join is the default
 
-The jj diamond development join is the worktree substitute.
-Parallel chains of work share a single working copy rather than separate worktrees: a multi-parent working-copy commit merges the active chains, edits route as new commits onto a chain, and jj auto-rebases the join and the working-copy commit after each routed commit.
-Where the superpowers worktree skill would create an isolated worktree per task, the diamond routes the unit of work onto its chain inside the one working copy, so isolation is achieved without any worktree creation.
+The default for the HIL apply phase is the diamond development join.
+Parallel chains of work share a single working copy: a multi-parent working-copy commit merges the active chains, edits route as new commits onto a chain, and jj auto-rebases the join and the working-copy commit after each routed commit.
+Where the superpowers worktree skill would create an isolated worktree per task, the diamond routes the unit of work onto its chain inside the one working copy.
+For a sequential, orchestrator-routed apply this is the right tool and no separate tree is created.
 
-## The CLAUDE_JJ_WORKSPACE_ISOLATION hatch
+## When a separate tree is warranted instead
 
-An env-gated hatch exists as an alternative to the diamond.
-With CLAUDE_JJ_WORKSPACE_ISOLATION set, the worktree-create hook early-exits to allow before the deny branch, making the parent directory and adding an in-tree jj workspace rather than a git worktree.
-This is the jj-workspace escape for a unit of work that genuinely warrants its own checkout, a tangling-writers situation, a long build, or an independent stream, where the diamond join is the wrong tool.
-For the multi-writer auto-snapshot tangling case specifically, the preventive mechanic (pre-dispatch concurrent-agent coordination, orchestrator-routed `jj squash --from @`, scoped `jj absorb`) is the parallel-agent coordination protocol in the jj-version-control skill; reach for it before the hatch when the writers can be serialized through the orchestrator.
-The diamond join and the jj workspace nest: the workspace is for an isolated checkout, the diamond is for integrating chains.
+Answer the worktree ask affirmatively when a separate filesystem tree is itself the requirement rather than a convenience.
+The qualifying cases are an external agent framework driving its own process against the repository, a long-running build that must not observe ongoing edits, and a side-by-side comparison of two states.
+Multiple writers concurrently touching the shared working copy is not one of them by default: the preventive mechanic (pre-dispatch concurrent-agent coordination, orchestrator-routed `jj squash --from @`, scoped `jj absorb`) is the parallel-agent coordination protocol in the jj-version-control skill, and it applies whenever the writers can be serialized through the orchestrator.
 
-## The reconciliation is an apply-gate open point
+In a flake repository the separate tree must be a git worktree, because a jj workspace has no `.git` and flake evaluation there degrades to a `path:` source with no revision.
+CLAUDE_JJ_WORKSPACE_ISOLATION=1 therefore selects the jj-workspace form only for non-flake repositories.
+A worktree and the diamond nest rather than compete: the tree gives an isolated checkout, the diamond integrates chains inside whichever tree holds them.
 
-The usable default is mechanical: the diamond development join for the common case of a sequential, orchestrator-routed apply, and the CLAUDE_JJ_WORKSPACE_ISOLATION jj-workspace hatch when more than one writer will concurrently touch the shared working copy (the tangling-writers case named above) or a unit genuinely warrants its own checkout.
-The choice between the diamond development join and the CLAUDE_JJ_WORKSPACE_ISOLATION jj-workspace hatch is not decided in this skill.
-It is confirmed at the apply gate per the change's Risks and Open Questions, and it is input to a separate jj-policy follow-up.
-The router bakes in no git worktree add and asserts no single isolation mechanism; it names both candidates and directs the apply executor to confirm the choice at the apply gate.
+A worktree carries obligations the diamond does not.
+A branch is owned by exactly one working copy; work returns from the worktree by ref rather than by checkout; and the primary's HEAD stays detached throughout.
+Read `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" before creating one — it is the authority for the ownership rules, the return path, the forbidden operations against the primary, and the recovery commands.
+
+## The apply gate confirms the choice
+
+The mechanical default stands: the diamond development join for the common case of a sequential, orchestrator-routed apply, and a separate tree only under the triggers above.
+The apply executor confirms the choice at the apply gate per the change's Risks and Open Questions rather than assuming it, because whether an external process needs its own tree is a property of the change and not of the router.
 
 ## Orchestrator-routed commits and no autonomous PR
 

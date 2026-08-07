@@ -15,7 +15,7 @@ Detailed technical design stays out of the issue body; it lives in design.md.
 When proposal.md's business-facing content later changes, the description is re-synced idempotently by the sync and edit operations: the mirror is down-only, from proposal.md into Linear, and never reconciles human edits to the issue body back into proposal.md.
 When the selected issue has no Linear project, the bind notes that archive spec-mirroring will be skipped and the overlay offers the human the choice to bind a project, never auto-assigning or fabricating one.
 A change with brainstorm.md but no proposal.md is still Backlog and no transition fires, so the brainstorm-exists-proposal-pending window is explicit.
-The second transition, Todo to In Progress, fires on the first checked tasks.md checkbox (`- [x]`); this anchor is grep-detectable and survives the jj worktree substitution, so the using-git-worktrees or jj-diamond act are fallback heuristics only.
+The second transition, Todo to In Progress, fires on the first checked tasks.md checkbox (`- [x]`); this anchor is grep-detectable and is independent of which isolation mechanism the apply phase chose, so the using-git-worktrees or jj-diamond act are fallback heuristics only.
 The third transition, In Progress to In Review, fires when verify.md is created; it is the best-grounded of the four because verify.md is one of the two signals machine-enforced in the bridge PRECHECKs.
 The fourth transition, In Review to Done, fires only when `openspec archive` succeeds; Done binds to archive, not to the step6 PR, because the PR diff already contains the complete archived cycle and archive precedes the PR.
 

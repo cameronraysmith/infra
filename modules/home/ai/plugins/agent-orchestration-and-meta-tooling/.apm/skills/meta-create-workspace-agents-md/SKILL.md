@@ -32,8 +32,8 @@ This command is designed for a specific development pattern where workspaces con
 
 1. **Primary Development Repository**: Main project under active development
 2. **Adjacent Git Worktrees**: Multiple experimental branches checked out as separate directories for parallel development (e.g., `project-686-feature`, `project-690-bugfix`).
-   In jj-colocated repos (where `.jj/` is present), parallel chains within the primary repo are typically handled via the diamond workflow's development join (see `~/.claude/skills/jj-version-control/tiered-ceremony.md`), not via adjacent worktrees.
-   Adjacent worktrees here refer specifically to git-native-mode adjacent project directories within a multi-repo workspace.
+   In jj-colocated repos (where `.jj/` is present), parallel chains within the primary repo are handled by default via the diamond workflow's development join (see `~/.claude/skills/jj-version-control/tiered-ceremony.md`) rather than adjacent worktrees.
+   An adjacent worktree is still the right structure when something outside the session needs its own filesystem tree — an external agent framework, a long-running build, a side-by-side comparison — under the discipline in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
 3. **Dependency Source Code**: Full source repositories of libraries and frameworks used
 4. **Reference Materials**: Documentation, papers, tutorials, and related method implementations
 5. **Development Tools**: Utilities, scripts, and analysis tools

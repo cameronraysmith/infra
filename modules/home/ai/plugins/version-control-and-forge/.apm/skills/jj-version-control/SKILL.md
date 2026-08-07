@@ -1235,6 +1235,82 @@ Pushing to git remotes:
 - Remote bookmark tracking is automatic
 - Git-specific features (like GitHub PRs) work normally with jj-managed bookmarks
 
+## Worktree interop
+
+A linked git worktree can coexist with a jj-colocated primary working copy.
+This section is the authority for how, and the worktree-surface hook messages point here.
+The default for parallel chains that share one review boundary remains the diamond development join; a worktree is warranted when a separate filesystem tree is itself the point, such as an external agent framework driving its own process, a long-running build, or a side-by-side comparison.
+The discriminator is whether something outside this session needs its own tree, not which mechanism seems faster.
+
+### Choosing the mechanism
+
+In a flake repository, isolation means a git worktree rather than `jj workspace add`.
+A `jj workspace add` directory contains `.jj` and no `.git`, so `git rev-parse --show-toplevel` inside it fails and flake evaluation degrades to a `path:` source with no revision, carrying `.jj` and gitignored directories into the store (jj-vcs/jj#4436, open).
+A git worktree resolves as `git+file://…&rev=<sha>` and evaluates to the same store path as the primary.
+
+### How work crosses the boundary
+
+Commits made with plain git inside a linked worktree reach the jj primary with no `jj git import` and no other step.
+The next jj command that *opens the repo* prints "Done importing changes from the underlying Git repo" and the branch appears as a local bookmark with `@git` tracking.
+Commands that do not open the repo, such as `jj --version` and `jj config list --repo`, do not import.
+Import works with a dirty primary: modified tracked files and untracked files are preserved.
+
+Work therefore returns from a worktree by ref, never by checkout.
+Commit in the worktree, then integrate from the primary with `jj new <branch>` or `jj bookmark set <target> -r <branch>`.
+The primary's HEAD stays detached throughout, which is the healthy steady state in a colocated repository.
+
+Import has no worktree counterpart: `lib/src/git.rs:1127-1148` reads only `head_id()`, so jj never learns what any worktree has checked out.
+jj's `View` carries a single `git_head` (`lib/src/op_store.rs:255-258`, with an upstream `// TODO: Support multiple Git worktrees?`), and a git worktree never appears in `jj workspace list`.
+
+### Exclusive branch ownership
+
+A branch is owned by whichever working copy has it checked out — the jj primary or one linked worktree, never both.
+Never point a worktree at a bookmark that sits on or under the primary's `@`, or at one a live development join includes.
+Point it at a stable base, or at nothing.
+
+Export is worktree-aware as of jj 0.39.0: `check_and_detach_head` at `lib/src/git.rs:1266` is applied per `git_repo.worktrees()` at `lib/src/git.rs:1313-1316`, and upstream CI-tests it against a real `git worktree add` at `lib/tests/test_git.rs:2749,2792`.
+So if jj does move or delete a bookmark a worktree holds, that worktree's HEAD detaches at the old commit.
+Files and index are untouched and there is no unborn-branch state.
+Recover with `git symbolic-ref HEAD refs/heads/<branch>`, which reattaches with a dirty tree fully preserved.
+Do not use `git checkout -f <branch>` for this; it discards uncommitted work.
+Treat the detachment as an accident to avoid rather than a workflow step.
+
+### Two residual hazards, both reversible
+
+The first is a worktree checked out on a bookmark that sits on the primary's `@`: that bookmark's git ref is rewritten by every repo-opening jj command, including read-only ones such as `jj log` and `jj status`.
+The second is creating a worktree at a path that currently holds jj-tracked files, in which case jj records deletions for everything under it until the `.git` entry is removed.
+
+### Nested trees are excluded, not submoduled
+
+`RESERVED_DIR_NAMES` at `lib/src/local_working_copy.rs:819` is `[".git", ".jj"]`, applied around `lib/src/local_working_copy.rs:1623-1628` on the mere existence of the entry whatever its kind.
+An in-tree worktree is therefore excluded from jj's snapshot automatically and needs no gitignore entry.
+`git ls-tree -r` shows plain blobs and no `160000` gitlink, so this is not a submodule boundary.
+
+### Operations that must not run against the primary
+
+Do not run `git checkout` or `git switch` to reattach the primary's HEAD, `git checkout -f`, `git branch -D`, or `git fetch --prune`.
+Do not use `git stash` to carry work across a switch in a jj working copy either: the working copy is jj's to manage, and the next jj snapshot governs what it holds.
+A detached HEAD in a colocated repository is the healthy steady state and must never be classified as drift to repair.
+
+The destructive class is ref deletion, not HEAD movement.
+An external `git branch -D` or `git fetch --prune` against the primary makes jj abandon commits and rewrite the working copy; abandoned means hidden rather than gone, and recovery is the top-level `jj undo` (`jj op undo` is not a subcommand in 0.43.0).
+A plain `git checkout <branch>` in a colocated primary is non-destructive by comparison: jj resets the working-copy parent, creates a fresh change, leaves the old one in the log, and silently re-detaches on the next command.
+The one genuinely unrecoverable loss is an unsnapshotted edit to a file git tracks at HEAD, destroyed by `git checkout -f`; running one repo-opening jj command beforehand mitigates it.
+
+### Governance inside a worktree
+
+A worktree is a plain-git tree and is governed as one.
+jj is unavailable inside it, and the edit-time jj-mode hooks — the branch-before-edit guard and the diamond integrity check — correctly no-op there.
+The worktree-creating gates still ask from inside a worktree, because they resolve the target repository through `git rev-parse --git-common-dir` and so land on the jj primary.
+That is correct behavior: creating a further worktree from inside one still concerns the primary, so the trade-off is still worth surfacing.
+The diamond invariants, the bookmark conventions, and the tiered ceremony model do not apply inside a worktree.
+
+### External frameworks get their own clone
+
+When an external agent framework such as firstmate manages repositories on our behalf, give it its own clone rather than a symlink to a working copy we also use.
+This is our choice given what the framework does, not an upstream recommendation; firstmate documents no preference either way.
+Its fleet-sync runs `git fetch --prune`, `git branch -D` on gone-tracking branches, and `git checkout <default>` to reattach a detached HEAD, and its project sweep dereferences symlinks — each in the class of operations named above as forbidden against a jj primary.
+
 ## Beads integration
 
 When `.beads/` exists alongside `.jj/` in a colocated repository, beads issue tracking integrates with jj bookmarks.
@@ -1247,8 +1323,8 @@ For example, beads issue `nix-pxj.4` becomes bookmark `nix-pxj-4-deploy-validate
 Beads IDs take precedence over the `exp-N-description` experiment naming convention when working on tracked issues.
 Use experiment naming only for exploratory work not tied to a beads issue.
 
-Worktrees are a git-only mechanism; jj uses bookmarks for branch-like semantics.
-When in a jj-managed repo, create a bookmark for bead work rather than using `git worktree add`:
+Bookmarks give the branch-like semantics a bead needs without a second tree, and a worktree is warranted only under the triggers in "Worktree interop" above.
+Create a bookmark for bead work:
 
 ```bash
 jj bookmark create {epic-ID}-descriptor

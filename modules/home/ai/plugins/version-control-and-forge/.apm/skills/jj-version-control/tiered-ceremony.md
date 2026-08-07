@@ -136,10 +136,19 @@ jj bookmark delete <bookmark>
 Descent is always available once the tier's trigger resolves.
 Do not stay at a higher tier than the work currently warrants; ceremony has a real coordination cost.
 
-## Workspaces are not a tier
+## Separate working copies are not a tier
 
-In jj mode, jj workspaces (and equivalently git worktrees) are NOT a tier in this model.
-They are not used for parallelizing related work — that is the diamond workflow's role at tier 3, accomplished via the development join in a single working copy.
-Workspaces are reserved for cases the user explicitly requests workspace isolation by name in-session, with utterances naming `worktree`, `workspace`, `isolate`, `separate working copy`, or path forms like `.worktrees/X`.
-Without an explicit request, all parallel work in jj mode uses the diamond workflow's development join.
-See `jj-workflow/SKILL.md` "Workspace creation (explicit user request only)" for the workspace mechanics when the user does request them.
+In jj mode, a separate working copy is NOT a tier in this model.
+It is not the mechanism for parallelizing related work — that is the diamond workflow's role at tier 3, accomplished via the development join in a single working copy.
+
+A separate working copy is reserved for two cases.
+The first is that something outside this session needs its own filesystem tree: an external agent framework driving its own process against the repository, a long-running build that must not see ongoing edits, or a side-by-side comparison of two states.
+The second is that the user explicitly requests isolation by name in-session, with utterances naming `worktree`, `workspace`, `isolate`, `separate working copy`, or path forms like `.worktrees/X`.
+Absent either trigger, all parallel work in jj mode uses the diamond workflow's development join.
+
+jj workspaces and git worktrees are not interchangeable, so the choice between them is not a matter of taste.
+A `jj workspace add` directory carries `.jj` and no `.git`, so jj works inside it but flake evaluation degrades to a `path:` source with no revision that copies `.jj` and gitignored directories into the store.
+A `git worktree add` directory carries `.git` and no `.jj`, so jj is unavailable inside it while flake evaluation resolves to `git+file://…&rev=<sha>` and yields the same store path as the primary.
+In a flake repository, therefore, isolation means a git worktree.
+
+See `jj-version-control/SKILL.md` §"Worktree interop" for the git-worktree discipline and mechanics, and `jj-workflow/SKILL.md` "Workspace creation" for the `jj workspace add` mechanics in a non-flake repository.
