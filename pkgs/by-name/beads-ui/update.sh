@@ -62,8 +62,9 @@ correct_hash="$(nix build ".#beads-ui" 2>&1 \
 
 if [[ -z "$correct_hash" ]]; then
   echo "ERROR: Could not extract npmDepsHash from build output."
-  echo "Manual intervention required. The version and src hash have been updated."
-  echo "Set npmDepsHash to lib.fakeHash and run: nix build .#beads-ui"
+  echo "The version, src hash, and lockfile have been updated."
+  echo "npmDepsHash is left at the placeholder \"${DUMMY_HASH}\"."
+  echo "Rerun 'nix build .#beads-ui' and read the correct hash from the mismatch error."
   exit 1
 fi
 
