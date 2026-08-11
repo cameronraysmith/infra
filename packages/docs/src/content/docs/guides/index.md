@@ -25,6 +25,7 @@ Task-oriented guides for common operations and workflows with this infrastructur
 - [Secrets management](/guides/secrets-management/) - Manage encrypted secrets with clan vars and legacy sops-nix
 - [Handling broken packages](/guides/handling-broken-packages/) - Fix broken packages from nixpkgs unstable with surgical stable fallbacks
 - [MCP servers usage](/guides/mcp-server-usage/) - Configure and use Model Context Protocol servers
+- [Consuming marketplace plugins](/guides/consuming-marketplace-plugins/) - Install this repository's agent-skill plugins in another project with the apm CLI
 
 ## Architecture References
 

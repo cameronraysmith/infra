@@ -24,6 +24,8 @@
 
 Nix flake-based system configurations for NixOS, nix-darwin, and home-manager using deferred module composition and clan.
 
+It also publishes an [apm](https://github.com/microsoft/apm) marketplace of agent-skill plugins that any project can install, independently of the Nix configurations.
+
 ## Quick Start
 
 > [!WARNING]
@@ -73,6 +75,9 @@ development testing
 
 **Operations:**
 [Secrets management](https://infra.cameronraysmith.net/guides/secrets-management) • [Handling broken packages](https://infra.cameronraysmith.net/guides/handling-broken-packages) • [Adding custom packages](https://infra.cameronraysmith.net/guides/adding-custom-packages)
+
+**Agent skills:**
+[Consuming marketplace plugins](https://infra.cameronraysmith.net/guides/consuming-marketplace-plugins)
 
 **Reference:**
 [CI jobs](https://infra.cameronraysmith.net/reference/ci-jobs) • [Justfile recipes](https://infra.cameronraysmith.net/reference/justfile-recipes) • [Flake apps](https://infra.cameronraysmith.net/reference/flake-apps)
