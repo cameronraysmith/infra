@@ -32,8 +32,7 @@
           description = ''
             The tuicr package to install. Sourced from the llm-agents input rather
             than {function}`lib.mkPackageOption`, which would resolve `pkgs.tuicr`:
-            at the currently locked revisions nixpkgs carries 0.18.0 against
-            llm-agents' 0.19.1.
+            llm-agents tracks upstream tuicr releases more closely than nixpkgs.
           '';
         };
 
@@ -67,6 +66,8 @@
         };
 
         home.packages = lib.mkIf cfg.enable [ cfg.package ];
+
+        aiSkills.extraSkillDirs = lib.mkIf cfg.enable [ "${cfg.package.src}/skills" ];
 
         # tuicr only reads this path (src/config/mod.rs, one fs::read_to_string at
         # startup), so it needs none of programs.codex.mutableSettings' copy handling.
