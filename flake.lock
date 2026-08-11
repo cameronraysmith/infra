@@ -200,11 +200,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785873814,
-        "narHash": "sha256-o8v2oMrb/p6gfbqYWjTJq5MspQRXYcr46Ud6g36MzBE=",
-        "rev": "3cbf69b25f56340a18131a52b222ecb43df481ad",
+        "lastModified": 1786478631,
+        "narHash": "sha256-rjnJAXyGQJw7PDM+PLE8BXijStAR04Ye8sBeaqmq4ZA=",
+        "rev": "0cc8dd02faa4abc2cbcb8599923faa9e24b1fc25",
         "type": "tarball",
-        "url": "https://git.clan.lol/api/v1/repos/clan/clan-core/archive/3cbf69b25f56340a18131a52b222ecb43df481ad.tar.gz"
+        "url": "https://git.clan.lol/api/v1/repos/clan/clan-core/archive/0cc8dd02faa4abc2cbcb8599923faa9e24b1fc25.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -264,11 +264,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785769407,
-        "narHash": "sha256-GstEMM47F3UzwKCmSHhU0MM/qvQUzeZi3s0hNQkOn7k=",
-        "rev": "fd0386a934e308c571bcb1f8f763cc3c86b18d6a",
+        "lastModified": 1786424809,
+        "narHash": "sha256-TzpXusH6fZMOARRUKt2yQwMS1+8XkA8jwuT75e1HNOY=",
+        "rev": "2a6fa4e1a4bdd7a8d409d7e73a852a3858d48f13",
         "type": "tarball",
-        "url": "https://git.clan.lol/api/v1/repos/clan/data-mesher/archive/fd0386a934e308c571bcb1f8f763cc3c86b18d6a.tar.gz"
+        "url": "https://git.clan.lol/api/v1/repos/clan/data-mesher/archive/2a6fa4e1a4bdd7a8d409d7e73a852a3858d48f13.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -1129,11 +1129,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1785747939,
-        "narHash": "sha256-NqaCaIITVSDaBYdcWcfCyEu1erL7paTPEQbISQp9xwQ=",
-        "rev": "104240a772428cc2e20d8fd86c9ddbb886bbaff2",
+        "lastModified": 1786227899,
+        "narHash": "sha256-31s7/m7S+yK2ZAW0tepnwSv/2uedYRjp2Eg7KBk1WiI=",
+        "rev": "fe6deff5fad4a42d0e08d2bab3f2d6c7c88f3fe5",
         "type": "tarball",
-        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1046984.104240a77242/nixexprs.tar.xz"
+        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1050309.fe6deff5fad4/nixexprs.tar.xz"
       },
       "original": {
         "type": "tarball",
