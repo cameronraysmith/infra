@@ -51,6 +51,13 @@
   mattpocockSrc ? inputs.self.packages.${stdenv.hostPlatform.system}.agent-plugins-mattpocock-skills,
   mattpocockRev ? mattpocockSrc.rev,
 
+  # Flake-pinned theclaymethod/unslop tree feeding apm's git checkout cache so the
+  # bare-skill remote dep resolves with zero network. unslopRev is the single SHA
+  # source of truth (the fetchFromGitHub rev), reconciled against the apm.yml pin by
+  # the drift guard in the build script.
+  unslopSrc ? inputs.self.packages.${stdenv.hostPlatform.system}.agent-plugins-unslop,
+  unslopRev ? unslopSrc.rev,
+
   targets ? [
     "agent-skills"
     "claude"
@@ -174,6 +181,24 @@ runCommandLocal "apm-skills-compose"
       exit 1
     fi
 
+    # Same offline pre-seed for the unslop remote dep declared in
+    # preferences-code-and-collaboration-conventions/apm.yml. apm types it
+    # CLAUDE_SKILL (SKILL.md at the repo root, no plugin.json or apm.yml) and installs
+    # the root tree as a single skill, carrying its scripts/ and references/ siblings.
+    US_SHA=${unslopRev}
+    SHARD_US=$(printf '%s' 'https://github.com/theclaymethod/unslop' | sha256sum | cut -c1-16)
+    CK_US="$APM_CACHE_DIR/git/checkouts_v1/$SHARD_US/$US_SHA/full"
+    mkdir -p "$CK_US"
+    cp -RL ${unslopSrc}/. "$CK_US"/
+    chmod -R u+w "$CK_US"
+    mkdir -p "$CK_US/.git"
+    printf '%s\n' "$US_SHA" > "$CK_US/.git/HEAD"
+
+    if ! grep -q "$US_SHA" ./preferences-code-and-collaboration-conventions/apm.yml; then
+      echo "apm-skills-compose: unslop SHA drift — preferences-code-and-collaboration-conventions/apm.yml does not pin $US_SHA" >&2
+      exit 1
+    fi
+
     cp ${rootConsumerManifest} ./apm.yml
     # agent-skills,claude only: the codex/hermes/opencode/droid harnesses are
     # fanned out nix-side from this composed $out in a later task, not by apm.
@@ -194,7 +219,10 @@ runCommandLocal "apm-skills-compose"
       "$out/.claude/skills/worktrunk/SKILL.md" \
       "$out/.claude/skills/wt-switch-create/SKILL.md" \
       "$out/.claude/skills/tdd/SKILL.md" \
-      "$out/.claude/skills/code-review/SKILL.md"; do
+      "$out/.claude/skills/code-review/SKILL.md" \
+      "$out/.claude/skills/unslop/SKILL.md" \
+      "$out/.agents/skills/unslop/SKILL.md" \
+      "$out/.claude/skills/unslop/scripts/banned_phrase_scan.py"; do
       if [ ! -f "$expected" ]; then
         echo "apm-skills-compose assertion failed: missing $expected" >&2
         exit 1
