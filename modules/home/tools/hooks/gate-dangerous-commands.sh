@@ -65,7 +65,11 @@ Gated patterns (each returns permissionDecision "ask"):
     docker/podman push *
 
   Process management
-    kill/killall/pkill *
+    pkill * / killall *          (all forms; they select processes by pattern)
+    kill <target> where any target is not a literal numeric PID
+      (variable, command substitution, glob, job spec, -f, or a pattern)
+    xargs ... kill
+    kill [-SIG] <numeric-pid>... and kill -0 * are not gated
 
   Destructive file operations (rm bypass vectors)
     find ... -delete
@@ -120,6 +124,42 @@ jj_cmd_match() {
   local flag_no_arg='--no-pager|--quiet|--verbose|--debug|--ignore-working-copy'
   local jj_opts="(\s+(${flag_arg}|${flag_no_arg}))*"
   echo "$COMMAND" | grep -qE "(^|[;&|]\s*|&&\s*|\|\|?\s*|\\\$\(\s*)jj${jj_opts}\s+$1"
+}
+
+# Return 0 only when every `kill` invocation in $COMMAND targets literal numeric
+# PIDs, optionally after one signal flag (-9, -TERM, -s TERM, --signal=TERM).
+# Anything else -- a variable, command substitution, glob, job spec, -f, or a
+# bare pattern -- returns 1, because such a target can resolve to a process the
+# author never identified. `kill -0` is exempt outright: it sends no signal and
+# only probes liveness.
+#
+# Splits on shell operators with parameter expansion rather than a regex over the
+# whole command, so a second segment (`ps ... ; kill ...`) cannot hide behind a
+# safe-looking first one. Splitting on parens too means a `kill` nested inside a
+# command substitution or subshell is inspected as its own segment, while the
+# substitution supplying its argument (`kill $(pgrep x)`) still fails the
+# literal-PID test.
+kill_targets_are_explicit_pids() {
+  local segments segment
+  segments="${COMMAND//&&/$'\n'}"
+  segments="${segments//||/$'\n'}"
+  segments="${segments//;/$'\n'}"
+  segments="${segments//|/$'\n'}"
+  segments="${segments//&/$'\n'}"
+  segments="${segments//(/$'\n'}"
+  segments="${segments//)/$'\n'}"
+  segments="${segments//\`/$'\n'}"
+
+  local sig='-[0-9]{1,2}|-(SIG)?[A-Z]+[A-Z0-9]*|-s[[:space:]]+[A-Za-z0-9]+|--signal[[:space:]]*=?[[:space:]]*[A-Za-z0-9]+'
+  local safe="^[[:space:]]*kill([[:space:]]+(${sig}))?([[:space:]]+[0-9]+)+[[:space:]]*\$"
+  local probe='^[[:space:]]*kill[[:space:]]+(-0|-s[[:space:]]+0|--signal[[:space:]]*=?[[:space:]]*0)([[:space:]]|$)'
+
+  while IFS= read -r segment; do
+    printf '%s' "$segment" | grep -qE '^[[:space:]]*kill([[:space:]]|$)' || continue
+    printf '%s' "$segment" | grep -qE "$probe" && continue
+    printf '%s' "$segment" | grep -qE "$safe" || return 1
+  done <<< "$segments"
+  return 0
 }
 
 # Fire-and-forget NOTICE via ntfy-send when a relaxed gate arm permits an action
@@ -332,8 +372,21 @@ if [ -z "$REASON" ]; then
 fi
 
 # --- Process management ---
+# pkill and killall select processes by pattern, so they can reach processes the
+# author never inspected -- on a host running sibling agent homes, that includes
+# other agents' processes. `kill 1308` with a PID read off ps selects exactly the
+# one process already identified. Gate the pattern selectors in every form, and
+# gate `kill` only when a target is not a literal numeric PID.
 if [ -z "$REASON" ]; then
-  cmd_match '(kill|killall|pkill)\s' && REASON="process termination"
+  cmd_match '(pkill|killall)\s' && REASON="pattern-matched process termination"
+fi
+if [ -z "$REASON" ]; then
+  if cmd_match 'kill(\s|$)' && ! kill_targets_are_explicit_pids; then
+    REASON="process termination with a target that is not an explicit PID"
+  fi
+fi
+if [ -z "$REASON" ]; then
+  echo "$COMMAND" | grep -qE '(^|[|;&])\s*xargs\s.*\bkill\b' && REASON="xargs kill terminates processes selected upstream"
 fi
 
 # --- Destructive file operations (rm bypass vectors) ---
