@@ -30,7 +30,7 @@
   rustPlatform,
 }:
 let
-  version = "0.5.9";
+  version = "0.5.11";
 
   # Self-reference is safe because `passthru` never becomes a derivation input:
   # fetchFromGitHub forwards it to the fetcher (fetchgithub/default.nix:210-213)
@@ -41,15 +41,15 @@ let
     owner = "block";
     repo = "buzz";
     tag = "desktop-v${version}";
-    hash = "sha256-obFZgv+E20G1JoN8RAXn0URcWqh+kq0noUnaf1BcWUo=";
+    hash = "sha256-gRB4ozmiwdPPd6msU/8N/bVEqONknf7GShjcduY9ThY=";
 
     passthru = {
       inherit version;
-      rev = "ee33722615ca1e7b8efb03e2ed641d99448c8899";
+      rev = "248b9d1b7666aacbcb1485b76e81de30a271ba0e";
 
       cargoDeps = rustPlatform.fetchCargoVendor {
         src = self;
-        hash = "sha256-5dscMwSf9EXaQMhZR1sZg9VPKJ63PD/EpALPWaNxM3A=";
+        hash = "sha256-7BQWBpHdmwt9BAbDlsEmk4PIYkeRDZwYIck3kgIJolo=";
       };
 
       updateScript = ./update.sh;
