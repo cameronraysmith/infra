@@ -11,6 +11,7 @@
     { pkgs, ... }:
     {
       home.packages = with pkgs; [
+        chrome-devtools-axi
         gh-axi
         lavish-axi
         no-mistakes
