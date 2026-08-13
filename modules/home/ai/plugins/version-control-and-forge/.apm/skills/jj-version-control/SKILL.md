@@ -1491,18 +1491,11 @@ Its fleet-sync runs `git fetch --prune`, `git branch -D` on gone-tracking branch
 
 ## Citing upstream jj source
 
-Cite upstream `jj-vcs/jj` source by naming the symbol and the file that holds it, as in `run_git_gc` in `lib/src/git_backend.rs`.
-Leave the line number out.
+Cite upstream `jj-vcs/jj` source by symbol and file rather than by line, following "Citing source files" in `~/.claude/skills/preferences-documentation/SKILL.md`.
 
-Line numbers drift on every upstream commit that touches the file above them, and they fail silently: the citation still resolves, now pointing at whatever occupies that line today.
-A symbol name survives most refactors, and when one does change, a search for it returns nothing, which is unmistakable.
-This document previously cited by line, and by the time it was audited `check_and_detach_head` and `RESERVED_DIR_NAMES` had both moved while keeping their names, and two test anchors had come to rest on a bare `}`.
-
-Where no symbol encloses the material, name the nearest enclosing symbol and say what within it the citation refers to.
-Where a citation supports a claim about runtime behavior, record the jj version the claim was verified against.
-
-A local clone sits at whatever revision it was fetched at, which is rarely the revision of the installed binary.
-Use it to confirm that a symbol exists, not to look up a line number for it.
+The local clone at `~/ghq/github.com/jj-vcs/jj` is shallow at `v0.44.0-12-g8f29cac` while the installed binary is 0.43.0.
+Its line numbers are wrong in both directions against either reference, so it cannot be used to check a citation or to repair one.
+Use it to confirm that a symbol exists, and check behavioral claims against the installed binary instead.
 
 ## Beads integration
 

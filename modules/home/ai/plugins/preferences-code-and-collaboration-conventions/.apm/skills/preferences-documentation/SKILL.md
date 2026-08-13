@@ -214,6 +214,27 @@ Each entry should include the subdirectory or file name, a one-line description 
 This index helps agents and humans quickly assess which notes exist and their approximate currency without reading each file.
 Update the index when creating, deleting, or significantly revising working notes.
 
+## Citing source files
+
+Cite a source file by naming the symbol it contains — a function, struct, constant, or test — rather than a line number.
+Write `run_git_gc` in `lib/src/git_backend.rs`, not `lib/src/git_backend.rs:921-940`.
+
+Line numbers rot on every upstream commit that touches the file above them, and they rot silently.
+The citation still resolves, so it goes on reading as authoritative while pointing at whatever now occupies that line.
+A symbol name survives most refactors, and a symbol that has moved or been renamed fails loudly: a search for it returns nothing, which is unmistakable.
+
+The silent failure is worse than a small offset.
+An audit of the jj skill corpus found the anchor `lib/src/git.rs:1127-1148`, cited for the claim that import reads only git's HEAD, resting inside `remotely_pinned_commit_ids` — a different function that reads no HEAD at all.
+The function the claim was actually about, `import_head`, had moved elsewhere in the file.
+A reader who followed that citation would find plausible-looking code rather than an obvious miss, and that is what makes this class of rot expensive to detect.
+
+Where no symbol encloses the material — a bare match arm, a comment, a stretch of prose — name the nearest enclosing symbol and say what within it the citation refers to.
+Drop the citation instead if it carries no weight.
+Where a citation supports a claim about runtime behavior, record the version the claim was verified against, because the claim and the source drift independently.
+
+A local clone of an upstream repository sits at whatever revision it was fetched at, which is rarely the revision of whatever build is installed.
+Use such a clone to confirm that a symbol exists, not to look up a line number for it.
+
 ## Code
 
 - In code, prefer docstrings relevant to a given programming language over code comments
