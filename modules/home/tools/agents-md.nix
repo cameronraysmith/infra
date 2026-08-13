@@ -297,77 +297,41 @@
           ${skillsPath}/jj-version-control/diamond-workflow.md for the
           four-phase process recipe.
 
-          ## Parallel work in jj mode
+          ## Making changes in jj-managed or colocated repos
 
-          In jj mode, the diamond workflow's development join is the default
-          technique for parallel chains of work in a single working copy. See
-          ${skillsPath}/jj-version-control/diamond-workflow.md (Development join
-          section) and ${skillsPath}/jj-summary/SKILL.md for the diamond's
-          mechanics. A tier-aware integrity check
-          (${skillsPath}/jj-version-control/SKILL.md, composite maintenance
-          invariant) runs before file edits whenever a development join is
-          present, surfacing diamond-shape violations as ask-prompts with
-          recovery commands.
+          The working copy is the integrated surface of every active chain. All
+          of them are merged into it continuously, so two chains that stop being
+          compatible conflict here, at the keyboard, on the day it happens
+          rather than at integration time. That is what the rule below protects,
+          and every other rule follows from it, including for verbs not listed
+          here.
 
-          ## Worktree gates and interop
+          The working copy pointer `@` never moves. Relocating `@` onto a single
+          chain dismantles the integration and strands any concurrent editor
+          coordinating through the shared wip. Create a change with `jj new
+          --no-edit`, which leaves `@` in place, and land work with `jj squash
+          --into <change> --use-destination-message --keep-emptied`. Both squash
+          flags are load-bearing: `-u` reuses the destination's description
+          instead of opening the description-merge editor, which hangs a
+          non-interactive session, and `-k` preserves the source, because
+          without `-i` or path arguments a squash always exhausts `@`, and an
+          exhausted source is abandoned and recreated with a new change id and
+          no description. Path-scoped squash is not exempt when the paths
+          exhaust the source.
 
-          The worktree-creating surfaces are ask-gated rather than denied. `git
-          worktree add` raises an ask when the target repository is
-          jj-colocated, as do EnterWorktree and subagent dispatch (tool name
-          Agent) with `isolation: "worktree"`; ExitWorktree is ungated. The
-          harness's WorktreeCreate path creates a real git worktree under
-          `<jj-root>/.claude/worktrees/<name>`, and
-          `CLAUDE_JJ_WORKSPACE_ISOLATION=1` selects a jj workspace instead.
-          Answer those asks affirmatively when a separate filesystem tree is
-          itself the point — an external framework driving its own agent
-          process, a long-running build, side-by-side comparison — and otherwise
-          stay on the development join. In a flake repository the isolated tree
-          must be a git worktree rather than `jj workspace add`, because a jj
-          workspace has no `.git` and flake evaluation there degrades to a
-          `path:` source with no revision that copies `.jj` and gitignored
-          directories into the store.
+          Because edits land in the integrated surface unattributed, accumulated
+          change is routed down to the chain it belongs to rather than committed
+          in place: path-scoped `jj squash` for what you can name, `jj absorb`
+          for what blame can route, `jj split` for a change spanning boundaries.
+          Splice into a chain with `jj new --no-edit -B <tip>`; descendants
+          rebase automatically and a downstream merge keeps every edge, so the
+          join stays intact without being touched.
 
-          The operating discipline for a worktree alongside a jj working copy is
-          exclusive branch ownership and return-by-ref. A branch is owned by
-          exactly one working copy, the jj primary or one worktree, never both,
-          so never point a worktree at a bookmark on or under the primary's `@`
-          or at one a live development join includes. Work returns from a
-          worktree by ref: commit there, let the primary import it on the next
-          jj command that opens the repo, then integrate with `jj new <branch>`
-          or `jj bookmark set <target> -r <branch>`. The primary's HEAD stays
-          detached throughout; that is the healthy steady state in a colocated
-          repo and must never be classified as drift to repair. Never run `git
-          checkout` or `git switch` to reattach the primary, `git checkout -f`,
-          `git branch -D`, or `git fetch --prune`, and never use `git stash` to
-          carry work across a switch in a jj working copy, because the working
-          copy is jj's to manage and the next jj snapshot governs what it holds.
-          Ref deletion is the destructive class, and its recovery is top-level
-          `jj undo`. If jj does move a bookmark a worktree holds, that
-          worktree's HEAD detaches at the old commit with files and index
-          untouched; recover with `git symbolic-ref HEAD refs/heads/<branch>`.
-          jj refuses to descend into any directory holding a `.git` or `.jj`
-          entry, so an in-tree worktree is excluded from the snapshot
-          automatically and needs no gitignore entry, but never create one where
-          jj-tracked files already live. Inside a worktree jj is unavailable and
-          the edit-time jj-mode hooks correctly no-op, so diamond invariants,
-          bookmark conventions, and tiered ceremony do not apply there; the
-          worktree-creating gates still ask from inside a worktree because they
-          resolve the target through `git rev-parse --git-common-dir` onto the
-          jj primary, which a further worktree still concerns. See
-          ${skillsPath}/jj-version-control/SKILL.md "Worktree interop" for the
-          mechanics and source anchors.
-
-          ## External agent frameworks
-
-          When an external agent framework such as firstmate manages
-          repositories on our behalf, give it its own clone rather than a
-          symlink to a working copy we also use. This is our choice given what
-          the framework does, not an upstream recommendation; firstmate
-          documents no preference either way. Its fleet-sync runs `git fetch
-          --prune`, `git branch -D` on gone-tracking branches, and `git checkout
-          <default>` to reattach a detached HEAD, and its project sweep
-          dereferences symlinks, so pointing it at a jj primary would run
-          exactly the operations the discipline above forbids.
+          Read-only inspection takes the global `--ignore-working-copy` so it
+          does not snapshot and race a concurrent session. Recovery for the
+          destructive class is top-level `jj undo`; there is no `jj op undo`.
+          See ${skillsPath}/jj-version-control/SKILL.md for the diamond
+          workflow, worktree interop, and external-framework clones.
         '';
       };
     };
