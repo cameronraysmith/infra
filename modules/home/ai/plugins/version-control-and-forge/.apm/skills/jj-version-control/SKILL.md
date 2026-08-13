@@ -788,6 +788,30 @@ Coordination protocol for parallel agents:
 The orchestrator routes changes to the correct chain via `jj squash --from @ --into ... --keep-emptied` or `jj absorb` after each subagent completes.
 Subagent prompts specify which files to edit and the target chain context but do not include jj routing commands.
 
+One file per agent is not sufficient isolation.
+Each concurrent editor triggers its own `snapshot working copy` operation, and jj snapshots the whole working copy rather than the file that agent touched, so the editors race the snapshot even with no content overlap; the resulting divergence and its mechanical recovery are covered in §"Pre-dispatch concurrent-agent coordination", and `jj status` showing `(divergent)` or a conflicted `wip??` bookmark is the signal to triage before any squash.
+Prefer a single sequential editor when the artifacts being edited cross-reference each other, since the coordination those cross-references already demand outweighs what the parallelism buys.
+
+A foreign modification appearing in `jj status` is routine neighbour traffic rather than corruption.
+Another session's uncommitted work is visible in the shared `@` until that session routes it into its own chain, at which point it vanishes from `@` — which reads as a file mutating itself.
+Do not chase it and do not revert it.
+The defence is to path-scope every squash to the files this editor actually edited; a wholesale `jj squash --from @` sweeps the neighbour's work into the wrong chain.
+
+Attribute a foreign change before acting on it:
+
+```bash
+PAGER=cat jj log -r '<change> & ::<your-bookmark>'                    # empty: not on your chain
+PAGER=cat jj log -r '<change> & ::fork_point(<chain-a> | <chain-b>)'  # non-empty: base-bound
+```
+
+An ancestor of the fork point is base-bound and belongs to nobody's chain — someone spliced it below the join, which makes it an ancestor of every chain by construction.
+`fork_point(<chain-a> | <chain-b>)` and the `fork_point(parents(<join>))` spelling used elsewhere in this skill agree whenever the join's parents are the chain tips; prefer whichever names the arms already in hand.
+Commit ids on your own chain move when a splice below lands, because it rebases everything above it.
+Content is untouched, so compare a diff digest rather than commit ids to prove nothing changed.
+
+For the same reason, never tell a subagent editor it is the sole editor of the working copy.
+It is the sole editor of one chain, and the stronger claim makes routine neighbour traffic look like corruption and invites the agent to clean up something that is not its business.
+
 ### Adding and removing chains
 
 Add a chain to the development join `@`:
@@ -850,6 +874,13 @@ Both are valid exits from a conflicted join.
 
 When mid-diamond work surfaces a `<base>`-bound commit — hotfix, formatting, config tweak, dependency bump — that belongs on `<base>` below all chains, splice it into the base-to-join interval.
 The accumulated splice region fast-forwards `<base>` independently of when the diamond's chains land.
+
+Splice is the route for base-bound content only, and is not the general route out of `[wip]`.
+Decide by asking who inherits the content rather than by which recipe is familiar: fleet-wide configuration, shared modules and dependency bumps go below, while one chain's feature or documentation appends to that chain's tip instead (see §"Extending a chain with a new commit (route-and-extend pattern)").
+Splicing chain-bound content is wrong in two ways.
+It makes one chain's content an ancestor of every other chain, so a change belonging to one chain silently enters the validation surface of all of them and no longer reflects the review boundary its bookmark names.
+And it is frequently impossible outright: an edit whose anchor was created by a commit on the chain above it has no anchor below the join, so there is no position to splice it into.
+A dispatch prompt instructing an agent to route content down into a named chain by the splice-below-join recipe is self-contradictory and should be caught rather than obeyed — resolve `children(fork_point(parents(<join>))) & ::<join>` read-only first, and refuse if the content's anchor is not below it.
 
 A diamond's interior is `<base>..<join>` — the half-open interval between the base bookmark and the development join.
 The bottom of the chains is the antichain of *chain roots* — the direct children of the splice tip (or `<base>` when the splice region is empty) that ancestor `<join>`.
@@ -978,6 +1009,55 @@ If only the first half ran, `@` is left as a two-parent merge at the old parent 
 Running the first half alone is what produces that state; the pair executed in full does not, and this failure has previously been misattributed to the rebase itself.
 Repair by issuing the second half: `jj rebase -s <wip-change-id> -d <merge-change-id>`.
 When the broken-half was the immediately-preceding operation, `jj op restore <id>` is also available to roll back and re-execute the sequence cleanly.
+
+That prior misattribution carries a methodological rule.
+Evidence that a given verb is destructive must come from a controlled fixture, never from a live session where a confound cannot be excluded: in a live session the half-run pair and the verb itself leave the same visible damage, so a single observation cannot distinguish them and will indict whichever verb was typed last.
+The `jj-linearize-join test` subcommand is the fixture available here, and running the sequence under it on jj 0.43.0 is what settled this case.
+Reach for the fixture before writing down any claim about jj's behavior, and treat a live-session observation as a hypothesis that still needs one.
+
+### Folding a foreign commit that forked the join
+
+An external tool that makes its own git commit mid-run forks the join.
+`clan machines install` is the observed case: it writes `inventory.json` (the `installedAt` timestamp) and commits it with the message `inventory.json: update install time of <machine>`, jj imports the git `HEAD` move, and jj mints a fresh working-copy commit on top of it.
+The join then has two children — the pre-existing `[wip]`, and the foreign commit carrying a new empty `@` above it — which violates invariant (vi).
+Expect this on every such run and fold it afterward, rather than reading it as corruption.
+
+The change usually exists twice: the tool writes the file, jj auto-snapshots it into `[wip]`, and the tool's own commit then carries byte-identical content.
+Check before folding, because the outcome depends on it:
+
+```bash
+PAGER=cat jj diff --from <foreign-commit> --to <wip>
+```
+
+An empty diff means `[wip]` collapses to empty during the fold with no conflict.
+A non-empty diff means the same rebase materializes a conflict at `@`, which is a normal state to resolve rather than evidence the fold went wrong (see §"A conflicted join is a normal state").
+
+The fold is four commands, and the order is load-bearing:
+
+```bash
+jj edit <wip>                                          # first — see below
+jj rebase -r <foreign-commit> -o <chain-tip>
+jj bookmark move <chain-bookmark> --to <foreign-commit>
+jj rebase -s <join> -o <foreign-commit> -o <other-arm>
+```
+
+The final rebase names the full parent set the join is to carry afterward, one `-o` per arm, following the convention in §"Adding and removing chains".
+
+Three plausible orderings are wrong:
+
+- *Anything before `jj edit <wip>`.* Abandoning the stray empty while `@` still sits on it makes jj mint a *replacement* empty on the foreign commit, reintroducing the second child. Moving `@` first makes the disposal free, because `jj edit` auto-abandons the prior working-copy commit when it is empty, undescribed, unbookmarked and childless.
+- *Disposing of the stray empty before relocating the foreign commit.* `jj rebase -r` reattaches descendants to the moved revision's old parents, so a surviving child is reparented onto the join and the two-child violation survives in a new guise.
+- *`-r` rather than `-s` for the join.* `-s` carries descendants, so `[wip]` stays the join's child and `@` is never the subject of a rebase. `-r` detaches `[wip]` onto the join's old parents and spawns a spurious second merge.
+
+**Why `jj edit` is sanctioned here.**
+This recipe opens with `jj edit <wip>`, a verb invariant (iii-b) otherwise prohibits, and the exception is deliberate and confined to this repair.
+The prohibition is on drifting `@` *off* `[wip]`; here a foreign process has already drifted it, and `jj edit <wip>` is the verb that puts it back.
+It is the restoration the composite maintenance invariant already requires after any `@`-moving operation, differing only in that `[wip]` still exists and must be preserved rather than recreated with `jj new <merge-change-id> -m "wip"`.
+Folding requires being on `[wip]`, so no `@`-preserving alternative exists.
+Outside this repair the prohibition stands unqualified, and the presence of this exception is not a precedent for reaching for `jj edit` elsewhere in a development join.
+
+Preserve the foreign tool's commit message rather than rewriting it into conventional-commit form.
+Seventeen prior `inventory.json: update install time of <machine>` commits exist in this repository and none was reworded; rewriting one breaks the uniformity that marks the series as machine-generated.
 
 ### Teardown
 
@@ -1228,6 +1308,9 @@ jj gc
 Do not execute cleanup automatically.
 Always present the summary and wait for explicit approval.
 
+`jj gc` here reclaims what jj considers unreachable; it does not reclaim objects the git reflog still roots.
+When the goal is actually recovering disk space in a colocated repository, run the `git fsck` diagnostic and the three-command purge in §"Reclaiming disk space in a colocated repo" instead of inferring from `jj gc`'s exit status that the space was freed.
+
 ## Integration with git repositories
 
 ### Initializing jj in existing git repository
@@ -1280,6 +1363,47 @@ Pushing to git remotes:
 - `jj git push` works identically to git push for bookmarks
 - Remote bookmark tracking is automatic
 - Git-specific features (like GitHub PRs) work normally with jj-managed bookmarks
+
+`git.auto-local-bookmark` was removed in jj 0.42.0 (2026-06-04), alongside `git.push-new-bookmarks`, as a deprecated config option (upstream `CHANGELOG.md`, 0.42.0 "Breaking changes").
+It existed and was deprecated rather than never having existed, and setting it in a config file today is inert.
+Do not reach for it to control whether fetched remote bookmarks acquire local counterparts, and do not conclude from its absence in `jj config list --include-defaults` that the name was always invalid.
+
+### Reclaiming disk space in a colocated repo
+
+Making a commit unreachable from every ref does not reclaim its objects.
+jj rewrites git `HEAD` on essentially every operation — the reflog fills with `export from jj` entries — so the git reflog independently pins every intermediate state, and `git gc` honors reflog entries as roots while `git rev-list --all` does not.
+`gc.reflogExpireUnreachable` defaults to 30 days, so recent debris survives no matter how aggressively refs are pruned.
+
+Measure before remedying.
+Reasoning about reachability from refs instead of measuring it is the expensive mistake here: on the observed incident it produced two successive remediation proposals, each defensible and each reclaiming almost nothing.
+Run the diagnostic first, and let its result select the remedy:
+
+```bash
+git fsck --unreachable --no-reflogs | wc -l   # unreachable ignoring reflogs
+git fsck --unreachable | wc -l                # unreachable honoring reflogs
+```
+
+A large first number against a zero second number means reflogs are the sole retaining root, and `git reflog expire` is the missing step.
+Confirm for a specific object with `git rev-list --objects --all --reflog | rg <blob-sha>`.
+
+The purge is three commands, all required, in order:
+
+```bash
+jj op abandon ..<op-id-after-the-debris>   # drops jj operations; releases refs/jj/keep
+git reflog expire --expire=now --expire-unreachable=now --all
+git gc --prune=now
+```
+
+`jj util gc` does not substitute for this sequence.
+It shells out to `git gc --prune=@<timestamp> +0000` (`lib/src/git_backend.rs:921-940`, invoked from `fn gc` at `lib/src/git_backend.rs:1508-1530`), and `git gc` prunes reflogs using the `gc.reflogExpire` and `gc.reflogExpireUnreachable` defaults of 90 and 30 days.
+The `--prune` cutoff governs loose-object age, not reflog reachability, so reflog-rooted objects survive and an apparently-successful `jj util gc` can consolidate debris instead of removing it.
+On the observed incident the jj half did work — the offending commit vanished and `refs/jj/keep` fell from 801 refs to 107 — while `.git` moved only from 5.65 GB to 5.27 GB against a working tree of roughly 6 MB.
+A subsequent bare `git gc --prune=now` changed nothing at all.
+Only after `git reflog expire --expire=now --expire-unreachable=now --all` did `git gc --prune=now` take `.git` to 21 MB, dropping exactly the object count `git fsck` had flagged.
+
+Avoid the upstream cause outright: never download into a jj working copy.
+`snapshot.max-new-file-size` gates *new* files only, so a downloader that creates a file while it is still tiny gets it tracked, and every later snapshot then ingests it whole regardless of size.
+No value of that setting prevents this; only a gitignore entry does, because jj will not track an ignored file at any size.
 
 ## Worktree interop
 
@@ -1350,6 +1474,12 @@ jj is unavailable inside it, and the edit-time jj-mode hooks — the branch-befo
 The worktree-creating gates still ask from inside a worktree, because they resolve the target repository through `git rev-parse --git-common-dir` and so land on the jj primary.
 That is correct behavior: creating a further worktree from inside one still concerns the primary, so the trade-off is still worth surfacing.
 The diamond invariants, the bookmark conventions, and the tiered ceremony model do not apply inside a worktree.
+
+No authorization mechanism or allowlist backs these gates, and none is needed.
+The apparent need for one was manufactured entirely by a resolver defect since fixed: the gate keyed on the session's working directory rather than the target repository, so a session rooted in a jj repository was denied `git worktree add` in unrelated pure-git repositories, and an allowlist looked like the way to carve those back out.
+With the target resolved per command segment through `-C`, `--git-dir`, or a preceding `cd`, pure-git tools such as firstmate and worktrunk short-circuit the gate on their own, because the jj-mode branch never fires for them.
+This is recorded as a negative design decision so its absence is read as deliberate rather than as an oversight to correct by building the allowlist.
+The gate is an ask and not a security boundary; Claude Code's documentation directs a hard allow or deny to the permission system rather than to a hook.
 
 ### External frameworks get their own clone
 
