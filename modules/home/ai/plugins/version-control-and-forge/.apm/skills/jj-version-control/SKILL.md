@@ -7,7 +7,7 @@ description: Jujutsu version control conventions and workflow patterns.
 
 **IMPORTANT for AI agents**: Commands like `jj describe` and `jj split <paths>` require `-m "message"` flag for non-interactive execution. See `~/.claude/skills/jj-workflow/SKILL.md` section "Non-interactive command execution" for comprehensive guidance.
 
-**Development-join invariant (multi-chain mode)**: when a development join is present, `@` is ALWAYS the empty `[wip]` commit directly atop the frozen multi-parent `[merge]`. Route all content DOWNWARD into a chain (`jj squash --from @ … --keep-emptied`, `jj absorb`, `jj split`) — NEVER `jj describe @` into content and NEVER relocate `@` via the positional rebase forms `jj rebase -r @ --insert-before/--insert-after <target>` or `jj rebase --revisions @ --insert-before/--insert-after <target>`, which drift `@` off `[wip]`. In every splice/relocation recipe the relocated `<commit>`/`<X>`/`<range>` is a SEPARATE, already-sealed non-wip commit, never `@`. The one sanctioned `jj rebase` naming `@` is the destination form `jj rebase -r @ -d 'all:(…)'` that re-anchors `[wip]` onto a rebuilt join. See Diamond invariants (iii-b) below, the composite maintenance invariant, and the edit-route cycle.
+**Development-join invariant (multi-chain mode)**: when a development join is present, `@` is ALWAYS the empty `[wip]` commit directly atop the frozen multi-parent `[merge]`. Route all content DOWNWARD into a chain (`jj squash --from @ … --keep-emptied`, `jj absorb`, `jj split`) — NEVER `jj describe @` into content and NEVER relocate `@` via the positional rebase forms `jj rebase -r @ --insert-before/--insert-after <target>` or `jj rebase --revisions @ --insert-before/--insert-after <target>`, which drift `@` off `[wip]`. In every splice/relocation recipe the relocated `<commit>`/`<X>`/`<range>` is a SEPARATE, already-sealed non-wip commit, never `@`. The one sanctioned `jj rebase` naming `@` is the destination form `jj rebase -r @ -d <chain-a> -d <chain-b> …` that re-anchors `[wip]` onto a rebuilt join. See Diamond invariants (iii-b) below, the composite maintenance invariant, and the edit-route cycle.
 
 ## Core philosophy
 
@@ -411,7 +411,7 @@ All content leaves `@` by routing DOWNWARD with `@` left in place and empty, via
 - `jj squash --from @ --insert-before 'children(fork_point(parents(<join>))) & ::<join>' -m "msg" --keep-emptied -- <paths>` (splice-below-join from live `@`);
 - `jj split` keeping the wip remainder.
 
-The ONLY sanctioned `jj rebase` touching `@` is the DESTINATION form that re-anchors `[wip]` onto a rebuilt multi-parent join when adding or removing a chain — `jj rebase -r @ -d 'all:(@- | new-bookmark)'` / `jj rebase -r @ -d 'all:(@- ~ removed-bookmark)'` (see §"Adding and removing chains").
+The ONLY sanctioned `jj rebase` touching `@` is the DESTINATION form that re-anchors `[wip]` onto a rebuilt multi-parent join when adding or removing a chain — `jj rebase -r @ -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark` (add) / `jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>` (remove), one `-d` per chain the join is to carry afterward (see §"Adding and removing chains").
 That form keeps `@` an empty direct child of the join and so does not drift it; it is distinct from the prohibited positional `--insert-before/--insert-after` forms above.
 
 In every splice/relocation recipe the relocated `<commit>`/`<X>`/`<range>` is a SEPARATE, already-sealed NON-wip commit, never `@`/`[wip]` itself.
@@ -465,13 +465,13 @@ By-relocation (ONLY for a SEPARATE, already-sealed NON-wip commit that already e
 jj rebase --revisions <separate-sealed-non-wip-commit> --insert-before 'children(fork_point(parents(<join>))) & ::<join>'
 ```
 
-Sanctioned destination-form rebase touching `@` (add/remove a chain; re-anchors the empty `@` onto the rebuilt multi-parent join; the `all:` prefix forces multi-parent; this is the ONLY `jj rebase` that may name `@` and it does NOT drift `@`):
+Sanctioned destination-form rebase touching `@` (add/remove a chain; re-anchors the empty `@` onto the rebuilt multi-parent join; one `-d` per chain the join is to carry afterward; this is the ONLY `jj rebase` that may name `@` and it does NOT drift `@`):
 
 ```bash
-jj rebase -r @ -d 'all:(@- | new-bookmark)'        # add chain
-jj rebase -r @ -d 'all:(@- ~ removed-bookmark)'    # remove chain
+jj rebase -r @ -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark   # add chain
+jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>                 # remove chain
 # the two-commit [merge]+[wip] model instead operates on the frozen [merge] then re-attaches:
-jj rebase -r <merge> -d 'all:(<existing-parents> | new-bookmark)' && jj rebase -r <wip> -d <merge>
+jj rebase -r <merge> -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark && jj rebase -r <wip> -d <merge>
 ```
 
 PROHIBITED (drifts `@` off `[wip]`; the catastrophic defect class):
@@ -787,17 +787,19 @@ Subagent prompts specify which files to edit and the target chain context but do
 Add a chain to the development join `@`:
 
 ```bash
-jj rebase -r @ -d 'all:(@- | new-bookmark)'
+jj rebase -r @ -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark
 ```
 
 Remove a chain from the development join `@`:
 
 ```bash
-jj rebase -r @ -d 'all:(@- ~ removed-bookmark)'
+jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>
 ```
 
-The `all:` prefix is required to ensure the revset resolves to multiple parents rather than collapsing to a single common ancestor.
-Without `all:`, jj would compute the nearest common ancestor of the revset members, producing a single-parent `@` instead of a multi-parent one.
+Name every destination explicitly, one `-d` per chain, listing the full parent set the join is to carry after the operation.
+Removal is expressed by naming the chains that remain rather than by subtracting the one that leaves.
+`-o`/`--onto` is the canonical spelling of the destination flag as of jj 0.43.0, with `-d`/`--destination` retained as an alias.
+The `all:` revset modifier that earlier revisions of this skill placed on these destinations was removed in jj 0.38.0 and now fails to parse.
 
 This destination form is the ONE sanctioned `jj rebase` that names `@`: it re-anchors the empty `@` onto a rebuilt multi-parent join, keeping `@` a direct child of the join, so it does not drift `@` below the join.
 It is distinct from — and must not be confused with — the prohibited positional forms `jj rebase -r @ --insert-before/--insert-after <target>` and `jj rebase --revisions @ --insert-before/--insert-after <target>`, which drop `@` into the chain/splice interior (see invariant (iii-b)).

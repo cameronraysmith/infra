@@ -138,7 +138,7 @@ Independent chains within the same linearization step can be ordered discretiona
    Develop in wip, routing changes to chains via the edit-route cycle.
    Throughout the develop phase `@` stays the single empty `[wip]` directly atop `[merge]` (invariant (iii)/(vi)); this shared `[wip]` is the stable coordination point that lets multiple concurrent editors write the same integrated surface safely.
    Route every change DOWN from `@` using only `@`-preserving verbs — `jj squash --from @ … --keep-emptied`, `jj absorb`, or `jj split` keeping the wip — and never `jj describe @` into content nor make `@` the subject of `jj rebase` / `--revisions @`, which drift `@` off `[wip]`, remove the surface other actors are concurrently writing, and (in this repo) drag the pushed `wip` deploy bookmark that machines rebuild from.
-   The one sanctioned `jj rebase` touching `@` is the destination add/remove-chain form `jj rebase -r @ -d 'all:(…)'`, which keeps `@` an empty child of the rebuilt join; the positional `--insert-before` / `--insert-after` (and the `-A` / `-B` aliases) forms are the prohibited ones.
+   The one sanctioned `jj rebase` touching `@` is the destination add/remove-chain form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, which keeps `@` an empty child of the rebuilt join; the positional `--insert-before` / `--insert-after` (and the `-A` / `-B` aliases) forms are the prohibited ones.
    See `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii-b) for the canonical statement.
    Each route from `[wip]` to a chain is either an append-route (default: land a new atomic commit on the chain) or an amend-route (fixups against the existing tip).
    The append-route is the default for landing new work:

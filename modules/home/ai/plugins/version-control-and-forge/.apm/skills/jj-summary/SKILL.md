@@ -147,8 +147,9 @@ jj rebase --revisions '<range-start>::<range-end>' --insert-after <chain-tip>
 jj bookmark set <chain-bookmark> -r <range-end>
 # See ~/.claude/skills/jj-version-control/SKILL.md §"Extending a chain with a new commit (route-and-extend pattern)" → Multi-commit-range form
 # Add/remove chains dynamically:
-jj rebase -r @ -d 'all:(@- | new-bm)'    # Add chain to the development join
-jj rebase -r @ -d 'all:(@- ~ old-bm)'    # Remove chain from the development join
+# name one -d per chain the join is to carry afterward
+jj rebase -r @ -d <chain-a> -d <chain-b> -d new-bm    # Add chain to the development join
+jj rebase -r @ -d <chain-a> -d <chain-b>              # Remove chain from the development join
 
 # Splice-below-join: insert a <base>-bound commit between <base> and chain roots
 # By-construction: author a new splice commit in position
@@ -307,8 +308,9 @@ jj absorb                         # Auto-route by blame
 # No description-recovery step is needed; [wip] is ephemeral.
 # See jj-version-control/SKILL.md §"Extending a chain with a new commit (route-and-extend pattern)".
 # Add/remove chains dynamically:
-jj rebase -r @ -d 'all:(@- | new-bookmark)'   # Add chain
-jj rebase -r @ -d 'all:(@- ~ old-bookmark)'   # Remove chain
+# name one -d per chain the join is to carry afterward
+jj rebase -r @ -d <chain-a> -d <chain-b> -d new-bookmark   # Add chain
+jj rebase -r @ -d <chain-a> -d <chain-b>                   # Remove chain
 ```
 
 **Diamond workflow (epic-scoped, four phases):**

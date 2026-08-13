@@ -462,11 +462,11 @@ jj op log --limit 20
 
 When in a development join (composite working copy), history cleanup operations on a parent chain (rebase, squash within the chain) trigger auto-rebase of `@`.
 This is safe — jj handles it automatically.
-However, if cleanup involves abandoning changes that are parents of `@`, exit the development join first by removing that chain from `@`: `jj rebase -r @ -d 'all:(@- ~ chain-being-cleaned)'`.
+However, if cleanup involves abandoning changes that are parents of `@`, exit the development join first by removing that chain from `@`: `jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>`, naming one `-d` per chain that remains.
 Re-add after cleanup is complete.
 
 Inside a development join `@` is always the empty `[wip]` commit sitting directly on the multi-parent join, and that shared `[wip]` is the coordination point that makes N concurrent editors safe by construction (in this repo it also backs the pushed `wip` deploy bookmark machines rebuild from).
-Auto-rebase of `@` triggered by editing its ancestors is safe and jj-managed, and re-anchoring `@`'s parent set with the destination forms `jj rebase -r @ -d 'all:(@- ~ chain)'` or `jj rebase -r @ -d 'all:(@- | chain)'` is the sanctioned apply/unapply primitive that keeps `@` an empty working copy on the join.
+Auto-rebase of `@` triggered by editing its ancestors is safe and jj-managed, and re-anchoring `@`'s parent set with the destination form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, is the sanctioned apply/unapply primitive that keeps `@` an empty working copy on the join.
 What you must never do is make `@` itself a content commit or relocate it off the join: do not `jj describe @` (consumes the wip into a content commit) and do not relocate it via the positional forms `jj rebase -r @ --insert-before/--insert-after <target>` or `jj rebase --revisions @ --insert-before/--insert-after <target>` (drops the wip into a chain interval).
 Either removes the shared editing surface other actors are concurrently writing and breaks the diamond invariants.
 To route a change down a chain while leaving `@` empty, use `jj absorb` (above) — the preferred routing-down verb in a development join, which distributes the working-copy diff into the commits that last touched each path while leaving `@` in place and empty — or `jj squash --from @ --into <chain-tip> --keep-emptied [-- <paths>]` (amend, `-m` omitted to preserve the tip description) and `jj squash --from @ --insert-after/--insert-before <target> -m "msg" --keep-emptied [-- <paths>]` (append/splice), each carrying explicit `-m` for non-interactive safety.

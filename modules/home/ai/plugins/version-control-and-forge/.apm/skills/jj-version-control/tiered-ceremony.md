@@ -62,7 +62,7 @@ Edits in `@` (which is `[wip]`) route to the correct chain via the canonical two
 Invariant: `@` is always the empty `[wip]` sitting directly on the frozen `[merge]`, because that shared empty `[wip]` is the coordination surface every editor — human or agent — writes concurrently, so drifting it off `[wip]` collapses the very thing that makes N concurrent editors safe.
 Therefore never `jj describe @` (consumes the wip into a content commit) and never relocate `@` via the positional rebase forms `jj rebase -r @ --insert-before/--insert-after <target>` or `jj rebase --revisions @ --insert-before/--insert-after <target>` (these drop `@` off or below the join).
 All content leaves `@` by routing DOWNWARD only — `jj absorb`, or `jj squash --from @ --insert-after/--insert-before <target> -m "msg" --keep-emptied [-- <paths>]` (append-route) and `jj squash --from @ --into <chain-tip> --keep-emptied` (amend-route, `-m` omitted) — which create or amend a target while leaving `@` empty in place.
-The one sanctioned `jj rebase` naming `@` is the destination form `jj rebase -r @ -d 'all:(…)'` that re-anchors the empty `@` when adding or removing a chain; it does not drift `@`.
+The one sanctioned `jj rebase` naming `@` is the destination form `jj rebase -r @ -d <chain-a> -d <chain-b> …` that re-anchors the empty `@` when adding or removing a chain; it does not drift `@`.
 Where any splice or by-relocation recipe references a separate stacked commit `<X>`, that `<X>` must be a SEPARATE already-sealed non-wip commit, never `@`/`[wip]` itself.
 See `SKILL.md` invariant (iii-b) and §"The edit-route cycle" for the full canon and command templates.
 Each chain becomes its own PR via FF merge.

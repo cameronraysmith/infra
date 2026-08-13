@@ -147,7 +147,7 @@ Operations that drift `@` away from wip, and are therefore forbidden while a dev
 - `jj rebase -r @ --insert-before <target>` / `--insert-after <target>` and `jj rebase --revisions @ --insert-before/--insert-after <target>` relocate the wip below or into the join interior.
 
 Never describe `@` into content and never positionally rebase `@`.
-The one sanctioned `jj rebase` touching `@` is the destination add/remove-chain form `jj rebase -r @ -d 'all:(@- | new-bookmark)'` (add a chain) or `jj rebase -r @ -d 'all:(@- ~ removed-bookmark)'` (remove a chain); the `all:` prefix forces a multi-parent merge so `@` stays an empty direct child of the rebuilt join and is not drifted.
+The one sanctioned `jj rebase` touching `@` is the destination add/remove-chain form `jj rebase -r @ -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark` (add a chain) or `jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>` (remove a chain); naming every chain the join is to carry with its own `-d` gives `@` a multi-parent destination, so it stays an empty direct child of the rebuilt join and is not drifted.
 
 All content leaves `@` by routing downward with `@` left in place and empty, via these editor-safe verbs:
 - `jj absorb` (auto-distribute by blame; prefer the scoped `jj absorb <path>` form under concurrency) — safe from wip without `--keep-emptied`.
