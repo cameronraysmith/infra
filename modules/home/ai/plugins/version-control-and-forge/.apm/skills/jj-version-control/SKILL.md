@@ -388,7 +388,7 @@ They are stated as a numbered list so individual invariants can be referenced un
 A bookmark whose tip is not in `parents([merge])` is an orphaned chain: its content is invisible to `[wip]` and absent from any integrated validation run on the development join.
 
 (ii) join parents = current bookmark targets — there is no staleness between `[merge]`'s parent revisions and the current targets of the chain bookmarks named in `[merge]`'s description.
-Auto-rebase normally maintains this invariant in place; when `jj rebase -r <merge>` is used deliberately (e.g., the chain-creation-mid-diamond recipe), the required successor `jj rebase -r <wip> -d <merge>` keeps `[wip]` attached — see "Re-attaching `[wip]` after `jj rebase -r <merge>`" below.
+Auto-rebase normally maintains this invariant in place; when `jj rebase -r <merge>` is used deliberately (e.g., the chain-creation-mid-diamond recipe), the required successor `jj rebase -s <wip> -d <merge>` keeps `[wip]` attached — see "Re-attaching `[wip]` after `jj rebase -r <merge>`" below.
 
 (iii) `@` atop the join — `@` is at `[wip]` whose sole parent is `[merge]`, or `@` IS `[merge]` during construction.
 This is the maintenance invariant historically named in this section; the other four invariants are now peer to it.
@@ -470,8 +470,9 @@ Sanctioned destination-form rebase touching `@` (add/remove a chain; re-anchors 
 ```bash
 jj rebase -r @ -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark   # add chain
 jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>                 # remove chain
-# the two-commit [merge]+[wip] model instead operates on the frozen [merge] then re-attaches:
-jj rebase -r <merge> -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark && jj rebase -r <wip> -d <merge>
+# the two-commit [merge]+[wip] model instead operates on the frozen [merge] then re-attaches;
+# both halves are one sequence, and the second takes -s so any stack above [wip] returns with it:
+jj rebase -r <merge> -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark && jj rebase -s <wip> -d <merge>
 ```
 
 PROHIBITED (drifts `@` off `[wip]`; the catastrophic defect class):
@@ -499,7 +500,7 @@ Invariant (iii) above is the maintenance invariant: the join + wip structure req
 
 Before any operation that moves `@` (like `jj new <single-parent>` or `jj edit`), verify and record `[merge]`'s change ID.
 After any such operation, immediately restore `[wip]` on top: `jj new <merge-change-id> -m "wip"`.
-When adding a new bookmark to the development join, reconstruct `[merge]` with all parents including the new one (re-set the description to the new `join N=<cardinality>: <alphabetical bookmarks>` state), then recreate `[wip]` on top.
+When adding a new bookmark to the development join, use the rebase pair — `jj rebase -r <merge>` onto all parents including the new one, then `jj rebase -s <wip> -d <merge>` — and re-set the description to the new `join N=<cardinality>: <alphabetical bookmarks>` state; see §"Adding and removing chains" for why rebuilding `[merge]` and `[wip]` with `jj new` is reserved for dissolution.
 Subagent prompts must specify whether they operate in `[wip]` (edit files, let orchestrator route) or outside it (e.g., working on a single chain directly).
 
 #### Idle vs mid-operation states
@@ -590,7 +591,12 @@ Cross-chain file-collision reconnaissance is the operational check that this mer
 
 ### Pre-dispatch concurrent-agent coordination
 
-When known concurrent agent activity exists on a development join — the user has flagged another session as in-progress, or `jj op log` shows recent ops from an unfamiliar source — verify chain state IMMEDIATELY before each chain-touching dispatch (not just at design time) and serialize ordering with the other agent explicitly. The pre-edit recon above catches different-FILE collisions across chains; this catches concurrent-AGENT mutations against the same chain, where two agents independently issue `jj squash --insert-after <tip>` in overlapping windows and produce divergent `@` and `[merge]` change IDs. Recovery is mechanical (`jj edit <survivor-commit-hash>` to retarget `@`, then `jj abandon <stale-wip-hash> <stale-merge-hash>` using commit hashes to disambiguate across divergence) but pause-and-serialize prevents the failure altogether.
+When known concurrent agent activity exists on a development join — the user has flagged another session as in-progress, or `jj op log` shows recent ops from an unfamiliar source — verify chain state IMMEDIATELY before each chain-touching dispatch (not just at design time) and serialize ordering with the other agent explicitly. The pre-edit recon above catches different-FILE collisions across chains; this catches concurrent-AGENT mutations against the same chain, where two agents independently issue `jj squash --insert-after <tip>` in overlapping windows and produce divergent `@` and `[merge]` change IDs.
+
+Recovery is mechanical: `jj abandon <superseded-commit-hash>` to drop the losing side of the divergence, then `jj bookmark set wip -r <keeper-commit-hash>` to point the deploy bookmark at the surviving one, using commit hashes throughout to disambiguate across the divergence.
+Neither verb moves `@`, so the shared editing surface the other agents are concurrently writing survives the repair.
+Do not recover with `jj edit <survivor>`: retargeting `@` is exactly what invariant (iii-b) prohibits, and under concurrency it deletes the surface the repair is meant to preserve.
+Pause-and-serialize prevents the failure altogether.
 
 ### The edit-route cycle
 
@@ -803,13 +809,42 @@ The `all:` revset modifier that earlier revisions of this skill placed on these 
 
 This destination form is the ONE sanctioned `jj rebase` that names `@`: it re-anchors the empty `@` onto a rebuilt multi-parent join, keeping `@` a direct child of the join, so it does not drift `@` below the join.
 It is distinct from — and must not be confused with — the prohibited positional forms `jj rebase -r @ --insert-before/--insert-after <target>` and `jj rebase --revisions @ --insert-before/--insert-after <target>`, which drop `@` into the chain/splice interior (see invariant (iii-b)).
-For repos on the two-commit `[merge]`+`[wip]` model, prefer reconstructing the frozen `[merge]` with the new parent set and then recreating `[wip]` (per §"Composite maintenance invariant") rather than rebasing `@`:
+For repos on the two-commit `[merge]`+`[wip]` model, operate on the frozen `[merge]` with the rebase pair rather than rebasing `@` directly:
 
 ```bash
-# Add a chain: reconstruct [merge] with the expanded parent set, then recreate [wip].
-jj new <existing-parent-bookmarks...> new-bookmark -m "join N=<k+1>: <alphabetical bookmarks>"
+# Add a chain: reparent [merge] onto the expanded set, then re-attach [wip].
+jj rebase -r <merge> -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark
+jj rebase -s <wip> -d <merge>
+jj describe <merge> -m "join N=<k+1>: <alphabetical bookmarks>"
+```
+
+The pair is the canonical add-chain and remove-chain procedure on this model.
+Both halves are one sequence: running the first alone leaves `@` a two-parent merge at the old parent set with the rebuilt join orphaned.
+The second half takes `-s` so that any commits stacked above `[wip]` return with it; see §"Re-attaching `[wip]` after `jj rebase -r <merge>`" for why `-r <wip>` is wrong there.
+
+Rebuilding the join with `jj new` instead — a fresh `[merge]` over the new parent set and a fresh `[wip]` above it — is the procedure for *dissolution*, and it is unsafe as a general add/remove procedure:
+
+```bash
+# Dissolution only: abandon the old pair FIRST, and only with @ already empty.
+jj abandon <wip-change-id> <merge-change-id>
+jj new <parent-bookmarks...> -m "join N=<k>: <alphabetical bookmarks>"
 jj new @ -m "wip"
 ```
+
+The two guards are what make it safe there: dissolution abandons the old `[merge]`+`[wip]` pair *first*, and it requires `@` to be empty as a precondition.
+Without both, the rebuild strands whatever content is live in `@` and leaves two `join N=` markers in the graph.
+The `jj-linearize-join` tool takes exactly this dissolution path (see §"Integration strategies at completion"), so it must not be cited as evidence that the rebuild form is a general add/remove procedure.
+
+#### A conflicted join is a normal state
+
+When a chain being added conflicts with a chain already in the join, the rebase pair succeeds and materializes the conflict in `[merge]`.
+This is an expected outcome of the operation and does not indicate that it failed or that the diamond is malformed.
+`empty` and `conflict` are orthogonal properties of a commit, so `@` stays empty while showing `(conflict)`: `jj status` reports that the working copy has no changes alongside a note that there are unresolved conflicts, in the same output.
+Reading either line as contradicting the other is a misreading; both are true of the same commit.
+
+Removing the offending chain from the join with the remove form above clears the conflict fully, and no `jj resolve` is required.
+Resolving in place is the alternative when the chains are meant to land together.
+Both are valid exits from a conflicted join.
 
 ### Splice-below-join
 
@@ -923,16 +958,25 @@ The base bookmark is not advanced — fast-forwarding `<base>` to incorporate th
 
 ### Re-attaching `[wip]` after `jj rebase -r <merge>`
 
-`jj rebase -r <merge>` and `jj rebase -r <wip> -d <merge>` form a required tool-pair.
+`jj rebase -r <merge>` and `jj rebase -s <merge's former direct child> -d <merge>` form a required tool-pair.
 The first reparents `[merge]`'s parent set in place; because the `-r` form's semantics are to reparent the named commit's parents while structurally reparenting its descendants away from it, the second is needed to bring `[wip]` back onto the rebuilt `[merge]`.
 Whenever the first verb is issued, the second is its required successor, immediately, in the same operation sequence — this is the canonical pairing, not an exception.
+The pair is the canonical procedure for adding a chain to a join and for removing one.
+It preserves `@`'s change ID, description, emptiness and single-child position, preserves the join's own change ID and any in-flight content in `@`, and leaves exactly one `join N=` marker.
+
+The second half takes `-s`, not `-r`.
+`-s` moves the named commit together with its descendants, so any commits stacked above `[wip]` return to the rebuilt `[merge]` with it.
+`-r <wip>` moves `[wip]` alone: with a stack above the join it pulls `@` off by itself, orphans the intermediate commits, and loses content spliced into them.
+When the stack above the join is `[wip]` alone — the idle diamond — the two forms coincide, so `-s` is correct in both cases and is the form to write.
+Name the commit that was `[merge]`'s direct child before the first half ran; in the canonical two-commit model that is `[wip]`, so the second half reads `jj rebase -s <wip> -d <merge>`.
 
 The route-and-extend recipe (`SKILL.md` §"Extending a chain with a new commit (route-and-extend pattern)") does not use this verb at all: it composes `jj new -A <chain-tip> --no-edit` with `jj squash --from @ --into <new-id> --keep-emptied`, and jj's auto-rebase updates `[merge]` and re-attaches `[wip]` cleanly without operator intervention.
 Neither half of the pair is needed there.
 The chain-creation-mid-diamond recipe (`diamond-workflow.md` §"Chain creation mid-diamond") deliberately uses `jj rebase -r <merge>` to grow the parent set in place, so both halves of the pair are mandatory and both appear in that recipe.
 
-If only the first half ran, `[wip]` is left at the old parent set: the diamond-health diagnostic surfaces this as `@` shown with multiple direct parent connectors instead of a single line into `[wip]`.
-Repair by issuing the second half: `jj rebase -r <wip-change-id> -d <merge-change-id>`.
+If only the first half ran, `@` is left as a two-parent merge at the old parent set with the rebuilt join orphaned: the diamond-health diagnostic surfaces this as `@` shown with multiple direct parent connectors instead of a single line into `[wip]`.
+Running the first half alone is what produces that state; the pair executed in full does not, and this failure has previously been misattributed to the rebase itself.
+Repair by issuing the second half: `jj rebase -s <wip-change-id> -d <merge-change-id>`.
 When the broken-half was the immediately-preceding operation, `jj op restore <id>` is also available to roll back and re-execute the sequence cleanly.
 
 ### Teardown

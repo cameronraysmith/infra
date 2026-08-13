@@ -186,13 +186,16 @@ jj bookmark create <name> -r @
 jj rebase -r <merge-change-id> -d <existing-chain-a> -d <existing-chain-b> -d <name>
 
 # 4. Re-attach [wip] to the rebased [merge] (required successor of step 3)
-jj rebase -r <wip-change-id> -d <merge-change-id>
+#    -s, not -r: any commits stacked above [wip] must return with it
+jj rebase -s <wip-change-id> -d <merge-change-id>
 
 # 5. Rewrite [merge]'s description with the new full set
 jj describe <merge-change-id> -m "join N=k+1: <alphabetical bookmarks including <name>>"
 ```
 
 Step 4 is the second half of the `jj rebase -r <merge>` tool-pair documented in `SKILL.md` §"Re-attaching `[wip]` after `jj rebase -r <merge>`".
+Steps 3 and 4 are one sequence: issuing step 3 without step 4 leaves `@` a two-parent merge at the old parent set with the rebuilt join orphaned.
+Step 4 names `[merge]`'s former direct child and uses `-s` so that its descendants come along; `-r` would move `[wip]` alone and orphan any commits stacked above it.
 After step 5, run the diamond-health diagnostic from `~/.claude/skills/jj-version-control/SKILL.md` as a sanity check on the executed recipe.
 
 ### Phase 3: converge (validate)
