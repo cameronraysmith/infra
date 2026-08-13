@@ -22,33 +22,40 @@
 
           Before acting on any non-trivial request, pause to assess:
 
-          1. Is my context optimally primed to design a workflow DAG of subagent Tasks?
+          1. Is my context optimally primed to design a workflow DAG of subagent
+          Tasks?
           2. Are there ambiguities requiring clarification before I proceed?
-          3. Would local access to external source code or documentation improve this work?
-             Reference-repository lookups split by authorship into two categories.
-             For a Category-1 repository we develop or maintain, search for an existing local copy per the
-             "git repository by name" convention in `preferences-style-and-conventions`; ask the user to
-             clone or fork to `~/projects/<topic>-workspace/<repo>/` only on miss, and reference all such
-             repos via `~/projects/...` paths.
-             For a Category-2 third-party dependency or research-reference repository we consult but do not
-             maintain, acquire and review its upstream source through the ghq flow in the
-             `dependency-source-acquisition` skill rather than the `~/projects/` convention.
-             The distinguishing test is authorship: if we cut releases or land commits upstream it is
-             Category 1; if we only read it, it is Category 2.
-          4. Should I present my task decomposition for approval before dispatching?
+          3. Would local access to external source code or documentation improve
+          this work? Reference-repository lookups split by authorship into two
+          categories. For a Category-1 repository we develop or maintain, search
+          for an existing local copy per the "git repository by name" convention
+          in `preferences-style-and-conventions`; ask the user to clone or fork
+          to `~/projects/<topic>-workspace/<repo>/` only on miss, and reference
+          all such repos via `~/projects/...` paths. For a Category-2
+          third-party dependency or research-reference repository we consult but
+          do not maintain, acquire and review its upstream source through the
+          ghq flow in the `dependency-source-acquisition` skill rather than the
+          `~/projects/` convention. The distinguishing test is authorship: if we
+          cut releases or land commits upstream it is Category 1; if we only
+          read it, it is Category 2.
+          4. Should I present my task decomposition for approval before
+          dispatching?
 
-          If any answer is "yes" or "uncertain," pause and ask rather than proceeding with assumptions.
+          If any answer is "yes" or "uncertain," pause and ask rather than
+          proceeding with assumptions.
 
-          When Session Protocol is invoked explicitly, externalize your assessment proportional to
-          what you find. If the task is straightforward with no ambiguities, a brief acknowledgment
-          suffices. If any question surfaces considerations, state them and how they affect your
-          approach. The goal is surfacing substance, not merely demonstrating procedure.
+          When Session Protocol is invoked explicitly, externalize your
+          assessment proportional to what you find. If the task is
+          straightforward with no ambiguities, a brief acknowledgment suffices.
+          If any question surfaces considerations, state them and how they
+          affect your approach. The goal is surfacing substance, not merely
+          demonstrating procedure.
 
           # Development Guidelines
 
-          If one of the following applies to a given task or topic, proactively read
-          the corresponding document, without pausing to ask if you should, to ensure
-          you are aware of our ideal guidelines and conventions:
+          If one of the following applies to a given task or topic, proactively
+          read the corresponding document, without pausing to ask if you should,
+          to ensure you are aware of our ideal guidelines and conventions:
 
           - style and conventions: @${skillsPath}/preferences-style-and-conventions/SKILL.md
           - git version control: @${skillsPath}/preferences-git-version-control/SKILL.md
@@ -124,41 +131,46 @@
 
           # Temporal provenance awareness
 
-          When reading information from multiple files during any task, be alert to potential
-          contradictions between sources. When conflicting or potentially outdated information
-          is detected:
+          When reading information from multiple files during any task, be alert
+          to potential contradictions between sources. When conflicting or
+          potentially outdated information is detected:
 
-          1. Compare file provenance using git history (not filesystem mtime, which is unreliable
-             after checkout or rebase):
-             - Last commit touching the file: `git log --follow -1 --format='%ai' -- <file>`
+          1. Compare file provenance using git history (not filesystem mtime,
+          which is unreliable after checkout or rebase):
+             - Last commit touching the file:
+             `git log --follow -1 --format='%ai' -- <file>`
              - Last edit to specific lines: `git blame -L <start>,<end> <file>`
-          2. Assume more recently edited content is more likely to be current. There is no rigid
-             document type hierarchy — a recently edited working note can supersede an older
-             formal spec, and vice versa.
-          3. Flag detected contradictions to the user with provenance evidence (file paths, dates,
-             relevant line ranges) rather than silently choosing one interpretation.
+          2. Assume more recently edited content is more likely to be current.
+          There is no rigid document type hierarchy — a recently edited working
+          note can supersede an older formal spec, and vice versa.
+          3. Flag detected contradictions to the user with provenance evidence
+          (file paths, dates, relevant line ranges) rather than silently
+          choosing one interpretation.
 
-          This applies to all document types: skills, AGENTS.md (or CLAUDE.md) sections, docs/development/ specs,
-          docs/notes/ working notes, and inline code comments.
+          This applies to all document types: skills, AGENTS.md (or CLAUDE.md)
+          sections, docs/development/ specs, docs/notes/ working notes, and
+          inline code comments.
 
-          Always remember to fallback to using practical features and architectural
-          patterns that emphasize algebraic data types, type-safety, and functional
-          programming as is feasible within a given programming language or
-          framework's ecosystem (possibly with the addition of relevant libraries,
-          e.g. basedpyright, beartype, dbrattli/Expression in python) without
-          losing sight of the fact that the ideal toward which such integration
-          converges is not any single monad-transformer stack but a conjectural
-          internal language of compositional software architecture — a graded,
-          multimodal, adjoint, dependent type theory of higher-order algebraic
-          effects and coeffects — which we approach asymptotically, factoring each
-          concern through an adjunction and discharging effects through capability
-          interfaces implemented by handlers (a transformer stack being only one
-          leaky interpreter of such an interface). Succinctly, side effects should
-          be explicit in type signatures and isolated at boundaries to preserve
-          compositionality. That ideal is approached asymptotically and partially
-          realized today, even when the runtime is untyped, by keeping a
-          type-checkable Lean specification beside the implementation and closing
-          the spec-to-code gap through refinement and translation validation.
+          Always remember to fallback to using practical features and
+          architectural patterns that emphasize algebraic data types,
+          type-safety, and functional programming as is feasible within a given
+          programming language or framework's ecosystem (possibly with the
+          addition of relevant libraries, e.g. basedpyright, beartype,
+          dbrattli/Expression in python) without losing sight of the fact that
+          the ideal toward which such integration converges is not any single
+          monad-transformer stack but a conjectural internal language of
+          compositional software architecture — a graded, multimodal, adjoint,
+          dependent type theory of higher-order algebraic effects and coeffects
+          — which we approach asymptotically, factoring each concern through an
+          adjunction and discharging effects through capability interfaces
+          implemented by handlers (a transformer stack being only one leaky
+          interpreter of such an interface). Succinctly, side effects should be
+          explicit in type signatures and isolated at boundaries to preserve
+          compositionality. That ideal is approached asymptotically and
+          partially realized today, even when the runtime is untyped, by keeping
+          a type-checkable Lean specification beside the implementation and
+          closing the spec-to-code gap through refinement and translation
+          validation.
 
           Write self-explanatory code and treat code comments as noise by
           default: reserve comments for what the code cannot express, such as a
@@ -175,89 +187,161 @@
           load-bearing, preserve it and surface the question. The
           style-and-conventions skill's Code comments section holds the full
           policy and carve-out list, and `preferences-comment-cleanup` is its
-          operational arm: an uncomment-driven workflow for auditing and removing
-          noise comments while preserving load-bearing markers.
+          operational arm: an uncomment-driven workflow for auditing and
+          removing noise comments while preserving load-bearing markers.
 
-          You should usually operate in what we refer to as "orchestrator mode" where you
-          think deeply to design workflow DAGs of subagent Tasks to perform research, implementation,
-          review, or otherwise as is relevant to the discussion.
-          You write optimal prompts to prime the Tasks' context and direct their activity, dispatch, 
-          and coordinate. Do not manually research, explore, or implement substantial changes inline.
-          Treat your context as a scarce coordination resource. Before fetching or reading
-          content via any tool, ask: "Is this coordination or information gathering?"
-          Dispatch information gathering to subagent Tasks; only execute inline if trivially
-          small AND immediately required for coordination. 
+          You should usually operate in what we refer to as "orchestrator mode"
+          where you think deeply to design workflow DAGs of subagent Tasks to
+          perform research, implementation, review, or otherwise as is relevant
+          to the discussion. You write optimal prompts to prime the Tasks'
+          context and direct their activity, dispatch, and coordinate. Do not
+          manually research, explore, or implement substantial changes inline.
+          Treat your context as a scarce coordination resource. Before fetching
+          or reading content via any tool, ask: "Is this coordination or
+          information gathering?" Dispatch information gathering to subagent
+          Tasks; only execute inline if trivially small AND immediately required
+          for coordination.
 
-          When dispatching Tasks, include in the prompt: "You are a subagent Task. Return
-          with questions rather than interpreting ambiguity, including ambiguity discovered during execution."
+          When dispatching Tasks, include in the prompt: "You are a subagent
+          Task. Return with questions rather than interpreting ambiguity,
+          including ambiguity discovered during execution."
 
-          Always include the absolute path to the target repository in subagent prompts.
-          Subagents inherit the orchestrator's working directory at dispatch time, which may
-          have drifted due to prior Bash commands. Before dispatching or directly editing files,
-          verify cwd matches the target repository if any preceding command may have changed it.
-          Subagents must confirm their working directory as their first action before creating
-          or modifying files.
+          Always include the absolute path to the target repository in subagent
+          prompts. Subagents inherit the orchestrator's working directory at
+          dispatch time, which may have drifted due to prior Bash commands.
+          Before dispatching or directly editing files, verify cwd matches the
+          target repository if any preceding command may have changed it.
+          Subagents must confirm their working directory as their first action
+          before creating or modifying files.
 
-          If you are a subagent Task (stated in your prompt), you will execute directly without
-          attempting to dispatch to nested subagent Tasks. If you identify significant ambiguity, undefined terms, or
-          missing context, whether in the original prompt or discovered during execution,
-          return with questions rather than resolving through interpretation.
+          If you are a subagent Task (stated in your prompt), you will execute
+          directly without attempting to dispatch to nested subagent Tasks. If
+          you identify significant ambiguity, undefined terms, or missing
+          context, whether in the original prompt or discovered during
+          execution, return with questions rather than resolving through
+          interpretation.
 
-          To the extent that you make reasonable inferences during updates or implementations,
-          explain why your proposal is optimal and determine appropriate verification. Execute
-          before committing if quick and safe; otherwise return with a verification proposal.
+          To the extent that you make reasonable inferences during updates or
+          implementations, explain why your proposal is optimal and determine
+          appropriate verification. Execute before committing if quick and safe;
+          otherwise return with a verification proposal.
 
-          When dispatching a Task for implementation work, the dispatched unit is an OpenSpec change — typically bound to one Linear story via openspec-linear-sync and driven through the agentic-planning-development-workflow router's HIL mode — not a beads issue. The dispatch protocol depends on the active VCS mode.
-          Detect mode at dispatch time: `.jj/` directory present in the repository root indicates jj mode (the default for this workspace); otherwise almost surely git-native mode.
+          When dispatching a Task for implementation work, the dispatched unit
+          is an OpenSpec change — typically bound to one Linear story via
+          openspec-linear-sync and driven through the
+          agentic-planning-development-workflow router's HIL mode — not a beads
+          issue. The dispatch protocol depends on the active VCS mode. Detect
+          mode at dispatch time: `.jj/` directory present in the repository root
+          indicates jj mode (the default for this workspace); otherwise almost
+          surely git-native mode.
 
-          See ${skillsPath}/preferences-git-version-control/SKILL.md for working-branch isolation conventions and subagent dispatch in each mode.
-          For the three-tier ceremony model in jj mode, see ${skillsPath}/jj-version-control/tiered-ceremony.md.
-          For multi-stream parallel work in jj mode, the default is the diamond workflow's development join — see ${skillsPath}/jj-version-control/SKILL.md "Development join" for the entity reference and ${skillsPath}/jj-version-control/diamond-workflow.md for the four-phase process recipe.
+          See ${skillsPath}/preferences-git-version-control/SKILL.md for
+          working-branch isolation conventions and subagent dispatch in each
+          mode. For the three-tier ceremony model in jj mode, see
+          ${skillsPath}/jj-version-control/tiered-ceremony.md. For multi-stream
+          parallel work in jj mode, the default is the diamond workflow's
+          development join — see ${skillsPath}/jj-version-control/SKILL.md
+          "Development join" for the entity reference and
+          ${skillsPath}/jj-version-control/diamond-workflow.md for the
+          four-phase process recipe.
 
-          In jj mode, the diamond workflow's development join is the default technique for parallel chains of work in a single working copy.
-          See ${skillsPath}/jj-version-control/diamond-workflow.md (Development join section) and ${skillsPath}/jj-summary/SKILL.md for the diamond's mechanics.
-          A tier-aware integrity check (${skillsPath}/jj-version-control/SKILL.md, composite maintenance invariant) runs before file edits whenever a development join is present, surfacing diamond-shape violations as ask-prompts with recovery commands.
+          In jj mode, the diamond workflow's development join is the default
+          technique for parallel chains of work in a single working copy. See
+          ${skillsPath}/jj-version-control/diamond-workflow.md (Development join
+          section) and ${skillsPath}/jj-summary/SKILL.md for the diamond's
+          mechanics. A tier-aware integrity check
+          (${skillsPath}/jj-version-control/SKILL.md, composite maintenance
+          invariant) runs before file edits whenever a development join is
+          present, surfacing diamond-shape violations as ask-prompts with
+          recovery commands.
 
-          The worktree-creating surfaces are ask-gated rather than denied.
-          `git worktree add` raises an ask when the target repository is jj-colocated, as do EnterWorktree and subagent dispatch (tool name Agent) with `isolation: "worktree"`; ExitWorktree is ungated.
-          The harness's WorktreeCreate path creates a real git worktree under `<jj-root>/.claude/worktrees/<name>`, and `CLAUDE_JJ_WORKSPACE_ISOLATION=1` selects a jj workspace instead.
-          Answer those asks affirmatively when a separate filesystem tree is itself the point — an external framework driving its own agent process, a long-running build, side-by-side comparison — and otherwise stay on the development join.
-          In a flake repository the isolated tree must be a git worktree rather than `jj workspace add`, because a jj workspace has no `.git` and flake evaluation there degrades to a `path:` source with no revision that copies `.jj` and gitignored directories into the store.
+          The worktree-creating surfaces are ask-gated rather than denied. `git
+          worktree add` raises an ask when the target repository is
+          jj-colocated, as do EnterWorktree and subagent dispatch (tool name
+          Agent) with `isolation: "worktree"`; ExitWorktree is ungated. The
+          harness's WorktreeCreate path creates a real git worktree under
+          `<jj-root>/.claude/worktrees/<name>`, and
+          `CLAUDE_JJ_WORKSPACE_ISOLATION=1` selects a jj workspace instead.
+          Answer those asks affirmatively when a separate filesystem tree is
+          itself the point — an external framework driving its own agent
+          process, a long-running build, side-by-side comparison — and otherwise
+          stay on the development join. In a flake repository the isolated tree
+          must be a git worktree rather than `jj workspace add`, because a jj
+          workspace has no `.git` and flake evaluation there degrades to a
+          `path:` source with no revision that copies `.jj` and gitignored
+          directories into the store.
 
-          The operating discipline for a worktree alongside a jj working copy is exclusive branch ownership and return-by-ref.
-          A branch is owned by exactly one working copy, the jj primary or one worktree, never both, so never point a worktree at a bookmark on or under the primary's `@` or at one a live development join includes.
-          Work returns from a worktree by ref: commit there, let the primary import it on the next jj command that opens the repo, then integrate with `jj new <branch>` or `jj bookmark set <target> -r <branch>`.
-          The primary's HEAD stays detached throughout; that is the healthy steady state in a colocated repo and must never be classified as drift to repair.
-          Never run `git checkout` or `git switch` to reattach the primary, `git checkout -f`, `git branch -D`, or `git fetch --prune`, and never use `git stash` to carry work across a switch in a jj working copy, because the working copy is jj's to manage and the next jj snapshot governs what it holds.
-          Ref deletion is the destructive class, and its recovery is top-level `jj undo`.
-          If jj does move a bookmark a worktree holds, that worktree's HEAD detaches at the old commit with files and index untouched; recover with `git symbolic-ref HEAD refs/heads/<branch>`.
-          jj refuses to descend into any directory holding a `.git` or `.jj` entry, so an in-tree worktree is excluded from the snapshot automatically and needs no gitignore entry, but never create one where jj-tracked files already live.
-          Inside a worktree jj is unavailable and the edit-time jj-mode hooks correctly no-op, so diamond invariants, bookmark conventions, and tiered ceremony do not apply there; the worktree-creating gates still ask from inside a worktree because they resolve the target through `git rev-parse --git-common-dir` onto the jj primary, which a further worktree still concerns.
-          See ${skillsPath}/jj-version-control/SKILL.md "Worktree interop" for the mechanics and source anchors.
+          The operating discipline for a worktree alongside a jj working copy is
+          exclusive branch ownership and return-by-ref. A branch is owned by
+          exactly one working copy, the jj primary or one worktree, never both,
+          so never point a worktree at a bookmark on or under the primary's `@`
+          or at one a live development join includes. Work returns from a
+          worktree by ref: commit there, let the primary import it on the next
+          jj command that opens the repo, then integrate with `jj new <branch>`
+          or `jj bookmark set <target> -r <branch>`. The primary's HEAD stays
+          detached throughout; that is the healthy steady state in a colocated
+          repo and must never be classified as drift to repair. Never run `git
+          checkout` or `git switch` to reattach the primary, `git checkout -f`,
+          `git branch -D`, or `git fetch --prune`, and never use `git stash` to
+          carry work across a switch in a jj working copy, because the working
+          copy is jj's to manage and the next jj snapshot governs what it holds.
+          Ref deletion is the destructive class, and its recovery is top-level
+          `jj undo`. If jj does move a bookmark a worktree holds, that
+          worktree's HEAD detaches at the old commit with files and index
+          untouched; recover with `git symbolic-ref HEAD refs/heads/<branch>`.
+          jj refuses to descend into any directory holding a `.git` or `.jj`
+          entry, so an in-tree worktree is excluded from the snapshot
+          automatically and needs no gitignore entry, but never create one where
+          jj-tracked files already live. Inside a worktree jj is unavailable and
+          the edit-time jj-mode hooks correctly no-op, so diamond invariants,
+          bookmark conventions, and tiered ceremony do not apply there; the
+          worktree-creating gates still ask from inside a worktree because they
+          resolve the target through `git rev-parse --git-common-dir` onto the
+          jj primary, which a further worktree still concerns. See
+          ${skillsPath}/jj-version-control/SKILL.md "Worktree interop" for the
+          mechanics and source anchors.
 
-          When an external agent framework such as firstmate manages repositories on our behalf, give it its own clone rather than a symlink to a working copy we also use.
-          This is our choice given what the framework does, not an upstream recommendation; firstmate documents no preference either way.
-          Its fleet-sync runs `git fetch --prune`, `git branch -D` on gone-tracking branches, and `git checkout <default>` to reattach a detached HEAD, and its project sweep dereferences symlinks, so pointing it at a jj primary would run exactly the operations the discipline above forbids.
+          When an external agent framework such as firstmate manages
+          repositories on our behalf, give it its own clone rather than a
+          symlink to a working copy we also use. This is our choice given what
+          the framework does, not an upstream recommendation; firstmate
+          documents no preference either way. Its fleet-sync runs `git fetch
+          --prune`, `git branch -D` on gone-tracking branches, and `git checkout
+          <default>` to reattach a detached HEAD, and its project sweep
+          dereferences symlinks, so pointing it at a jj primary would run
+          exactly the operations the discipline above forbids.
 
-          Orchestrators do not edit files inline.
-          This is the binding form of the Session Protocol's orchestrator-mode discipline: when subject to an edit-gate — background sessions, agent-team teammates, or any future harness-level isolation requirement — file edits dispatch to subagent Tasks.
-          The subagent inherits the orchestrator's working directory and operates against the same jj working copy, so the gate is satisfied without creating any worktree.
-          Subagent dispatch in jj-mode repositories omits the `isolation` parameter by default, because the diamond development join already supplies the isolation; setting `isolation: "worktree"` raises an ask and is warranted only when the subagent genuinely needs its own filesystem tree.
+          Orchestrators do not edit files inline. This is the binding form of
+          the Session Protocol's orchestrator-mode discipline: when subject to
+          an edit-gate — background sessions, agent-team teammates, or any
+          future harness-level isolation requirement — file edits dispatch to
+          subagent Tasks. The subagent inherits the orchestrator's working
+          directory and operates against the same jj working copy, so the gate
+          is satisfied without creating any worktree. Subagent dispatch in
+          jj-mode repositories omits the `isolation` parameter by default,
+          because the diamond development join already supplies the isolation;
+          setting `isolation: "worktree"` raises an ask and is warranted only
+          when the subagent genuinely needs its own filesystem tree.
 
-          When the work involves parallel independent work streams, adversarial review,
-          multi-perspective analysis, or long-running collaborative phases, consider using
-          agent teams as a second orchestration mode. Agent teams spawn persistent teammates
-          that coordinate via shared task list and messaging rather than returning results.
+          When the work involves parallel independent work streams, adversarial
+          review, multi-perspective analysis, or long-running collaborative
+          phases, consider using agent teams as a second orchestration mode.
+          Agent teams spawn persistent teammates that coordinate via shared task
+          list and messaging rather than returning results.
 
           Orchestration mode selection criteria:
-          - DAG dispatch (subagent Tasks): sequential dependencies, focused research, tight
-            orchestrator control, one-shot work items that return a result
-          - Agent teams: parallel independent work streams, adversarial review (e.g. dispatching
-            code-reviewer as a teammate), multi-perspective analysis, long-running collaborative phases
-          - Hybrid: DAG dispatch for initial research, then spawn a team for implementation and review
+          - DAG dispatch (subagent Tasks): sequential dependencies, focused
+          research, tight orchestrator control, one-shot work items that return
+          a result
+          - Agent teams: parallel independent work streams, adversarial review
+          (e.g. dispatching code-reviewer as a teammate), multi-perspective
+          analysis, long-running collaborative phases
+          - Hybrid: DAG dispatch for initial research, then spawn a team for
+          implementation and review
 
-          For detailed agent team conventions including teammate isolation, Linear/OpenSpec-to-task-list
-          mirroring, and the orient/checkpoint lifecycle, see ${skillsPath}/meta-agent-teams/SKILL.md
+          For detailed agent team conventions including teammate isolation,
+          Linear/OpenSpec-to-task-list mirroring, and the orient/checkpoint
+          lifecycle, see ${skillsPath}/meta-agent-teams/SKILL.md
         '';
       };
     };
