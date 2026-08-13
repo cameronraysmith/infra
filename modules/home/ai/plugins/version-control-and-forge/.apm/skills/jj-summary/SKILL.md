@@ -49,7 +49,7 @@ For quick questions about commands or concepts, this summary may suffice.
 | `jj describe -r <c>` | Opens editor | `jj describe -r <c> -m "message"` |
 | `jj split <paths>` | Opens editor twice (extracted + remainder) | `jj describe -m "<remainder>"` first, then `jj split <paths> -m "<extracted>"` — see `jj-workflow` "Common gotchas" for the multi-boundary rule |
 | `jj split` (no paths) | Opens diff editor (TUI) | **Cannot be non-interactive** |
-| `jj squash --into <dest>` | Opens description merge editor | `jj squash --into <dest> -u` (keep dest description) or `-m "msg"` |
+| `jj squash --into <dest>` | Opens description merge editor | `jj squash --into <dest> -u` (keep dest description), `-m "msg"`, or `-k`/`--keep-emptied` (source not abandoned, so there are no descriptions to merge) |
 | `jj squash --from @ --insert-after <tip>` / `--insert-before <revset>` (create mode) | Opens editor for the new commit's description when neither `-m` nor `-u` is supplied | always pass `-m "msg"` (and `--keep-emptied` so `@` returns to empty `[wip]`) |
 
 **Mandatory verification protocol:**
@@ -135,7 +135,7 @@ jj new bm-a bm-b bm-c         # Join multiple chains into one working tree
 jj describe -m "join: bm-a + bm-b + bm-c"  # Describe the development join
 jj new                         # Create wip commit on top of the join
 # Work in wip, then route changes to the appropriate chain:
-jj squash --into <chain> -u -- <path>     # Manual routing (keeps dest description)
+jj squash --into <chain> -u --keep-emptied -- <path>     # Manual routing (keeps dest description)
 jj absorb                      # Auto-route changes by blame
 # Route-and-extend: create a NEW commit on a chain (not amend existing); @/[wip] never drifts below the join
 jj new -A <bookmark> --no-edit -m "feat: msg"   # Insert empty commit after bookmark; --no-edit keeps @ on [wip]
@@ -352,7 +352,7 @@ jj log -r 'mine() & ~bookmarks()'
 
 ## Critical reminders
 
-- **Non-interactive execution**: ALWAYS use `-m "message"` with `jj describe`, `jj describe -r`, and `jj split <paths>` to avoid editor hangups; use `-u` or `-m` with `jj squash --into` to prevent the description merge editor; the development-join append-route `jj squash --from @ --insert-after/--insert-before` is create-a-new-commit mode and opens an editor without `-m`/`-u`, so always pass `-m` and `--keep-emptied` so `@` stays an empty `[wip]`; verify unfamiliar commands with `jj [subcommand] --help` first
+- **Non-interactive execution**: ALWAYS use `-m "message"` with `jj describe`, `jj describe -r`, and `jj split <paths>` to avoid editor hangups; use `-u`, `-m`, or `-k` with `jj squash --into` to prevent the description merge editor; the development-join append-route `jj squash --from @ --insert-after/--insert-before` is create-a-new-commit mode and opens an editor without `-m`/`-u`, so always pass `-m` and `--keep-emptied` so `@` stays an empty `[wip]`; verify unfamiliar commands with `jj [subcommand] --help` first
 - **Command verification protocol**: Before executing any jj command you're uncertain about, run `jj [subcommand] --help` to check for interactive flags (look for `-m, --message`)
 - **Git parity requirement**: Execute `jj new` immediately after `jj describe -m "msg"` to freeze commits for git export; without `jj new`, described commits exist only in jj and appear as uncommitted changes in git
 - **Always colocated mode**: We operate with both .git and .jj (can revert to git anytime)
