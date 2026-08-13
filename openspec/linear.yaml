@@ -10,6 +10,11 @@ teams:
     id: "0ee3fb44-535c-47b7-b000-51617a6a3e18"
     name: "Cameron Smith"
 projects:
+  "pi-agent-environment":
+    id: "d7d743a19249"
+    name: "Pi agent environment"
+    teams: ["CAM"]
+    archive_documents: {}
   "cognee-memory-layer":
     # slugId, not the project UUID (40537fb1-dadc-4405-ad3c-e5ed5dd7b66d): `linear
     # document list --project` silently returns zero nodes with exit 0 for a UUID,
