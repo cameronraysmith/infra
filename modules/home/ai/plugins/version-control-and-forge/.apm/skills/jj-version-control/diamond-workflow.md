@@ -148,7 +148,7 @@ Independent chains within the same linearization step can be ordered discretiona
    # capture <new-commit-id> from the "Created new commit <id>" line jj prints above
    jj bookmark move <chain> --to <new-commit-id>
    ```
-   The `--insert-after` (`-A`) flag is what switches `jj squash` into create-a-new-commit mode (per `cli/src/commands/squash.rs:51-84`); without it, `--into <chain-tip>` amends the existing tip in place.
+   The `--insert-after` (`-A`) flag is what switches `jj squash` into create-a-new-commit mode (per the EXPERIMENTAL FEATURES doc comment on `SquashArgs` in `cli/src/commands/squash.rs`); without it, `--into <chain-tip>` amends the existing tip in place.
    As of jj 0.43.0, `jj squash --help` documents `-o`, `-A`, and `-B` under a heading of EXPERIMENTAL FEATURES.
    `--keep-emptied` preserves the single shared `[wip]` on top of `[merge]` (invariant (vi)); the bookmark-move is a separate explicit step because jj does not auto-advance a bookmark onto a newly inserted commit.
    Target the new commit's change ID from the `Created new commit <id>` output line, not `@-`: in a multi-parent join, `@-` resolves to the rebuilt `[merge]` (the new commit is one of its parents, not a direct ancestor of `@`), and pointing the bookmark there advances `<chain>` onto `[merge]`.

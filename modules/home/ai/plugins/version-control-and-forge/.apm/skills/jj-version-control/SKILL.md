@@ -619,7 +619,8 @@ NEW_ID=$(echo "$SQUASH_OUT" | sed -n 's/^Created new commit \([a-z][a-z0-9]*\) .
 jj bookmark move <chain> --to "$NEW_ID"
 ```
 
-The `--insert-after` (alias `-A`) flag is what makes this an append rather than an amend; per the EXPERIMENTAL FEATURES doc comment at `cli/src/commands/squash.rs:51-84`, `-o`/`-A`/`-B` switch `jj squash` into create-a-new-commit mode rather than merging into an existing target.
+The `--insert-after` (alias `-A`) flag is what makes this an append rather than an amend; per the EXPERIMENTAL FEATURES doc comment on `SquashArgs` in `cli/src/commands/squash.rs`, `-o`/`-A`/`-B` switch `jj squash` into create-a-new-commit mode rather than merging into an existing target.
+`jj squash --help` on jj 0.43.0 carries all three flags under that heading.
 `@` (`[wip]`) returns to empty atop the auto-rebuilt `[merge]`, so the join + wip structure is preserved across the route.
 The bookmark-move is a separate explicit step: jj does not auto-advance a bookmark onto a newly inserted commit, so omitting it leaves the bookmark pointing at the prior tip.
 
@@ -1395,7 +1396,7 @@ git gc --prune=now
 ```
 
 `jj util gc` does not substitute for this sequence.
-It shells out to `git gc --prune=@<timestamp> +0000` (`lib/src/git_backend.rs:921-940`, invoked from `fn gc` at `lib/src/git_backend.rs:1508-1530`), and `git gc` prunes reflogs using the `gc.reflogExpire` and `gc.reflogExpireUnreachable` defaults of 90 and 30 days.
+It shells out to `git gc --prune=@<timestamp> +0000` (`fn run_git_gc` in `lib/src/git_backend.rs`, invoked from the `Backend::gc` implementation for `GitBackend` in the same file), and `git gc` prunes reflogs using the `gc.reflogExpire` and `gc.reflogExpireUnreachable` defaults of 90 and 30 days.
 The `--prune` cutoff governs loose-object age, not reflog reachability, so reflog-rooted objects survive and an apparently-successful `jj util gc` can consolidate debris instead of removing it.
 On the observed incident the jj half did work — the offending commit vanished and `refs/jj/keep` fell from 801 refs to 107 — while `.git` moved only from 5.65 GB to 5.27 GB against a working tree of roughly 6 MB.
 A subsequent bare `git gc --prune=now` changed nothing at all.
@@ -1411,6 +1412,7 @@ A linked git worktree can coexist with a jj-colocated primary working copy.
 This section is the authority for how, and the worktree-surface hook messages point here.
 The default for parallel chains that share one review boundary remains the diamond development join; a worktree is warranted when a separate filesystem tree is itself the point, such as an external agent framework driving its own process, a long-running build, or a side-by-side comparison.
 The discriminator is whether something outside this session needs its own tree, not which mechanism seems faster.
+The behavior this section describes was established against jj 0.43.0.
 
 ### Choosing the mechanism
 
@@ -1429,8 +1431,8 @@ Work therefore returns from a worktree by ref, never by checkout.
 Commit in the worktree, then integrate from the primary with `jj new <branch>` or `jj bookmark set <target> -r <branch>`.
 The primary's HEAD stays detached throughout, which is the healthy steady state in a colocated repository.
 
-Import has no worktree counterpart: `lib/src/git.rs:1127-1148` reads only `head_id()`, so jj never learns what any worktree has checked out.
-jj's `View` carries a single `git_head` (`lib/src/op_store.rs:255-258`, with an upstream `// TODO: Support multiple Git worktrees?`), and a git worktree never appears in `jj workspace list`.
+Import has no worktree counterpart: `import_head` in `lib/src/git.rs` reads only `git_repo.head_id()`, so jj never learns what any worktree has checked out.
+jj's `View` carries a single `git_head` field (`struct View` in `lib/src/op_store.rs`, where an upstream `// TODO: Support multiple Git worktrees?` sits directly above it), and a git worktree never appears in `jj workspace list`.
 
 ### Exclusive branch ownership
 
@@ -1438,7 +1440,7 @@ A branch is owned by whichever working copy has it checked out — the jj primar
 Never point a worktree at a bookmark that sits on or under the primary's `@`, or at one a live development join includes.
 Point it at a stable base, or at nothing.
 
-Export is worktree-aware as of jj 0.39.0: `check_and_detach_head` at `lib/src/git.rs:1266` is applied per `git_repo.worktrees()` at `lib/src/git.rs:1313-1316`, and upstream CI-tests it against a real `git worktree add` at `lib/tests/test_git.rs:2749,2792`.
+Export is worktree-aware as of jj 0.39.0: the `check_and_detach_head` closure in `export_some_refs` (`lib/src/git.rs`) is applied to the primary and then once per entry of `git_repo.worktrees()` in that same function, and upstream CI-tests it against a real `git worktree add` in `test_export_refs_worktree_head_changed` and `test_export_refs_worktree_no_detach` (`lib/tests/test_git.rs`).
 So if jj does move or delete a bookmark a worktree holds, that worktree's HEAD detaches at the old commit.
 Files and index are untouched and there is no unborn-branch state.
 Recover with `git symbolic-ref HEAD refs/heads/<branch>`, which reattaches with a dirty tree fully preserved.
@@ -1452,7 +1454,7 @@ The second is creating a worktree at a path that currently holds jj-tracked file
 
 ### Nested trees are excluded, not submoduled
 
-`RESERVED_DIR_NAMES` at `lib/src/local_working_copy.rs:819` is `[".git", ".jj"]`, applied around `lib/src/local_working_copy.rs:1623-1628` on the mere existence of the entry whatever its kind.
+`RESERVED_DIR_NAMES` in `lib/src/local_working_copy.rs` is `[".git", ".jj"]`, applied in `process_dir_entry` in that same file, whose `symlink_metadata().is_ok()` test turns on the mere existence of the entry whatever its kind.
 An in-tree worktree is therefore excluded from jj's snapshot automatically and needs no gitignore entry.
 `git ls-tree -r` shows plain blobs and no `160000` gitlink, so this is not a submodule boundary.
 
@@ -1486,6 +1488,21 @@ The gate is an ask and not a security boundary; Claude Code's documentation dire
 When an external agent framework such as firstmate manages repositories on our behalf, give it its own clone rather than a symlink to a working copy we also use.
 This is our choice given what the framework does, not an upstream recommendation; firstmate documents no preference either way.
 Its fleet-sync runs `git fetch --prune`, `git branch -D` on gone-tracking branches, and `git checkout <default>` to reattach a detached HEAD, and its project sweep dereferences symlinks — each in the class of operations named above as forbidden against a jj primary.
+
+## Citing upstream jj source
+
+Cite upstream `jj-vcs/jj` source by naming the symbol and the file that holds it, as in `run_git_gc` in `lib/src/git_backend.rs`.
+Leave the line number out.
+
+Line numbers drift on every upstream commit that touches the file above them, and they fail silently: the citation still resolves, now pointing at whatever occupies that line today.
+A symbol name survives most refactors, and when one does change, a search for it returns nothing, which is unmistakable.
+This document previously cited by line, and by the time it was audited `check_and_detach_head` and `RESERVED_DIR_NAMES` had both moved while keeping their names, and two test anchors had come to rest on a bare `}`.
+
+Where no symbol encloses the material, name the nearest enclosing symbol and say what within it the citation refers to.
+Where a citation supports a claim about runtime behavior, record the jj version the claim was verified against.
+
+A local clone sits at whatever revision it was fetched at, which is rarely the revision of the installed binary.
+Use it to confirm that a symbol exists, not to look up a line number for it.
 
 ## Beads integration
 
