@@ -23,6 +23,12 @@
 #               chain commit at any depth (tip, mid-chain, root) and any
 #               splice-region commit (route-and-extend in-progress, in-chain
 #               editing via jj edit, splice-region editing via jj edit).
+#   (iv)  the join has exactly one child (the wip commit). A sibling of wip
+#         strands a pushed wip bookmark on the child @ is not on. The usual
+#         cause is following jj's printed conflict advice ("create a commit on
+#         top of the conflicted commit") literally, when @ already is that
+#         commit. Checked ahead of (i)-(iii) and in every @ position, since the
+#         stranding does not depend on where @ sits.
 # Checks (i)/(ii) run only in cases (A)/(B); cases (C)/(D) are mid-operation
 # transients in which bookmark advancement lags the join's parent set by design.
 # Emits permissionDecision=ask on violation or ambiguity (never deny — both are
@@ -84,6 +90,26 @@ EOF
 fi
 
 JOIN_CHANGE="$JOIN_CHANGES"
+
+# --- Check (iv): the join has exactly one child ---
+# jj prints, on a conflicted commit, "start by creating a commit on top of the
+# conflicted commit ... then use `jj resolve` ... then run `jj squash`". That
+# advice is written for a bare conflicted commit. Here @ already IS the commit
+# on top of the join, so following it literally gives the join a second child
+# and strands a pushed wip bookmark on the sibling @ left behind. Checked in
+# every @ position, ahead of (i)-(iii): the stranding does not depend on where
+# @ sits, and an operator who has just read jj's hint needs the correction now.
+JOIN_CHILDREN=$(jj log -r "children($JOIN_CHANGE)" --no-graph \
+                  -T 'change_id ++ "\n"' 2>/dev/null | sed '/^$/d')
+JOIN_CHILD_COUNT=$(printf '%s' "$JOIN_CHILDREN" | grep -c . || true)
+
+if [ "$JOIN_CHILD_COUNT" -gt 1 ]; then
+  JOIN_CHILD_LIST=$(printf '%s' "$JOIN_CHILDREN" | tr '\n' ',' | sed 's/,$//')
+  cat << EOF
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Diamond integrity violation (iv): the join has $JOIN_CHILD_COUNT children ($JOIN_CHILD_LIST). A development join has exactly one, the wip commit. A sibling of wip means a pushed wip bookmark can be left stranded on the child @ is not on. The usual cause is following jj's own conflict advice literally: 'start by creating a commit on top of the conflicted commit, then use jj resolve, then run jj squash' is written for a bare conflicted commit, and in this two-commit join-plus-wip model @ already is the commit on top of the join, so creating another one gives the join a second child. Do not follow that hint literally here. Resolve a conflicted join either with 'jj resolve -r $JOIN_CHANGE --tool <tool>', which never touches @, or by editing the resolution in the wip commit and running 'jj squash --into $JOIN_CHANGE --use-destination-message --keep-emptied'; both clear the conflict while preserving @'s change id, emptiness and sole-child position. If the extra child is wanted work rather than a stray resolution attempt, move it above wip with 'jj rebase -s <extra-child> -d <wip-change-id>' instead of abandoning it. See ~/.claude/skills/jj-version-control/SKILL.md (composite maintenance invariant)."}}
+EOF
+  exit 0
+fi
 
 # --- Gather join + @ topology ---
 JOIN_PARENTS=$(jj log -r "$JOIN_CHANGE" --no-graph \
