@@ -752,7 +752,7 @@ These conflicts are informational — they tell you the chains will conflict whe
 Conflicts in `@` do not prevent work.
 They are a continuous integration signal, not a blocking error.
 
-The rest of this section was measured on a controlled fixture against jj 0.43.0, 40 scenarios passing, except the one paragraph marked unmeasured.
+The rest of this section was measured on a controlled fixture against jj 0.43.0.
 
 One revset separates the two cases an operator has to tell apart:
 
@@ -792,8 +792,15 @@ jj log -r <join> --no-graph --limit 1 \
 A conflict with three or more sides refuses cleanly: "The conflict has 3 sides. At most 2 sides are supported", exit 1, join untouched, `@` unaffected.
 The silent-discard window therefore exists only for 2-sided conflicts.
 
-Unmeasured: whether the add-chain rebase `jj rebase -r <join> -d A -d B -d C` rewrites stored parent order to the flag order was not established, because that measurement was cut short.
-The safe instruction holds under either answer — re-read stored order after any join surgery, and never rely on a reading taken before it.
+Join surgery rewrites stored order rather than preserving it.
+`jj rebase -r <join> -d A -d B -d C` sets stored parent order to the `-d` flag order, and the remove form does the same; `jj rebase -s <child> -d <join>`, the pair's second half, and `jj describe` both leave it intact.
+Stored order is therefore not a property of how the join was first built — it is whatever was last typed on a rebase.
+Re-read it after any join surgery, and never rely on a reading taken before one, though after surgery the operator already knows the answer, having just specified it.
+
+The join's description must not be read as a view of stored order.
+`jj-linearize-join.sh` generates the description alphabetically while stored order is construction order, so the two agree only by coincidence: measured with an aggregate bookmark sorting alphabetically first they agree, and with one sorting last they diverge.
+The documented alphabetical convention guarantees divergence whenever construction order is not alphabetical.
+The template above is the only reliable read.
 
 A join's label and its parent set change in separate operations, so there is an unavoidable interval in which the two disagree and the hook asks on invariants (i) and (ii).
 That is expected while adding or removing a chain rather than a violation: finish the sequence, then redescribe.
