@@ -235,6 +235,14 @@ Where a citation supports a claim about runtime behavior, record the version the
 A local clone of an upstream repository sits at whatever revision it was fetched at, which is rarely the revision of whatever build is installed.
 Use such a clone to confirm that a symbol exists, not to look up a line number for it.
 
+The same caution applies to a document's own generated copy.
+Where a build system materializes documentation into a second location — nix home-manager linking generated skill files into place, for example — that copy changes only when the build reruns, so it holds pre-change content indefinitely after the source is edited.
+Verify an edit against the source tree, never against the generated copy, and treat a generated path as a read-only artifact.
+
+Two properties make the staleness hard to notice, so check for them before trusting a negative result.
+Generated files may carry a fixed epoch timestamp rather than a real one, which is the same reason provenance questions route to git history rather than mtime; a nix store path reports a 1970 mtime whatever its content.
+And a search that does not follow symlinks reports nothing at all for a symlinked tree rather than reporting an error, which reads as agreement with whatever was expected — `rg` needs `-L` to descend into one.
+
 ## Code
 
 - In code, prefer docstrings relevant to a given programming language over code comments
