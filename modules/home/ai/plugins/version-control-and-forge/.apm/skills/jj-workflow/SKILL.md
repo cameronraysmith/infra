@@ -337,7 +337,7 @@ Conflicts are first-class citizens, committed and resolved when convenient.
 Conflict workflow:
 - Operations never fail due to conflicts - conflicts are committed with marker
 - Continue working on other commits while conflicts exist
-- View conflicted commits: `jj log -r 'conflict()'`
+- View conflicted commits: `jj log -r 'conflicts()'`
 - Resolve when ready: `jj new <conflicted-commit>`, fix files, `jj squash` resolution back
 - Or resolve in place: `jj edit <conflicted-commit>`, fix files (automatically amends)
 
@@ -958,7 +958,7 @@ done
 jj new @-
 
 # Check for conflicts
-jj log -r 'conflict() & main..@'
+jj log -r 'conflicts() & main..@'
 
 # Review operation history
 jj op log --limit 20
@@ -1300,7 +1300,7 @@ description(glob:"pattern")    # Commits with matching description
 file("path")                   # Commits modifying path
 ~/path                         # Commits modifying path (shorthand)
 empty()                        # Empty commits (no changes)
-conflict()                     # Commits with conflicts
+conflicts()                    # Commits with conflicts
 merge()                        # Merge commits
 bookmarks()                    # All bookmarked commits
 working_copies()               # All working-copy commits
@@ -1309,7 +1309,7 @@ working_copies()               # All working-copy commits
 main..@                        # Commits ahead of main
 mine() & ~bookmarks()          # Your unbookmarked commits
 description(glob:"WIP*") & main..@  # WIP commits in current branch
-conflict() & main..@           # Conflicts in current work
+conflicts() & main..@          # Conflicts in current work
 ```
 
 ### Common command patterns

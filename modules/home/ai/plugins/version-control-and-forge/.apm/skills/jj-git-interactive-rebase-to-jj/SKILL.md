@@ -561,7 +561,7 @@ jj split -r <commit> -- file1.txt -m "Part 1"
 
 | Task | Jujutsu Command |
 |------|----------------|
-| See conflicted files | `jj status` or `jj log -r 'conflict()'` |
+| See conflicted files | `jj status` or `jj log -r 'conflicts()'` |
 | Start resolving conflicts | `jj new <conflicted-commit>` |
 | Resolve with merge tool | `jj resolve` |
 | List conflicts | `jj resolve --list` |

@@ -146,7 +146,7 @@ Conflicts are first-class citizens, committed and resolved when convenient:
 Conflict workflow:
 - Operations never fail due to conflicts - conflicts are committed with "conflict" marker
 - Continue working on other commits while conflicts exist
-- View conflicted commits: `jj log -r 'conflict()'`
+- View conflicted commits: `jj log -r 'conflicts()'`
 - Resolve when ready: `jj new <conflicted-commit>`, fix files, `jj squash` resolution back
 - Or resolve in place: `jj edit <conflicted-commit>`, fix files (automatically amends)
 
@@ -191,7 +191,7 @@ Common revset patterns:
 - Select by author: `jj rebase -s 'author("name@example.com")' -d main`
 - Select empty commits: `jj abandon 'empty()'`
 - Select your commits not on bookmarks: `jj log -r 'mine() & ~bookmarks()'`
-- Select conflicted commits: `jj log -r 'conflict()'`
+- Select conflicted commits: `jj log -r 'conflicts()'`
 - Select commits in range: `jj log -r 'A..B'` or `jj log -r 'B::A'`
 
 Revset flags for rebase:

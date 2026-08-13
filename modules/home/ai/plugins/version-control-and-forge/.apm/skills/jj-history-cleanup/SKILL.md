@@ -283,7 +283,7 @@ jj undo  # Undo the operation that caused conflict
 # Try different operation order
 
 # Check for any conflicts in range
-jj log -r 'conflict() & main..@'
+jj log -r 'conflicts() & main..@'
 ```
 
 Unlike git, conflicts don't stop the workflow.
@@ -450,7 +450,7 @@ jj new @-
 jj log -r 'main..@' --template 'description ++ "\n"'
 
 # Check for conflicts
-jj log -r 'conflict() & main..@'
+jj log -r 'conflicts() & main..@'
 # Should be empty
 
 # Review operation history
