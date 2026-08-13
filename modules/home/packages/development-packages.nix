@@ -85,7 +85,6 @@
           clipboard-jh
           dvcWithOptionalRemotes
           forgejo-cli
-          gh
           ghq
           gh-dash
           git-filter-repo

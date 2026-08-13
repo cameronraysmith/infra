@@ -27,22 +27,17 @@ let
     {
       home.stateVersion = "23.11";
 
-      home.packages =
-        with pkgs;
-        [
-          gh # GitHub CLI (keep from baseline)
-        ]
-        ++ [
-          flake.inputs.niks3.packages.${pkgs.stdenv.hostPlatform.system}.niks3
-        ]
-        ++ [
-          # On PATH for per-repository opt-in ergonomics: gpg.x509.program is
-          # written by hand in a repo-local config, and the alternative is
-          # pasting a store path that goes stale on the next update. Nothing
-          # invokes it until someone opts in. The credential helper needs no
-          # such entry — generated config references it by absolute store path.
-          pkgs.buzz-git-sign-nostr
-        ];
+      home.packages = [
+        flake.inputs.niks3.packages.${pkgs.stdenv.hostPlatform.system}.niks3
+      ]
+      ++ [
+        # On PATH for per-repository opt-in ergonomics: gpg.x509.program is
+        # written by hand in a repo-local config, and the alternative is
+        # pasting a store path that goes stale on the next update. Nothing
+        # invokes it until someone opts in. The credential helper needs no
+        # such entry — generated config references it by absolute store path.
+        pkgs.buzz-git-sign-nostr
+      ];
 
       # Inject linear-cli's bundled skill (a single linear-cli/ dir with one
       # SKILL.md and 16 reference subfiles under references/) into all agent
