@@ -40,18 +40,20 @@ In the two-commit `[merge]`+`[wip]` structure, rebase the frozen `[merge]` (`@-`
 
 ```bash
 # Add a chain: grow the join's parent set in place, then re-attach the wip
-jj rebase -r <merge-change-id> -d 'all:(<existing-parents> | new-bookmark)'
-jj rebase -r <wip-change-id> -d <merge-change-id>
+jj rebase -r <merge-change-id> -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark
+jj rebase -s <wip-change-id> -d <merge-change-id>
 
 # Remove a chain
-jj rebase -r <merge-change-id> -d 'all:(<existing-parents> ~ removed-bookmark)'
-jj rebase -r <wip-change-id> -d <merge-change-id>
+jj rebase -r <merge-change-id> -d <remaining-chain-a> -d <remaining-chain-b>
+jj rebase -s <wip-change-id> -d <merge-change-id>
 ```
 
-The `all:` prefix forces a multi-parent result rather than collapsing to the nearest common ancestor.
+Name every destination explicitly, one `-d` per chain the join is to carry afterward, so removal is expressed by omitting a chain from the list rather than subtracting it in a revset.
+The `all:` revset modifier that earlier revisions of this file placed on these destinations was removed in jj 0.38.0 and now fails to parse.
+The second half takes `-s`, not `-r`, so that any commits stacked above `[wip]` return to the rebuilt `[merge]` with it; `-r <wip>` moves `[wip]` alone and orphans them.
 
 Do NOT make the empty `[wip]` the subject of a positional rebase — `jj rebase -r @ --insert-before <target>` / `--insert-after <target>` (and the `jj rebase --revisions @ --insert-before/--insert-after <target>` aliases) relocate `@` below or into the join, dropping the shared editing surface concurrent actors are writing and dragging the pushed `wip` deploy bookmark (the catastrophic concurrency failure).
-In the simpler single-commit join — where `@` IS the join with no separate `[wip]` — the sanctioned destination form `jj rebase -r @ -d 'all:(@- | new-bookmark)'` (or `'all:(@- ~ removed-bookmark)'` to remove) re-parents in place and keeps `@` an empty direct child of the join; the two-commit `[merge]`+`[wip]` pair above is canonical for diamond work.
+In the simpler single-commit join — where `@` IS the join with no separate `[wip]` — the sanctioned destination form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, re-parents in place and keeps `@` an empty direct child of the join; the two-commit `[merge]`+`[wip]` pair above is canonical for diamond work.
 This destination form is the ONLY `jj rebase` that may name `@`; it is distinct from the prohibited positional `--insert-before/--insert-after` forms.
 See `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii) and §"Adding and removing chains" for the full canon.
 
@@ -159,8 +161,8 @@ jj development joins operate in a single working tree, so the repository root's 
 | Applied branches | Chains in development join `@` |
 | `gitbutler/workspace` commit | Development join `@` commit |
 | `but commit --changes` | `jj squash --into <target> -u -- <path>` or `jj absorb` |
-| `but unapply` | Remove chain: `jj rebase -r <merge> -d 'all:(<existing-parents> ~ bookmark)'` then `jj rebase -r <wip> -d <merge>` (single-commit join: `jj rebase -r @ -d 'all:(@- ~ bookmark)'`) |
-| `but apply` | Add chain: `jj rebase -r <merge> -d 'all:(<existing-parents> | bookmark)'` then `jj rebase -r <wip> -d <merge>` (single-commit join: `jj rebase -r @ -d 'all:(@- | bookmark)'`) |
+| `but unapply` | Remove chain: `jj rebase -r <merge> -d <remaining-chain-a> -d <remaining-chain-b>` then `jj rebase -s <wip> -d <merge>` (single-commit join: `jj rebase -r @ -d <remaining-chain-a> -d <remaining-chain-b>`) |
+| `but apply` | Add chain: `jj rebase -r <merge> -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark` then `jj rebase -s <wip> -d <merge>` (single-commit join: `jj rebase -r @ -d <existing-chain-a> -d <existing-chain-b> -d new-bookmark`) |
 | Branch stacks | Bookmark chains (linear descendant sequences) |
 | `but move` (cross-stack) | `jj squash --from <src> --into <dst>` |
 

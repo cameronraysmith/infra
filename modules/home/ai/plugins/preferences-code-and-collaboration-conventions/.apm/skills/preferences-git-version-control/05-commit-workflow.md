@@ -43,7 +43,7 @@ In jj development join mode (multi-parent composite): edit one file, then route 
 In this mode `@` is always the empty `[wip]` commit sitting directly on the multi-parent development join; every editor edits that same shared `[wip]` and routes each change DOWNWARD into a chain, leaving `@` empty in place.
 Never `jj describe @` into content and never relocate `@` via the positional rebase forms `jj rebase -r @ --insert-before/--insert-after <target>` (nor `jj rebase --revisions @ --insert-before/--insert-after <target>`).
 Doing so drifts `@` off `[wip]`, destroys the shared editing surface concurrent actors are writing, and — in this repo — drags the pushed `wip` deploy bookmark below the join and breaks the join's single-`[wip]`-child invariant; recover any drift with `jj op restore`.
-The one sanctioned `jj rebase` that may name `@` is the destination add/remove-chain form `jj rebase -r @ -d 'all:(…)'`, which re-anchors the empty `@` onto a rebuilt join without drifting it.
+The one sanctioned `jj rebase` that may name `@` is the destination add/remove-chain form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, which re-anchors the empty `@` onto a rebuilt join without drifting it.
 See `~/.claude/skills/jj-version-control/SKILL.md` §"Development join" for the canonical invariant, splice/by-relocation recipes, and the full concurrency rationale — this section is a routing summary, not the source of truth.
 Two routing patterns exist:
 
