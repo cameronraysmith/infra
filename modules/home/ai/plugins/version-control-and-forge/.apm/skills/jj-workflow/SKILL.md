@@ -65,6 +65,19 @@ Use `.jjignore` or `.gitignore` to prevent tracking unwanted files.
 | `jj squash -r <c>` | Usually safe, may prompt | `jj squash -r <c>` | Generally OK without `-m` |
 | `jj squash --into <dest>` | Opens description merge editor when both source and destination have non-empty descriptions | `jj squash --into <dest> -u -- <paths>` (keeps dest description) or `jj squash --into <dest> -m "msg" -- <paths>` (sets description) | `-u` preserves existing description; `-m` replaces it. `-u` is preferred when routing into commits that already have descriptions. |
 | `jj new` | No editor (safe) | `jj new` or `jj new -m "msg"` | Safe as-is |
+| `jj resolve` | Launches an external merge tool once per conflicted file, and defaults to `-r @`, which under a development join is the empty `[wip]` rather than the `[merge]` where the conflict materializes | `jj resolve --list -r <merge>` to inspect; to resolve, edit the conflict markers in the file directly and route the result down with `jj squash --into <merge> --use-destination-message --keep-emptied -- <paths>` | **Two-part hazard** — wrong default target and a tool launch, each sufficient on its own. `--tool <NAME>` selects the merge tool. Only conflicts resolvable by 3-way merge are supported at all. See "Resolving a conflict under a development join" below. |
+
+### Resolving a conflict under a development join
+
+The advice jj prints when it reports conflicts assumes a shape the two-commit model does not have.
+It reads "To resolve the conflicts, start by creating a commit on top of the conflicted commit" and then offers a `jj new <change-id>` line, emitted by `report_repo_conflicts` in `cli/src/cli_util.rs`.
+Under a development join `@` already is a commit on top of the conflicted one, so following the hint literally gives the join a second child and strands the pushed `wip` bookmark.
+
+Two routes avoid this, neither of which moves `@`: resolve at the join by naming its revision explicitly, or edit the resolution in `[wip]` and route it down with `jj squash --into <merge> --use-destination-message --keep-emptied`.
+Prefer the squash route for a hand-crafted resolution.
+The built-in tools `--tool :ours` and `--tool :theirs` select side #1 and side #2 of the conflict, and which parent those correspond to under a merge with three or more parents is not established here.
+
+`~/.claude/skills/jj-version-control/SKILL.md` holds the full procedure and the join-specific recovery steps.
 
 ### Mandatory command verification protocol
 
