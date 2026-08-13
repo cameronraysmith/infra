@@ -1,6 +1,11 @@
 ---
 name: meta-orchestrator-checkpoint
-description: Team-level checkpoint and handoff for missions coordinated through the master orchestrator pattern. Captures cross-cycle accumulated state across the master plus retired ACs and their WO cycles, producing a handoff payload that the next master session can resume via /meta-orchestrator-initiate. Two variants: handoff (mid-mission) and closure (mission completion).
+description: >-
+  Team-level checkpoint and handoff for missions coordinated through the master
+  orchestrator pattern. Captures cross-cycle accumulated state across the
+  master plus retired ACs and their WO cycles, producing a handoff payload that
+  the next master session can resume via /meta-orchestrator-initiate. Two
+  variants: handoff (mid-mission) and closure (mission completion).
 ---
 
 # Meta-orchestrator checkpoint
