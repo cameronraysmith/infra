@@ -1,19 +1,15 @@
 ---
 name: nucleus-platform
-description: >
-  Thin router for the Nucleus pattern: a spec-anchored, approximately-verifiable data-modeling and
-  computational-science monorepo where Lean 4 holds the structural source of truth outright and a
-  round trip of instantiation-then-reconstruction drives structural drift toward zero. Names the
-  Nucleus instance of each pattern and the few Nucleus-only rules, then delegates the how to owning
-  sibling skills. Load when standing up a new Nucleus-pattern repo; orienting or operating an existing
-  instance (which directory holds what, the down-L-back-up-R build order); placing a component in a
-  maturity tier or deciding a promotion trigger; applying the ODPS scope rule; authoring or maintaining
-  the Lean-to-LinkML skeleton projection for table schemas; wiring the Nucleus module layout; upholding
-  the Arrow single-physical-oracle invariant; or choosing the deliberate frozen-stack exclusions. Does
-  not fire as a generic build-a-data-platform skill nor as agent/subagent orchestration. Depends on
-  preferences-theoretical-foundations and refinement-driven-development for the structural and refinement
-  axis; pairs with preferences-data-modeling and preferences-bounded-context-design for the data and
-  contract layers.
+description: >-
+  Router for the Nucleus pattern: a spec-anchored, approximately verifiable
+  data-modeling and computational-science monorepo where Lean 4 is the
+  structural source of truth and instantiation followed by reconstruction
+  drives structural drift toward zero. Use when standing up or operating a
+  Nucleus instance, applying its Lean/LinkML/Arrow boundaries, wiring its
+  module and check layout, placing components in maturity tiers, or choosing
+  its deliberate frozen-stack exclusions. Delegate generic techniques to the
+  sibling skills named in this router. Do not use for generic data-platform or
+  agent-orchestration work.
 ---
 
 # Nucleus platform
