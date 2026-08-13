@@ -1,68 +1,67 @@
 ---
 name: meta-search-sessions
 description: >-
-  Search previous Claude Code session transcripts for specific topics, terms, or conversations.
-  Use when the user asks to find, recall, or locate a past session, conversation, or discussion
-  by topic, keyword, or content. Handles multi-term AND searches, project scoping, and result
-  ranking by match density.
+  Use when the user asks to find, recall, or locate a past Claude Code, Codex, or Pi session, conversation, or discussion by topic, keyword, project, path, or content.
 ---
 
 # Session history search
 
-Search Claude Code session JSONL transcripts stored in `~/.claude/projects/`.
+Use the bundled `scripts/search_sessions.sh` rather than assembling ad hoc JSON parser pipelines.
+It searches Claude Code, Codex, and Pi session stores by default and returns a bounded, ranked table of session files.
 
-## Workflow
+## Search workflow
 
-### 1. Interpret the request
+Choose two to five specific terms that should occur in the same session.
+Terms are literal strings and form an AND query at the file level.
+Use `-i` unless exact case matters.
 
-Extract from the user's query:
+```bash
+bash <skill-dir>/scripts/search_sessions.sh -i -n 10 \
+  "architecture diagram" "bounded context"
+```
 
-- **Search terms**: 2-5 key phrases that uniquely identify the target session.
-  Prefer specific nouns and domain terms over generic words.
-  Quoted multi-word phrases in rg are literal matches — use them for compound terms like "architecture diagram".
-- **Project scope**: which project directories to restrict to.
-  Map user references ("vanixiets", "planning", "sciops") to directory names under `~/.claude/projects/`.
-  Common mappings for this user: `vanixiets` -> `-Users-crs58-projects-nix-workspace-vanixiets`, `planning` -> `-Users-crs58-projects-sciexp-planning`.
-  Use `ls ~/.claude/projects/` to discover others.
-  Omit scope to search all projects.
-- **Case sensitivity**: default to case-insensitive (`-i`) unless the user specifies exact-case terms.
+The default structured mode uses `rg` to intersect candidate files, harness-specific `jaq` normalization to exclude hidden reasoning, and ephemeral DuckDB queries to verify terms and rank results.
+Visible user and assistant messages and session metadata receive the highest weights.
+Tool calls and results remain searchable at lower weights.
+Temporary normalized data is removed when the command exits, and no persistent index is created.
 
-### 2. Run the search script
+## Scope and fallback
+
+Repeat `--harness` to search any subset of the canonical harness names `claude`, `codex`, and `pi`.
 
 ```bash
 bash <skill-dir>/scripts/search_sessions.sh \
-  -i \
-  -d "-Users-crs58-projects-nix-workspace-vanixiets" \
-  -d "-Users-crs58-projects-sciexp-planning" \
-  "term1" "term2" "term3"
+  --harness codex --harness pi -i "terranix" "clusterAPI"
 ```
 
-The script performs AND-intersection (all terms must appear in the same file) then ranks results by total match count across all terms.
+Use `--project TEXT` to match a session source path, recorded project, or cwd.
+In raw mode, project scope is checked against both the source path and serialized file content.
+Use repeatable `--path PATH` for direct files or directories; relative paths resolve under each selected harness store.
+Pair an absolute path outside a standard store with exactly one `--harness` so its schema is unambiguous.
+Run `--help` for the store locations and complete option contract.
 
-Output columns: file path (relative to `~/.claude/projects/`), file size, per-term counts, and total.
+Use `--raw` for maximum recall or when structured dependencies are unavailable.
+Raw mode uses `rg`, can match hidden or implementation-only fields, and leaves metadata columns empty.
+In structured mode, a syntactically valid unknown record is checked independently with raw semantics while known records remain normalized; it contributes only when that one record contains every term and satisfies project scope.
+A malformed JSONL file uses whole-file raw fallback because its record boundaries are unreliable.
+Missing `jaq` or DuckDB also triggers warned whole-file raw fallback.
+The script warns when an unknown record contributes to a result or when whole-file fallback is required, not merely because an irrelevant unknown record exists.
 
-### 3. Present results
+## Interpret and inspect results
 
-Report the top-ranked session(s) with:
+Each result reports harness, source path, session ID and name when available, project or cwd, latest timestamp, matching-record count, weighted score, and search mode.
+A `structured` row matched only normalized known events.
+A `raw-fallback` row matched only fallback events, while `mixed` means both normalized and per-record fallback events contributed.
+An explicit `raw` row or any fallback contribution requires manual interpretation because its match may come from any serialized field.
+Higher structured scores indicate more or higher-weight matching records, not semantic relevance by themselves.
+In raw modes, `MATCH_RECORDS` counts distinct matching JSONL lines while `SCORE` counts all term occurrences.
 
-- Full path to the JSONL file
-- Per-term match counts (indicates which terms dominate the session)
-- File size (proxy for session length)
-- Whether matches include subagent transcripts (paths containing `/subagents/`)
-
-If the user wants to inspect content from a matched session, extract specific lines:
+The default table intentionally contains no transcript excerpts.
+Refine terms or scope first, then inspect only a selected result with a bounded command such as:
 
 ```bash
-rg -i "term" /path/to/session.jsonl -C 0 | head -20
+rg -n -m 20 -F -i -- "term" /selected/session.jsonl
 ```
 
-For readable extraction of conversation turns containing a term:
-
-```bash
-rg -i "term" /path/to/session.jsonl | jq -r '.message.content // empty' 2>/dev/null | head -40
-```
-
-### 4. Refinement
-
-If too many results: add more specific terms or narrow project scope.
-If zero results: broaden scope, try alternate phrasings, or drop the least-specific term.
+That extraction is raw and may expose hidden fields, so do not present it verbatim without checking the matched record kind.
+Prefer the harness UI when a readable full-session view is needed.

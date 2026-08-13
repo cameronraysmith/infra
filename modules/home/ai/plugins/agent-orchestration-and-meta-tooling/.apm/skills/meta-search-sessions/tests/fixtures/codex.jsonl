@@ -1,0 +1,10 @@
+{"timestamp":"2026-01-02T00:00:00Z","type":"session_meta","payload":{"session_id":"codex-session-1","id":"codex-meta-id","cwd":"/work/beta","thread_name":"Codex beta"}}
+{"timestamp":"2026-01-02T00:01:00Z","type":"response_item","payload":{"id":"item-user","type":"message","role":"user","content":[{"type":"input_text","text":"orchid lattice from Codex"}]}}
+{"timestamp":"2026-01-02T00:02:00Z","type":"response_item","payload":{"id":"item-reasoning","type":"reasoning","summary":[{"type":"summary_text","text":"hidden-nebula private chain"}]}}
+{"timestamp":"2026-01-02T00:03:00Z","type":"response_item","payload":{"id":"item-assistant","type":"message","role":"assistant","content":[{"type":"output_text","text":"visible Codex answer"}]}}
+{"timestamp":"2026-01-02T00:04:00Z","type":"world_state","payload":{"full":false,"state":{}}}
+{"timestamp":"2026-01-02T00:05:00Z","type":"inter_agent_communication_metadata","payload":{"trigger_turn":false}}
+{"timestamp":"2026-01-02T00:06:00Z","type":"event_msg","payload":{"type":"sub_agent_activity","event_id":"event-1","kind":"completed"}}
+{"timestamp":"2026-01-02T00:07:00Z","type":"event_msg","payload":{"type":"web_search_end","call_id":"call-web","query":"fixture query","action":"search","results":[]}}
+{"timestamp":"2026-01-02T00:08:00Z","type":"event_msg","payload":{"type":"patch_apply_end","call_id":"call-patch","stdout":"","stderr":"","success":true,"changes":[]}}
+{"timestamp":"2026-01-02T00:09:00Z","type":"event_msg","payload":{"type":"thread_settings_applied","setting":"unknown routine setting"}}

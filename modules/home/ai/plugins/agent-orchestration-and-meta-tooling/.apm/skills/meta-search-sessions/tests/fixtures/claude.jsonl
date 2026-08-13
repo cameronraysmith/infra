@@ -1,0 +1,13 @@
+{"type":"user","sessionId":"claude-1","cwd":"/work/alpha","timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":"orchid lattice from Claude"}}
+{"type":"assistant","sessionId":"claude-1","cwd":"/work/alpha","timestamp":"2026-01-01T00:01:00Z","message":{"role":"assistant","content":[{"type":"thinking","thinking":"hidden-nebula private chain unknown-only-term unknown-only-signal"},{"type":"text","text":"visible Claude answer"}]}}
+{"type":"assistant","sessionId":"claude-1","cwd":"/work/alpha","timestamp":"2026-01-01T00:02:00Z","message":{"role":"assistant","content":[{"type":"text","text":"claude-visible-rank"},{"type":"tool_use","id":"tool-1","name":"read","input":{"path":"fixture"}}]}}
+{"type":"last-prompt","lastPrompt":"orchid lattice from Claude","leafUuid":"leaf-1","sessionId":"claude-1"}
+{"type":"custom-title","customTitle":"Claude fixture title","sessionId":"claude-1"}
+{"type":"agent-name","agentName":"fixture-agent","sessionId":"claude-1"}
+{"type":"mode","mode":"default","sessionId":"claude-1"}
+{"type":"permission-mode","permissionMode":"default","sessionId":"claude-1"}
+{"type":"attachment","attachment":{"kind":"fixture"},"uuid":"attachment-1","timestamp":"2026-01-01T00:03:00Z","cwd":"/work/alpha","sessionId":"claude-1"}
+{"type":"file-history-delta","messageId":"msg-1","snapshotMessageId":"snapshot-1","trackingPath":"fixture","backup":{},"timestamp":"2026-01-01T00:04:00Z"}
+{"type":"bridge-session","bridgeMeta":"unknown-only-term unknown-only-signal","sessionId":"claude-1"}
+{"type":"ai-title","title":"unknown routine title","sessionId":"claude-1"}
+{"type":"agent-setting","setting":"unknown routine setting","sessionId":"claude-1"}

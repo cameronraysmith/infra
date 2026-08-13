@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"pi-1","timestamp":"2026-01-03T00:00:00Z","cwd":"/work/gamma"}
+{"type":"session_info","id":"info-1","parentId":null,"timestamp":"2026-01-03T00:00:01Z","name":"Pi gamma"}
+{"type":"message","id":"msg-1","timestamp":"2026-01-03T00:01:00Z","message":{"role":"user","content":[{"type":"text","text":"orchid lattice from Pi"}]}}
+{"type":"message","id":"msg-2","timestamp":"2026-01-03T00:02:00Z","message":{"role":"assistant","content":[{"type":"thinking","thinking":"hidden-nebula private chain"},{"type":"text","text":"visible Pi answer"}]}}
+{"type":"message","id":"msg-3","timestamp":"2026-01-03T00:03:00Z","message":{"role":"assistant","content":[{"type":"text","text":"pi-visible-rank"},{"type":"toolCall","id":"call-1","name":"read","arguments":{"path":"fixture"}}]}}
