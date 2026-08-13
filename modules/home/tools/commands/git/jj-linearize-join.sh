@@ -81,7 +81,8 @@ Subcommand:
                                   join-conflict-preexisting,
                                   join-conflict-resolve, join-side-order,
                                   join-nsided-refusal,
-                                  join-conflict-multifile
+                                  join-conflict-multifile, join-stored-order,
+                                  join-desc-vs-stored
                                 Omit SCENARIO to run all. The join-* scenarios
                                 compare the corpus's competing add/remove-chain
                                 procedures against the seven join-preservation
@@ -1952,6 +1953,146 @@ run_scenario_join_conflict_multifile() {
   printf '%s' "${result}"
 }
 
+# -----------------------------------------------------------------------------
+# Stored parent order across join surgery
+# -----------------------------------------------------------------------------
+#
+# Stored parent order is what `--tool :ours/:theirs` selects sides by, and it is
+# rewritten to the `-d` flag order every time the join is rebased. So it is not
+# a property of how the join was first built: it must be re-read after any
+# add or remove. The operator does control it — it is exactly the order typed
+# on the command line.
+
+# Rebasing the join sets stored order to the -d flag order, for both the add and
+# the remove form, and the resulting order governs :ours behaviourally. Neither
+# the pair's second half nor `jj describe` perturbs it.
+run_scenario_join_stored_order() {
+  local result=""
+
+  # Add-chain with flags deliberately out of construction order.
+  result+=$(
+    set +e
+    tmp=$(scenario_setup_join_sideorder "c1 c2 c3")
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-stored-order-add: cd to tmpdir failed"; exit 0; }
+    # c4 needs to exist to be added.
+    jj new main -m "c4 commit" --no-edit >/dev/null 2>&1
+    jj bookmark create c4 -r 'heads(main:: & ~::@)' >/dev/null 2>&1
+    local ok=true
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+    w=$(jj log -r @ --no-graph -T 'change_id.short()')
+    if [[ "$(join_parent_order "${m}")" != "c1 c2 c3" ]]; then
+      ok=false; echo "FAIL join-stored-order-add: fixture stored order '$(join_parent_order "${m}")' != 'c1 c2 c3'"
+    fi
+    jj rebase -r "${m}" -d c3 -d c1 -d c2 >/dev/null 2>&1
+    jj rebase -r "${w}" -d "${m}" >/dev/null 2>&1
+    if $ok && [[ "$(join_parent_order "${m}")" != "c3 c1 c2" ]]; then
+      ok=false; echo "FAIL join-stored-order-add: stored order '$(join_parent_order "${m}")' != flag order 'c3 c1 c2'"
+    fi
+    if $ok; then
+      echo "PASS join-stored-order-add (rebase rewrites stored order to the -d flag order)"
+    fi
+  )
+  result+=$'\n'
+
+  # Remove-chain form rewrites it the same way.
+  result+=$(
+    set +e
+    tmp=$(scenario_setup_join_sideorder "c1 c2 c3")
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-stored-order-remove: cd to tmpdir failed"; exit 0; }
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+    w=$(jj log -r @ --no-graph -T 'change_id.short()')
+    jj rebase -r "${m}" -d c3 -d c2 >/dev/null 2>&1
+    jj rebase -r "${w}" -d "${m}" >/dev/null 2>&1
+    if [[ "$(join_parent_order "${m}")" == "c3 c2" ]]; then
+      echo "PASS join-stored-order-remove (remove form also adopts -d flag order)"
+    else
+      echo "FAIL join-stored-order-remove: stored order '$(join_parent_order "${m}")' != 'c3 c2'"
+    fi
+  )
+  result+=$'\n'
+
+  # Neither the pair's second half nor a re-describe perturbs stored order.
+  result+=$(
+    set +e
+    tmp=$(scenario_setup_join_sideorder "c1 c3 c2")
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-stored-order-stable: cd to tmpdir failed"; exit 0; }
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+    child=$(jj log -r "children(${m}) & mutable()" --no-graph -T 'change_id.short()')
+    local before after_s after_d
+    before=$(join_parent_order "${m}")
+    jj rebase -s "${child}" -d "${m}" >/dev/null 2>&1
+    after_s=$(join_parent_order "${m}")
+    jj describe "${m}" -m "join N=3: c1, c2, c3" >/dev/null 2>&1
+    after_d=$(join_parent_order "${m}")
+    if [[ "${before}" == "${after_s}" && "${before}" == "${after_d}" ]]; then
+      echo "PASS join-stored-order-stable ('rebase -s <child>' and 'jj describe' both leave stored order '${before}' intact)"
+    else
+      echo "FAIL join-stored-order-stable: '${before}' -> after -s '${after_s}' -> after describe '${after_d}'"
+    fi
+  )
+  printf '%s' "${result}"
+}
+
+# Characterization, not endorsement. The corpus convention describes a join with
+# its bookmarks in ALPHABETICAL order, while `jj new` is invoked in insertion
+# order and `jj describe` does not touch stored order. So a join's description
+# does not report its stored parent order, and this script already demonstrates
+# the divergence whenever the aggregate bookmark does not sort first. If the
+# convention is ever changed to describe in stored order, this test should fail
+# and be updated deliberately.
+run_scenario_join_desc_vs_stored() {
+  local script_path
+  if [[ "${BASH_SOURCE[0]}" = /* ]]; then
+    script_path="${BASH_SOURCE[0]}"
+  else
+    script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+  fi
+  local agg result=""
+  # "aggregate name|expected description|expected stored order"
+  local specs=(
+    "agg|join N=3: agg, c3, c4|agg"
+    "zebra|join N=3: c3, c4, zebra|zebra"
+  )
+  local spec
+  for spec in "${specs[@]}"; do
+    agg="${spec%%|*}"
+    local rest="${spec#*|}"
+    local want_desc="${rest%%|*}" want_first="${rest##*|}"
+    result+=$(
+      set +e
+      tmp=$(scenario_setup_diamond 4 disjoint)
+      trap 'rm -rf "${tmp}"' EXIT
+      cd "${tmp}" || { echo "FAIL join-desc-vs-stored[${agg}]: cd to tmpdir failed"; exit 0; }
+      bash "${script_path}" --order c1,c2 --aggregate-bookmark "${agg}" --keep-remaining c3,c4 >/dev/null 2>&1
+      m=$(jj log -r @- --no-graph -T 'change_id.short()')
+      local desc stored_first
+      desc=$(jj --ignore-working-copy log -r "${m}" --no-graph -T 'description.first_line()' --limit 1)
+      # The aggregate shares a commit with the last linearized chain, so take
+      # only the first stored parent's name set and check the aggregate is in it.
+      stored_first=$(join_parent_order "${m}" | awk '{print $1}')
+      local ok=true
+      if [[ "${desc}" != "${want_desc}" ]]; then
+        ok=false; echo "FAIL join-desc-vs-stored[${agg}]: description '${desc}' != '${want_desc}'"
+      fi
+      if $ok && [[ "${stored_first}" != *"${want_first}"* ]]; then
+        ok=false; echo "FAIL join-desc-vs-stored[${agg}]: first stored parent '${stored_first}' does not include '${want_first}'"
+      fi
+      if $ok; then
+        if [[ "${desc}" == "join N=3: ${want_first},"* ]]; then
+          echo "PASS join-desc-vs-stored[${agg}] (description and stored order agree here)"
+        else
+          echo "PASS join-desc-vs-stored[${agg}] (description is alphabetical, stored order starts '${want_first}' — they DIVERGE, as measured)"
+        fi
+      fi
+    )
+    result+=$'\n'
+  done
+  printf '%s' "${result%$'\n'}"
+}
+
 run_tests() {
   local scenario="${1:-}"
   local out=""
@@ -1975,7 +2116,9 @@ run_tests() {
       out+=$(run_scenario_join_conflict_resolve); out+=$'\n'
       out+=$(run_scenario_join_side_order); out+=$'\n'
       out+=$(run_scenario_join_nsided_refusal); out+=$'\n'
-      out+=$(run_scenario_join_conflict_multifile)
+      out+=$(run_scenario_join_conflict_multifile); out+=$'\n'
+      out+=$(run_scenario_join_stored_order); out+=$'\n'
+      out+=$(run_scenario_join_desc_vs_stored)
       ;;
     clean-dry) out=$(run_scenario_clean_dry) ;;
     clean-real) out=$(run_scenario_clean_real) ;;
@@ -1996,9 +2139,11 @@ run_tests() {
     join-side-order) out=$(run_scenario_join_side_order) ;;
     join-nsided-refusal) out=$(run_scenario_join_nsided_refusal) ;;
     join-conflict-multifile) out=$(run_scenario_join_conflict_multifile) ;;
+    join-stored-order) out=$(run_scenario_join_stored_order) ;;
+    join-desc-vs-stored) out=$(run_scenario_join_desc_vs_stored) ;;
     *)
       echo "Error: unknown test scenario '${scenario}'." >&2
-      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile" >&2
+      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile, join-stored-order, join-desc-vs-stored" >&2
       return 1
       ;;
   esac
