@@ -1,7 +1,7 @@
 ---
 name: git-commit-prompt
 description: Generate optimal prompt for atomic git commits with conventional format. Use when preparing commits or cleaning up git history.
-argument-hint: [context] [--atomic] [--worktree] [--venv]
+argument-hint: '[context] [--atomic] [--worktree] [--venv]'
 disable-model-invocation: true
 ---
 

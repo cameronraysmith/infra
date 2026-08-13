@@ -1,7 +1,7 @@
 ---
 name: meta-session-resume
 description: Generate annotated resume command and add to atuin history for session continuation. Triggered by requests to prepare, save, or checkpoint a session for resumption, or "prepare this session for resumption".
-argument-hint: [session-uuid] [nohist]
+argument-hint: '[session-uuid] [nohist]'
 disable-model-invocation: false
 ---
 Generate a resume session command and automatically add it to atuin shell history.

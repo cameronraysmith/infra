@@ -1,7 +1,7 @@
 ---
 name: github-browse
 description: Open a GitHub issue or PR in browser and optionally manage subscriptions. Use when navigating to GitHub resources from the terminal.
-argument-hint: [issue-or-pr-number] [sub|un]
+argument-hint: '[issue-or-pr-number] [sub|un]'
 disable-model-invocation: true
 ---
 
