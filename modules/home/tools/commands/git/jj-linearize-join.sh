@@ -76,7 +76,10 @@ Subcommand:
                                   subset-keep-remaining, subset-conflict,
                                   join-add-candidates, join-remove-candidates,
                                   join-inflight-content, join-deep-stack,
-                                  join-conflict-add, join-conflict-remove
+                                  join-conflict-add, join-conflict-remove,
+                                  join-conflict-nway,
+                                  join-conflict-preexisting,
+                                  join-conflict-resolve
                                 Omit SCENARIO to run all. The join-* scenarios
                                 compare the corpus's competing add/remove-chain
                                 procedures against the seven join-preservation
@@ -1469,6 +1472,238 @@ run_scenario_join_conflict_remove() {
   printf '%s' "${result}"
 }
 
+# -----------------------------------------------------------------------------
+# N-sided conflicts, pre-conflicted chains, and conflict resolution
+# -----------------------------------------------------------------------------
+
+# Change ids of join parents that are themselves conflicted. This is the
+# discriminator an agent needs: empty means the join created the conflict, so
+# drop a chain or resolve at the join; non-empty names the chains that are
+# broken on their own and must be fixed where they live.
+conflicted_join_parents() {
+  jj --ignore-working-copy log -r 'conflicts() & parents(@-)' --no-graph \
+    -T 'bookmarks.join(",") ++ "\n"' 2>/dev/null | sed '/^$/d' | sort | tr '\n' ' ' | sed 's/ $//'
+}
+
+count_children_of_join() {
+  jj --ignore-working-copy log -r 'children(@-)' --no-graph \
+    -T 'change_id ++ "\n"' 2>/dev/null | sed '/^$/d' | wc -l | tr -d ' '
+}
+
+# Four chains that all rewrite shared.txt from the same base, so joining k of
+# them yields a k-sided conflict. Each also carries its own f<N>.txt.
+scenario_setup_join_nway_conflict() {
+  enter_scratch_dir
+  jj git init >/dev/null 2>&1
+  echo "base" > base.txt
+  echo "base" > shared.txt
+  jj describe -m "init" >/dev/null
+  jj bookmark create main -r @ >/dev/null
+  local i
+  for i in 1 2 3 4; do
+    jj new main -m "c${i} commit" >/dev/null
+    echo "from-c${i}" > shared.txt
+    echo "content-c${i}" > "f${i}.txt"
+    jj bookmark create "c${i}" -r @ >/dev/null
+  done
+  jj new c1 c2 c3 -m "join N=3: c1, c2, c3" >/dev/null
+  jj new -m "current wip" >/dev/null
+}
+
+# c1 and c2 are clean; c3's tip is conflicted before it ever joins, by being
+# rebased onto a commit that rewrote the same file.
+scenario_setup_join_preconflicted() {
+  enter_scratch_dir
+  jj git init >/dev/null 2>&1
+  echo "base" > base.txt
+  echo "base" > shared.txt
+  jj describe -m "init" >/dev/null
+  jj bookmark create main -r @ >/dev/null
+
+  local i
+  for i in 1 2; do
+    jj new main -m "c${i} commit" >/dev/null
+    echo "content-c${i}" > "f${i}.txt"
+    jj bookmark create "c${i}" -r @ >/dev/null
+  done
+
+  jj new main -m "pre commit" >/dev/null
+  echo "from-pre" > shared.txt
+  jj bookmark create pre -r @ >/dev/null
+
+  jj new main -m "c3 commit" >/dev/null
+  echo "content-c3" > f3.txt
+  echo "from-c3" > shared.txt
+  jj bookmark create c3 -r @ >/dev/null
+  jj rebase -r c3 -d pre >/dev/null 2>&1
+
+  jj new c1 c2 -m "join N=2: c1, c2" >/dev/null
+  jj new -m "current wip" >/dev/null
+}
+
+# Joining k chains that all rewrite one file yields a genuine k-sided conflict,
+# and adding another conflicting chain raises the arity rather than degrading.
+run_scenario_join_conflict_nway() {
+  local result
+  result=$(
+    set +e
+    tmp=$(scenario_setup_join_nway_conflict)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-conflict-nway: cd to tmpdir failed"; exit 0; }
+    local ok=true
+    if ! jj status 2>&1 | grep -q '3-sided conflict'; then
+      ok=false
+      echo "FAIL join-conflict-nway: joining 3 conflicting chains did not report a 3-sided conflict"
+    fi
+
+    w=$(jj log -r @ --no-graph -T 'change_id.short()')
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+    jj rebase -r "${m}" -d c1 -d c2 -d c3 -d c4 >/dev/null 2>&1
+    jj rebase -r "${w}" -d "${m}" >/dev/null 2>&1
+    jj describe "${m}" -m "join N=4: c1, c2, c3, c4" >/dev/null 2>&1
+
+    if $ok && ! jj status 2>&1 | grep -q '4-sided conflict'; then
+      ok=false
+      echo "FAIL join-conflict-nway: adding a 4th conflicting chain did not raise the conflict to 4-sided"
+    fi
+    if $ok && ! working_copy_empty; then
+      ok=false; echo "FAIL join-conflict-nway: @ is not empty under an n-sided conflict"
+    fi
+    if $ok && [[ "$(rev_conflict @)" != "true" ]]; then
+      ok=false; echo "FAIL join-conflict-nway: @ does not report the inherited conflict"
+    fi
+    if $ok; then
+      local got
+      got=$(check_join_criteria "${w}" "current wip" "c1 c2 c3 c4" "join N=4: c1, c2, c3, c4")
+      if [[ -n "${got}" ]]; then
+        ok=false; echo "FAIL join-conflict-nway: violated join criteria '${got}'"
+      fi
+    fi
+    # A join-created conflict leaves every chain tip individually clean.
+    if $ok && [[ -n "$(conflicted_join_parents)" ]]; then
+      ok=false
+      echo "FAIL join-conflict-nway: join parents [$(conflicted_join_parents)] are conflicted; a join-created conflict should leave chains clean"
+    fi
+    if $ok; then
+      echo "PASS join-conflict-nway (3-sided raises to 4-sided; @ empty, conflicted, identical; chains clean)"
+    fi
+  )
+  printf '%s' "${result}"
+}
+
+# A chain conflicted before it joins propagates its conflict into [merge]. The
+# rebase pair still completes, and the state IS distinguishable from a
+# join-created conflict by whether any join parent is itself conflicted.
+run_scenario_join_conflict_preexisting() {
+  local result
+  result=$(
+    set +e
+    tmp=$(scenario_setup_join_preconflicted)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-conflict-preexisting: cd to tmpdir failed"; exit 0; }
+    local ok=true
+    if [[ "$(rev_conflict c3)" != "true" ]]; then
+      ok=false; echo "FAIL join-conflict-preexisting: fixture chain c3 is not conflicted before joining"
+    fi
+    if $ok && [[ "$(rev_conflict @-)" != "false" ]]; then
+      ok=false; echo "FAIL join-conflict-preexisting: fixture join is not clean before the add"
+    fi
+
+    w=$(jj log -r @ --no-graph -T 'change_id.short()')
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+    jj rebase -r "${m}" -d c1 -d c2 -d c3 >/dev/null 2>&1
+    jj rebase -r "${w}" -d "${m}" >/dev/null 2>&1
+    jj describe "${m}" -m "join N=3: c1, c2, c3" >/dev/null 2>&1
+
+    if $ok && [[ "$(rev_conflict @-)" != "true" ]]; then
+      ok=false; echo "FAIL join-conflict-preexisting: the chain's conflict did not propagate into [merge]"
+    fi
+    if $ok; then
+      local got
+      got=$(check_join_criteria "${w}" "current wip" "c1 c2 c3" "join N=3: c1, c2, c3")
+      if [[ -n "${got}" ]]; then
+        ok=false; echo "FAIL join-conflict-preexisting: violated join criteria '${got}'"
+      fi
+    fi
+    # The discriminator: the offending chain is named among the join's parents.
+    if $ok && [[ "$(conflicted_join_parents)" != "c3" ]]; then
+      ok=false
+      echo "FAIL join-conflict-preexisting: expected conflicted join parent 'c3', got '$(conflicted_join_parents)'"
+    fi
+    if $ok; then
+      echo "PASS join-conflict-preexisting (propagates; pair completes; conflicted parent names the broken chain)"
+    fi
+  )
+  printf '%s' "${result}"
+}
+
+# jj's own conflict advice says to create a commit on top of the conflicted
+# commit, resolve there, and squash down. In the two-commit model [wip] ALREADY
+# is that commit, so following the advice literally adds a redundant second
+# child of the join and strands [wip] as a sibling. Two diamond-safe routes work
+# instead, and neither moves @.
+run_scenario_join_conflict_resolve() {
+  local variant result=""
+  for variant in squash-down resolve-at-join literal-advice; do
+    result+=$(
+      set +e
+      tmp=$(scenario_setup_join_conflict remove)
+      trap 'rm -rf "${tmp}"' EXIT
+      cd "${tmp}" || { echo "FAIL join-resolve-${variant}: cd to tmpdir failed"; exit 0; }
+      w=$(jj log -r @ --no-graph -T 'change_id.short()')
+      m=$(jj log -r @- --no-graph -T 'change_id.short()')
+      local ok=true
+
+      case "${variant}" in
+        squash-down)
+          # Hand-craft the resolution in [wip], then route it down. Same verb
+          # and same --keep-emptied as ordinary chain routing.
+          echo "resolved-content" > shared.txt
+          jj squash --into "${m}" --use-destination-message --keep-emptied >/dev/null 2>&1
+          ;;
+        resolve-at-join)
+          # Resolve in the join itself; @ is never touched. --tool is mandatory:
+          # a bare `jj resolve` launches an external merge tool.
+          jj resolve -r "${m}" --tool :ours >/dev/null 2>&1
+          ;;
+        literal-advice)
+          jj new "${m}" -m "resolve conflicts" >/dev/null 2>&1
+          ;;
+      esac
+
+      if [[ "${variant}" == "literal-advice" ]]; then
+        local kids; kids=$(count_children_of_join)
+        if [[ "${kids}" -eq 2 ]]; then
+          echo "PASS join-resolve-literal-advice (jj's advice adds a 2nd join child and strands [wip], as measured)"
+        else
+          echo "FAIL join-resolve-literal-advice: expected 2 children of the join, got ${kids}"
+        fi
+      else
+        if [[ "$(rev_conflict @-)" != "false" ]]; then
+          ok=false; echo "FAIL join-resolve-${variant}: [merge] still conflicted"
+        fi
+        if $ok && [[ "$(rev_conflict @)" != "false" ]]; then
+          ok=false; echo "FAIL join-resolve-${variant}: @ still conflicted"
+        fi
+        if $ok && ! working_copy_empty; then
+          ok=false; echo "FAIL join-resolve-${variant}: @ is not empty after resolution"
+        fi
+        if $ok && [[ "$(jj --ignore-working-copy log -r @ --no-graph -T 'change_id.short()')" != "${w}" ]]; then
+          ok=false; echo "FAIL join-resolve-${variant}: @ change id changed"
+        fi
+        if $ok && [[ "$(count_children_of_join)" -ne 1 ]]; then
+          ok=false; echo "FAIL join-resolve-${variant}: join has $(count_children_of_join) children; expected 1"
+        fi
+        if $ok; then
+          echo "PASS join-resolve-${variant} (conflict cleared; @ empty, identical, sole child of the join)"
+        fi
+      fi
+    )
+    result+=$'\n'
+  done
+  printf '%s' "${result%$'\n'}"
+}
+
 run_tests() {
   local scenario="${1:-}"
   local out=""
@@ -1486,7 +1721,10 @@ run_tests() {
       out+=$(run_scenario_join_inflight_content); out+=$'\n'
       out+=$(run_scenario_join_deep_stack); out+=$'\n'
       out+=$(run_scenario_join_conflict_add); out+=$'\n'
-      out+=$(run_scenario_join_conflict_remove)
+      out+=$(run_scenario_join_conflict_remove); out+=$'\n'
+      out+=$(run_scenario_join_conflict_nway); out+=$'\n'
+      out+=$(run_scenario_join_conflict_preexisting); out+=$'\n'
+      out+=$(run_scenario_join_conflict_resolve)
       ;;
     clean-dry) out=$(run_scenario_clean_dry) ;;
     clean-real) out=$(run_scenario_clean_real) ;;
@@ -1501,9 +1739,12 @@ run_tests() {
     join-deep-stack) out=$(run_scenario_join_deep_stack) ;;
     join-conflict-add) out=$(run_scenario_join_conflict_add) ;;
     join-conflict-remove) out=$(run_scenario_join_conflict_remove) ;;
+    join-conflict-nway) out=$(run_scenario_join_conflict_nway) ;;
+    join-conflict-preexisting) out=$(run_scenario_join_conflict_preexisting) ;;
+    join-conflict-resolve) out=$(run_scenario_join_conflict_resolve) ;;
     *)
       echo "Error: unknown test scenario '${scenario}'." >&2
-      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove" >&2
+      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve" >&2
       return 1
       ;;
   esac
