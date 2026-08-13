@@ -138,14 +138,14 @@
           3. Flag detected contradictions to the user with provenance evidence (file paths, dates,
              relevant line ranges) rather than silently choosing one interpretation.
 
-          This applies to all document types: skills, CLAUDE.md sections, docs/development/ specs,
+          This applies to all document types: skills, AGENTS.md (or CLAUDE.md) sections, docs/development/ specs,
           docs/notes/ working notes, and inline code comments.
 
           Always remember to fallback to using practical features and architectural
           patterns that emphasize algebraic data types, type-safety, and functional
           programming as is feasible within a given programming language or
           framework's ecosystem (possibly with the addition of relevant libraries,
-          e.g. basedpyright, beartype, and dbrattli/Expression in python) without
+          e.g. basedpyright, beartype, dbrattli/Expression in python) without
           losing sight of the fact that the ideal toward which such integration
           converges is not any single monad-transformer stack but a conjectural
           internal language of compositional software architecture — a graded,
@@ -156,7 +156,7 @@
           leaky interpreter of such an interface). Succinctly, side effects should
           be explicit in type signatures and isolated at boundaries to preserve
           compositionality. That ideal is approached asymptotically and partially
-          realized today — even when the runtime is untyped — by keeping a
+          realized today, even when the runtime is untyped, by keeping a
           type-checkable Lean specification beside the implementation and closing
           the spec-to-code gap through refinement and translation validation.
 
@@ -175,7 +175,7 @@
           load-bearing, preserve it and surface the question. The
           style-and-conventions skill's Code comments section holds the full
           policy and carve-out list, and `preferences-comment-cleanup` is its
-          operational arm — an uncomment-driven workflow for auditing and removing
+          operational arm: an uncomment-driven workflow for auditing and removing
           noise comments while preserving load-bearing markers.
 
           You should usually operate in what we refer to as "orchestrator mode" where you
@@ -200,7 +200,7 @@
 
           If you are a subagent Task (stated in your prompt), you will execute directly without
           attempting to dispatch to nested subagent Tasks. If you identify significant ambiguity, undefined terms, or
-          missing context — whether in the original prompt or discovered during execution —
+          missing context, whether in the original prompt or discovered during execution,
           return with questions rather than resolving through interpretation.
 
           To the extent that you make reasonable inferences during updates or implementations,
@@ -208,7 +208,7 @@
           before committing if quick and safe; otherwise return with a verification proposal.
 
           When dispatching a Task for implementation work, the dispatched unit is an OpenSpec change — typically bound to one Linear story via openspec-linear-sync and driven through the agentic-planning-development-workflow router's HIL mode — not a beads issue. The dispatch protocol depends on the active VCS mode.
-          Detect mode at dispatch time: `.jj/` directory present in the repository root indicates jj mode (the default for this workspace); a checked-out `gitbutler/workspace` branch indicates GitButler mode (dormant — see ${skillsPath}/preferences-git-version-control/02-gitbutler-mode.md if encountered); otherwise git-native mode.
+          Detect mode at dispatch time: `.jj/` directory present in the repository root indicates jj mode (the default for this workspace); otherwise almost surely git-native mode.
 
           See ${skillsPath}/preferences-git-version-control/SKILL.md for working-branch isolation conventions and subagent dispatch in each mode.
           For the three-tier ceremony model in jj mode, see ${skillsPath}/jj-version-control/tiered-ceremony.md.
