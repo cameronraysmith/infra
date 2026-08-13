@@ -18,7 +18,7 @@
       programs.agents-md = {
         enable = lib.mkDefault true;
         settings.body = ''
-          # Session Protocol
+          # Session protocol
 
           Before acting on any non-trivial request, pause to assess:
 
@@ -51,7 +51,7 @@
           affect your approach. The goal is surfacing substance, not merely
           demonstrating procedure.
 
-          # Development Guidelines
+          # Development guidelines
 
           If one of the following applies to a given task or topic, proactively
           read the corresponding document, without pausing to ask if you should,
@@ -151,6 +151,8 @@
           sections, docs/development/ specs, docs/notes/ working notes, and
           inline code comments.
 
+          # Compositional architecture and type discipline
+
           Always remember to fallback to using practical features and
           architectural patterns that emphasize algebraic data types,
           type-safety, and functional programming as is feasible within a given
@@ -172,6 +174,8 @@
           closing the spec-to-code gap through refinement and translation
           validation.
 
+          # Code comments
+
           Write self-explanatory code and treat code comments as noise by
           default: reserve comments for what the code cannot express, such as a
           true non-obvious reason behind a choice, a surprising external
@@ -190,6 +194,8 @@
           operational arm: an uncomment-driven workflow for auditing and
           removing noise comments while preserving load-bearing markers.
 
+          # Orchestrator mode
+
           You should usually operate in what we refer to as "orchestrator mode"
           where you think deeply to design workflow DAGs of subagent Tasks to
           perform research, implementation, review, or otherwise as is relevant
@@ -201,6 +207,8 @@
           information gathering?" Dispatch information gathering to subagent
           Tasks; only execute inline if trivially small AND immediately required
           for coordination.
+
+          # Subagent dispatch contract
 
           When dispatching Tasks, include in the prompt: "You are a subagent
           Task. Return with questions rather than interpreting ambiguity,
@@ -226,6 +234,8 @@
           appropriate verification. Execute before committing if quick and safe;
           otherwise return with a verification proposal.
 
+          # Dispatch unit and version control mode
+
           When dispatching a Task for implementation work, the dispatched unit
           is an OpenSpec change — typically bound to one Linear story via
           openspec-linear-sync and driven through the
@@ -245,6 +255,8 @@
           ${skillsPath}/jj-version-control/diamond-workflow.md for the
           four-phase process recipe.
 
+          # Parallel work in jj mode
+
           In jj mode, the diamond workflow's development join is the default
           technique for parallel chains of work in a single working copy. See
           ${skillsPath}/jj-version-control/diamond-workflow.md (Development join
@@ -254,6 +266,8 @@
           invariant) runs before file edits whenever a development join is
           present, surfacing diamond-shape violations as ask-prompts with
           recovery commands.
+
+          # Worktree gates and interop
 
           The worktree-creating surfaces are ask-gated rather than denied. `git
           worktree add` raises an ask when the target repository is
@@ -301,6 +315,8 @@
           ${skillsPath}/jj-version-control/SKILL.md "Worktree interop" for the
           mechanics and source anchors.
 
+          # External agent frameworks
+
           When an external agent framework such as firstmate manages
           repositories on our behalf, give it its own clone rather than a
           symlink to a working copy we also use. This is our choice given what
@@ -310,6 +326,8 @@
           <default>` to reattach a detached HEAD, and its project sweep
           dereferences symlinks, so pointing it at a jj primary would run
           exactly the operations the discipline above forbids.
+
+          # Orchestrators do not edit files inline
 
           Orchestrators do not edit files inline. This is the binding form of
           the Session Protocol's orchestrator-mode discipline: when subject to
@@ -322,6 +340,8 @@
           because the diamond development join already supplies the isolation;
           setting `isolation: "worktree"` raises an ask and is warranted only
           when the subagent genuinely needs its own filesystem tree.
+
+          # Agent teams
 
           When the work involves parallel independent work streams, adversarial
           review, multi-perspective analysis, or long-running collaborative
