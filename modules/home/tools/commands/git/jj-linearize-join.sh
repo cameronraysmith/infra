@@ -79,7 +79,9 @@ Subcommand:
                                   join-conflict-add, join-conflict-remove,
                                   join-conflict-nway,
                                   join-conflict-preexisting,
-                                  join-conflict-resolve
+                                  join-conflict-resolve, join-side-order,
+                                  join-nsided-refusal,
+                                  join-conflict-multifile
                                 Omit SCENARIO to run all. The join-* scenarios
                                 compare the corpus's competing add/remove-chain
                                 procedures against the seven join-preservation
@@ -1704,6 +1706,252 @@ run_scenario_join_conflict_resolve() {
   printf '%s' "${result%$'\n'}"
 }
 
+# -----------------------------------------------------------------------------
+# Merge-tool side selection and multi-file conflicts
+# -----------------------------------------------------------------------------
+#
+# `jj resolve --tool :ours/:theirs` picks sides by the join's stored parent
+# order, which is the argument order `jj new` was given. The ordinary way to
+# inspect a join does NOT show that order: the revset `parents(<join>)` returns
+# a canonical ordering, so it looks identical no matter how the join was built.
+# Only the commit template `parents` preserves it. Since :ours silently discards
+# the other chain's work while reporting success, that gap is the footgun.
+
+# Parent bookmarks of the join in STORED order (the order `jj new` was given).
+join_parent_order() {
+  jj --ignore-working-copy log -r "$1" --no-graph --limit 1 \
+    -T 'parents.map(|c| c.bookmarks().map(|b| b.name()).join("/")).join(" ")' 2>/dev/null
+}
+
+# Parent bookmarks as the revset yields them — canonical, NOT stored order.
+join_parent_revset_order() {
+  jj --ignore-working-copy log -r 'parents(@-)' --no-graph \
+    -T 'bookmarks.join(",") ++ " "' 2>/dev/null | sed 's/ $//'
+}
+
+# $1 = parent order for `jj new`. c1 is disjoint; c2 and c3 conflict on
+# shared.txt, so the conflict is 2-sided and :ours/:theirs are applicable.
+scenario_setup_join_sideorder() {
+  local order="$1"
+  enter_scratch_dir
+  jj git init >/dev/null 2>&1
+  echo "base" > base.txt
+  echo "base" > shared.txt
+  jj describe -m "init" >/dev/null
+  jj bookmark create main -r @ >/dev/null
+  local i
+  for i in 1 2 3; do
+    jj new main -m "c${i} commit" >/dev/null
+    echo "content-c${i}" > "f${i}.txt"
+    if [[ "${i}" != "1" ]]; then echo "SIDE-FROM-C${i}" > shared.txt; fi
+    jj bookmark create "c${i}" -r @ >/dev/null
+  done
+  # shellcheck disable=SC2086
+  jj new ${order} -m "join N=3: c1, c2, c3" >/dev/null
+  jj new -m "current wip" >/dev/null
+}
+
+# :ours resolves to the FIRST conflicting parent in stored order, :theirs to the
+# second. Reversing the construction order reverses the winner while the revset
+# view stays byte-identical — that is the trap, asserted directly.
+run_scenario_join_side_order() {
+  local spec result=""
+  # "construction order|tool|expected surviving chain"
+  local specs=(
+    "c1 c2 c3|:ours|SIDE-FROM-C2"
+    "c1 c3 c2|:ours|SIDE-FROM-C3"
+    "c1 c2 c3|:theirs|SIDE-FROM-C3"
+    "c1 c3 c2|:theirs|SIDE-FROM-C2"
+  )
+  for spec in "${specs[@]}"; do
+    local order="${spec%%|*}" rest="${spec#*|}"
+    local tool="${rest%%|*}" want="${rest##*|}"
+    result+=$(
+      set +e
+      tmp=$(scenario_setup_join_sideorder "${order}")
+      trap 'rm -rf "${tmp}"' EXIT
+      cd "${tmp}" || { echo "FAIL join-side-order: cd to tmpdir failed"; exit 0; }
+      local label="join-side-order[${order}|${tool}]" ok=true
+      w=$(jj log -r @ --no-graph -T 'change_id.short()')
+      m=$(jj log -r @- --no-graph -T 'change_id.short()')
+
+      # The stored order must echo the construction order; the revset must not.
+      if [[ "$(join_parent_order "${m}")" != "${order}" ]]; then
+        ok=false
+        echo "FAIL ${label}: stored parent order '$(join_parent_order "${m}")' != construction order '${order}'"
+      fi
+
+      jj resolve -r "${m}" --tool "${tool}" >/dev/null 2>&1
+      local survived
+      survived=$(jj --ignore-working-copy file show -r "${m}" shared.txt 2>/dev/null \
+                 | grep -o 'SIDE-FROM-C[0-9]' | head -1)
+      if $ok && [[ "${survived}" != "${want}" ]]; then
+        ok=false; echo "FAIL ${label}: survived '${survived}', expected '${want}'"
+      fi
+      if $ok && [[ "$(rev_conflict @-)" != "false" ]]; then
+        ok=false; echo "FAIL ${label}: join still conflicted after resolve"
+      fi
+      if $ok; then
+        local got
+        got=$(check_join_criteria "${w}" "current wip" "c1 c2 c3" "join N=3: c1, c2, c3")
+        if [[ -n "${got}" ]]; then
+          ok=false; echo "FAIL ${label}: violated join criteria '${got}'"
+        fi
+      fi
+      if $ok; then
+        echo "PASS ${label} -> ${survived}"
+      fi
+    )
+    result+=$'\n'
+  done
+
+  # The trap itself: the revset view cannot distinguish the two constructions.
+  result+=$(
+    set +e
+    a=$(scenario_setup_join_sideorder "c1 c2 c3")
+    b=$(scenario_setup_join_sideorder "c1 c3 c2")
+    trap 'rm -rf "${a}" "${b}"' EXIT
+    cd "${a}" || { echo "FAIL join-side-order-opacity: cd failed"; exit 0; }
+    ra=$(join_parent_revset_order); ta=$(join_parent_order @-)
+    cd "${b}" || { echo "FAIL join-side-order-opacity: cd failed"; exit 0; }
+    rb=$(join_parent_revset_order); tb=$(join_parent_order @-)
+    if [[ "${ra}" == "${rb}" && "${ta}" != "${tb}" ]]; then
+      echo "PASS join-side-order-opacity (revset view identical '${ra}' while stored order differs '${ta}' vs '${tb}')"
+    else
+      echo "FAIL join-side-order-opacity: expected revset views to match and stored orders to differ; got revset '${ra}'/'${rb}' stored '${ta}'/'${tb}'"
+    fi
+  )
+  printf '%s' "${result}"
+}
+
+# With three or more sides the built-in merge tools refuse outright, so the
+# silent-discard risk is confined to 2-sided conflicts.
+run_scenario_join_nsided_refusal() {
+  local tool result=""
+  for tool in :ours :theirs; do
+    result+=$(
+      set +e
+      tmp=$(scenario_setup_join_nway_conflict)
+      trap 'rm -rf "${tmp}"' EXIT
+      cd "${tmp}" || { echo "FAIL join-nsided-refusal: cd to tmpdir failed"; exit 0; }
+      local label="join-nsided-refusal[${tool}]" ok=true
+      w=$(jj log -r @ --no-graph -T 'change_id.short()')
+      m=$(jj log -r @- --no-graph -T 'change_id.short()')
+      local out rc
+      out=$(jj resolve -r "${m}" --tool "${tool}" 2>&1); rc=$?
+      if [[ ${rc} -eq 0 ]]; then
+        ok=false; echo "FAIL ${label}: expected refusal on a 3-sided conflict, got success"
+      fi
+      if $ok && ! grep -q 'At most 2 sides are supported' <<<"${out}"; then
+        ok=false; echo "FAIL ${label}: refusal message changed: $(head -2 <<<"${out}" | tr '\n' ' ')"
+      fi
+      if $ok && [[ "$(rev_conflict @-)" != "true" ]]; then
+        ok=false; echo "FAIL ${label}: join should be left conflicted after a refused resolve"
+      fi
+      if $ok && [[ "$(jj --ignore-working-copy log -r @ --no-graph -T 'change_id.short()')" != "${w}" ]]; then
+        ok=false; echo "FAIL ${label}: @ change id changed on a refused resolve"
+      fi
+      if $ok; then
+        echo "PASS ${label} (refuses cleanly, leaves join conflicted, @ untouched)"
+      fi
+    )
+    result+=$'\n'
+  done
+  printf '%s' "${result%$'\n'}"
+}
+
+# fileA conflicts between c1 and c2, fileB between c2 and c3. Conflicts are
+# per-path and independent: resolving one leaves the other untouched, and the
+# join clears only once every path is resolved.
+scenario_setup_join_multifile() {
+  enter_scratch_dir
+  jj git init >/dev/null 2>&1
+  echo "base" > base.txt
+  echo "base" > fileA.txt
+  echo "base" > fileB.txt
+  jj describe -m "init" >/dev/null
+  jj bookmark create main -r @ >/dev/null
+
+  jj new main -m "c1 commit" >/dev/null
+  echo "content-c1" > f1.txt; echo "A-from-c1" > fileA.txt
+  jj bookmark create c1 -r @ >/dev/null
+
+  jj new main -m "c2 commit" >/dev/null
+  echo "content-c2" > f2.txt; echo "A-from-c2" > fileA.txt; echo "B-from-c2" > fileB.txt
+  jj bookmark create c2 -r @ >/dev/null
+
+  jj new main -m "c3 commit" >/dev/null
+  echo "content-c3" > f3.txt; echo "B-from-c3" > fileB.txt
+  jj bookmark create c3 -r @ >/dev/null
+
+  jj new c1 c2 c3 -m "join N=3: c1, c2, c3" >/dev/null
+  jj new -m "current wip" >/dev/null
+}
+
+conflicted_path_count() {
+  jj --ignore-working-copy resolve -r @- --list 2>/dev/null | grep -c 'sided conflict' || true
+}
+
+run_scenario_join_conflict_multifile() {
+  local result
+  result=$(
+    set +e
+    tmp=$(scenario_setup_join_multifile)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-conflict-multifile: cd to tmpdir failed"; exit 0; }
+    local ok=true
+    w=$(jj log -r @ --no-graph -T 'change_id.short()')
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+
+    if [[ "$(conflicted_path_count)" -ne 2 ]]; then
+      ok=false; echo "FAIL join-conflict-multifile: expected 2 conflicted paths, got $(conflicted_path_count)"
+    fi
+
+    jj resolve -r "${m}" --tool :ours fileA.txt >/dev/null 2>&1
+
+    if $ok && [[ "$(conflicted_path_count)" -ne 1 ]]; then
+      ok=false; echo "FAIL join-conflict-multifile: resolving fileA left $(conflicted_path_count) conflicted paths, expected 1"
+    fi
+    # fileB must be untouched by fileA's resolution.
+    if $ok && ! jj --ignore-working-copy file show -r "${m}" fileB.txt 2>/dev/null | grep -qF '<<<<<<<'; then
+      ok=false; echo "FAIL join-conflict-multifile: resolving fileA altered fileB"
+    fi
+    # The join stays conflicted while any path remains.
+    if $ok && [[ "$(rev_conflict @-)" != "true" ]]; then
+      ok=false; echo "FAIL join-conflict-multifile: join reported clean with fileB still conflicted"
+    fi
+    if $ok && ! working_copy_empty; then
+      ok=false; echo "FAIL join-conflict-multifile: @ not empty during partial resolution"
+    fi
+
+    jj resolve -r "${m}" --tool :theirs fileB.txt >/dev/null 2>&1
+
+    if $ok && [[ "$(rev_conflict @-)" != "false" ]]; then
+      ok=false; echo "FAIL join-conflict-multifile: join still conflicted after resolving both paths"
+    fi
+    if $ok; then
+      local a b
+      a=$(jj --ignore-working-copy file show -r "${m}" fileA.txt 2>/dev/null)
+      b=$(jj --ignore-working-copy file show -r "${m}" fileB.txt 2>/dev/null)
+      # Stored order is c1 c2 c3: :ours on fileA picks c1, :theirs on fileB picks c3.
+      if [[ "${a}" != "A-from-c1" || "${b}" != "B-from-c3" ]]; then
+        ok=false; echo "FAIL join-conflict-multifile: sides resolved to '${a}'/'${b}', expected 'A-from-c1'/'B-from-c3'"
+      fi
+    fi
+    if $ok; then
+      local got
+      got=$(check_join_criteria "${w}" "current wip" "c1 c2 c3" "join N=3: c1, c2, c3")
+      if [[ -n "${got}" ]]; then
+        ok=false; echo "FAIL join-conflict-multifile: violated join criteria '${got}'"
+      fi
+    fi
+    if $ok; then
+      echo "PASS join-conflict-multifile (per-path and independent; join clears only when every path is resolved)"
+    fi
+  )
+  printf '%s' "${result}"
+}
+
 run_tests() {
   local scenario="${1:-}"
   local out=""
@@ -1724,7 +1972,10 @@ run_tests() {
       out+=$(run_scenario_join_conflict_remove); out+=$'\n'
       out+=$(run_scenario_join_conflict_nway); out+=$'\n'
       out+=$(run_scenario_join_conflict_preexisting); out+=$'\n'
-      out+=$(run_scenario_join_conflict_resolve)
+      out+=$(run_scenario_join_conflict_resolve); out+=$'\n'
+      out+=$(run_scenario_join_side_order); out+=$'\n'
+      out+=$(run_scenario_join_nsided_refusal); out+=$'\n'
+      out+=$(run_scenario_join_conflict_multifile)
       ;;
     clean-dry) out=$(run_scenario_clean_dry) ;;
     clean-real) out=$(run_scenario_clean_real) ;;
@@ -1742,9 +1993,12 @@ run_tests() {
     join-conflict-nway) out=$(run_scenario_join_conflict_nway) ;;
     join-conflict-preexisting) out=$(run_scenario_join_conflict_preexisting) ;;
     join-conflict-resolve) out=$(run_scenario_join_conflict_resolve) ;;
+    join-side-order) out=$(run_scenario_join_side_order) ;;
+    join-nsided-refusal) out=$(run_scenario_join_nsided_refusal) ;;
+    join-conflict-multifile) out=$(run_scenario_join_conflict_multifile) ;;
     *)
       echo "Error: unknown test scenario '${scenario}'." >&2
-      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve" >&2
+      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile" >&2
       return 1
       ;;
   esac
