@@ -151,7 +151,9 @@
           sections, docs/development/ specs, docs/notes/ working notes, and
           inline code comments.
 
-          # Compositional architecture and type discipline
+          # Engineering standards
+
+          ## Compositional architecture and type discipline
 
           Always remember to fallback to using practical features and
           architectural patterns that emphasize algebraic data types,
@@ -174,7 +176,7 @@
           closing the spec-to-code gap through refinement and translation
           validation.
 
-          # Code comments
+          ## Code comments
 
           Write self-explanatory code and treat code comments as noise by
           default: reserve comments for what the code cannot express, such as a
@@ -194,7 +196,9 @@
           operational arm: an uncomment-driven workflow for auditing and
           removing noise comments while preserving load-bearing markers.
 
-          # Orchestrator mode
+          # Orchestration and delegation
+
+          ## Orchestrator mode
 
           You should usually operate in what we refer to as "orchestrator mode"
           where you think deeply to design workflow DAGs of subagent Tasks to
@@ -208,7 +212,7 @@
           Tasks; only execute inline if trivially small AND immediately required
           for coordination.
 
-          # Subagent dispatch contract
+          ## Subagent dispatch contract
 
           When dispatching Tasks, include in the prompt: "You are a subagent
           Task. Return with questions rather than interpreting ambiguity,
@@ -234,7 +238,45 @@
           appropriate verification. Execute before committing if quick and safe;
           otherwise return with a verification proposal.
 
-          # Dispatch unit and version control mode
+          ## Orchestrators do not edit files inline
+
+          Orchestrators do not edit files inline. This is the binding form of
+          the Session Protocol's orchestrator-mode discipline: when subject to
+          an edit-gate — background sessions, agent-team teammates, or any
+          future harness-level isolation requirement — file edits dispatch to
+          subagent Tasks. The subagent inherits the orchestrator's working
+          directory and operates against the same jj working copy, so the gate
+          is satisfied without creating any worktree. Subagent dispatch in
+          jj-mode repositories omits the `isolation` parameter by default,
+          because the diamond development join already supplies the isolation;
+          setting `isolation: "worktree"` raises an ask and is warranted only
+          when the subagent genuinely needs its own filesystem tree.
+
+          ## Agent teams
+
+          When the work involves parallel independent work streams, adversarial
+          review, multi-perspective analysis, or long-running collaborative
+          phases, consider using agent teams as a second orchestration mode.
+          Agent teams spawn persistent teammates that coordinate via shared task
+          list and messaging rather than returning results.
+
+          Orchestration mode selection criteria:
+          - DAG dispatch (subagent Tasks): sequential dependencies, focused
+          research, tight orchestrator control, one-shot work items that return
+          a result
+          - Agent teams: parallel independent work streams, adversarial review
+          (e.g. dispatching code-reviewer as a teammate), multi-perspective
+          analysis, long-running collaborative phases
+          - Hybrid: DAG dispatch for initial research, then spawn a team for
+          implementation and review
+
+          For detailed agent team conventions including teammate isolation,
+          Linear/OpenSpec-to-task-list mirroring, and the orient/checkpoint
+          lifecycle, see ${skillsPath}/meta-agent-teams/SKILL.md
+
+          # Version control and work dispatch
+
+          ## Dispatch unit and version control mode
 
           When dispatching a Task for implementation work, the dispatched unit
           is an OpenSpec change — typically bound to one Linear story via
@@ -255,7 +297,7 @@
           ${skillsPath}/jj-version-control/diamond-workflow.md for the
           four-phase process recipe.
 
-          # Parallel work in jj mode
+          ## Parallel work in jj mode
 
           In jj mode, the diamond workflow's development join is the default
           technique for parallel chains of work in a single working copy. See
@@ -267,7 +309,7 @@
           present, surfacing diamond-shape violations as ask-prompts with
           recovery commands.
 
-          # Worktree gates and interop
+          ## Worktree gates and interop
 
           The worktree-creating surfaces are ask-gated rather than denied. `git
           worktree add` raises an ask when the target repository is
@@ -315,7 +357,7 @@
           ${skillsPath}/jj-version-control/SKILL.md "Worktree interop" for the
           mechanics and source anchors.
 
-          # External agent frameworks
+          ## External agent frameworks
 
           When an external agent framework such as firstmate manages
           repositories on our behalf, give it its own clone rather than a
@@ -326,42 +368,6 @@
           <default>` to reattach a detached HEAD, and its project sweep
           dereferences symlinks, so pointing it at a jj primary would run
           exactly the operations the discipline above forbids.
-
-          # Orchestrators do not edit files inline
-
-          Orchestrators do not edit files inline. This is the binding form of
-          the Session Protocol's orchestrator-mode discipline: when subject to
-          an edit-gate — background sessions, agent-team teammates, or any
-          future harness-level isolation requirement — file edits dispatch to
-          subagent Tasks. The subagent inherits the orchestrator's working
-          directory and operates against the same jj working copy, so the gate
-          is satisfied without creating any worktree. Subagent dispatch in
-          jj-mode repositories omits the `isolation` parameter by default,
-          because the diamond development join already supplies the isolation;
-          setting `isolation: "worktree"` raises an ask and is warranted only
-          when the subagent genuinely needs its own filesystem tree.
-
-          # Agent teams
-
-          When the work involves parallel independent work streams, adversarial
-          review, multi-perspective analysis, or long-running collaborative
-          phases, consider using agent teams as a second orchestration mode.
-          Agent teams spawn persistent teammates that coordinate via shared task
-          list and messaging rather than returning results.
-
-          Orchestration mode selection criteria:
-          - DAG dispatch (subagent Tasks): sequential dependencies, focused
-          research, tight orchestrator control, one-shot work items that return
-          a result
-          - Agent teams: parallel independent work streams, adversarial review
-          (e.g. dispatching code-reviewer as a teammate), multi-perspective
-          analysis, long-running collaborative phases
-          - Hybrid: DAG dispatch for initial research, then spawn a team for
-          implementation and review
-
-          For detailed agent team conventions including teammate isolation,
-          Linear/OpenSpec-to-task-list mirroring, and the orient/checkpoint
-          lifecycle, see ${skillsPath}/meta-agent-teams/SKILL.md
         '';
       };
     };
