@@ -75,11 +75,13 @@ Subcommand:
                                   precond-violations, single-chain,
                                   subset-keep-remaining, subset-conflict,
                                   join-add-candidates, join-remove-candidates,
-                                  join-inflight-content, join-deep-stack
-                                Omit SCENARIO to run all. The four join-*
-                                scenarios compare the corpus's competing
-                                add/remove-chain procedures against the seven
-                                join-preservation criteria.
+                                  join-inflight-content, join-deep-stack,
+                                  join-conflict-add, join-conflict-remove
+                                Omit SCENARIO to run all. The join-* scenarios
+                                compare the corpus's competing add/remove-chain
+                                procedures against the seven join-preservation
+                                criteria, and pin down what a conflicted join
+                                looks like.
 
 Pre-condition rule for --order vs parents(@-):
   --order must list a SUBSET of @-'s parents that excludes --base. The
@@ -1305,6 +1307,168 @@ run_scenario_join_deep_stack() {
   printf '%s' "${result%$'\n'}"
 }
 
+# -----------------------------------------------------------------------------
+# Conflicted-join behaviour
+# -----------------------------------------------------------------------------
+#
+# The join is a continuously evaluated merge, so two chains that stop being
+# compatible conflict at the keyboard rather than at integration time. That is
+# the property the diamond buys, which makes conflicted joins a normal state to
+# pass through, not an error. These scenarios pin down what that state looks
+# like so an agent encountering it does not mistake it for damage.
+#
+# Fixture: c1 is disjoint; c2 and c3 both write shared.txt with different
+# content, so joining c2 and c3 together conflicts.
+scenario_setup_join_conflict() {
+  local mode="$1"
+  enter_scratch_dir
+
+  jj git init >/dev/null 2>&1
+  echo "base" > base.txt
+  jj describe -m "init" >/dev/null
+  jj bookmark create main -r @ >/dev/null
+
+  jj new main -m "c1 commit" >/dev/null
+  echo "content-c1" > f1.txt
+  jj bookmark create c1 -r @ >/dev/null
+
+  # Each chain also carries its own f<N>.txt so criterion 7 stays meaningful
+  # here rather than being excused for this fixture.
+  jj new main -m "c2 commit" >/dev/null
+  echo "content-c2" > f2.txt
+  echo "from-c2" > shared.txt
+  jj bookmark create c2 -r @ >/dev/null
+
+  jj new main -m "c3 commit" >/dev/null
+  echo "content-c3" > f3.txt
+  echo "from-c3" > shared.txt
+  jj bookmark create c3 -r @ >/dev/null
+
+  if [[ "${mode}" == "add" ]]; then
+    jj new c1 c2 -m "join N=2: c1, c2" >/dev/null
+  else
+    jj new c1 c2 c3 -m "join N=3: c1, c2, c3" >/dev/null
+  fi
+  jj new -m "current wip" >/dev/null
+}
+
+rev_conflict() {
+  jj --ignore-working-copy log -r "$1" --no-graph -T 'conflict' --limit 1 2>/dev/null
+}
+
+# Adding a chain that conflicts with an existing join parent. The rebase
+# succeeds and materializes the conflict in [merge]; it does not refuse.
+# [wip] stays EMPTY and keeps its change id — it is marked conflicted only
+# because it inherits the join's conflict, and `jj status` reports both "no
+# changes" and "unresolved conflicts" at once. Both halves of the cand1 pair
+# behave the same here, unlike the deep-stack case.
+run_scenario_join_conflict_add() {
+  local form result=""
+  for form in wip child; do
+    result+=$(
+      set +e
+      tmp=$(scenario_setup_join_conflict add)
+      trap 'rm -rf "${tmp}"' EXIT
+      cd "${tmp}" || { echo "FAIL join-conflict-add-${form}: cd to tmpdir failed"; exit 0; }
+      w=$(jj log -r @ --no-graph -T 'change_id.short()')
+      m=$(jj log -r @- --no-graph -T 'change_id.short()')
+      child=$(jj log -r "children(${m}) & mutable()" --no-graph -T 'change_id.short()')
+
+      jj rebase -r "${m}" -d c1 -d c2 -d c3 >/dev/null 2>&1
+      local rebase_rc=$?
+      if [[ "${form}" == "wip" ]]; then
+        jj rebase -r "${w}" -d "${m}" >/dev/null 2>&1
+      else
+        jj rebase -s "${child}" -d "${m}" >/dev/null 2>&1
+      fi
+      jj describe "${m}" -m "join N=3: c1, c2, c3" >/dev/null 2>&1
+
+      local label="join-conflict-add-${form}" ok=true
+      if [[ ${rebase_rc} -ne 0 ]]; then
+        ok=false; echo "FAIL ${label}: rebase refused (exit ${rebase_rc}); expected success with materialized conflict"
+      fi
+      if $ok && [[ "$(rev_conflict @-)" != "true" ]]; then
+        ok=false; echo "FAIL ${label}: [merge] is not conflicted; the fixture chains should conflict"
+      fi
+      if $ok && ! working_copy_empty; then
+        ok=false; echo "FAIL ${label}: @ is not empty — a conflicted join must still leave [wip] empty"
+      fi
+      if $ok && [[ "$(rev_conflict @)" != "true" ]]; then
+        ok=false; echo "FAIL ${label}: @ does not report the inherited conflict"
+      fi
+      if $ok; then
+        local got
+        got=$(check_join_criteria "${w}" "current wip" "c1 c2 c3" "join N=3: c1, c2, c3")
+        if [[ -n "${got}" ]]; then
+          ok=false; echo "FAIL ${label}: violated join criteria '${got}' under conflict"
+        fi
+      fi
+      if $ok && ! grep -qF '<<<<<<<' shared.txt 2>/dev/null; then
+        ok=false; echo "FAIL ${label}: no conflict markers materialized in the working copy"
+      fi
+      if $ok; then
+        echo "PASS ${label} (conflict materializes in [merge]; @ stays empty, conflicted, and identical)"
+      fi
+    )
+    result+=$'\n'
+  done
+  printf '%s' "${result%$'\n'}"
+}
+
+# Removing the chain that caused the conflict returns the join to unconflicted
+# without any resolve step, and leaves the dropped chain's content intact.
+run_scenario_join_conflict_remove() {
+  local result
+  result=$(
+    set +e
+    tmp=$(scenario_setup_join_conflict remove)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL join-conflict-remove: cd to tmpdir failed"; exit 0; }
+    w=$(jj log -r @ --no-graph -T 'change_id.short()')
+    m=$(jj log -r @- --no-graph -T 'change_id.short()')
+    local ok=true
+    if [[ "$(rev_conflict "${m}")" != "true" ]]; then
+      ok=false; echo "FAIL join-conflict-remove: fixture join is not conflicted to begin with"
+    fi
+
+    jj rebase -r "${m}" -d c1 -d c2 >/dev/null 2>&1
+    jj rebase -r "${w}" -d "${m}" >/dev/null 2>&1
+    jj describe "${m}" -m "join N=2: c1, c2" >/dev/null 2>&1
+
+    if $ok && [[ "$(rev_conflict @-)" != "false" ]]; then
+      ok=false; echo "FAIL join-conflict-remove: [merge] still conflicted after dropping c3"
+    fi
+    if $ok && [[ "$(rev_conflict @)" != "false" ]]; then
+      ok=false; echo "FAIL join-conflict-remove: @ still conflicted after dropping c3"
+    fi
+    if $ok; then
+      local remaining
+      remaining=$(jj --ignore-working-copy log -r 'conflicts()' --no-graph \
+                    -T 'change_id ++ "\n"' 2>/dev/null | sed '/^$/d' | wc -l | tr -d ' ')
+      if [[ "${remaining}" -ne 0 ]]; then
+        ok=false; echo "FAIL join-conflict-remove: conflicts() still reports ${remaining} commits"
+      fi
+    fi
+    if $ok && grep -qF '<<<<<<<' shared.txt 2>/dev/null; then
+      ok=false; echo "FAIL join-conflict-remove: conflict markers left in the working copy"
+    fi
+    if $ok && [[ "$(jj --ignore-working-copy file show -r c3 shared.txt 2>/dev/null)" != "from-c3" ]]; then
+      ok=false; echo "FAIL join-conflict-remove: dropped chain c3 lost its content"
+    fi
+    if $ok; then
+      local got
+      got=$(check_join_criteria "${w}" "current wip" "c1 c2" "join N=2: c1, c2")
+      if [[ -n "${got}" ]]; then
+        ok=false; echo "FAIL join-conflict-remove: violated join criteria '${got}'"
+      fi
+    fi
+    if $ok; then
+      echo "PASS join-conflict-remove (join returns unconflicted; dropped chain keeps its content)"
+    fi
+  )
+  printf '%s' "${result}"
+}
+
 run_tests() {
   local scenario="${1:-}"
   local out=""
@@ -1320,7 +1484,9 @@ run_tests() {
       out+=$(run_scenario_join_add_candidates); out+=$'\n'
       out+=$(run_scenario_join_remove_candidates); out+=$'\n'
       out+=$(run_scenario_join_inflight_content); out+=$'\n'
-      out+=$(run_scenario_join_deep_stack)
+      out+=$(run_scenario_join_deep_stack); out+=$'\n'
+      out+=$(run_scenario_join_conflict_add); out+=$'\n'
+      out+=$(run_scenario_join_conflict_remove)
       ;;
     clean-dry) out=$(run_scenario_clean_dry) ;;
     clean-real) out=$(run_scenario_clean_real) ;;
@@ -1333,9 +1499,11 @@ run_tests() {
     join-remove-candidates) out=$(run_scenario_join_remove_candidates) ;;
     join-inflight-content) out=$(run_scenario_join_inflight_content) ;;
     join-deep-stack) out=$(run_scenario_join_deep_stack) ;;
+    join-conflict-add) out=$(run_scenario_join_conflict_add) ;;
+    join-conflict-remove) out=$(run_scenario_join_conflict_remove) ;;
     *)
       echo "Error: unknown test scenario '${scenario}'." >&2
-      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack" >&2
+      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove" >&2
       return 1
       ;;
   esac
