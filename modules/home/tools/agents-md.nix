@@ -26,18 +26,23 @@
           Tasks?
           2. Are there ambiguities requiring clarification before I proceed?
           3. Would local access to external source code or documentation improve
-          this work? Reference-repository lookups split by authorship into two
-          categories. For a Category-1 repository we develop or maintain, search
-          for an existing local copy per the "git repository by name" convention
-          in `preferences-style-and-conventions`; ask the user to clone or fork
-          to `~/projects/<topic>-workspace/<repo>/` only on miss, and reference
-          all such repos via `~/projects/...` paths. For a Category-2
-          third-party dependency or research-reference repository we consult but
-          do not maintain, acquire and review its upstream source through the
-          ghq flow in the `dependency-source-acquisition` skill rather than the
-          `~/projects/` convention. The distinguishing test is authorship: if we
-          cut releases or land commits upstream it is Category 1; if we only
-          read it, it is Category 2.
+          this work? Whenever a repository is named, resolve it to a local path
+          before reasoning about it. Resolve the org first: a bare name is often
+          ambiguous — `gh search repos <name>` returns dozens of matches for a
+          common word — and the org determines everything downstream, so when
+          more than one plausible match exists, ask which one rather than
+          guessing. A fully-qualified `org/repo` or a forge URL settles it. Then
+          branch on authorship. A repository we maintain, meaning we cut
+          releases or land commits upstream, lives at
+          `~/projects/<topic>-workspace/<repo>/`; find it with `fd -t d -d 4
+          '^<repo>$' ~/projects`, confirm with `git remote -v`, and on a miss
+          ask the user to clone it there. A repository we only read lives at
+          `~/ghq/<host>/<org>/<repo>`; `ghq list -p <name>` is authoritative
+          because it walks the filesystem, `zoxide query -l <name>` is a cache
+          whose hits must be validated against it, and on a miss `ghq-sync
+          <url>` clones shallow and blobless and registers the path. A shallow
+          clone sits at HEAD, which is usually not the revision we pin, so read
+          at the pinned rev or every line anchor you cite will be wrong.
           4. Should I present my task decomposition for approval before
           dispatching?
 
