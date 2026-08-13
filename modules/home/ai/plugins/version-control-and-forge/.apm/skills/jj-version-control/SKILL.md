@@ -748,10 +748,56 @@ The same precondition applies as for splice-below-join's by-relocation arm — s
 
 When antichain elements contain conflicting changes, `@` displays first-class jj conflicts.
 These conflicts are informational — they tell you the chains will conflict when merged.
-You can resolve them in `@` (the resolution stays in `@` and may need re-resolution when parents change), continue working with conflict markers present, or resolve the underlying conflict in one of the chains directly.
 
 Conflicts in `@` do not prevent work.
 They are a continuous integration signal, not a blocking error.
+
+The rest of this section was measured on a controlled fixture against jj 0.43.0, 40 scenarios passing, except the one paragraph marked unmeasured.
+
+One revset separates the two cases an operator has to tell apart:
+
+```bash
+jj log -r 'conflicts() & parents(<join>)'
+```
+
+An empty result means the join itself created the conflict: every chain tip is clean, so drop a chain or resolve at the join.
+A non-empty result names the broken chain, so fix it where it lives.
+
+jj's printed advice does not compose with this model.
+On a conflict jj emits "start by creating a commit on top of the conflicted commit", then `jj resolve`, then `jj squash`.
+Here `@` already is that commit, so following it literally gives the join a second child and strands the pushed `wip` bookmark on the sibling `@` left behind.
+Two routes are safe, neither of which moves `@`: resolve at the join by naming its revision, or edit the resolution in `[wip]` and route it down with `jj squash --into <join> --use-destination-message --keep-emptied`.
+The squash route is the default for a hand resolution.
+
+A resolved join is non-empty, carrying the resolution as its own content.
+"The join is always empty" does not hold once a conflict has been resolved there, and no check should assume it; none currently does.
+
+Conflicts are per-path and independent, so resolving one path leaves the others byte-identical.
+The join reports conflicted while any path remains and clears only when all do, which means "still conflicted" after a resolve indicates more paths remain rather than that the resolve failed.
+`jj resolve --list -r <revision>` is the safe read-only enumeration.
+
+The built-in `--tool :ours` and `--tool :theirs` select the first and second conflicting parent in the join's stored parent order, which is the argument order `jj new` was given.
+Four trials varying construction order established this, and reversing construction reverses the winner; bookmark-name order and commit-id order were both ruled out by the data.
+Treat this as reference rather than recommendation and prefer the squash route above for a hand resolution.
+
+Stored order is the trap, because it is visible only through a commit template.
+The `parents(<join>)` revset returns a canonical order that is byte-identical however the join was built, and on this repository's live join it is the exact reverse of stored order, so an operator checking side #1 with the obvious command gets the answer backwards.
+Read stored order with:
+
+```bash
+jj log -r <join> --no-graph --limit 1 \
+  -T 'parents.map(|c| c.bookmarks().map(|b| b.name()).join("/")).join("\n")'
+```
+
+A conflict with three or more sides refuses cleanly: "The conflict has 3 sides. At most 2 sides are supported", exit 1, join untouched, `@` unaffected.
+The silent-discard window therefore exists only for 2-sided conflicts.
+
+Unmeasured: whether the add-chain rebase `jj rebase -r <join> -d A -d B -d C` rewrites stored parent order to the flag order was not established, because that measurement was cut short.
+The safe instruction holds under either answer — re-read stored order after any join surgery, and never rely on a reading taken before it.
+
+A join's label and its parent set change in separate operations, so there is an unavoidable interval in which the two disagree and the hook asks on invariants (i) and (ii).
+That is expected while adding or removing a chain rather than a violation: finish the sequence, then redescribe.
+It is the same point as both halves of the rebase pair being one sequence — these operations are multi-step, and their intermediate states look wrong.
 
 ### `jj absorb` scope and limitations
 
