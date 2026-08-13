@@ -341,10 +341,16 @@ Conflict workflow:
 - Resolve when ready: `jj new <conflicted-commit>`, fix files, `jj squash` resolution back
 - Or resolve in place: `jj edit <conflicted-commit>`, fix files (automatically amends)
 
+Those last two apply outside a development join.
+Under a join the first gives the join a second child and the second drifts `@` off `[wip]`, both forbidden by the list above; §"Resolving a conflict under a development join" holds the routes that work there.
+
 Conflict tools:
-- `jj resolve` - launch merge tool for each conflict
-- `jj resolve --list` - see all conflicts in current commit
-- Edit conflict markers directly in files or use merge tools
+- `jj resolve --list -r <revision>` - list conflicts in a named revision; read-only
+- `jj resolve -r <revision> --tool <NAME>` - launch a merge tool per conflicted file
+- Edit conflict markers directly in files, then route the resolution down with a path-scoped squash
+
+Name the revision in either form.
+Bare `jj resolve` defaults to `-r @` and launches a tool; the `jj resolve` row in §"Commands requiring explicit flags for non-interactive use" states both halves of that hazard.
 
 Never blocked by conflicts - they're just another commit state.
 
