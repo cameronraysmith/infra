@@ -18,6 +18,143 @@ const CURL_DATA_LONG_OPTIONS = new Set([
   "--json",
   "--upload-file",
 ]);
+// Reviewed no-value flags that cannot independently supply a method, body, or opaque config.
+const CURL_SAFE_FLAG_LONG_OPTIONS = new Set([
+  "--anyauth",
+  "--append",
+  "--basic",
+  "--ca-native",
+  "--cert-status",
+  "--compressed",
+  "--compressed-ssh",
+  "--create-dirs",
+  "--crlf",
+  "--digest",
+  "--disable",
+  "--disable-eprt",
+  "--disable-epsv",
+  "--disallow-username-in-url",
+  "--doh-cert-status",
+  "--doh-insecure",
+  "--dump-ca-embed",
+  "--fail",
+  "--fail-early",
+  "--fail-with-body",
+  "--false-start",
+  "--follow",
+  "--form-escape",
+  "--ftp-create-dirs",
+  "--ftp-pasv",
+  "--ftp-pret",
+  "--ftp-skip-pasv-ip",
+  "--ftp-ssl-ccc",
+  "--ftp-ssl-control",
+  "--get",
+  "--globoff",
+  "--haproxy-protocol",
+  "--head",
+  "--http0.9",
+  "--http1.0",
+  "--http1.1",
+  "--http2",
+  "--http2-prior-knowledge",
+  "--http3",
+  "--http3-only",
+  "--ignore-content-length",
+  "--insecure",
+  "--ipv4",
+  "--ipv6",
+  "--junk-session-cookies",
+  "--list-only",
+  "--location",
+  "--location-trusted",
+  "--mail-rcpt-allowfails",
+  "--manual",
+  "--metalink",
+  "--mptcp",
+  "--negotiate",
+  "--netrc",
+  "--netrc-optional",
+  "--next",
+  "--no-alpn",
+  "--no-buffer",
+  "--no-clobber",
+  "--no-keepalive",
+  "--no-npn",
+  "--no-progress-meter",
+  "--no-sessionid",
+  "--ntlm",
+  "--ntlm-wb",
+  "--out-null",
+  "--parallel",
+  "--parallel-immediate",
+  "--path-as-is",
+  "--post301",
+  "--post302",
+  "--post303",
+  "--progress-bar",
+  "--proxy-anyauth",
+  "--proxy-basic",
+  "--proxy-ca-native",
+  "--proxy-digest",
+  "--proxy-http2",
+  "--proxy-http3",
+  "--proxy-insecure",
+  "--proxy-negotiate",
+  "--proxy-ntlm",
+  "--proxy-ssl-allow-beast",
+  "--proxy-ssl-auto-client-cert",
+  "--proxy-tlsv1",
+  "--proxytunnel",
+  "--raw",
+  "--remote-header-name",
+  "--remote-name",
+  "--remote-name-all",
+  "--remote-time",
+  "--remove-on-error",
+  "--retry-all-errors",
+  "--retry-connrefused",
+  "--sasl-ir",
+  "--show-error",
+  "--show-headers",
+  "--silent",
+  "--skip-existing",
+  "--socks5-basic",
+  "--socks5-gssapi",
+  "--socks5-gssapi-nec",
+  "--ssl",
+  "--ssl-allow-beast",
+  "--ssl-auto-client-cert",
+  "--ssl-no-revoke",
+  "--ssl-reqd",
+  "--ssl-revoke-best-effort",
+  "--sslv2",
+  "--sslv3",
+  "--styled-output",
+  "--suppress-connect-headers",
+  "--tcp-fastopen",
+  "--tcp-nodelay",
+  "--tftp-no-options",
+  "--tls-earlydata",
+  "--tlsv1",
+  "--tlsv1.0",
+  "--tlsv1.1",
+  "--tlsv1.2",
+  "--tlsv1.3",
+  "--tr-encoding",
+  "--trace-ids",
+  "--trace-time",
+  "--use-ascii",
+  "--verbose",
+  "--version",
+  "--xattr",
+]);
+const isSafeCurlLongFlag = (option: string): boolean => {
+  if (CURL_SAFE_FLAG_LONG_OPTIONS.has(option)) return true;
+  if (!option.startsWith("--no-") || option.startsWith("--no-no-")) return false;
+  return CURL_SAFE_FLAG_LONG_OPTIONS.has(`--${option.slice("--no-".length)}`);
+};
+
 const CURL_VALUE_LONG_OPTIONS = new Set([
   "--abstract-unix-socket",
   "--alt-svc",
@@ -121,6 +258,39 @@ const CURL_VALUE_LONG_OPTIONS = new Set([
   "--user",
   "--user-agent",
   "--write-out",
+]);
+const CURL_SAFE_FLAG_SHORT_OPTIONS = new Set([
+  "#",
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "6",
+  "B",
+  "G",
+  "I",
+  "J",
+  "L",
+  "M",
+  "N",
+  "O",
+  "R",
+  "S",
+  "V",
+  "Z",
+  "a",
+  "f",
+  "g",
+  "i",
+  "j",
+  "k",
+  "l",
+  "n",
+  "p",
+  "q",
+  "s",
+  "v",
 ]);
 const CURL_VALUE_SHORT_OPTIONS = new Set([
   "A",
@@ -267,8 +437,8 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
       const equals = argument.indexOf("=");
       const option = equals === -1 ? argument : argument.slice(0, equals);
       const inlineValue = equals === -1 ? undefined : argument.slice(equals + 1);
-      if (option === "--get") {
-        usesGet = true;
+      if (isSafeCurlLongFlag(option)) {
+        if (option === "--get") usesGet = true;
         malformed ||= inlineValue !== undefined;
         continue;
       }
@@ -293,8 +463,14 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
     const cluster = argument.slice(1);
     for (let position = 0; position < cluster.length; position += 1) {
       const option = cluster[position];
-      if (option === "G") usesGet = true;
-      if (!CURL_VALUE_SHORT_OPTIONS.has(option)) continue;
+      if (CURL_SAFE_FLAG_SHORT_OPTIONS.has(option)) {
+        if (option === "G") usesGet = true;
+        continue;
+      }
+      if (!CURL_VALUE_SHORT_OPTIONS.has(option)) {
+        hasUnclassifiedOption = true;
+        continue;
+      }
       const inlineValue = cluster.slice(position + 1);
       const value = inlineValue.length > 0 ? inlineValue : args[index + 1];
       if (inlineValue.length === 0) index += 1;
@@ -481,19 +657,22 @@ interface ConsumedGlobalValue {
 
 interface ParsedGlobalArguments {
   readonly command: readonly string[];
+  readonly flags: readonly string[];
   readonly values: readonly ConsumedGlobalValue[];
   readonly unknownLeadingOption: boolean;
 }
 
 const parseGlobalArguments = (args: string[], spec: GlobalOptionSpec): ParsedGlobalArguments => {
+  const flags: string[] = [];
   const values: ConsumedGlobalValue[] = [];
   let index = 0;
   while (index < args.length) {
     const argument = args[index];
     if (argument === "--") {
-      return { command: args.slice(index + 1), values, unknownLeadingOption: false };
+      return { command: args.slice(index + 1), flags, values, unknownLeadingOption: false };
     }
     if (spec.flags.has(argument)) {
+      flags.push(argument);
       index += 1;
       continue;
     }
@@ -518,26 +697,37 @@ const parseGlobalArguments = (args: string[], spec: GlobalOptionSpec): ParsedGlo
     }
     return {
       command: args.slice(index),
+      flags,
       values,
       unknownLeadingOption: argument.startsWith("-"),
     };
   }
-  return { command: [], values, unknownLeadingOption: false };
+  return { command: [], flags, values, unknownLeadingOption: false };
 };
 
 const GIT_GLOBAL_OPTIONS: GlobalOptionSpec = {
   flags: new Set([
     "--bare",
+    "--exec-path",
     "--glob-pathspecs",
+    "--help",
+    "--html-path",
     "--icase-pathspecs",
+    "--info-path",
     "--literal-pathspecs",
+    "--man-path",
+    "--no-advice",
+    "--no-lazy-fetch",
     "--no-optional-locks",
     "--no-pager",
     "--no-replace-objects",
     "--noglob-pathspecs",
     "--paginate",
+    "--version",
+    "-h",
     "-p",
     "-P",
+    "-v",
   ]),
   values: new Set([
     "--config-env",
@@ -551,6 +741,19 @@ const GIT_GLOBAL_OPTIONS: GlobalOptionSpec = {
   ]),
   gluedValues: new Set(["-C", "-c"]),
 };
+
+const GIT_INFORMATIONAL_GLOBAL_OPTIONS = new Set([
+  "--exec-path",
+  "--help",
+  "--html-path",
+  "--info-path",
+  "--man-path",
+  "--version",
+  "-h",
+  "-v",
+]);
+
+const NO_INFORMATIONAL_GLOBAL_OPTIONS: ReadonlySet<string> = new Set();
 
 const JJ_GLOBAL_OPTIONS: GlobalOptionSpec = {
   flags: new Set([
@@ -572,38 +775,152 @@ const JJ_GLOBAL_OPTIONS: GlobalOptionSpec = {
   gluedValues: new Set(["-R"]),
 };
 
-const KNOWN_GIT_COMMANDS = new Set([
+// Git 2.55.0 `git --list-cmds=builtins,nohelpers`, from the deployed Nix package.
+const KNOWN_GIT_BUILTIN_COMMANDS = new Set([
   "add",
+  "am",
+  "annotate",
+  "apply",
+  "archive",
+  "backfill",
+  "bisect",
+  "blame",
   "branch",
+  "bugreport",
+  "bundle",
+  "cat-file",
+  "check-attr",
+  "check-ignore",
+  "check-mailmap",
+  "check-ref-format",
   "checkout",
+  "checkout-index",
+  "cherry",
   "cherry-pick",
   "clean",
   "clone",
+  "column",
   "commit",
+  "commit-graph",
+  "commit-tree",
   "config",
+  "count-objects",
+  "credential",
+  "credential-cache",
+  "credential-store",
+  "describe",
+  "diagnose",
   "diff",
+  "diff-files",
+  "diff-index",
+  "diff-pairs",
+  "diff-tree",
+  "difftool",
+  "fast-export",
+  "fast-import",
   "fetch",
+  "fetch-pack",
+  "fmt-merge-msg",
+  "for-each-ref",
+  "for-each-repo",
+  "format-patch",
+  "format-rev",
+  "fsck",
+  "fsck-objects",
+  "gc",
+  "get-tar-commit-id",
+  "grep",
+  "hash-object",
+  "help",
+  "history",
+  "hook",
+  "index-pack",
   "init",
+  "init-db",
+  "interpret-trailers",
+  "last-modified",
   "log",
+  "ls-files",
+  "ls-remote",
+  "ls-tree",
+  "mailinfo",
+  "mailsplit",
+  "maintenance",
   "merge",
+  "merge-base",
+  "merge-file",
+  "merge-index",
+  "merge-ours",
+  "merge-recursive",
+  "merge-recursive-ours",
+  "merge-recursive-theirs",
+  "merge-subtree",
+  "merge-tree",
+  "mktag",
+  "mktree",
+  "multi-pack-index",
   "mv",
+  "name-rev",
   "notes",
+  "pack-objects",
+  "pack-redundant",
+  "pack-refs",
+  "patch-id",
+  "pickaxe",
+  "prune",
+  "prune-packed",
   "pull",
   "push",
+  "range-diff",
+  "read-tree",
   "rebase",
+  "receive-pack",
+  "reflog",
+  "refs",
   "remote",
+  "remote-ext",
+  "remote-fd",
+  "repack",
+  "replace",
+  "replay",
+  "repo",
+  "rerere",
   "reset",
   "restore",
+  "rev-list",
+  "rev-parse",
   "revert",
   "rm",
+  "send-pack",
+  "shortlog",
   "show",
+  "show-branch",
+  "show-index",
+  "show-ref",
   "sparse-checkout",
+  "stage",
   "stash",
   "status",
-  "submodule",
+  "stripspace",
   "switch",
+  "symbolic-ref",
   "tag",
+  "unpack-file",
+  "unpack-objects",
+  "update-index",
+  "update-ref",
+  "update-server-info",
+  "upload-archive",
+  "upload-pack",
+  "url-parse",
+  "var",
+  "verify-commit",
+  "verify-pack",
+  "verify-tag",
+  "version",
+  "whatchanged",
   "worktree",
+  "write-tree",
 ]);
 const KNOWN_JJ_COMMANDS = new Set([
   "abandon",
@@ -699,9 +1016,11 @@ const couldCreateAfterGlobalOptions = (
   spec: GlobalOptionSpec,
   commandName: "worktree" | "workspace",
   knownCommands: ReadonlySet<string>,
+  informationalGlobalOptions: ReadonlySet<string>,
   aliasesFor: (values: readonly ConsumedGlobalValue[]) => ReadonlyMap<string, AliasExpansionKind>,
 ): boolean => {
   const parsed = parseGlobalArguments(args, spec);
+  if (parsed.flags.some((flag) => informationalGlobalOptions.has(flag))) return false;
   const command = parsed.command;
   if (command[0] === commandName && command[1] === "add") return true;
   const aliasKind = aliasesFor(parsed.values).get(command[0] ?? "");
@@ -717,13 +1036,19 @@ const createsWorktree = (args: string[]): boolean =>
     args,
     GIT_GLOBAL_OPTIONS,
     "worktree",
-    KNOWN_GIT_COMMANDS,
+    KNOWN_GIT_BUILTIN_COMMANDS,
+    GIT_INFORMATIONAL_GLOBAL_OPTIONS,
     (values) => gitAliasesFor(values, "worktree"),
   );
 
 const createsWorkspace = (args: string[]): boolean =>
-  couldCreateAfterGlobalOptions(args, JJ_GLOBAL_OPTIONS, "workspace", KNOWN_JJ_COMMANDS, (values) =>
-    jjAliasesFor(values, "workspace"),
+  couldCreateAfterGlobalOptions(
+    args,
+    JJ_GLOBAL_OPTIONS,
+    "workspace",
+    KNOWN_JJ_COMMANDS,
+    NO_INFORMATIONAL_GLOBAL_OPTIONS,
+    (values) => jjAliasesFor(values, "workspace"),
   );
 
 export default function permissionRules(helpers: GateHelpers): GateConfig {
