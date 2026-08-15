@@ -899,21 +899,395 @@
           };
         }
       ];
+      jjArgvOracle = {
+        root = [
+          "jj"
+          "--ignore-working-copy"
+          "root"
+        ];
+        current = [
+          "jj"
+          "--ignore-working-copy"
+          "log"
+          "-r"
+          "@"
+          "--no-graph"
+          "-T"
+          ''change_id ++ "\t" ++ commit_id ++ "\t" ++ conflict ++ "\t" ++ empty ++ "\t" ++ parents.len() ++ "\n"''
+        ];
+        currentIdentity = [
+          "jj"
+          "--ignore-working-copy"
+          "log"
+          "-r"
+          "change-a"
+          "--no-graph"
+          "-T"
+          ''commit_id ++ "\n"''
+        ];
+        defaultBookmarks = [
+          "jj"
+          "--ignore-working-copy"
+          "bookmark"
+          "list"
+          "exact:main"
+          "exact:master"
+          "-T"
+          ''if(!remote, added_targets.map(|c| name ++ "\t" ++ c.commit_id() ++ "\n").join(""))''
+        ];
+        classifyWip = [
+          "jj"
+          "--ignore-working-copy"
+          "bookmark"
+          "list"
+          "exact:wip"
+          "-T"
+          ''if(!remote, name ++ "\t" ++ conflict ++ "\n")''
+        ];
+        resolveWip = [
+          "jj"
+          "--ignore-working-copy"
+          "bookmark"
+          "list"
+          "exact:wip"
+          "-T"
+          ''if(!remote, added_targets.map(|c| c.commit_id() ++ "\t" ++ conflict ++ "\n").join(""))''
+        ];
+        join = [
+          "jj"
+          "--ignore-working-copy"
+          "log"
+          "-r"
+          "@-"
+          "--no-graph"
+          "-T"
+          ''commit_id ++ "\t" ++ conflict ++ "\t" ++ empty ++ "\t" ++ parents.len() ++ "\n"''
+        ];
+        parents = [
+          "jj"
+          "--ignore-working-copy"
+          "log"
+          "-r"
+          "parents(@-)"
+          "--no-graph"
+          "-T"
+          ''commit_id ++ "\t" ++ conflict ++ "\n"''
+        ];
+      };
+      expectedJjArgvByScenario =
+        let
+          inherit (jjArgvOracle)
+            classifyWip
+            current
+            currentIdentity
+            defaultBookmarks
+            join
+            parents
+            resolveWip
+            root
+            ;
+        in
+        {
+          "ordinary-healthy" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "ordinary-nonempty-at" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "ordinary-conflict" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "ordinary-divergent-at" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "ordinary-main-at" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "ordinary-master-at" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "diamond-healthy" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-nonempty-wip" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-resolved-nonempty-join" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-missing-wip" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-moved-wip" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-divergent-wip" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-divergent-wip-without-target" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-divergent-wip-malformed-resolution" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+          ];
+          "diamond-nonsingle-parent-wip" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-single-parent-join" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-conflicted-join" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-conflicted-immediate-parent" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-join-parent-count-mismatch" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "diamond-malformed-join-probe" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+          ];
+          "diamond-failing-join-probe" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+          ];
+          "malformed-probe" = [
+            root
+            current
+          ];
+          "malformed-parent-count-probe" = [
+            root
+            current
+          ];
+          "failing-probe" = [
+            root
+            current
+          ];
+          "ambiguous-probe" = [
+            root
+            current
+          ];
+          "failing-root-probe" = [ root ];
+          "outside-jj-contradictory-stdout" = [ root ];
+          "outside-jj-wrong-status" = [ root ];
+          "outside-jj-mixed-diagnostics" = [ root ];
+          "classification-whitespace-only" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "classification-padded" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "classification-extra-blank" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "root-padded" = [ root ];
+          "current-extra-blank" = [
+            root
+            current
+          ];
+          "identity-padded" = [
+            root
+            current
+            currentIdentity
+          ];
+          "defaults-extra-blank" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+          ];
+          "resolution-padded" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+          ];
+          "parents-extra-blank" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+            resolveWip
+            join
+            parents
+          ];
+          "canonical-root-mismatch" = [ root ];
+          "target-jj-cwd-other-repository" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "target-git-cwd-jj-repository" = [ root ];
+          "git-protected-head" = [ root ];
+          "git-feature-head" = [ root ];
+          "git-detached-head" = [ root ];
+          "git-malformed-head" = [ root ];
+          "git-multiline-head" = [ root ];
+        };
       repositoryScenarios = [
         "ordinary-healthy"
+        "ordinary-nonempty-at"
         "ordinary-conflict"
         "ordinary-divergent-at"
         "ordinary-main-at"
         "ordinary-master-at"
         "diamond-healthy"
+        "diamond-nonempty-wip"
+        "diamond-resolved-nonempty-join"
         "diamond-missing-wip"
         "diamond-moved-wip"
         "diamond-divergent-wip"
         "diamond-divergent-wip-without-target"
         "diamond-divergent-wip-malformed-resolution"
-        "diamond-nonempty-join"
+        "diamond-nonsingle-parent-wip"
         "diamond-single-parent-join"
         "diamond-conflicted-join"
+        "diamond-conflicted-immediate-parent"
+        "diamond-join-parent-count-mismatch"
+        "diamond-malformed-join-probe"
+        "diamond-failing-join-probe"
         "malformed-probe"
         "malformed-parent-count-probe"
         "failing-probe"
@@ -950,21 +1324,20 @@
             if
               builtins.elem scenario [
                 "ordinary-healthy"
+                "ordinary-nonempty-at"
                 "target-jj-cwd-other-repository"
                 "target-git-cwd-jj-repository"
                 "git-feature-head"
                 "git-detached-head"
                 "diamond-healthy"
+                "diamond-nonempty-wip"
+                "diamond-resolved-nonempty-join"
               ]
             then
               "allow"
             else
               "block";
-          expectedJjCalls =
-            if lib.hasPrefix "ordinary-" scenario || scenario == "target-jj-cwd-other-repository" then
-              5
-            else
-              null;
+          expectedJjArgv = expectedJjArgvByScenario.${scenario} or null;
         }
         //
           lib.optionalAttrs
@@ -1330,6 +1703,12 @@
 
         function jjOutputs(scenario: string) {
           const current = "change-a\tcommit-a\tfalse\ttrue\t2\n";
+          const diamondCurrent = "change-a\tcommit-a\tfalse\ttrue\t1\n";
+          const diamondJoin = "commit-join\tfalse\ttrue\t6\n";
+          const diamondParents = Array.from(
+            { length: 6 },
+            (_, index) => `parent-''${index + 1}\tfalse\n`,
+          ).join("");
           const ordinary = [
             processResult("/repo\n"),
             processResult(current),
@@ -1340,6 +1719,7 @@
           const outside = processResult("", 1, 'Error: There is no jj repo in "."\n');
           switch (scenario) {
             case "ordinary-healthy": return ordinary;
+            case "ordinary-nonempty-at": return [ordinary[0], processResult("change-a\tcommit-a\tfalse\tfalse\t1\n"), ...ordinary.slice(2)];
             case "target-jj-cwd-other-repository": return [processResult("/target\n"), ...ordinary.slice(1)];
             case "ordinary-conflict": return [ordinary[0], processResult("change-a\tcommit-a\ttrue\tfalse\t1\n"), ...ordinary.slice(2)];
             case "ordinary-divergent-at": return [ordinary[0], ordinary[1], processResult("commit-a\ncommit-b\n"), ...ordinary.slice(3)];
@@ -1353,7 +1733,7 @@
             case "identity-padded": return [ordinary[0], ordinary[1], processResult(" commit-a\n"), ...ordinary.slice(3)];
             case "defaults-extra-blank": return [ordinary[0], ordinary[1], ordinary[2], processResult("\n"), ordinary[4]];
             case "resolution-padded": return [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult(" commit-a\tfalse\n"), processResult("parent-a\tfalse\nparent-b\tfalse\n")];
-            case "parents-extra-blank": return [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult("commit-a\tfalse\n"), processResult("parent-a\tfalse\nparent-b\tfalse\n\n")];
+            case "parents-extra-blank": return [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult("commit-a\tfalse\n"), processResult(diamondJoin), processResult(diamondParents + "\n")];
             case "malformed-probe": return [ordinary[0], processResult("not-a-record\n")];
             case "malformed-parent-count-probe": return [ordinary[0], processResult("change-a\tcommit-a\tfalse\ttrue\t2x\n"), ...ordinary.slice(2)];
             case "failing-probe": return [ordinary[0], processResult("", 2, "probe failed")];
@@ -1364,10 +1744,17 @@
             case "outside-jj-mixed-diagnostics": return [processResult("", 1, outside.stderr + "Hint: additional diagnostic\n")];
             case "canonical-root-mismatch": return [processResult("/other\n")];
             default: {
-              let diamondCurrent = current;
+              let currentProbe = diamondCurrent;
               let classification = processResult("wip\tfalse\n");
               let resolution = processResult("commit-a\tfalse\n");
-              let parents = processResult("parent-a\tfalse\nparent-b\tfalse\n");
+              let joinProbe = processResult(diamondJoin);
+              let parents = processResult(diamondParents);
+              if (scenario === "diamond-nonempty-wip") {
+                currentProbe = "change-a\tcommit-a\tfalse\tfalse\t1\n";
+              }
+              if (scenario === "diamond-resolved-nonempty-join") {
+                joinProbe = processResult("commit-join\tfalse\tfalse\t6\n");
+              }
               if (scenario === "diamond-missing-wip") resolution = processResult("");
               if (scenario === "diamond-moved-wip") resolution = processResult("commit-other\tfalse\n");
               if (scenario === "diamond-divergent-wip") {
@@ -1382,19 +1769,36 @@
                 classification = processResult("wip\ttrue\n");
                 resolution = processResult("malformed-resolution\n");
               }
-              if (scenario === "diamond-nonempty-join") diamondCurrent = "change-a\tcommit-a\tfalse\tfalse\t2\n";
-              if (scenario === "diamond-single-parent-join") {
-                diamondCurrent = "change-a\tcommit-a\tfalse\ttrue\t1\n";
-                parents = processResult("parent-a\tfalse\n");
+              if (scenario === "diamond-nonsingle-parent-wip") {
+                currentProbe = "change-a\tcommit-a\tfalse\ttrue\t2\n";
               }
-              if (scenario === "diamond-conflicted-join") parents = processResult("parent-a\tfalse\nparent-b\ttrue\n");
+              if (scenario === "diamond-single-parent-join") {
+                joinProbe = processResult("commit-join\tfalse\ttrue\t1\n");
+                parents = processResult("parent-1\tfalse\n");
+              }
+              if (scenario === "diamond-conflicted-join") {
+                joinProbe = processResult("commit-join\ttrue\tfalse\t6\n");
+              }
+              if (scenario === "diamond-conflicted-immediate-parent") {
+                parents = processResult(diamondParents.replace("parent-6\tfalse", "parent-6\ttrue"));
+              }
+              if (scenario === "diamond-join-parent-count-mismatch") {
+                parents = processResult(diamondParents.replace("parent-6\tfalse\n", ""));
+              }
+              if (scenario === "diamond-malformed-join-probe") {
+                joinProbe = processResult("not-a-join-record\n");
+              }
+              if (scenario === "diamond-failing-join-probe") {
+                joinProbe = processResult("", 2, "join probe failed");
+              }
               return [
                 ordinary[0],
-                processResult(diamondCurrent),
+                processResult(currentProbe),
                 ordinary[2],
                 ordinary[3],
                 classification,
                 resolution,
+                joinProbe,
                 parents,
               ];
             }
@@ -1586,8 +1990,16 @@
                   failures.push(entry.name + ": jj argv does not start with jj --ignore-working-copy: " + JSON.stringify(argv));
                 }
               }
-              if (entry.expectedJjCalls !== null && calls.length !== entry.expectedJjCalls) {
-                failures.push(entry.name + ": expected " + entry.expectedJjCalls + " jj probes, got " + calls.length);
+              if (calls.length > 0 && entry.expectedJjArgv == null) {
+                failures.push(entry.name + ": jj-invoking repository scenario lacks an exact argv oracle");
+              } else if (
+                entry.expectedJjArgv !== null &&
+                JSON.stringify(calls) !== JSON.stringify(entry.expectedJjArgv)
+              ) {
+                failures.push(
+                  entry.name + ": expected exact jj argv " + JSON.stringify(entry.expectedJjArgv) +
+                  ", got " + JSON.stringify(calls),
+                );
               }
               if (entry.expectedProbeCwd !== undefined && jjCwds.some((probeCwd) => probeCwd !== entry.expectedProbeCwd)) {
                 failures.push(entry.name + ": expected every jj probe cwd to be " + JSON.stringify(entry.expectedProbeCwd) + ", got " + JSON.stringify(jjCwds));

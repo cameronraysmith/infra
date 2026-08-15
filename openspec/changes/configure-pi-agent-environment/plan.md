@@ -273,14 +273,16 @@ Preserve the pinned project-trust merge and headless behavior unchanged.
 
 Define direct core inputs for `edit` and `write` and injected capability results for mutable paths, `/nix/store`, declared immutable roots, Git feature branches, Git `main`, and Git `master`.
 Lower repository inspection into an exhaustively handled discriminated input with outside-repository, Git, ordinary jj, diamond-managed jj, and invalid diagnostic variants.
-Add literal jj rows in this order: ordinary healthy; ordinary conflict; ordinary divergent `@`; ordinary `main`/`master` at `@`; diamond healthy; classified-diamond missing, moved, or divergent `wip`; nonempty, single-parent, or conflicted join; malformed, failing, or ambiguous probe.
+Add literal jj rows in this order: ordinary healthy; ordinary healthy with nonempty `@`; ordinary conflict; ordinary divergent `@`; ordinary `main`/`master` at `@`; an actual healthy empty `@` `[wip]` over an empty six-parent `@-` join; healthy nonempty `[wip]`; healthy conflict-resolved nonempty join; classified-diamond missing, moved, or divergent `wip`; non-single-parent `[wip]`; single-parent join; conflicted join; conflicted immediate join parent; join-parent count mismatch; and malformed or failing join probe.
 Common jj health requires canonical repository identity and canonical target containment, unambiguous conflict-free `@`, non-divergent current `@` identity, neither `main` nor `master` pointing directly to `@`, and successful unambiguous probes.
 A separate bookmark-listing classification probe selects diamond mode only when it reports the `wip` convention, including a divergent indicator.
 Only then does the unique `wip`-resolution probe return the healthy, absent, moved, or divergent result used by diamond rows.
 A repository with no `wip` report remains eligible for ordinary mode and never reaches a missing-`wip` row.
-Diamond mode additionally requires stored `@` to be an empty merge with at least two parents, exactly one non-divergent `wip` at `@`, and conflict-free `@` plus immediate parents.
-Ordinary mode has no `wip`, empty-merge, or multi-parent requirement, and neither mode requires working-copy cleanliness.
-Record every process argv in the fake capability and require every read-only jj argv to start with `jj --ignore-working-copy`.
+Diamond mode additionally requires `@` to be the `[wip]` commit with exactly one parent and exactly one non-divergent `wip` bookmark pointing to it.
+It probes `@-` separately as the `[merge]` join, requires that join to be nonconflicted with at least two parents, and probes `parents(@-)` separately to require conflict-free immediate parents whose count matches the join report.
+Neither `@` nor `@-` must be empty, and diamond mode imposes no working-copy-cleanliness requirement.
+Ordinary mode has no `wip`, diamond-topology, emptiness, or working-copy-cleanliness requirement.
+Record every process argv in the fake capability and compare the complete ordered argv list with a literal oracle in addition to requiring every read-only jj argv to start with `jj --ignore-working-copy`.
 
 - [ ] **Step 5: Add executable thin-adapter RED, then implement the core and adapter**
 
