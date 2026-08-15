@@ -534,6 +534,58 @@ Clean every probe with `rip`.
 After Cameron confirms activation, inspect `/nix/var/nix/profiles/system` with `readlink` and `readlink -f`.
 Require it to point to the new active `system-N-link`, require the link recorded in Step 1 to be `system-(N-1)-link`, and require that recorded link to remain present and resolvable as the immediately previous system available for rollback.
 
+## Task 8: Remediate post-activation policy review findings
+
+**Files:**
+
+- Modify: `modules/checks/pi-agent-environment.nix`
+- Modify: `modules/home/ai/pi/policy/permission-rules.ts`
+- Modify: `openspec/changes/configure-pi-agent-environment/brainstorm.md`
+- Modify: `openspec/changes/configure-pi-agent-environment/plan.md`
+- Modify: `openspec/changes/configure-pi-agent-environment/tasks.md`
+
+**Interfaces:**
+
+- Consumes the pinned permission-gate parser, helpers, and rule API without replacing or copying them.
+- Produces fail-closed curl option classification and fail-closed unresolved Git/jj subcommand classification while preserving recognized ordinary commands.
+- Adds structural and adapter evidence for the three minor review findings.
+- Produces automated pre-activation evidence for a second human-controlled activation cycle, while leaving activation and live verification open.
+
+- [ ] **Step 1: Add exact policy RED rows**
+
+Add rows for `curl --expand-data`, an unclassified future curl long option, a persistent Git alias invocation with no literal `add`, and a persistent jj alias invocation with no literal `add`.
+Add ordinary recognized Git and jj rows that must remain allowed.
+Run the policy regulator before editing `permission-rules.ts` and retain the four named allow-versus-prompt failures.
+
+- [ ] **Step 2: Implement the smallest fail-closed policy correction**
+
+Make any unclassified curl long option prompt unless the option is explicitly classified safe.
+Make unknown Git/jj leading options and unresolved alias-shaped subcommands prompt while preserving injected alias handling, exact worktree/workspace built-ins, and recognized commands.
+Run the policy regulator independently and require every row to pass.
+
+- [ ] **Step 3: Add the minor review regressions**
+
+Correct the stale nix-darwin rollback wording in `brainstorm.md`.
+Add a structural literal proving no top-level slow-mode activation setting exists.
+Add explicit adapter cases for a missing filesystem capability and a throwing capability factory, both of which must block diagnostically.
+
+- [ ] **Step 4: Revalidate before a second activation**
+
+Run formatting, the policy and structural regulators independently, the aggregate smoke, the package check, relevant Home Manager evaluation/build, and the approved fast check set.
+Run strict OpenSpec validation from a trap-cleaned temporary XDG tree.
+Audit all 25 requirement/scenario names and order, scope, exact traces, and the final diff.
+Record the current nix-darwin system profile link and resolved store path without activating.
+
+- [ ] **Step 5: Stop for the second human activation**
+
+Ask Cameron to run `just activate --ask`.
+The implementation agent must not run activation or inspect live Pi targets before explicit success confirmation.
+
+- [ ] **Step 6: Verify the remediated live environment after confirmation**
+
+After Cameron confirms the second activation, rerun the representative policy, immutable-resource, slow-mode, and rollback probes.
+Keep this step open until that evidence exists.
+
 ## Commit plan
 
 | Commit | Purpose | Paths |
