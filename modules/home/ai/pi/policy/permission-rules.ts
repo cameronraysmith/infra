@@ -248,6 +248,7 @@ interface CurlAnalysis {
   readonly hasData: boolean;
   readonly usesGet: boolean;
   readonly hasOpaqueConfig: boolean;
+  readonly hasUnclassifiedOption: boolean;
   readonly malformed: boolean;
 }
 
@@ -256,6 +257,7 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
   let hasData = false;
   let usesGet = false;
   let hasOpaqueConfig = false;
+  let hasUnclassifiedOption = false;
   let malformed = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -267,13 +269,17 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
       const inlineValue = equals === -1 ? undefined : argument.slice(equals + 1);
       if (option === "--get") {
         usesGet = true;
+        malformed ||= inlineValue !== undefined;
         continue;
       }
       const takesValue =
         option === "--request" ||
         CURL_DATA_LONG_OPTIONS.has(option) ||
         CURL_VALUE_LONG_OPTIONS.has(option);
-      if (!takesValue) continue;
+      if (!takesValue) {
+        hasUnclassifiedOption = true;
+        continue;
+      }
       const value = inlineValue ?? args[index + 1];
       if (inlineValue === undefined) index += 1;
       if (value === undefined || value.length === 0) malformed = true;
@@ -300,12 +306,19 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
     }
   }
 
-  return { explicitMethod, hasData, usesGet, hasOpaqueConfig, malformed };
+  return {
+    explicitMethod,
+    hasData,
+    usesGet,
+    hasOpaqueConfig,
+    hasUnclassifiedOption,
+    malformed,
+  };
 };
 
 const curlTransferMutates = (args: readonly string[]): boolean => {
   const analysis = analyzeCurlTransfer(args);
-  if (analysis.malformed || analysis.hasOpaqueConfig) return true;
+  if (analysis.malformed || analysis.hasOpaqueConfig || analysis.hasUnclassifiedOption) return true;
   if (analysis.explicitMethod !== undefined) {
     return !READ_ONLY_METHODS.has(analysis.explicitMethod);
   }
@@ -694,14 +707,9 @@ const couldCreateAfterGlobalOptions = (
   const aliasKind = aliasesFor(parsed.values).get(command[0] ?? "");
   if (aliasKind === "unknown" || aliasKind === "command-with-add") return true;
   if (aliasKind === "base-command" && command[1] === "add") return true;
-  if (parsed.unknownLeadingOption) {
-    return command.some(
-      (argument, index) =>
-        command[index + 1] === "add" &&
-        (argument === commandName || (!argument.startsWith("-") && !knownCommands.has(argument))),
-    );
-  }
-  return command[1] === "add" && !knownCommands.has(command[0] ?? "");
+  if (parsed.unknownLeadingOption) return true;
+  const invokedCommand = command[0];
+  return invokedCommand !== undefined && !knownCommands.has(invokedCommand);
 };
 
 const createsWorktree = (args: string[]): boolean =>

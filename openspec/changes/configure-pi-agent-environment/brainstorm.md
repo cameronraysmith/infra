@@ -69,5 +69,5 @@ The credential-free registration and inert base URL establish only selected star
 If the hermetic reproduction differs from the discovery characterization, including a deployed-package mismatch, implementation stops and asks rather than weakening the contract.
 
 Rollout has a hard human gate.
-Implementation stops after pre-activation checks, records the prior Home Manager generation, and asks Cameron to run `just activate --ask`.
-No live-state probe runs before Cameron confirms success, and the prior generation remains the rollback target.
+Implementation stops after pre-activation checks, records the current nix-darwin system profile link and its resolved `darwin-system` store path, and asks Cameron to run `just activate --ask`.
+No live-state probe runs before Cameron confirms success, and the recorded system profile link remains the rollback target.

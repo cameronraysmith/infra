@@ -352,9 +352,9 @@
         }
         {
           kind = "shell";
-          name = "jj global option value is not a workspace subcommand";
+          name = "jj global option value followed by unresolved alias prompts";
           command = "jj -R workspace add ../feature";
-          expected = "allow";
+          expected = "prompt";
           custom = true;
         }
         {
@@ -450,8 +450,22 @@
         }
         {
           kind = "shell";
+          name = "persistent Git alias embedding worktree add prompts without literal add";
+          command = "git wa ../feature feature";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "wrapped persistent unknown jj alias-shaped add prompts";
           command = "env jj ws add ../feature";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "persistent jj alias embedding workspace add prompts without literal add";
+          command = "jj wa ../feature";
           expected = "prompt";
           custom = true;
         }
@@ -471,8 +485,22 @@
         }
         {
           kind = "shell";
+          name = "ordinary Git status remains allowed";
+          command = "git status --short";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "ordinary jj bookmark list remains allowed";
           command = "jj bookmark list";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "ordinary jj log remains allowed";
+          command = "jj log -r @";
           expected = "allow";
           custom = true;
         }
@@ -659,6 +687,20 @@
           kind = "shell";
           name = "curl data mutation prompts";
           command = "curl --data=value https://example.invalid";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl expand-data mutation prompts";
+          command = "curl --expand-data=payload https://example.invalid";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl unclassified future long option prompts";
+          command = "curl --future-option value https://example.invalid";
           expected = "prompt";
           custom = true;
         }
@@ -1610,6 +1652,24 @@
         }
         {
           kind = "adapter";
+          name = "adapter blocks a missing filesystem capability";
+          scenario = "capability-missing";
+          tool = "edit";
+          input.path = "/repo/file.ts";
+          expected = "block";
+          reason = "capability failed";
+        }
+        {
+          kind = "adapter";
+          name = "adapter blocks a throwing capability factory";
+          scenario = "capability-factory-throws";
+          tool = "write";
+          input.path = "/repo/file.ts";
+          expected = "block";
+          reason = "adapter failed";
+        }
+        {
+          kind = "adapter";
           name = "adapter blocks unavailable interaction";
           scenario = "outside-headless";
           tool = "edit";
@@ -2099,10 +2159,16 @@
               }
               const calls: string[][] = [];
               const capabilities = fakeCapabilities(entry.scenario, calls, []);
+              if (entry.scenario === "capability-missing") {
+                delete (capabilities as { filesystem?: unknown }).filesystem;
+              }
               const options = entry.scenario === "core-throws"
                 ? { decide: () => { throw new Error("synthetic core fault"); } }
                 : {};
-              const handler = editModule.createEditWriteToolCallHandler(() => capabilities, options);
+              const capabilityFactory = entry.scenario === "capability-factory-throws"
+                ? () => { throw new Error("synthetic capability factory fault"); }
+                : () => capabilities;
+              const handler = editModule.createEditWriteToolCallHandler(capabilityFactory, options);
               const context = {
                 cwd: "/repo",
                 hasUI: entry.scenario !== "outside-headless",
@@ -2146,6 +2212,9 @@
             ) packageEntries;
             inherit globalInstructionsNixOwned piSpecificSkillsPresent;
             canonicalSkills = if canonicalSkillsScript == "" then null else "~/.agents/skills";
+            slowModeDefaultActivationSettings = builtins.filter (name: lib.hasInfix "slow" (lib.toLower name)) (
+              builtins.attrNames piConfig.settings
+            );
             settingsActivation = {
               afterWriteBoundary = builtins.elem "writeBoundary" (settingsActivation.after or [ ]);
               copyCommand = lib.hasInfix "install -Dm644" settingsActivationData;
@@ -2206,6 +2275,7 @@
             globalInstructionsNixOwned = true;
             canonicalSkills = "~/.agents/skills";
             piSpecificSkillsPresent = false;
+            slowModeDefaultActivationSettings = [ ];
             settingsActivation = {
               afterWriteBoundary = true;
               copyCommand = true;
