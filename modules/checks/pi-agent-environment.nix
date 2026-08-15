@@ -9,6 +9,8 @@
     }:
     let
       mkCheck = self.lib.mkStructuralCheck pkgs;
+      piModuleText = builtins.readFile ../home/ai/pi/default.nix;
+      piReconnaissanceText = builtins.readFile ../../docs/notes/development/ai-agents/pi-integration-reconnaissance.md;
       homeConfig = self.homeConfigurations."crs58@${system}".config;
       piConfig = homeConfig.programs.pi-coding-agent;
       extensionPackage = self'.packages.pi-agent-extensions or null;
@@ -2129,6 +2131,8 @@
         pi-agent-environment-structural = mkCheck {
           name = "pi-agent-environment";
           actual = {
+            piModuleHasNoPi083 = !lib.hasInfix "0.83" piModuleText;
+            piReconnaissanceHasNoPi083 = !lib.hasInfix "0.83" piReconnaissanceText;
             piPackageVersion = lib.getVersion piConfig.package;
             extensionPackagePresent = extensionPackage != null;
             extensionPackageName = if extensionPackage == null then null else lib.getName extensionPackage;
@@ -2171,6 +2175,8 @@
             };
           };
           expected = {
+            piModuleHasNoPi083 = true;
+            piReconnaissanceHasNoPi083 = true;
             piPackageVersion = "0.84.1";
             extensionPackagePresent = true;
             extensionPackageName = "pi-agent-extensions";
