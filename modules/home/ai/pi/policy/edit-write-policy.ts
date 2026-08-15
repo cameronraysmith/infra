@@ -28,6 +28,7 @@ export interface JjCurrentState {
   readonly commitId: string;
   readonly conflicted: boolean;
   readonly divergent: boolean;
+  readonly parentCount: number;
 }
 
 interface JjCommonState {
@@ -58,7 +59,7 @@ export type RepositoryState =
   | ({
       readonly kind: "jj-diamond";
       readonly join: {
-        readonly empty: boolean;
+        readonly conflicted: boolean;
         readonly parentCount: number;
         readonly parentsConflicted: boolean;
       };
@@ -161,7 +162,22 @@ export const JJ_READ_ARGV = {
     "-T",
     'if(!remote, added_targets.map(|c| c.commit_id() ++ "\\t" ++ conflict ++ "\\n").join(""))',
   ),
-  parents: jjRead("log", "-r", "@-", "--no-graph", "-T", 'commit_id ++ "\\t" ++ conflict ++ "\\n"'),
+  join: jjRead(
+    "log",
+    "-r",
+    "@-",
+    "--no-graph",
+    "-T",
+    'commit_id ++ "\\t" ++ conflict ++ "\\t" ++ empty ++ "\\t" ++ parents.len() ++ "\\n"',
+  ),
+  parents: jjRead(
+    "log",
+    "-r",
+    "parents(@-)",
+    "--no-graph",
+    "-T",
+    'commit_id ++ "\\t" ++ conflict ++ "\\n"',
+  ),
 } as const;
 
 const block = (reason: string): PolicyDecision => ({ decision: "block", reason });
@@ -225,12 +241,15 @@ export function decideEditWrite(input: EditWriteInput): PolicyDecision {
       if (repository.wip.kind !== "healthy") {
         return block(`diamond wip bookmark is ${repository.wip.kind}`);
       }
-      if (!repository.join.empty) return block("diamond join is not empty");
+      if (repository.at.parentCount !== 1) {
+        return block("diamond wip does not have exactly one parent");
+      }
+      if (repository.join.conflicted) return block("diamond join is conflicted");
       if (repository.join.parentCount < 2) {
         return block("diamond join has fewer than two parents");
       }
       if (repository.join.parentsConflicted) {
-        return block("diamond join or an immediate parent is conflicted");
+        return block("diamond join has a conflicted immediate parent");
       }
       return allow();
     }
@@ -339,6 +358,36 @@ const parseCurrent = (result: ProcessResult): CurrentRecord | string => {
   };
 };
 
+interface JoinRecord {
+  readonly commitId: string;
+  readonly conflicted: boolean;
+  readonly empty: boolean;
+  readonly parentCount: number;
+}
+
+const parseJoin = (result: ProcessResult): JoinRecord | string => {
+  if (result.code !== 0) {
+    return `jj join probe failed (${result.code}): ${result.stderr.trim()}`;
+  }
+  const lines = strictOutputLines(result.stdout);
+  if (lines === undefined || lines.length !== 1) return "jj join probe is malformed or ambiguous";
+  const fields = lines[0].split("\t");
+  if (fields.length !== 4) return "jj join probe is malformed";
+  const conflicted = parseBoolean(fields[1]);
+  const empty = parseBoolean(fields[2]);
+  const parentCount = Number.parseInt(fields[3], 10);
+  if (
+    fields[0].length === 0 ||
+    conflicted === undefined ||
+    empty === undefined ||
+    !/^\d+$/.test(fields[3]) ||
+    !Number.isSafeInteger(parentCount)
+  ) {
+    return "jj join probe is malformed";
+  }
+  return { commitId: fields[0], conflicted, empty, parentCount };
+};
+
 const invalid = (diagnostic: string): RepositoryState => ({
   kind: "invalid",
   diagnostic,
@@ -438,6 +487,7 @@ const inspectJj = async (
       commitId: current.commitId,
       conflicted: current.conflicted,
       divergent,
+      parentCount: current.parentCount,
     },
     defaultBookmarksAtCurrent,
   };
@@ -497,26 +547,30 @@ const inspectJj = async (
     wip = { kind: "healthy" };
   }
 
+  const joinResult = await runJj(capabilities, JJ_READ_ARGV.join, cwd);
+  const join = parseJoin(joinResult);
+  if (typeof join === "string") return invalid(join);
+
   const parentsResult = await runJj(capabilities, JJ_READ_ARGV.parents, cwd);
   if (parentsResult.code !== 0) {
     return invalid(
-      `jj parent probe failed (${parentsResult.code}): ${parentsResult.stderr.trim()}`,
+      `jj immediate parent probe failed (${parentsResult.code}): ${parentsResult.stderr.trim()}`,
     );
   }
   const parentLines = strictOutputLines(parentsResult.stdout);
-  if (parentLines === undefined) return invalid("jj parent probe is malformed");
+  if (parentLines === undefined) return invalid("jj immediate parent probe is malformed");
   let parentsConflicted = false;
   for (const line of parentLines) {
     const fields = line.split("\t");
     const conflicted = parseBoolean(fields[1] ?? "");
     if (fields.length !== 2 || fields[0].length === 0 || conflicted === undefined) {
-      return invalid("jj parent probe is malformed");
+      return invalid("jj immediate parent probe is malformed");
     }
     parentsConflicted ||= conflicted;
   }
 
-  if (parentLines.length !== current.parentCount) {
-    return invalid("jj parent probe is ambiguous");
+  if (parentLines.length !== join.parentCount) {
+    return invalid("jj immediate parent probe count does not match the join");
   }
 
   return {
@@ -524,8 +578,8 @@ const inspectJj = async (
     ...common,
     wip,
     join: {
-      empty: current.empty,
-      parentCount: current.parentCount,
+      conflicted: join.conflicted,
+      parentCount: join.parentCount,
       parentsConflicted,
     },
   };

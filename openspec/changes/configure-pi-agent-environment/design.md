@@ -103,10 +103,12 @@ The package filter uses this literal extension list:
 - Choice: A separate bookmark-listing classification probe must first report the `wip` convention, including a divergent `wip` indicator, before a repository is classified as diamond-managed.
 - Choice: Only a repository already classified as diamond-managed runs the unique `wip`-resolution probe and can produce absent, moved, or divergent `wip` failures.
 - Choice: A repository with no `wip` report remains eligible for ordinary classification and never reaches a missing-`wip` failure.
-- Choice: Diamond health adds a stored `@` that is an empty merge commit with at least two parents, exactly one non-divergent `wip` bookmark pointing to `@`, and conflict-free `@` plus immediate parents.
-- Choice: Ordinary jj health adds no `wip`, empty-merge, or multi-parent requirement.
-- Choice: Neither jj mode requires working-copy cleanliness because probes ignore the working copy and Pi may perform repeated edit or write calls.
-- Choice: Literal policy rows cover ordinary healthy, ordinary conflict, ordinary divergent `@`, ordinary `main`/`master` at `@`, diamond healthy, classified-diamond missing/moved/divergent `wip`, nonempty/single-parent/conflicted join, and malformed/failing/ambiguous probe states.
+- Choice: Diamond health requires `@` to be the nonconflicted, nondivergent `[wip]` commit with exactly one parent and exactly one non-divergent `wip` bookmark pointing to it.
+- Choice: Diamond health probes `@-` separately as the `[merge]` join, requires that join to be nonconflicted with at least two parents, and requires a separate `parents(@-)` probe to return the same number of conflict-free immediate parents.
+- Choice: Neither `@` nor `@-` must be empty because policy must admit in-flight `[wip]` edits and conflict resolutions recorded on the join.
+- Choice: Ordinary jj health adds no `wip`, diamond-topology, emptiness, or working-copy-cleanliness requirement.
+- Choice: Diamond jj health also adds no working-copy-cleanliness requirement because probes ignore the working copy and Pi may perform repeated edit or write calls.
+- Choice: Literal policy rows cover ordinary healthy states including nonempty `@` and ordinary unhealthy states; an actual healthy empty `@` `[wip]` over an empty six-parent `@-` join; healthy nonempty `[wip]` and conflict-resolved nonempty join states; classified-diamond missing, moved, or divergent `wip`; non-single-parent `[wip]`; single-parent or conflicted join; conflicted immediate join parent; join-parent count mismatch; and malformed or failing join probes.
 - Choice: Parser errors, policy or adapter exceptions, ambiguous repository state, missing or throwing capabilities, and prompt-class decisions without usable interaction block with a diagnostic reason.
 - Choice: Adapter evidence directly invokes the exported Pi factory or handler seam for synthetic edit/write allow and block translation, unrelated-tool pass-through, malformed tool input, and core or capability exceptions that fail closed; pure-core cases remain separately table-driven without a Pi process per row.
 - Rationale: Capability injection isolates the pure decision algebra from Pi and process execution while executable adapter evidence proves the actual integration boundary rather than only adapter-shaped inputs.
@@ -172,7 +174,7 @@ The requirement names and order below are canonical for the plan trace.
 | Additional shell policy | policy | Exercise semantic dangerous, HTTP, `rm`, worktree, and Pi-mutation rows. |
 | Non-Bash edit and write policy | policy | Exercise pure-core cases and directly invoke the exported Pi adapter seam for allow/block translation, unrelated-tool pass-through, malformed input, and exception fail-closed behavior. |
 | Git default-branch boundary | policy | Compare feature-branch allow cases with `main` and `master` blocks. |
-| Jj diamond boundary | policy | Record every jj argv; prove no-`wip` reports remain ordinary; and cover classification-reported diamond state followed by healthy or absent/moved/divergent unique-`wip` resolution, plus conflict, divergence, default-bookmark, join-shape, and malformed/failing/ambiguous-probe rows. |
+| Jj diamond boundary | policy | Record every jj argv; prove no-`wip` reports remain ordinary; and cover classification-reported diamond state followed by unique-`wip` resolution at `@`, the single-parent `@` `[wip]`, the separately probed multi-parent `@-` join and its immediate parents, allowed nonempty states, and unhealthy or indeterminate probe rows. |
 | Fail-closed policy | policy | Inject parser, decision, adapter, repository, capability, and headless failures and require diagnostic blocks. |
 | Secret-safe direnv | structural + smoke | Compare runtime-indirection configuration and scan the aggregate environment for an absent sentinel secret. |
 | Opt-in slow mode | structural | Assert slow-mode is selected without a default activation setting. |
