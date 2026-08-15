@@ -52,9 +52,9 @@
             # home-manager, so every generation bump would emit one.
             enableInstallTelemetry = false;
 
-            # Pinned against pi 0.80.9 while we run 0.83.0. The consequence is
-            # confined to the catch fallback in src/remote-compaction.ts, whose
-            # compact() call passes arguments shifted against 0.83.0's signature.
+            # Algal declares Pi >=0.80.9 <0.81.0; the fleet evaluates Pi 0.84.1,
+            # outside that range. Its fallback compact() argument order still
+            # matches exact Pi 0.84.1, while broader API drift remains a calibrated risk.
             packages = [
               {
                 source = "${pkgs.pi-agent-extensions}";
