@@ -231,6 +231,62 @@
         }
         {
           kind = "shell";
+          name = "safe curl silent flag is allowed";
+          command = "curl --silent https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl head flag is allowed";
+          command = "curl --head https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl location flag is allowed";
+          command = "curl --location https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl combined long flags are allowed";
+          command = "curl --silent --show-error --location https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl negated long flag is allowed";
+          command = "curl --no-location https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl combined silent short flags are allowed";
+          command = "curl -sS https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl combined head and location short flags are allowed";
+          command = "curl -IL https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "safe curl ordinary short flag cluster is allowed";
+          command = "curl -fsSL https://example.invalid";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "safe wget OPTIONS is allowed";
           command = "wget --method OPTIONS https://example.invalid";
           expected = "allow";
@@ -492,6 +548,104 @@
         }
         {
           kind = "shell";
+          name = "ordinary Git grep remains allowed";
+          command = "git grep needle";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "ordinary Git blame remains allowed";
+          command = "git blame -- file.ts";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "ordinary Git rev-parse remains allowed";
+          command = "git rev-parse HEAD";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "ordinary Git ls-files remains allowed";
+          command = "git ls-files";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "ordinary Git archive remains allowed";
+          command = "git archive --format=tar HEAD";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "ordinary Git show-ref remains allowed";
+          command = "git show-ref";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global version information remains allowed";
+          command = "git --version";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global version ignores mutation-shaped trailing argv";
+          command = "git --version worktree add ../feature feature";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global help remains allowed";
+          command = "git --help";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global help ignores worktree subcommand argv";
+          command = "git --help worktree add";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global HTML path remains allowed";
+          command = "git --html-path";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global man path remains allowed";
+          command = "git --man-path";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global info path remains allowed";
+          command = "git --info-path";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "Git global exec path remains allowed";
+          command = "git --exec-path";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "ordinary jj bookmark list remains allowed";
           command = "jj bookmark list";
           expected = "allow";
@@ -701,6 +855,13 @@
           kind = "shell";
           name = "curl unclassified future long option prompts";
           command = "curl --future-option value https://example.invalid";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl unclassified future short option prompts";
+          command = "curl -W https://example.invalid";
           expected = "prompt";
           custom = true;
         }
@@ -2212,9 +2373,7 @@
             ) packageEntries;
             inherit globalInstructionsNixOwned piSpecificSkillsPresent;
             canonicalSkills = if canonicalSkillsScript == "" then null else "~/.agents/skills";
-            slowModeDefaultActivationSettings = builtins.filter (name: lib.hasInfix "slow" (lib.toLower name)) (
-              builtins.attrNames piConfig.settings
-            );
+            slowModeSettingsShape = builtins.attrNames piConfig.settings;
             settingsActivation = {
               afterWriteBoundary = builtins.elem "writeBoundary" (settingsActivation.after or [ ]);
               copyCommand = lib.hasInfix "install -Dm644" settingsActivationData;
@@ -2275,7 +2434,11 @@
             globalInstructionsNixOwned = true;
             canonicalSkills = "~/.agents/skills";
             piSpecificSkillsPresent = false;
-            slowModeDefaultActivationSettings = [ ];
+            slowModeSettingsShape = [
+              "enableInstallTelemetry"
+              "packages"
+              "theme"
+            ];
             settingsActivation = {
               afterWriteBoundary = true;
               copyCommand = true;
@@ -2434,6 +2597,11 @@
                   expected = strict_json_loads(expected_text)
                   if not isinstance(settings, dict) or settings != expected:
                       raise AssertionError("copied settings differ from evaluated settings")
+                  expected_keys = {"enableInstallTelemetry", "packages", "theme"}
+                  if set(settings) != expected_keys:
+                      raise AssertionError(
+                          f"copied settings have an unexpected top-level shape: {sorted(settings)}"
+                      )
                   if settings.get("theme") != "catppuccin-mocha":
                       raise AssertionError("copied settings select the wrong theme")
                   packages = settings.get("packages")
@@ -2471,6 +2639,23 @@
                   if len(set(references)) != 2:
                       raise AssertionError("copied settings contain duplicate package references")
                   return settings
+
+
+              def validate_slow_mode_source(source_path):
+                  source = source_path.read_text(encoding="utf-8")
+                  initial_state_declarations = [
+                      line for line in source.splitlines() if "let enabled =" in line
+                  ]
+                  if initial_state_declarations != ["  let enabled = false;"]:
+                      raise AssertionError(
+                          "slow-mode initial state is not exactly disabled: "
+                          f"{initial_state_declarations}"
+                      )
+                  toggle = "      enabled = !enabled;"
+                  if source.count(toggle) != 1:
+                      raise AssertionError("slow-mode toggle transition differs from the pinned source")
+                  if source.index(initial_state_declarations[0]) >= source.index(toggle):
+                      raise AssertionError("slow-mode toggle precedes its disabled initial state")
 
 
               def validate_resource_links(resource_links):
@@ -2708,6 +2893,7 @@
               project_dir = Path(os.environ["SMOKE_PROJECT"])
               settings_path = agent_dir / "settings.json"
               settings_source = Path(os.environ["SETTINGS_SOURCE"])
+              slow_mode_source = Path(os.environ["SLOW_MODE_SOURCE"])
               models_path = agent_dir / "models.json"
 
               expected_settings_text = os.environ["EXPECTED_SETTINGS_JSON"]
@@ -2720,6 +2906,7 @@
                   raise AssertionError(f"expected exactly one settings.json, got {settings_files}")
               settings_text = settings_path.read_text(encoding="utf-8")
               settings = validate_settings_text(settings_text, expected_settings_text)
+              validate_slow_mode_source(slow_mode_source)
 
               models = strict_json_loads(models_path.read_text(encoding="utf-8"))
               provider = models.get("providers", {}).get("review-local")
@@ -3126,6 +3313,8 @@
               print(f"request_types={json.dumps(expected_request_types)}")
               print(f"selected_model={selected[0]}/{selected[1]}")
               print(f"required_commands={json.dumps(visible)}")
+              print("slow_mode_initial_state=disabled")
+              print(f"slow_mode_settings_keys={json.dumps(sorted(settings))}")
               print(f"mutation_cases={len(mutation_names)}")
               print(f"sentinel_scan_files={scanned_files}")
               print("sentinel_forwarded_to_pi=false")
@@ -3143,6 +3332,7 @@
               PI_EXECUTABLE = deployedPiExecutable;
               SETTINGS_SOURCE = settingsSource;
               EXPECTED_SETTINGS_JSON = builtins.toJSON piConfig.settings;
+              SLOW_MODE_SOURCE = "${extensionPackage}/slow-mode/index.ts";
               SKILLS_SOURCE = skillsSource;
               CONTEXT_SOURCE = contextSource;
               THEME_SOURCE = themeSource;

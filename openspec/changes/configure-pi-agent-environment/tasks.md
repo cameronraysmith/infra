@@ -75,3 +75,10 @@
 - [x] 7.4 Run automated pre-activation revalidation: formatting, package, independent policy/structural/smoke regulators, relevant Home Manager evaluation/build, approved fast checks, strict temporary-XDG OpenSpec validation, 25-requirement trace/order audit, scope audit, and final diff checks; record the current nix-darwin system profile link and resolved store path without activating.
 - [ ] 7.5 Stop and ask Cameron to run `just activate --ask` for the remediated generation; the implementation agent MUST NOT run activation or inspect live Pi targets before explicit confirmation.
 - [ ] 7.6 After explicit confirmation, verify representative live policy, immutable-resource, slow-mode, and rollback behavior for the remediated generation.
+
+## 8. Recognized shell reads and slow-mode evidence
+
+- [x] 8.1 Add allow regression rows for common safe curl long flags, representative safe short clusters, `grep`, `blame`, `rev-parse`, `ls-files`, `archive`, `show-ref`, and Git global informational options; retain the exact current-policy overprompt RED transcript before production edits.
+- [x] 8.2 Classify reviewed no-value curl flags explicitly, make unclassified long and short options prompt, and replace the partial Git command list with the exact deployed Git 2.55.0 `git --list-cmds=builtins,nohelpers` inventory while excluding aliases and helpers.
+- [x] 8.3 Replace the lexical slow-mode settings check with an exact top-level settings shape and require the pinned selected slow-mode source to initialize its only `enabled` state declaration to `false` before its toggle transition.
+- [x] 8.4 Re-run policy, structural, smoke, treefmt, approved fast checks, strict temporary-XDG OpenSpec validation, and exact requirement, trace, inventory, scope, and diff audits; retain the `system-53-link` rollback record without activation or live probes.
