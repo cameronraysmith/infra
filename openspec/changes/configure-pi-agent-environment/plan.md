@@ -586,6 +586,45 @@ The implementation agent must not run activation or inspect live Pi targets befo
 After Cameron confirms the second activation, rerun the representative policy, immutable-resource, slow-mode, and rollback probes.
 Keep this step open until that evidence exists.
 
+## Task 9: Preserve recognized shell reads and prove slow-mode defaults
+
+**Files:**
+
+- Modify: `modules/checks/pi-agent-environment.nix`
+- Modify: `modules/home/ai/pi/policy/permission-rules.ts`
+- Modify: `openspec/changes/configure-pi-agent-environment/plan.md`
+- Modify: `openspec/changes/configure-pi-agent-environment/tasks.md`
+
+**Interfaces:**
+
+- Consumes the fail-closed unknown-option and unresolved-alias behavior from Task 8.
+- Produces explicit safe curl flag classifications and a complete deployed Git 2.55.0 built-in command inventory without admitting aliases or helpers.
+- Replaces lexical slow-mode evidence with an exact settings shape and pinned-source initial-state assertion.
+- Leaves Task 8 steps 5 and 6 open for the second human activation and live verification.
+
+- [ ] **Step 1: Add recognized-read RED rows**
+
+Add allow rows for `--silent`, `--head`, `--location`, combined long flags, representative short clusters, the named ordinary Git built-ins, and Git global informational options.
+Run the unchanged Task 8 policy and retain the named overprompt failures before editing production policy.
+
+- [ ] **Step 2: Classify safe curl flags and deployed Git built-ins**
+
+Enumerate reviewed no-value curl flags separately from value-taking, data-bearing, opaque, and unclassified options.
+Prompt for every unclassified long or short option.
+Replace the partial Git command set with the exact output of deployed Git 2.55.0 `git --list-cmds=builtins,nohelpers` and explicitly allow global informational flags.
+Keep unknown subcommands, persistent aliases, injected aliases, worktree creation, and unknown leading options on their existing fail-closed paths.
+
+- [ ] **Step 3: Strengthen slow-mode evidence**
+
+Compare the complete top-level settings key shape with the three-key oracle.
+Read the selected pinned `slow-mode/index.ts` in the smoke regulator and require its only initial-state declaration to be exactly `let enabled = false;` before its toggle transition.
+
+- [ ] **Step 4: Revalidate without activation**
+
+Run policy, structural, smoke, treefmt, the approved fast check set, strict temporary-XDG OpenSpec validation, and exact requirement, trace, inventory, scope, and diff audits.
+Confirm the rollback record remains `system-53-link` and its recorded resolved `darwin-system` path.
+Run no activation or live Pi probe.
+
 ## Commit plan
 
 | Commit | Purpose | Paths |
