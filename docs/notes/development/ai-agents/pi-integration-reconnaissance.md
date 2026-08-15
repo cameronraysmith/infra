@@ -4,7 +4,7 @@ title: pi coding agent integration reconnaissance
 
 Synthesis of ten reconnaissance passes over the pi coding agent (earendil-works/pi), its nix packaging in numtide/llm-agents.nix and nixpkgs, prior art in Mic92/dotfiles, pinpox/nixos, kunchenguid/dotfiles, and rytswd/pi-agent-extensions, and the vanixiets module surfaces a pi integration would touch.
 Every claim below is anchored to a file and line in the source findings; where two passes disagree the disagreement is stated rather than resolved silently.
-A subsequent verification pass — an independent source trace plus an empirical run against the packaged pi 0.83.0 binary — falsified the original skills recommendation and resolved two of the contradictions the reconnaissance left open.
+A subsequent verification pass — an independent source trace plus an empirical run against an earlier packaged pi binary — falsified the original skills recommendation and resolved two of the contradictions the reconnaissance left open.
 Claims that pass verified are marked with the method that verified them, and claims it did not reach remain marked unverified rather than upgraded.
 
 ## What pi is
@@ -17,13 +17,14 @@ Credentials live separately in `~/.pi/agent/auth.json` at mode 0600, whose `key`
 ## Packaging decision
 
 The llm-agents.nix `pi` package is usable as-is at the currently locked revision and no input bump is required.
-vanixiets locks `llm-agents` at rev `92b4121e344b4c82f6f095c17f961762a505e4ab`; `git ls-tree` at that rev and at the clone HEAD `5028d466` return identical blob OIDs for all four files under `packages/pi/`, and `git diff --name-only 92b4121e HEAD -- packages/pi` is empty.
-The package is `buildNpmPackage` over the npm registry tarball at version 0.83.0 pinned by a sidecar `hashes.json`, followed by a `bun build --compile` step producing a standalone binary, with a `makeWrapper` invocation that already sets `PI_PACKAGE_DIR`, `PI_SKIP_VERSION_CHECK=1`, and `PI_TELEMETRY=0` and prepends nixpkgs `fd` and `ripgrep` onto PATH.
+The current fleet evaluation resolves the deployed package to pi 0.84.1.
+An earlier reconnaissance pass inspected `llm-agents` rev `92b4121e344b4c82f6f095c17f961762a505e4ab`; `git ls-tree` at that rev and at the then-current clone HEAD `5028d466` returned identical blob OIDs for all four files under `packages/pi/`, and `git diff --name-only 92b4121e HEAD -- packages/pi` was empty.
+That earlier package used `buildNpmPackage` over an npm registry tarball pinned by a sidecar `hashes.json`, followed by a `bun build --compile` step producing a standalone binary, with a `makeWrapper` invocation that set `PI_PACKAGE_DIR`, `PI_SKIP_VERSION_CHECK=1`, and `PI_TELEMETRY=0` and prepended nixpkgs `fd` and `ripgrep` onto PATH.
 vanixiets already trusts `cache.numtide.com` and declares the `llm-agents` input without a `nixpkgs.follows`, which is precisely the configuration under which the numtide binary cache substitutes rather than rebuilding.
-That substitution is now verified rather than inferred: `nix build github:numtide/llm-agents.nix/92b4121e344b4c82f6f095c17f961762a505e4ab#pi` fetched from `cache.numtide.com` with no local build and yielded pi 0.83.0.
+The earlier substitution test fetched from `cache.numtide.com` with no local build; that command was not rerun as evidence for the current pi 0.84.1 package.
 
 A local `pkgs/by-name` derivation is not needed and would be strictly worse: it would duplicate the bun-compile and darwin re-signing workarounds that llm-agents already carries, and it would forfeit cache substitution.
-The competing option is nixpkgs' own `pi-coding-agent`, also at 0.83.0 and also present at the locked nixpkgs rev.
+The competing option is nixpkgs' own `pi-coding-agent`, which was at the same then-current version during the earlier reconnaissance and was present at the locked nixpkgs revision.
 Two reconnaissance passes describe that derivation differently — one reports it as `buildNpmPackage` from a GitHub source tag with a separately fetched model catalog, the other as `buildNpmPackage` over the `@earendil-works/pi-ai` npm tarball.
 Either way it is a different upstream artifact from the llm-agents one, so the usual "nixpkgs lags, llm-agents leads" version rationale recorded in the tuicr module does not decide this; provenance and update cadence do.
 
@@ -82,7 +83,7 @@ There is also no size limit and no truncation on context files: a 3,360,040-byte
 
 Per directory, first match wins among `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, and `CLAUDE.MD`.
 A directory contributes at most one file and the loser is silently ignored.
-`AGENTS.override.md` exists only at 0.84.0 and is absent at the packaged 0.83.0.
+The earlier packaged-binary pass found `AGENTS.override.md` absent, while the changelog attributed its introduction to 0.84.0; that observation was not rerun against deployed pi 0.84.1.
 The vanixiets repository root carries both `AGENTS.md` and `CLAUDE.md` as symlinks to the same planning-repo target, so pi loads the project context once through `AGENTS.md` and the `CLAUDE.md` symlink is inert there.
 
 ## Authentication options matrix
@@ -130,11 +131,11 @@ A refactor removing the early return would not be caught by anything else.
 It is imported lazily, and the WebSocket path is unreachable on the Codex provider, gated at `src/custom-stream.ts:26` and `src/openai-ws-stream.ts:786`.
 Were it ever reached, a failed import is caught and degrades to SSE unless the transport is explicitly `"websocket"`.
 
-One known defect is carried deliberately.
-The extension targets pi 0.80.9 and the fleet runs 0.83.0.
-`compact()` gained a model-registry parameter in slot 2 and lost `apiKey` and `headers`, so the call at `src/remote-compaction.ts:738` passes arguments shifted from position 2 onward.
-That call sits on the `catch` fallback arm, reached only when `generatePortableSummary` throws; the happy path calls `complete(model, context, options)`, which matches 0.83.0.
-It was left unpatched deliberately, because a correct fix would require threading a model registry through two files to repair a path that should not normally execute, and a loud failure there is more useful than a patched-over one.
+The extension declares a pi peer range of `>=0.80.9 <0.81.0`, while the fleet evaluates and deploys pi 0.84.1 outside that declared range.
+The source anchor is `peerDependencies` in Algal's `package.json` at audited revision `8a3de2f3b0c178fdd6f73f2f94172dfc3943e466`, which applies that range to `@earendil-works/pi-coding-agent`, `pi-ai`, and `pi-agent-core`.
+At the same Algal revision, `generateBestEffortLocalSummary` in `src/remote-compaction.ts` catches failure from `generatePortableSummary` and calls `compact` with `preparation`, `model`, `apiKey`, `headers`, `customInstructions`, `signal`, and `thinkingLevel`, in that order.
+The audited `@earendil-works/pi-coding-agent` package identifies itself as version 0.84.1 in `package.json`; its exported `compact` declaration in `dist/core/compaction/compaction.d.ts` retains those same first seven parameters in the same order.
+The fallback can therefore execute when portable summarization throws, but matching argument order does not establish broader live compatibility, so API drift outside the declared peer range remains a calibrated risk.
 
 This analysis is a source trace only, and one claim is unverified in consequence.
 No live request was made to either backend, so the ChatGPT backend's acceptance of the `compaction_trigger` input item and the `remote_compaction_v2` beta header is inferred from code intent plus the author's `VALIDATION.md` claim of a passing live suite against `openai-codex/gpt-5.6-sol`.
@@ -151,7 +152,7 @@ Their `<tool> setup hooks` subcommand mutates the user's agent `settings.json` o
 pi needs no new skills sink, and the earlier recommendation to make it the sixth delivery target of the apm pipeline is withdrawn.
 pi already scans `~/.agents/skills` as a global discovery root, registered at `package-manager.ts:2375` and deliberately placed outside the project-trust gate, and it follows symlinks.
 The nix cost is therefore zero: the existing home-manager delivery to `~/.agents/skills` already reaches pi with no module change at all.
-Verified empirically — pi 0.83.0 run from cwd `/tmp` with `--no-approve` enumerated 127 skills, every one of them reporting a location under `/Users/crs58/.agents/skills/`.
+Verified in the earlier packaged-binary pass: pi run from cwd `/tmp` with `--no-approve` enumerated 127 skills, every one of them reporting a location under `/Users/crs58/.agents/skills/`; this probe was not rerun against pi 0.84.1.
 Nothing upstream changes either: the compose derivation, `apmTargets`, the plugin layout, each `apm.yml` and `plugin.json`, and `.github/plugin/marketplace.json` are all harness-agnostic, and apm 0.27.0 has no `pi` target.
 
 Do not add `~/.pi/agent/skills` as a second sink.
@@ -194,7 +195,8 @@ Nor is any change needed to `pkgs/by-name/apm-skills-compose/package.nix`, `modu
 
 Two methods produced the verified claims above.
 The first is an independent source trace that follows each call chain from the CLI entry point down to the layer that supplies the value, rather than reading a default list at the layer that declares it.
-The second is an empirical run of the packaged pi 0.83.0 binary: enumerating discovered skills from a neutral cwd, planting control files under an overridden `HOME`, planting unknown settings keys to observe whether they take effect or warn, and inlining an oversized context file to test for truncation.
+The second was an empirical run of an earlier packaged pi binary: enumerating discovered skills from a neutral cwd, planting control files under an overridden `HOME`, planting unknown settings keys to observe whether they take effect or warn, and inlining an oversized context file to test for truncation.
+Those empirical observations were not rerun against the currently evaluated and deployed pi 0.84.1 package.
 
 That empirical work left one artifact on the machine.
 An empty `/Users/crs58/.pi/agent/auth.json` exists, created 2026-08-06 as a byproduct of the investigation.
@@ -203,7 +205,7 @@ It is inert: pi creates exactly that file on its first run, so the state is indi
 ## Risks, gotchas, and contradictions
 
 Two reconnaissance passes disagree about what nixpkgs' `pi-coding-agent` builds from: one reports `fetchFromGitHub` at the version tag with a separately fetched model catalog, the other reports the `@earendil-works/pi-ai` npm tarball.
-Both agree it is a different artifact from llm-agents' `pi`, and both read version 0.83.0, so the disagreement does not change the recommendation but should be resolved before anyone cites the nixpkgs derivation's provenance.
+Both agree it is a different artifact from llm-agents' `pi`, and both reported the same then-current version, so the disagreement does not change the recommendation but should be resolved before anyone cites the nixpkgs derivation's provenance.
 
 The contradiction over whether pi reads `~/.agents/skills` is resolved: it does.
 The negative claim rested on `skills.ts`, whose `loadSkills()` carries an `includeDefaults: true` branch hardcoding only `<agentDir>/skills` and `<cwd>/.pi/skills` — a branch the CLI never takes.
@@ -217,10 +219,10 @@ A firstmate document asserts that pi's `openai-codex` family "authenticates thro
 Treat the firstmate claim as an upstream documentation error unless 0.82.0-era behaviour is shown to differ.
 
 Version skew runs through the whole corpus.
-The local pi clone is at HEAD `4e64de6`, which is after the 0.84.0 tag and carries an `[Unreleased]` changelog section while `package.json` still reads 0.84.0; the packaged version at the locked llm-agents rev is 0.83.0; the kunchenguid and firstmate documentation pins its claims to 0.82.0.
-The behavioural claims the empirical run exercised are now confirmed against the 0.83.0 binary that would actually be deployed, and are marked as such where they appear.
-Claims resting on changelog entries alone remain unconfirmed by source diff, because all `~/ghq` clones are shallow and blobless, so history and blame are unavailable throughout and no 0.83.0-to-0.84.0 diff can be taken locally.
-The `AGENTS.override.md` verdict is the concrete instance: its absence at 0.83.0 was observed empirically, while its 0.84.0 introduction rests on the changelog.
+The source clone used by the earlier reconnaissance was at HEAD `4e64de6`, after the 0.84.0 tag with an `[Unreleased]` changelog section while `package.json` still read 0.84.0; the fleet now evaluates and deploys pi 0.84.1; the kunchenguid and firstmate documentation pins its claims to 0.82.0.
+The behavioural claims exercised empirically are confirmed only against the earlier packaged binary and are marked as such where they appear; they were not rerun against pi 0.84.1.
+Claims resting on changelog entries alone remain unconfirmed by source diff, because the `~/ghq` clones used for the reconnaissance were shallow and blobless, so history and blame were unavailable.
+The `AGENTS.override.md` verdict is the concrete instance: its absence was observed in the earlier packaged-binary pass, while its 0.84.0 introduction rests on the changelog.
 
 The jiti transpile cache is no longer an open hazard.
 pi's extension loader calls `createJiti` with `moduleCache: false` and does not pass `fsCache: false`, but the on-disk cache directory derives from pi's own `import.meta.url` rather than from the path of the loaded extension.
