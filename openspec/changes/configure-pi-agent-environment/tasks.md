@@ -17,21 +17,21 @@
 
 ## 3. Table-driven pure safety policy
 
-- [ ] 3.1 Add `pkgs.writeText`-backed table-driven assertion-level RED cases following `modules/checks/hooks.nix` for safe commands, dangerous classes, semantic mutating HTTP forms, direct and composed `rm`, worktree creation, Pi package mutation, and the pinned permission-gate project-trust boundary.
-- [ ] 3.2 Implement Nix-owned rules through the pinned permission-gate parser, helpers, and rule API, with `rip` guidance, Nix-pin guidance, interactive prompt decisions for mutating HTTP and worktree creation, and headless blocks.
-- [ ] 3.3 Add pure decision-core RED cases for direct Pi `edit` and `write` calls against mutable paths, `/nix/store`, other immutable roots, Git feature branches, Git `main` and `master`, and a typed discriminated repository-state input covering outside-repository, Git, ordinary jj, diamond-managed jj, and invalid diagnostic variants.
+- [x] 3.1 Add `pkgs.writeText`-backed table-driven assertion-level RED cases following `modules/checks/hooks.nix` for safe commands, dangerous classes, semantic mutating HTTP forms, direct and composed `rm`, worktree creation, Pi package mutation, and the pinned permission-gate project-trust boundary.
+- [x] 3.2 Implement Nix-owned rules through the pinned permission-gate parser, helpers, and rule API, with `rip` guidance, Nix-pin guidance, interactive prompt decisions for mutating HTTP and worktree creation, and headless blocks.
+- [x] 3.3 Add pure decision-core RED cases for direct Pi `edit` and `write` calls against mutable paths, `/nix/store`, other immutable roots, Git feature branches, Git `main` and `master`, and a typed discriminated repository-state input covering outside-repository, Git, ordinary jj, diamond-managed jj, and invalid diagnostic variants.
   Include literal jj rows in this order: ordinary healthy; ordinary conflict; ordinary divergent `@`; ordinary `main`/`master` at `@`; diamond healthy; classified-diamond missing, moved, or divergent `wip`; nonempty, single-parent, or conflicted join; malformed, failing, or ambiguous probe.
   Common health requires canonical repository identity and target containment, unambiguous conflict-free `@`, non-divergent current `@` identity, neither default bookmark at `@`, and successful unambiguous probes.
   Classify a repository as diamond-managed only after a separate bookmark-listing probe reports the `wip` convention, including a divergent indicator; only then run the unique `wip`-resolution probe and admit healthy or absent/moved/divergent results.
   Keep a repository with no `wip` report eligible for ordinary mode and ensure it never reaches missing-`wip` failure.
   Require an empty merge `@` with at least two parents, exactly one non-divergent `wip` at `@`, and conflict-free `@` and immediate parents only for diamond mode.
   Require no working-copy cleanliness in either mode and no `wip`, empty-merge, or multi-parent predicate in ordinary mode.
-- [ ] 3.4 Add executable adapter RED cases, then implement one compact pure edit/write decision core with injected filesystem, Git, jj, and interaction capabilities plus a thin Pi `tool_call` adapter exported through a directly invocable factory or handler seam.
+- [x] 3.4 Add executable adapter RED cases, then implement one compact pure edit/write decision core with injected filesystem, Git, jj, and interaction capabilities plus a thin Pi `tool_call` adapter exported through a directly invocable factory or handler seam.
   Cover synthetic edit/write allow translation, edit/write diagnostic block translation, unrelated-tool pass-through, malformed tool input, and core or capability exceptions that fail closed; add no delegated-tool policy or unrelated event registrations.
-- [ ] 3.5 Record every jj argv emitted by injected capabilities and require every read-only command to start with `jj --ignore-working-copy`; make failed, malformed, or ambiguously parsed probes block diagnostically.
-- [ ] 3.6 Preserve permission-gate's untrusted project-config behavior explicitly, including refusal to weaken protected/block behavior and fail-closed handling where headless prompt rules cannot be disabled.
-- [ ] 3.7 Make parser errors, core or adapter exceptions, ambiguous repository state, malformed tool input, missing or throwing capabilities, and unavailable interaction return diagnostic blocks.
-- [ ] 3.8 Link policy sources immutably and make every pure-core and executable-adapter row GREEN inside the single independent policy derivation without starting a Pi process per row.
+- [x] 3.5 Record every jj argv emitted by injected capabilities and require every read-only command to start with `jj --ignore-working-copy`; make failed, malformed, or ambiguously parsed probes block diagnostically.
+- [x] 3.6 Preserve permission-gate's untrusted project-config behavior explicitly, including refusal to weaken protected/block behavior and fail-closed handling where headless prompt rules cannot be disabled.
+- [x] 3.7 Make parser errors, core or adapter exceptions, ambiguous repository state, malformed tool input, missing or throwing capabilities, and unavailable interaction return diagnostic blocks.
+- [x] 3.8 Link policy sources immutably and make every pure-core and executable-adapter row GREEN inside the single independent policy derivation without starting a Pi process per row.
 
 ## 4. One-process aggregate smoke
 
