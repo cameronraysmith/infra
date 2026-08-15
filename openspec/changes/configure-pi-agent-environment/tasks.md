@@ -1,8 +1,8 @@
 ## 1. Independent check surfaces and source-only package
 
-- [ ] 1.1 Create `modules/checks/pi-agent-environment.nix` as one ordinary flake-parts logical-group module exposing exactly three independent derivations with separate inputs and cache boundaries: `pi-agent-environment-structural`, `pi-agent-environment-policy`, and `pi-agent-environment-smoke`.
-- [ ] 1.2 Add an evaluable assertion-level structural RED for evaluated Pi package version `0.84.1` and the absent compact package/configuration values without importing absent files or recursively evaluating the check set.
-- [ ] 1.3 Create `pkgs/by-name/pi-agent-extensions/package.nix` at commit `c700f300707db5345727052682c88e3064030aa2` with hash `sha256-RLtDi9ahKONSJBuuYkYo/oIIxDX6PWiZ7rlevOStUUk=`, a copy-only install phase, and an explicit rejection of `node_modules`.
+- [x] 1.1 Create `modules/checks/pi-agent-environment.nix` as one ordinary flake-parts logical-group module exposing exactly three independent derivations with separate inputs and cache boundaries: `pi-agent-environment-structural`, `pi-agent-environment-policy`, and `pi-agent-environment-smoke`.
+- [x] 1.2 Add an evaluable assertion-level structural RED for evaluated Pi package version `0.84.1` and the absent compact package/configuration values without importing absent files or recursively evaluating the check set.
+- [x] 1.3 Create `pkgs/by-name/pi-agent-extensions/package.nix` at commit `c700f300707db5345727052682c88e3064030aa2` with hash `sha256-RLtDi9ahKONSJBuuYkYo/oIIxDX6PWiZ7rlevOStUUk=`, a copy-only install phase, and an explicit rejection of `node_modules`.
 - [ ] 1.4 Leave `modules/checks/packages.nix` unmodified and verify its existing auto-map exposes `package-pi-agent-extensions` by final external check enumeration; preserve ordinary package realization and separately prove by pre-activation scope and diff scan that this is exactly one new by-name package and no flake input was added.
 - [ ] 1.5 Add structural RED rows, then configure the ordered six positive extension paths, `-fetch/index.ts`, `-notify/index.ts`, empty skills/prompts/themes for the package, retained separate compaction entry, and exactly five `extraPackages`.
 - [ ] 1.6 Add explicit structural RED coverage for Nix-owned global instructions, the canonical `~/.agents/skills` sink, and the absence of `~/.pi/agent/skills`.
