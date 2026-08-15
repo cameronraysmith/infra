@@ -3,7 +3,7 @@
 - [x] 1.1 Create `modules/checks/pi-agent-environment.nix` as one ordinary flake-parts logical-group module exposing exactly three independent derivations with separate inputs and cache boundaries: `pi-agent-environment-structural`, `pi-agent-environment-policy`, and `pi-agent-environment-smoke`.
 - [x] 1.2 Add an evaluable assertion-level structural RED for evaluated Pi package version `0.84.1` and the absent compact package/configuration values without importing absent files or recursively evaluating the check set.
 - [x] 1.3 Create `pkgs/by-name/pi-agent-extensions/package.nix` at commit `c700f300707db5345727052682c88e3064030aa2` with hash `sha256-RLtDi9ahKONSJBuuYkYo/oIIxDX6PWiZ7rlevOStUUk=`, a copy-only install phase, and an explicit rejection of `node_modules`.
-- [ ] 1.4 Leave `modules/checks/packages.nix` unmodified and verify its existing auto-map exposes `package-pi-agent-extensions` by final external check enumeration; preserve ordinary package realization and separately prove by pre-activation scope and diff scan that this is exactly one new by-name package and no flake input was added.
+- [x] 1.4 Leave `modules/checks/packages.nix` unmodified and verify its existing auto-map exposes `package-pi-agent-extensions` by final external check enumeration; preserve ordinary package realization and separately prove by pre-activation scope and diff scan that this is exactly one new by-name package and no flake input was added.
 - [x] 1.5 Add structural RED rows, then configure the ordered six positive extension paths, `-fetch/index.ts`, `-notify/index.ts`, empty skills/prompts/themes for the package, retained separate compaction entry, and exactly five `extraPackages`.
 - [x] 1.6 Add explicit structural RED coverage for Nix-owned global instructions, the canonical `~/.agents/skills` sink, and the absence of `~/.pi/agent/skills`.
 
@@ -51,13 +51,13 @@
 
 ## 5. Provenance, traceability, and pre-activation verification
 
-- [ ] 5.1 Add explicit assertion-level RED scans that name stale Pi 0.83 references in both `modules/home/ai/pi/default.nix` and `docs/notes/development/ai-agents/pi-integration-reconnaissance.md` before changing either file.
-- [ ] 5.2 After observing both expected RED failures, update both files to Pi 0.84.1 and make the stale-reference assertions GREEN.
-- [ ] 5.3 Externally enumerate current-system checks and require exactly `pi-agent-environment-policy`, `pi-agent-environment-smoke`, and `pi-agent-environment-structural` plus the existing auto-mapped `package-pi-agent-extensions`; do not make the structural regulator inspect the check set recursively.
-- [ ] 5.4 Scan implementation, generated configuration, and the diff for extra packages, broad filters, unintended `fetch` or `notify` enablement, a Pi-specific skill sink, secret literals, runtime package mutation guidance, extra custom Pi checks, fixture-tree creation, or Herdr changes; prove that `pi-agent-extensions` is exactly one new by-name package, no flake input was added, and `modules/checks/packages.nix` is unchanged.
-- [ ] 5.5 Verify all 25 requirements have exactly one scenario, the same exact name and order in D10 and the plan trace, and explicit checklist and plan routes with Pi package version `0.84.1`, source-only package realization plus scope evidence, mutable settings, canonical skills, secret-safe direnv, executable adapter evidence, ordinary no-`wip` eligibility, and classified-diamond unique-`wip` modalities aligned.
-- [ ] 5.6 Run formatting, `package-pi-agent-extensions`, the three independent regulators, the relevant Home Manager evaluation/build, and `just check-fast` or an approved targeted equivalent; require fresh exit-zero evidence before reporting pre-activation success.
-- [ ] 5.7 Validate OpenSpec status and strict conformance through a trap-cleaned dereferenced temporary `/tmp` `XDG_DATA_HOME` copy and add no schema workaround to the repository.
+- [x] 5.1 Add explicit assertion-level RED scans that name stale Pi 0.83 references in both `modules/home/ai/pi/default.nix` and `docs/notes/development/ai-agents/pi-integration-reconnaissance.md` before changing either file.
+- [x] 5.2 After observing both expected RED failures, update both files to Pi 0.84.1 and make the stale-reference assertions GREEN.
+- [x] 5.3 Externally enumerate current-system checks and require exactly `pi-agent-environment-policy`, `pi-agent-environment-smoke`, and `pi-agent-environment-structural` plus the existing auto-mapped `package-pi-agent-extensions`; do not make the structural regulator inspect the check set recursively.
+- [x] 5.4 Scan implementation, generated configuration, and the diff for extra packages, broad filters, unintended `fetch` or `notify` enablement, a Pi-specific skill sink, secret literals, runtime package mutation guidance, extra custom Pi checks, fixture-tree creation, or Herdr changes; prove that `pi-agent-extensions` is exactly one new by-name package, no flake input was added, and `modules/checks/packages.nix` is unchanged.
+- [x] 5.5 Verify all 25 requirements have exactly one scenario, the same exact name and order in D10 and the plan trace, and explicit checklist and plan routes with Pi package version `0.84.1`, source-only package realization plus scope evidence, mutable settings, canonical skills, secret-safe direnv, executable adapter evidence, ordinary no-`wip` eligibility, and classified-diamond unique-`wip` modalities aligned.
+- [x] 5.6 Run formatting, `package-pi-agent-extensions`, the three independent regulators, the relevant Home Manager evaluation/build, and `just check-fast` or an approved targeted equivalent; require fresh exit-zero evidence before reporting pre-activation success.
+- [x] 5.7 Validate OpenSpec status and strict conformance through a trap-cleaned dereferenced temporary `/tmp` `XDG_DATA_HOME` copy and add no schema workaround to the repository.
 
 ## 6. Human activation boundary and rollback
 
