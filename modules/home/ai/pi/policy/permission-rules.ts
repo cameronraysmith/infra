@@ -438,7 +438,7 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
       const option = equals === -1 ? argument : argument.slice(0, equals);
       const inlineValue = equals === -1 ? undefined : argument.slice(equals + 1);
       if (isSafeCurlLongFlag(option)) {
-        if (option === "--get") usesGet = true;
+        if (option === "--get" || option === "--no-get") usesGet = option === "--get";
         malformed ||= inlineValue !== undefined;
         continue;
       }
