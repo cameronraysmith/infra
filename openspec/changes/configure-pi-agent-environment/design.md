@@ -147,8 +147,8 @@ The package filter uses this literal extension list:
 - Choice: The hermetic registration adds no secret or API key, sends no prompt or provider-facing request, and retains the Nix sandbox as the network boundary.
 - Choice: After the supported queries, the harness closes stdin and requires a clean exit status.
 - Choice: The aggregate smoke does not rely on the invocation until that reproduction passes, and implementation stops with a question rather than weakening the contract if hermetic behavior differs from the discovery characterization, including a deployed-package mismatch.
-- Choice: Implementation completes pre-activation verification, records the current Home Manager generation, and stops.
-- Choice: Only Cameron runs `just activate --ask`; live probes wait for explicit success confirmation and preserve the recorded prior generation for rollback.
+- Choice: Implementation completes pre-activation verification, records both the current `/nix/var/nix/profiles/system` link and its resolved nix-darwin system store path, and stops.
+- Choice: Only Cameron runs `just activate --ask`; live probes wait for explicit success confirmation and preserve the recorded prior nix-darwin system profile link for rollback.
 - Rationale: A severe witness must distinguish discovery characterization from hermetic assertion-level evidence, and live activation is an operator-owned effect.
 - Alternatives considered: Treating the disposable characterization as derivation proof would skip the required RED witness; agent-run activation crosses the authority boundary.
 
@@ -181,9 +181,9 @@ The requirement names and order below are canonical for the plan trace.
 | Consolidated custom regulators | external enumeration | Enumerate the exact three custom Pi checks and existing ordinary package-map result outside the regulators. |
 | Offline aggregate smoke | smoke | Hermetically reproduce the discovery-characterized credential-free RPC readiness once with explicit `review-local/review-model`, query supported state/command surfaces, close stdin, and require clean exit. |
 | Stale Pi version cleanup | structural | Observe assertion-level RED in both files, then require Pi 0.84.1 with no Pi 0.83 reference. |
-| Human-only activation | manual | Record the prior generation, stop, and request Cameron's command. |
+| Human-only activation | manual | Record the current nix-darwin system profile link and resolved store path, stop, and request Cameron's command. |
 | Confirmation-gated live verification | manual | Require explicit activation success before any live probe. |
-| Rollback preservation | manual | Confirm the recorded prior generation remains immediately available. |
+| Rollback preservation | manual | Confirm the new active `system-N-link` and recorded `system-(N-1)-link` are consecutive and the recorded link remains available. |
 
 ## Risks / Trade-offs
 
@@ -211,11 +211,11 @@ The requirement names and order below are canonical for the plan trace.
 5. Add explicit stale-version RED scans for both files before updating either Pi 0.83 reference.
 6. Externally enumerate checks, run the package build and three regulators, prove exactly one new by-name package and no flake input by scope and diff scan, audit all 25 routes, and complete remaining pre-activation checks.
 7. Validate OpenSpec strictly through a trap-cleaned dereferenced temporary XDG data tree.
-8. Record the current Home Manager generation, stop, and ask Cameron to run `just activate --ask`.
+8. Record `readlink /nix/var/nix/profiles/system` and `readlink -f /nix/var/nix/profiles/system`, stop, and ask Cameron to run `just activate --ask`.
 9. After explicit confirmation, run non-destructive live probes and confirm rollback availability.
 
-Rollback uses the Home Manager generation recorded immediately before Cameron's activation.
-Reverting to it restores the prior theme and package set while preserving separately stored mutable session and authentication state.
+Rollback uses the nix-darwin `system-(N-1)-link` and resolved store path recorded immediately before Cameron's activation.
+After activation, `/nix/var/nix/profiles/system` must point to a new `system-N-link`, with the recorded link immediately previous and still available; reverting to it restores the prior theme and package set while preserving separately stored mutable session and authentication state.
 
 ## Open Questions
 

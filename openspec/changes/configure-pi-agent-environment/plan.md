@@ -504,11 +504,18 @@ Require no fixture tree, no `modules/checks/packages.nix` change, exactly one ne
 **Interfaces:**
 
 - Consumes fresh pre-activation evidence from Task 6.
-- Produces a recorded rollback generation, human activation request, confirmation-gated live evidence, and rollback confirmation.
+- Produces a recorded nix-darwin rollback system profile, human activation request, confirmation-gated live evidence, and rollback confirmation.
 
 - [ ] **Step 1: Record rollback without activating**
 
-Run `home-manager generations | head -1` and retain the complete line in the handoff.
+Run both commands without `sudo` and retain both complete, nonempty single-line outputs in the handoff:
+
+```bash
+readlink /nix/var/nix/profiles/system
+readlink -f /nix/var/nix/profiles/system
+```
+
+Require the first line to name the current `system-N-link` and the second to name its resolved `darwin-system` store path.
 Do not run `just activate --ask`.
 
 - [ ] **Step 2: Stop for the human command**
@@ -524,7 +531,8 @@ Clean every probe with `rip`.
 
 - [ ] **Step 4: Confirm rollback**
 
-Run `home-manager generations | head -2` and require the generation recorded in Step 1 to remain immediately behind the active generation.
+After Cameron confirms activation, inspect `/nix/var/nix/profiles/system` with `readlink` and `readlink -f`.
+Require it to point to the new active `system-N-link`, require the link recorded in Step 1 to be `system-(N-1)-link`, and require that recorded link to remain present and resolvable as the immediately previous system available for rollback.
 
 ## Commit plan
 
