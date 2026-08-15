@@ -4,16 +4,16 @@
 - [x] 1.2 Add an evaluable assertion-level structural RED for evaluated Pi package version `0.84.1` and the absent compact package/configuration values without importing absent files or recursively evaluating the check set.
 - [x] 1.3 Create `pkgs/by-name/pi-agent-extensions/package.nix` at commit `c700f300707db5345727052682c88e3064030aa2` with hash `sha256-RLtDi9ahKONSJBuuYkYo/oIIxDX6PWiZ7rlevOStUUk=`, a copy-only install phase, and an explicit rejection of `node_modules`.
 - [ ] 1.4 Leave `modules/checks/packages.nix` unmodified and verify its existing auto-map exposes `package-pi-agent-extensions` by final external check enumeration; preserve ordinary package realization and separately prove by pre-activation scope and diff scan that this is exactly one new by-name package and no flake input was added.
-- [ ] 1.5 Add structural RED rows, then configure the ordered six positive extension paths, `-fetch/index.ts`, `-notify/index.ts`, empty skills/prompts/themes for the package, retained separate compaction entry, and exactly five `extraPackages`.
-- [ ] 1.6 Add explicit structural RED coverage for Nix-owned global instructions, the canonical `~/.agents/skills` sink, and the absence of `~/.pi/agent/skills`.
+- [x] 1.5 Add structural RED rows, then configure the ordered six positive extension paths, `-fetch/index.ts`, `-notify/index.ts`, empty skills/prompts/themes for the package, retained separate compaction entry, and exactly five `extraPackages`.
+- [x] 1.6 Add explicit structural RED coverage for Nix-owned global instructions, the canonical `~/.agents/skills` sink, and the absence of `~/.pi/agent/skills`.
 
 ## 2. State ownership and Catppuccin theme
 
-- [ ] 2.1 Use `flake.lib.mkStructuralCheck` from `modules/lib/mk-structural-check.nix` to compare one compact serialized evaluated Nix/Home Manager value with a literal oracle.
-- [ ] 2.2 Add assertion-level RED rows for mutable-copy settings activation; runtime-managed categories under Pi-managed paths that are not converted into immutable executable-resource links; immutable policy/theme/extensions/global-instruction resources; selected theme; theme digest; and canonical skills, without claiming live writability or exhaustive path enumeration.
-- [ ] 2.3 Within Pi-managed paths, preserve the mutable settings copy and do not convert runtime-managed settings, sessions, compaction, authentication, project trust, model selection, thinking preferences, or extension state into immutable executable-resource links; keep executable policy, theme, extensions, and global instructions immutable.
-- [ ] 2.4 Copy `themes/catppuccin-mocha.json` byte-for-byte from `aldoborrero/pi-agent-kit` commit `128c4c08396961ea8f934111ba1aad0b33c525b2`, verify SHA-256 `5858d086e155246d48e5b7a2ac372988fe2d1a028d2b77b5f0a7670088a8642b`, link it immutably, and select `catppuccin-mocha` without a standalone package.
-- [ ] 2.5 Make the structural regulator GREEN only for compact configuration facts; leave runtime loading, live writability, upstream provenance beyond reviewed source acquisition, package-output behavior, and final check enumeration to their declared evidence routes.
+- [x] 2.1 Use `flake.lib.mkStructuralCheck` from `modules/lib/mk-structural-check.nix` to compare one compact serialized evaluated Nix/Home Manager value with a literal oracle.
+- [x] 2.2 Add assertion-level RED rows for mutable-copy settings activation; runtime-managed categories under Pi-managed paths that are not converted into immutable executable-resource links; immutable policy/theme/extensions/global-instruction resources; selected theme; theme digest; and canonical skills, without claiming live writability or exhaustive path enumeration.
+- [x] 2.3 Within Pi-managed paths, preserve the mutable settings copy and do not convert runtime-managed settings, sessions, compaction, authentication, project trust, model selection, thinking preferences, or extension state into immutable executable-resource links; keep executable policy, theme, extensions, and global instructions immutable.
+- [x] 2.4 Copy `themes/catppuccin-mocha.json` byte-for-byte from `aldoborrero/pi-agent-kit` commit `128c4c08396961ea8f934111ba1aad0b33c525b2`, verify SHA-256 `5858d086e155246d48e5b7a2ac372988fe2d1a028d2b77b5f0a7670088a8642b`, link it immutably, and select `catppuccin-mocha` without a standalone package.
+- [x] 2.5 Make the structural regulator GREEN only for compact configuration facts; leave runtime loading, live writability, upstream provenance beyond reviewed source acquisition, package-output behavior, and final check enumeration to their declared evidence routes.
 
 ## 3. Table-driven pure safety policy
 
