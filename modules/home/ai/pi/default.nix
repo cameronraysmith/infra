@@ -90,7 +90,9 @@
         # no writer for keybindings.json or models.json.
         home.file = {
           "${cfg.configDir}/settings.json".enable = lib.mkIf cfg.mutableSettings (lib.mkForce false);
+          "${cfg.configDir}/extensions/edit-write-policy.ts".source = ./policy/edit-write-policy.ts;
           "${cfg.configDir}/themes/catppuccin-mocha.json".source = ./themes/catppuccin-mocha.json;
+          ".config/pi-agent-extensions/permission-gate/rules.ts".source = ./policy/permission-rules.ts;
         };
 
         home.activation.piCodingAgentMutableSettings = lib.mkIf cfg.mutableSettings (
