@@ -213,12 +213,12 @@ The implementation MUST remove active Pi 0.83 references from `modules/home/ai/p
 
 ### Requirement: Human-only activation
 
-Implementation MUST stop after pre-activation verification, record the current Home Manager generation, and ask Cameron to run `just activate --ask` manually.
+Implementation MUST stop after pre-activation verification, record both the current `/nix/var/nix/profiles/system` link and its resolved nix-darwin system store path, and ask Cameron to run `just activate --ask` manually.
 
 #### Scenario: Pre-activation verification passes
 
 - **WHEN** all declared pre-activation verification exits successfully
-- **THEN** the implementation agent records the prior generation, requests the human command, and does not run activation
+- **THEN** the implementation agent records the complete, nonempty single-line outputs of `readlink /nix/var/nix/profiles/system` and `readlink -f /nix/var/nix/profiles/system`, requests the human command, and does not run activation
 
 ### Requirement: Confirmation-gated live verification
 
@@ -231,9 +231,9 @@ Post-activation verification MUST remain blocked until Cameron explicitly confir
 
 ### Requirement: Rollback preservation
 
-Post-activation verification MUST confirm that the generation recorded before activation remains immediately available for rollback.
+Post-activation verification MUST confirm that `/nix/var/nix/profiles/system` points to a new active `system-N-link` and that the `system-(N-1)-link` recorded before activation remains immediately previous, present, and resolvable for rollback.
 
-#### Scenario: Activated generation is inspected
+#### Scenario: Activated system profile is inspected
 
-- **WHEN** Cameron confirms activation and generation history is queried
-- **THEN** the recorded prior generation remains directly behind the active generation
+- **WHEN** Cameron confirms activation and the nix-darwin system profile links are queried
+- **THEN** the recorded `system-(N-1)-link` remains directly behind the new active `system-N-link` and available for rollback

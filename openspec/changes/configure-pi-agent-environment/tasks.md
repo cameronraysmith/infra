@@ -61,8 +61,8 @@
 
 ## 6. Human activation boundary and rollback
 
-- [ ] 6.1 After every pre-activation check passes, record the complete output of `home-manager generations | head -1` without activating.
+- [x] 6.1 After every pre-activation check passes, record the complete, nonempty single-line outputs of `readlink /nix/var/nix/profiles/system` and `readlink -f /nix/var/nix/profiles/system` without `sudo` or activation; require the first to name the current `system-N-link` and the second its resolved `darwin-system` store path.
 - [ ] 6.2 Stop and ask Cameron to run `just activate --ask`; the implementation agent MUST NOT run that command.
 - [ ] 6.3 Keep every live-state probe blocked and every post-activation task incomplete until Cameron explicitly confirms successful activation.
 - [ ] 6.4 After confirmation, inspect representative Pi-managed targets to verify the mutable settings copy, runtime-managed state not converted into immutable executable-resource links, immutable policy/theme/extensions/global-instruction resources, canonical `~/.agents/skills`, absent `~/.pi/agent/skills`, exact selected resources, policy behavior, exclusions, sentinel-secret absence, and slow-mode opt-in with unique non-destructive probes cleaned by `rip`; do not claim exhaustive coverage of every possible Pi path.
-- [ ] 6.5 Confirm the generation recorded in 6.1 remains immediately behind the active generation and available for rollback.
+- [ ] 6.5 After activation, confirm `/nix/var/nix/profiles/system` points to the new active `system-N-link`, the link recorded in 6.1 is the immediately previous `system-(N-1)-link`, and that recorded link remains present and resolvable for rollback.
