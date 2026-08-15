@@ -625,6 +625,36 @@ Run policy, structural, smoke, treefmt, the approved fast check set, strict temp
 Confirm the rollback record remains `system-53-link` and its recorded resolved `darwin-system` path.
 Run no activation or live Pi probe.
 
+## Task 10: Honor curl GET negation order
+
+**Files:**
+
+- Modify: `modules/checks/pi-agent-environment.nix`
+- Modify: `modules/home/ai/pi/policy/permission-rules.ts`
+- Modify: `openspec/changes/configure-pi-agent-environment/plan.md`
+- Modify: `openspec/changes/configure-pi-agent-environment/tasks.md`
+
+**Interfaces:**
+
+- Consumes the reviewed curl option inventory and ordered transfer analyzer from Task 9.
+- Produces ordered `--get`/`-G` and `--no-get` state so the final toggle controls whether data-bearing requests retain GET semantics.
+- Leaves Task 8 steps 5 and 6 open for human activation and live verification.
+
+- [ ] **Step 1: Add ordered-state RED rows**
+
+Add exact prompt rows for `curl --get --no-get --data payload URL` and `curl -G --no-get --upload-file payload URL`, plus an allow guard proving a later positive `--get` restores GET semantics.
+Run the unchanged analyzer and retain only the two expected allow-versus-prompt bypass failures.
+
+- [ ] **Step 2: Implement the minimal ordered-state correction**
+
+Make `--no-get` clear `usesGet` while preserving the existing left-to-right behavior in which a later `--get` or `-G` sets it again.
+Audit related stateful negations and broaden the policy only if another safety-relevant state defect is demonstrated.
+
+- [ ] **Step 3: Revalidate without activation**
+
+Run policy, structural, smoke, treefmt, `just check-fast off off`, strict temporary-XDG OpenSpec validation, exact 25-requirement trace/order, scope and diff audits, and rollback verification for `system-53-link`.
+Run no activation or live Pi probe.
+
 ## Commit plan
 
 | Commit | Purpose | Paths |

@@ -846,6 +846,27 @@
         }
         {
           kind = "shell";
+          name = "curl no-get after get restores data mutation";
+          command = "curl --get --no-get --data payload URL";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl no-get after short get restores upload mutation";
+          command = "curl -G --no-get --upload-file payload URL";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl later get restores GET semantics";
+          command = "curl --get --no-get --get --data payload URL";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "curl expand-data mutation prompts";
           command = "curl --expand-data=payload https://example.invalid";
           expected = "prompt";

@@ -82,3 +82,10 @@
 - [x] 8.2 Classify reviewed no-value curl flags explicitly, make unclassified long and short options prompt, and replace the partial Git command list with the exact deployed Git 2.55.0 `git --list-cmds=builtins,nohelpers` inventory while excluding aliases and helpers.
 - [x] 8.3 Replace the lexical slow-mode settings check with an exact top-level settings shape and require the pinned selected slow-mode source to initialize its only `enabled` state declaration to `false` before its toggle transition.
 - [x] 8.4 Re-run policy, structural, smoke, treefmt, approved fast checks, strict temporary-XDG OpenSpec validation, and exact requirement, trace, inventory, scope, and diff audits; retain the `system-53-link` rollback record without activation or live probes.
+
+## 9. Curl GET negation order remediation
+
+- [x] 9.1 Add exact prompt rows for `curl --get --no-get --data payload URL` and `curl -G --no-get --upload-file payload URL`, plus an allow guard proving a later positive `--get` restores GET semantics; retain the two expected allow-versus-prompt RED failures before the production edit.
+- [x] 9.2 Make `--no-get` clear `usesGet` while preserving left-to-right restoration by a later `--get` or `-G`, and make the independent policy regulator GREEN.
+- [x] 9.3 Audit related stateful curl negations and leave them unchanged because no additional safety-relevant ordered-state defect is present in the analyzer.
+- [x] 9.4 Re-run policy, structural, smoke, treefmt, `just check-fast off off`, strict temporary-XDG OpenSpec validation, exact 25-requirement trace/order, scope and diff audits, and rollback verification for `system-53-link`; run no activation or live Pi probe.
