@@ -73,8 +73,8 @@
 - [x] 7.2 Make unclassified curl long options and unresolved Git/jj alias-shaped subcommands prompt while preserving explicit safe curl behavior, injected aliases, worktree/workspace built-ins, and recognized ordinary Git/jj commands; make the independent policy regulator GREEN.
 - [x] 7.3 Correct stale brainstorm rollback wording, add a structural literal for the absence of default slow-mode activation settings, and add explicit missing-capability and throwing-capability-factory diagnostic block cases.
 - [x] 7.4 Run automated pre-activation revalidation: formatting, package, independent policy/structural/smoke regulators, relevant Home Manager evaluation/build, approved fast checks, strict temporary-XDG OpenSpec validation, 25-requirement trace/order audit, scope audit, and final diff checks; record the current nix-darwin system profile link and resolved store path without activating.
-- [ ] 7.5 Stop and ask Cameron to run `just activate --ask` for the remediated generation; the implementation agent MUST NOT run activation or inspect live Pi targets before explicit confirmation.
-- [ ] 7.6 After explicit confirmation, verify representative live policy, immutable-resource, slow-mode, and rollback behavior for the remediated generation.
+- [x] 7.5 Stop and ask Cameron to run `just activate --ask` for the remediated generation; the implementation agent MUST NOT run activation or inspect live Pi targets before explicit confirmation.
+- [x] 7.6 After explicit confirmation, verify representative live policy, immutable-resource, slow-mode, and rollback behavior for the remediated generation.
 
 ## 8. Recognized shell reads and slow-mode evidence
 
