@@ -52,6 +52,71 @@
         "piCodingAgentMutableSettings"
       ] { } homeConfig.home.activation;
       settingsActivationData = settingsActivation.data or "";
+      settingsActivationLines = builtins.filter (line: line != "") (
+        lib.splitString "\n" settingsActivationData
+      );
+      settingsActivationMatch =
+        if builtins.length settingsActivationLines == 1 then
+          builtins.match "[$]DRY_RUN_CMD install -Dm644 (/nix/store/[^ ]+) ([^ ]+)" (
+            builtins.head settingsActivationLines
+          )
+        else
+          null;
+      settingsSource =
+        if
+          settingsActivationMatch != null && builtins.elemAt settingsActivationMatch 1 == settingsTarget
+        then
+          builtins.elemAt settingsActivationMatch 0
+        else
+          throw "pi-agent-environment-smoke: expected one exact mutable-settings install source and target";
+      deployedPiCandidates = builtins.filter (
+        package: (package.meta.mainProgram or null) == "pi" && lib.getVersion package == "0.84.1"
+      ) homeConfig.home.packages;
+      deployedPiPackage =
+        if builtins.length deployedPiCandidates == 1 then
+          builtins.head deployedPiCandidates
+        else
+          throw "pi-agent-environment-smoke: expected one deployed Home Manager Pi main program at version 0.84.1";
+      deployedPiExecutable =
+        if toString deployedPiPackage != toString piConfig.package then
+          lib.getExe deployedPiPackage
+        else
+          throw "pi-agent-environment-smoke: deployed Pi must be the Home Manager outer wrapper";
+      skillsActivation = lib.attrByPath [ "agentsSkillsRealFiles" ] { } homeConfig.home.activation;
+      skillsActivationData = skillsActivation.data or "";
+      skillsActivationLines = builtins.filter (line: line != "") (
+        lib.splitString "\n" skillsActivationData
+      );
+      skillsCopyMatch =
+        if
+          builtins.length skillsActivationLines == 3
+          && builtins.elemAt skillsActivationLines 0 == ''$DRY_RUN_CMD rm -rf "$HOME/.agents/skills"''
+          && builtins.elemAt skillsActivationLines 1 == ''$DRY_RUN_CMD install -d "$HOME/.agents/skills"''
+        then
+          builtins.match ''[$]DRY_RUN_CMD cp -RL --no-preserve=mode (/nix/store/[^ ]+)/[.] "[$]HOME/[.]agents/skills/"'' (
+            builtins.elemAt skillsActivationLines 2
+          )
+        else
+          null;
+      skillsSource =
+        if skillsCopyMatch != null then
+          builtins.elemAt skillsCopyMatch 0
+        else
+          throw "pi-agent-environment-smoke: expected one exact canonical skills copy source";
+      requiredHomeFileSource =
+        target:
+        let
+          file = homeFileAt target;
+        in
+        if
+          file != null
+          && file.enable
+          && file.source != null
+          && lib.hasPrefix builtins.storeDir (toString file.source)
+        then
+          file.source
+        else
+          throw "pi-agent-environment-smoke: missing immutable Home Manager resource at ${target}";
       runtimeStateCategories = [
         {
           name = "settings";
@@ -2209,9 +2274,846 @@
               touch "$out"
             '';
 
-        pi-agent-environment-smoke = pkgs.runCommand "pi-agent-environment-smoke-scaffold" { } ''
-          printf '%s\n' 'scaffold only: smoke behavior is assigned to Plan Task 4' > "$out"
-        '';
+        pi-agent-environment-smoke =
+          let
+            contextSource = requiredHomeFileSource contextTarget;
+            themeSource = requiredHomeFileSource themeTarget;
+            editWritePolicySource = requiredHomeFileSource editWritePolicyTarget;
+            permissionRulesSource = requiredHomeFileSource permissionRulesTarget;
+            resourceLinks = [
+              {
+                destination = ".pi/agent/AGENTS.md";
+                sourceVariable = "CONTEXT_SOURCE";
+              }
+              {
+                destination = ".pi/agent/themes/catppuccin-mocha.json";
+                sourceVariable = "THEME_SOURCE";
+              }
+              {
+                destination = ".pi/agent/extensions/edit-write-policy.ts";
+                sourceVariable = "EDIT_WRITE_POLICY_SOURCE";
+              }
+              {
+                destination = ".config/pi-agent-extensions/permission-gate/rules.ts";
+                sourceVariable = "PERMISSION_RULES_SOURCE";
+              }
+            ];
+            packageResourceSources = map (
+              entry: if builtins.isAttrs entry then toString entry.source else toString entry
+            ) packageEntries;
+            piModuleSource = builtins.path {
+              path = ../home/ai/pi/default.nix;
+              name = "pi-home-module.nix";
+            };
+            sentinelScanRoots = [
+              piModuleSource
+              settingsSource
+              skillsSource
+            ]
+            ++ packageResourceSources;
+            runtimeIndirection =
+              if builtins.elem "direnv/index.ts" positiveExtensions then
+                "direnv/index.ts"
+              else
+                throw "pi-agent-environment-smoke: direnv runtime indirection is not configured";
+            smokeDriver = pkgs.writeText "pi-agent-environment-smoke-driver.py" ''
+              import json
+              import os
+              from pathlib import Path
+              import secrets
+              import signal
+              import subprocess
+
+              def reject_json_constant(value):
+                  raise ValueError(f"non-finite JSON constant: {value}")
+
+
+              def reject_duplicate_keys(pairs):
+                  result = {}
+                  for key, value in pairs:
+                      if key in result:
+                          raise ValueError(f"duplicate JSON key: {key}")
+                      result[key] = value
+                  return result
+
+
+              def strict_json_loads(text):
+                  return json.loads(
+                      text,
+                      parse_constant=reject_json_constant,
+                      object_pairs_hook=reject_duplicate_keys,
+                  )
+
+
+              def expect_rejected(name, operation):
+                  try:
+                      operation()
+                  except (AssertionError, TypeError, ValueError):
+                      return
+                  raise AssertionError(f"mutation unexpectedly accepted: {name}")
+
+
+              def validate_settings_text(settings_text, expected_text):
+                  settings = strict_json_loads(settings_text)
+                  expected = strict_json_loads(expected_text)
+                  if not isinstance(settings, dict) or settings != expected:
+                      raise AssertionError("copied settings differ from evaluated settings")
+                  if settings.get("theme") != "catppuccin-mocha":
+                      raise AssertionError("copied settings select the wrong theme")
+                  packages = settings.get("packages")
+                  expected_packages = expected.get("packages")
+                  if not isinstance(packages, list) or len(packages) != 2:
+                      raise AssertionError("copied settings require exactly two package entries")
+                  if packages != expected_packages:
+                      raise AssertionError("copied settings package entries differ from evaluated entries")
+                  extension = packages[0]
+                  compaction = packages[1]
+                  if not isinstance(extension, dict) or not isinstance(extension.get("source"), str):
+                      raise AssertionError("copied settings extension package reference is malformed")
+                  if not isinstance(compaction, str) or not compaction:
+                      raise AssertionError("copied settings compaction package reference is malformed")
+                  expected_extensions = [
+                      "direnv/index.ts",
+                      "permission-gate/index.ts",
+                      "questionnaire/index.ts",
+                      "slow-mode/index.ts",
+                      "stash/index.ts",
+                      "statusline/index.ts",
+                      "-fetch/index.ts",
+                      "-notify/index.ts",
+                  ]
+                  if extension.get("extensions") != expected_extensions:
+                      raise AssertionError("copied settings extension references differ")
+                  if len(set(extension["extensions"])) != len(extension["extensions"]):
+                      raise AssertionError("copied settings extension references contain duplicates")
+                  for empty_resource_kind in ("skills", "prompts", "themes"):
+                      if extension.get(empty_resource_kind) != []:
+                          raise AssertionError(
+                              f"copied settings unexpectedly select package {empty_resource_kind}"
+                          )
+                  references = [extension["source"], compaction]
+                  if len(set(references)) != 2:
+                      raise AssertionError("copied settings contain duplicate package references")
+                  return settings
+
+
+              def validate_resource_links(resource_links):
+                  expected = [
+                      {"destination": ".pi/agent/AGENTS.md", "sourceVariable": "CONTEXT_SOURCE"},
+                      {
+                          "destination": ".pi/agent/themes/catppuccin-mocha.json",
+                          "sourceVariable": "THEME_SOURCE",
+                      },
+                      {
+                          "destination": ".pi/agent/extensions/edit-write-policy.ts",
+                          "sourceVariable": "EDIT_WRITE_POLICY_SOURCE",
+                      },
+                      {
+                          "destination": ".config/pi-agent-extensions/permission-gate/rules.ts",
+                          "sourceVariable": "PERMISSION_RULES_SOURCE",
+                      },
+                  ]
+                  if resource_links != expected:
+                      raise AssertionError("aggregate immutable resource references differ")
+                  destinations = [entry["destination"] for entry in resource_links]
+                  variables = [entry["sourceVariable"] for entry in resource_links]
+                  if len(set(destinations)) != len(destinations) or len(set(variables)) != len(variables):
+                      raise AssertionError("aggregate immutable resource references contain duplicates")
+                  return resource_links
+
+
+              def validate_scan_roots(scan_roots):
+                  root_strings = [str(root) for root in scan_roots]
+                  if len(root_strings) != len(set(root_strings)):
+                      raise AssertionError("sentinel scan roots contain duplicates")
+                  for root in scan_roots:
+                      parts = root.parts
+                      if len(parts) >= 3 and parts[-3:] == (
+                          "modules",
+                          "checks",
+                          "pi-agent-environment.nix",
+                      ):
+                          raise AssertionError("shared Pi check module entered the smoke scan roots")
+                  return scan_roots
+
+
+              def validate_extension_ui_record(record, seen_ids):
+                  request_id = record.get("id")
+                  if not isinstance(request_id, str) or not request_id:
+                      raise AssertionError("extension UI request id must be nonempty")
+                  if request_id in seen_ids:
+                      raise AssertionError(f"duplicate extension UI request id: {request_id}")
+                  seen_ids.add(request_id)
+                  if record.get("method") != "setStatus":
+                      raise AssertionError(f"unexpected extension UI method: {record}")
+                  status_key = record.get("statusKey")
+                  clear_shape = {"type", "id", "method", "statusKey"}
+                  gate_shape = clear_shape | {"statusText"}
+                  if status_key == "gate":
+                      expected_text = "\x1b[38;5;103m\uf132 gate\x1b[39m"
+                      if set(record) != gate_shape or record.get("statusText") != expected_text:
+                          raise AssertionError(f"unexpected permission-gate status shape: {record}")
+                      return
+                  if status_key in {"direnv", "stash"} and set(record) == clear_shape:
+                      return
+                  raise AssertionError(f"unexpected non-benign status record: {record}")
+
+
+              def validate_command_rows(commands):
+                  if not isinstance(commands, list):
+                      raise AssertionError("get_commands data is not a list")
+                  by_name = {}
+                  allowed_keys = {"name", "description", "source", "sourceInfo"}
+                  source_info_keys = {"path", "source", "scope", "origin", "baseDir"}
+                  required_source_info_keys = {"path", "source", "scope", "origin"}
+                  for index, command in enumerate(commands):
+                      if not isinstance(command, dict):
+                          raise AssertionError(f"get_commands row {index} is not an object")
+                      if not {"name", "source", "sourceInfo"}.issubset(command) or not set(
+                          command
+                      ).issubset(allowed_keys):
+                          raise AssertionError(f"get_commands row {index} has an invalid shape: {command}")
+                      name = command["name"]
+                      source = command["source"]
+                      source_info = command["sourceInfo"]
+                      if not isinstance(name, str) or not name:
+                          raise AssertionError(f"get_commands row {index} has an invalid name")
+                      if name in by_name:
+                          raise AssertionError(f"get_commands contains duplicate command name: {name}")
+                      if source not in {"extension", "prompt", "skill"}:
+                          raise AssertionError(f"get_commands row {index} has an invalid source")
+                      if "description" in command and not isinstance(command["description"], str):
+                          raise AssertionError(f"get_commands row {index} has an invalid description")
+                      if not isinstance(source_info, dict) or not required_source_info_keys.issubset(
+                          source_info
+                      ) or not set(source_info).issubset(source_info_keys):
+                          raise AssertionError(
+                              f"get_commands row {index} has invalid sourceInfo: {source_info}"
+                          )
+                      if any(
+                          not isinstance(source_info[key], str) or not source_info[key]
+                          for key in ("path", "source")
+                      ):
+                          raise AssertionError(
+                              f"get_commands row {index} has empty sourceInfo paths: {source_info}"
+                          )
+                      if source_info["scope"] not in {"user", "project", "temporary"}:
+                          raise AssertionError(
+                              f"get_commands row {index} has invalid sourceInfo scope: {source_info}"
+                          )
+                      if source_info["origin"] not in {"package", "top-level"}:
+                          raise AssertionError(
+                              f"get_commands row {index} has invalid sourceInfo origin: {source_info}"
+                          )
+                      if "baseDir" in source_info and (
+                          not isinstance(source_info["baseDir"], str) or not source_info["baseDir"]
+                      ):
+                          raise AssertionError(
+                              f"get_commands row {index} has invalid sourceInfo baseDir: {source_info}"
+                          )
+                      by_name[name] = command
+                  return by_name
+
+
+              def validate_response_rows(responses, requests):
+                  if len(responses) != len(requests):
+                      raise AssertionError(f"unexpected RPC response count: {responses}")
+                  expected_shape = {"id", "type", "command", "success", "data"}
+                  for response in responses:
+                      if not isinstance(response, dict) or set(response) != expected_shape:
+                          raise AssertionError(f"RPC response has an unexpected shape: {response}")
+                      if response.get("type") != "response":
+                          raise AssertionError(f"RPC response has an invalid type: {response}")
+                      if not isinstance(response.get("id"), str) or not response["id"]:
+                          raise AssertionError(f"RPC response has an invalid id: {response}")
+                      if response.get("success") is not True:
+                          raise AssertionError(f"failed RPC response: {response}")
+                  response_ids = [response["id"] for response in responses]
+                  expected_ids = [request["id"] for request in requests]
+                  if response_ids != expected_ids or len(set(response_ids)) != len(response_ids):
+                      raise AssertionError(
+                          f"responses are not uniquely correlated in request order: {responses}"
+                      )
+                  response_by_id = {response["id"]: response for response in responses}
+                  for request in requests:
+                      response = response_by_id[request["id"]]
+                      if response.get("command") != request["type"]:
+                          raise AssertionError(f"missing correlated response for {request}")
+                  return response_by_id
+
+
+              def validate_no_session_state(state):
+                  if not isinstance(state, dict):
+                      raise AssertionError("get_state data is not an object")
+                  if state.get("sessionFile") is not None:
+                      raise AssertionError(f"--no-session returned a session file: {state['sessionFile']}")
+                  return state
+
+
+              def reject_session_jsonl(paths):
+                  if paths:
+                      raise AssertionError(f"--no-session created JSONL files: {[str(path) for path in paths]}")
+
+
+              def signal_group(pid, group_signal):
+                  try:
+                      os.killpg(pid, group_signal)
+                  except ProcessLookupError:
+                      pass
+
+
+              def cleanup_process_group(
+                  process,
+                  terminate_timeout=2,
+                  kill_timeout=2,
+                  group_signaler=signal_group,
+              ):
+                  group_signaler(process.pid, signal.SIGTERM)
+                  try:
+                      return process.communicate(timeout=terminate_timeout), "terminated"
+                  except subprocess.TimeoutExpired:
+                      group_signaler(process.pid, signal.SIGKILL)
+                      try:
+                          return process.communicate(timeout=kill_timeout), "killed"
+                      except subprocess.TimeoutExpired as error:
+                          raise AssertionError(
+                              "Pi process group retained pipes after bounded SIGKILL cleanup"
+                          ) from error
+
+
+              def communicate_with_cleanup(process, timeout=20):
+                  try:
+                      return process.communicate(timeout=timeout)
+                  except subprocess.TimeoutExpired as error:
+                      _, cleanup_method = cleanup_process_group(process)
+                      raise AssertionError(
+                          f"Pi did not exit within {timeout} seconds after stdin closure; "
+                          f"process group cleanup={cleanup_method}"
+                      ) from error
+
+
+              def launch_pi(argv, project_dir, launch_env):
+                  return subprocess.Popen(
+                      argv,
+                      cwd=project_dir,
+                      env=launch_env,
+                      stdin=subprocess.PIPE,
+                      stdout=subprocess.PIPE,
+                      stderr=subprocess.PIPE,
+                      start_new_session=True,
+                  )
+
+
+              class CleanupProbe:
+                  pid = 4242
+
+                  def __init__(self, outcomes):
+                      self.outcomes = list(outcomes)
+                      self.timeouts = []
+
+                  def communicate(self, timeout):
+                      self.timeouts.append(timeout)
+                      outcome = self.outcomes.pop(0)
+                      if outcome == "timeout":
+                          raise subprocess.TimeoutExpired("pi", timeout)
+                      return b"", b""
+
+
+              requests = [
+                  {"id": "state-1", "type": "get_state"},
+                  {"id": "commands-1", "type": "get_commands"},
+              ]
+              expected_request_types = ["get_state", "get_commands"]
+              if [request["type"] for request in requests] != expected_request_types:
+                  raise AssertionError("provider-triggering request entered the request stream")
+
+              home = Path(os.environ["SMOKE_HOME"])
+              agent_dir = home / ".pi" / "agent"
+              project_dir = Path(os.environ["SMOKE_PROJECT"])
+              settings_path = agent_dir / "settings.json"
+              settings_source = Path(os.environ["SETTINGS_SOURCE"])
+              models_path = agent_dir / "models.json"
+
+              expected_settings_text = os.environ["EXPECTED_SETTINGS_JSON"]
+              if settings_path.is_symlink() or not os.access(settings_path, os.W_OK):
+                  raise AssertionError("generated settings are not one writable copied file")
+              if settings_path.read_bytes() != settings_source.read_bytes():
+                  raise AssertionError("copied generated settings differ before launch")
+              settings_files = sorted(home.rglob("settings.json"))
+              if settings_files != [settings_path]:
+                  raise AssertionError(f"expected exactly one settings.json, got {settings_files}")
+              settings_text = settings_path.read_text(encoding="utf-8")
+              settings = validate_settings_text(settings_text, expected_settings_text)
+
+              models = strict_json_loads(models_path.read_text(encoding="utf-8"))
+              provider = models.get("providers", {}).get("review-local")
+              expected_provider = {
+                  "baseUrl": "http://127.0.0.1:9/v1",
+                  "api": "openai-completions",
+                  "models": [{"id": "review-model"}],
+              }
+              if provider != expected_provider or "apiKey" in provider:
+                  raise AssertionError(f"models.json is not the credential-free inert registration: {provider}")
+
+              resource_links = validate_resource_links(strict_json_loads(os.environ["RESOURCE_LINKS"]))
+              for resource in resource_links:
+                  destination = home / resource["destination"]
+                  source = Path(os.environ[resource["sourceVariable"]])
+                  if not destination.is_symlink() or destination.resolve() != source.resolve():
+                      link_target = os.readlink(destination) if destination.is_symlink() else None
+                      raise AssertionError(
+                          f"immutable resource link differs: destination={destination}, "
+                          f"link_target={link_target!r}, resolved={destination.resolve()}, "
+                          f"source={source}, source_resolved={source.resolve()}"
+                      )
+
+              mutation_names = []
+
+              def reject_mutation(name, operation):
+                  expect_rejected(name, operation)
+                  mutation_names.append(name)
+
+              for constant in ("NaN", "Infinity", "-Infinity"):
+                  reject_mutation(
+                      f"non-finite JSON {constant}",
+                      lambda constant=constant: strict_json_loads(f'{{"value":{constant}}}'),
+                  )
+              reject_mutation(
+                  "duplicate JSON object key",
+                  lambda: strict_json_loads('{"value":1,"value":2}'),
+              )
+
+              wrong_theme = dict(settings)
+              wrong_theme["theme"] = "dark"
+              reject_mutation(
+                  "wrong settings theme",
+                  lambda: validate_settings_text(json.dumps(wrong_theme), expected_settings_text),
+              )
+              missing_package = dict(settings)
+              missing_package["packages"] = settings["packages"][:1]
+              reject_mutation(
+                  "missing settings package",
+                  lambda: validate_settings_text(json.dumps(missing_package), expected_settings_text),
+              )
+              duplicate_package = dict(settings)
+              duplicate_package["packages"] = [settings["packages"][0], settings["packages"][0]]
+              reject_mutation(
+                  "duplicate settings package",
+                  lambda: validate_settings_text(json.dumps(duplicate_package), expected_settings_text),
+              )
+              wrong_reference = dict(settings)
+              wrong_extension = dict(settings["packages"][0])
+              wrong_extension["source"] = "/nix/store/wrong-extension-reference"
+              wrong_reference["packages"] = [wrong_extension, settings["packages"][1]]
+              reject_mutation(
+                  "wrong settings resource reference",
+                  lambda: validate_settings_text(json.dumps(wrong_reference), expected_settings_text),
+              )
+              duplicate_extension = dict(settings)
+              duplicate_extension_package = dict(settings["packages"][0])
+              duplicate_extension_package["extensions"] = [
+                  *duplicate_extension_package["extensions"],
+                  duplicate_extension_package["extensions"][0],
+              ]
+              duplicate_extension["packages"] = [
+                  duplicate_extension_package,
+                  settings["packages"][1],
+              ]
+              reject_mutation(
+                  "duplicate settings extension reference",
+                  lambda: validate_settings_text(
+                      json.dumps(duplicate_extension), expected_settings_text
+                  ),
+              )
+              reject_mutation(
+                  "duplicate immutable resource destination",
+                  lambda: validate_resource_links(resource_links + [resource_links[0]]),
+              )
+
+              benign_gate = {
+                  "type": "extension_ui_request",
+                  "id": "ui-gate",
+                  "method": "setStatus",
+                  "statusKey": "gate",
+                  "statusText": "\x1b[38;5;103m\uf132 gate\x1b[39m",
+              }
+              validate_extension_ui_record(benign_gate, set())
+              reject_mutation(
+                  "empty extension UI id",
+                  lambda: validate_extension_ui_record({**benign_gate, "id": ""}, set()),
+              )
+              reject_mutation(
+                  "duplicate extension UI id",
+                  lambda: validate_extension_ui_record(
+                      {
+                          "type": "extension_ui_request",
+                          "id": "ui-duplicate",
+                          "method": "setStatus",
+                          "statusKey": "stash",
+                      },
+                      {"ui-duplicate"},
+                  ),
+              )
+              reject_mutation(
+                  "extension UI extra field",
+                  lambda: validate_extension_ui_record({**benign_gate, "extra": True}, set()),
+              )
+              reject_mutation(
+                  "diagnostic direnv status",
+                  lambda: validate_extension_ui_record(
+                      {
+                          "type": "extension_ui_request",
+                          "id": "ui-direnv",
+                          "method": "setStatus",
+                          "statusKey": "direnv",
+                          "statusText": "direnv:error",
+                      },
+                      set(),
+                  ),
+              )
+
+              synthetic_source_info = {
+                  "path": "/nix/store/source/index.ts",
+                  "source": "/nix/store/source",
+                  "scope": "user",
+                  "origin": "package",
+                  "baseDir": "/nix/store/source",
+              }
+              validate_command_rows(
+                  [{"name": "valid", "source": "extension", "sourceInfo": synthetic_source_info}]
+              )
+              reject_mutation(
+                  "non-object command row",
+                  lambda: validate_command_rows([None]),
+              )
+              reject_mutation(
+                  "malformed command row",
+                  lambda: validate_command_rows([{"source": "extension"}]),
+              )
+              reject_mutation(
+                  "duplicate command name",
+                  lambda: validate_command_rows(
+                      [
+                          {
+                              "name": "duplicate",
+                              "source": "extension",
+                              "sourceInfo": synthetic_source_info,
+                          },
+                          {
+                              "name": "duplicate",
+                              "source": "skill",
+                              "sourceInfo": synthetic_source_info,
+                          },
+                      ]
+                  ),
+              )
+
+              synthetic_responses = [
+                  {
+                      "id": request["id"],
+                      "type": "response",
+                      "command": request["type"],
+                      "success": True,
+                      "data": {},
+                  }
+                  for request in requests
+              ]
+              validate_response_rows(synthetic_responses, requests)
+              reject_mutation(
+                  "response extra field",
+                  lambda: validate_response_rows(
+                      [{**synthetic_responses[0], "extra": True}, synthetic_responses[1]],
+                      requests,
+                  ),
+              )
+              reject_mutation(
+                  "duplicate response id",
+                  lambda: validate_response_rows(
+                      [synthetic_responses[0], {**synthetic_responses[1], "id": "state-1"}],
+                      requests,
+                  ),
+              )
+
+              validate_no_session_state({})
+              validate_no_session_state({"sessionFile": None})
+              reject_mutation(
+                  "non-null no-session state",
+                  lambda: validate_no_session_state({"sessionFile": "/tmp/session.jsonl"}),
+              )
+              reject_mutation(
+                  "nested no-session JSONL",
+                  lambda: reject_session_jsonl([agent_dir / "sessions" / "nested.jsonl"]),
+              )
+              reject_mutation(
+                  "shared check module scan root",
+                  lambda: validate_scan_roots(
+                      [Path("/nix/store/source/modules/checks/pi-agent-environment.nix")]
+                  ),
+              )
+
+              cleanup_signals = []
+              cleanup_probe = CleanupProbe(["timeout", "done"])
+              _, cleanup_method = cleanup_process_group(
+                  cleanup_probe,
+                  group_signaler=lambda pid, group_signal: cleanup_signals.append((pid, group_signal)),
+              )
+              if (
+                  cleanup_method != "killed"
+                  or cleanup_probe.timeouts != [2, 2]
+                  or cleanup_signals
+                  != [(cleanup_probe.pid, signal.SIGTERM), (cleanup_probe.pid, signal.SIGKILL)]
+              ):
+                  raise AssertionError("process-group cleanup did not use bounded TERM/KILL escalation")
+              mutation_names.append("bounded process-group cleanup escalation")
+              reject_mutation(
+                  "pipes retained after group kill",
+                  lambda: cleanup_process_group(
+                      CleanupProbe(["timeout", "timeout"]),
+                      group_signaler=lambda _pid, _signal: None,
+                  ),
+              )
+
+              skills_dir = home / ".agents" / "skills"
+              if skills_dir.is_symlink() or not (skills_dir / "using-superpowers" / "SKILL.md").is_file():
+                  raise AssertionError("canonical skills were not copied from the derived aggregate tree")
+              if (agent_dir / "skills").exists():
+                  raise AssertionError("Pi-specific shadow skill sink exists")
+              if os.environ["RUNTIME_INDIRECTION"] != "direnv/index.ts":
+                  raise AssertionError("runtime environment indirection is not derived from settings")
+              if (project_dir / ".pi").exists() or (project_dir / ".agents").exists():
+                  raise AssertionError("fresh project contains trust-eligible project resources")
+
+              forbidden_legacy_paths = [
+                  agent_dir / "oauth.json",
+                  agent_dir / "auth.json",
+                  agent_dir / "apiKeys",
+                  agent_dir / "commands",
+                  agent_dir / "tools",
+                  home / ".config" / "pi-statusline",
+              ]
+              present_legacy_paths = [str(path) for path in forbidden_legacy_paths if path.exists()]
+              if present_legacy_paths:
+                  raise AssertionError(f"legacy migration inputs exist: {present_legacy_paths}")
+
+              sentinel = ("pi-runtime-sentinel-" + secrets.token_hex(32)).encode("ascii")
+              scan_roots = validate_scan_roots(
+                  [Path(path) for path in strict_json_loads(os.environ["SENTINEL_SCAN_ROOTS"])]
+                  + [Path(os.environ[resource["sourceVariable"]]) for resource in resource_links]
+                  + [home]
+              )
+              scanned_files = 0
+              for root in scan_roots:
+                  if root.is_file():
+                      candidates = [root]
+                  elif root.is_dir():
+                      candidates = (path for path in root.rglob("*") if path.is_file())
+                  else:
+                      raise AssertionError(f"sentinel scan root is absent: {root}")
+                  for candidate in candidates:
+                      scanned_files += 1
+                      try:
+                          content = candidate.read_bytes()
+                      except OSError as error:
+                          raise AssertionError(f"cannot scan {candidate}: {error}") from error
+                      if sentinel in content:
+                          raise AssertionError(f"runtime sentinel leaked into {candidate}")
+
+              launch_env = {
+                  "HOME": str(home),
+                  "PI_CODING_AGENT_DIR": str(agent_dir),
+                  "XDG_CONFIG_HOME": str(home / ".config"),
+                  "XDG_DATA_HOME": str(home / ".local" / "share"),
+                  "XDG_CACHE_HOME": str(home / ".cache"),
+                  "TMPDIR": os.environ["SMOKE_TMPDIR"],
+                  "PI_OFFLINE": "1",
+                  "PI_STATUSLINE": "minimal",
+              }
+              forbidden_fragments = ("API_KEY", "TOKEN", "CREDENTIAL", "AUTH")
+              credential_variables = [
+                  name for name in launch_env if any(fragment in name.upper() for fragment in forbidden_fragments)
+              ]
+              if credential_variables:
+                  raise AssertionError(f"credential variables entered launch environment: {credential_variables}")
+
+              argv = [
+                  os.environ["PI_EXECUTABLE"],
+                  "--mode",
+                  "rpc",
+                  "--no-session",
+                  "--no-approve",
+                  "--model",
+                  "review-local/review-model",
+              ]
+              process = launch_pi(argv, project_dir, launch_env)
+              assert process.stdin is not None
+              request_bytes = b"".join(
+                  json.dumps(request, separators=(",", ":")).encode("utf-8") + b"\n"
+                  for request in requests
+              )
+              process.stdin.write(request_bytes)
+              process.stdin.flush()
+              process.stdin.close()
+              process.stdin = None
+              stdout, stderr = communicate_with_cleanup(process)
+
+              if process.returncode is None:
+                  raise AssertionError("Pi exit status is absent")
+              if process.returncode < 0:
+                  raise AssertionError(f"Pi died from signal {-process.returncode}")
+              if process.returncode != 0:
+                  raise AssertionError(
+                      f"Pi exited {process.returncode}; stderr={stderr.decode('utf-8', 'replace')!r}"
+                  )
+              if stderr:
+                  raise AssertionError(f"Pi emitted stderr diagnostics: {stderr.decode('utf-8', 'replace')!r}")
+              if stdout and not stdout.endswith(b"\n"):
+                  raise AssertionError(f"Pi stdout ended with a non-LF-delimited record: {stdout!r}")
+
+              records = []
+              for index, raw_line in enumerate(stdout.split(b"\n")[:-1], start=1):
+                  if not raw_line:
+                      raise AssertionError(f"Pi stdout record {index} is empty")
+                  try:
+                      text = raw_line.decode("utf-8", "strict")
+                      record = strict_json_loads(text)
+                  except (UnicodeDecodeError, ValueError) as error:
+                      raise AssertionError(f"Pi stdout record {index} is malformed: {error}") from error
+                  if not isinstance(record, dict):
+                      raise AssertionError(f"Pi stdout record {index} is not an object")
+                  records.append(record)
+
+              responses = []
+              extension_ui_ids = set()
+              for record in records:
+                  record_type = record.get("type")
+                  if record_type == "response":
+                      responses.append(record)
+                      continue
+                  if record_type == "extension_error":
+                      raise AssertionError(f"extension_error emitted: {record}")
+                  if record_type == "extension_ui_request":
+                      validate_extension_ui_record(record, extension_ui_ids)
+                      continue
+                  raise AssertionError(f"unexpected asynchronous RPC record emitted: {record}")
+
+              response_by_id = validate_response_rows(responses, requests)
+
+              state = validate_no_session_state(response_by_id["state-1"].get("data"))
+              model = state.get("model")
+              if not isinstance(model, dict):
+                  raise AssertionError(f"get_state did not return a model object: {state}")
+              selected = (model.get("provider"), model.get("id"))
+              if selected == ("unknown", "unknown"):
+                  raise AssertionError("get_state returned forbidden unknown/unknown model")
+              if selected != ("review-local", "review-model"):
+                  raise AssertionError(f"unexpected selected model: {selected}")
+
+              command_data = response_by_id["commands-1"].get("data")
+              if not isinstance(command_data, dict) or set(command_data) != {"commands"}:
+                  raise AssertionError(f"get_commands data has an invalid shape: {command_data}")
+              by_name = validate_command_rows(command_data["commands"])
+              required_extensions = {"direnv", "gate", "slow-mode", "statusline"}
+              missing_extensions = sorted(required_extensions - by_name.keys())
+              if missing_extensions:
+                  raise AssertionError(f"missing extension commands: {missing_extensions}")
+              wrong_extension_sources = sorted(
+                  name for name in required_extensions if by_name[name].get("source") != "extension"
+              )
+              if wrong_extension_sources:
+                  raise AssertionError(f"commands are not extension-sourced: {wrong_extension_sources}")
+              skill_name = "skill:using-superpowers"
+              if skill_name not in by_name or by_name[skill_name].get("source") != "skill":
+                  raise AssertionError(f"missing canonical skill command: {skill_name}")
+
+              if settings_path.read_bytes() != settings_source.read_bytes():
+                  raise AssertionError("copied generated settings were rewritten")
+              migrated = sorted(str(path) for path in home.rglob("*.migrated"))
+              if migrated:
+                  raise AssertionError(f"legacy migration artifacts appeared: {migrated}")
+              session_jsonl = sorted(agent_dir.rglob("*.jsonl"))
+              reject_session_jsonl(session_jsonl)
+              generated_auth = agent_dir / "auth.json"
+              post_launch_legacy_paths = [
+                  path for path in forbidden_legacy_paths if path != generated_auth and path.exists()
+              ]
+              if post_launch_legacy_paths:
+                  raise AssertionError(f"legacy migration paths appeared: {post_launch_legacy_paths}")
+              if generated_auth.exists() and strict_json_loads(
+                  generated_auth.read_text(encoding="utf-8")
+              ) != {}:
+                  raise AssertionError("Pi generated nonempty authentication state")
+
+              visible = sorted(required_extensions | {skill_name})
+              print(f"pi_executable={argv[0]}")
+              print(f"pi_argv={json.dumps(argv[1:])}")
+              print("pi_launch_seam=launch_pi")
+              print(f"request_types={json.dumps(expected_request_types)}")
+              print(f"selected_model={selected[0]}/{selected[1]}")
+              print(f"required_commands={json.dumps(visible)}")
+              print(f"mutation_cases={len(mutation_names)}")
+              print(f"sentinel_scan_files={scanned_files}")
+              print("sentinel_forwarded_to_pi=false")
+              print("migration_artifacts=0")
+              print("runtime_auth_entries=0")
+              print("diagnostics=0")
+              print("provider_triggering_requests=0")
+              print("stdin_closed=true")
+              print(f"exit_status={process.returncode}")
+            '';
+          in
+          pkgs.runCommand "pi-agent-environment-smoke"
+            {
+              nativeBuildInputs = [ pkgs.python3 ];
+              PI_EXECUTABLE = deployedPiExecutable;
+              SETTINGS_SOURCE = settingsSource;
+              EXPECTED_SETTINGS_JSON = builtins.toJSON piConfig.settings;
+              SKILLS_SOURCE = skillsSource;
+              CONTEXT_SOURCE = contextSource;
+              THEME_SOURCE = themeSource;
+              EDIT_WRITE_POLICY_SOURCE = editWritePolicySource;
+              PERMISSION_RULES_SOURCE = permissionRulesSource;
+              RESOURCE_LINKS = builtins.toJSON resourceLinks;
+              SENTINEL_SCAN_ROOTS = builtins.toJSON (map toString sentinelScanRoots);
+              RUNTIME_INDIRECTION = runtimeIndirection;
+            }
+            ''
+              set -o pipefail
+              home="$TMPDIR/home"
+              agent="$home/.pi/agent"
+              mkdir -p \
+                "$agent/extensions" \
+                "$agent/themes" \
+                "$home/.agents/skills" \
+                "$home/.config/pi-agent-extensions/permission-gate" \
+                "$home/.local/share" \
+                "$home/.cache" \
+                "$TMPDIR/pi-tmp" \
+                "$TMPDIR/project"
+
+              install -m644 "$SETTINGS_SOURCE" "$agent/settings.json"
+              cp -RL --no-preserve=mode "$SKILLS_SOURCE/." "$home/.agents/skills/"
+              ln -s "$CONTEXT_SOURCE" "$agent/AGENTS.md"
+              ln -s "$THEME_SOURCE" "$agent/themes/catppuccin-mocha.json"
+              ln -s "$EDIT_WRITE_POLICY_SOURCE" "$agent/extensions/edit-write-policy.ts"
+              ln -s "$PERMISSION_RULES_SOURCE" \
+                "$home/.config/pi-agent-extensions/permission-gate/rules.ts"
+              cat > "$agent/models.json" <<'JSON'
+              {
+                "providers": {
+                  "review-local": {
+                    "baseUrl": "http://127.0.0.1:9/v1",
+                    "api": "openai-completions",
+                    "models": [{ "id": "review-model" }]
+                  }
+                }
+              }
+              JSON
+
+              SMOKE_HOME="$home" \
+              SMOKE_PROJECT="$TMPDIR/project" \
+              SMOKE_TMPDIR="$TMPDIR/pi-tmp" \
+                python3 ${smokeDriver} | tee "$out"
+            '';
       };
     };
 }
