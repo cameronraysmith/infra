@@ -37,17 +37,17 @@
 
 ## 4. One-process aggregate smoke
 
-- [ ] 4.1 Add an assertion-level RED/prototype gate in `pi-agent-environment-smoke` that hermetically reproduces the discovery-characterized exact deployed Pi 0.84.1 Bun wrapper with explicit `--model review-local/review-model` and readiness without credentials or a provider request; do not accept a default `unknown/unknown` model state.
+- [x] 4.1 Add an assertion-level RED/prototype gate in `pi-agent-environment-smoke` that hermetically reproduces the discovery-characterized exact deployed Pi 0.84.1 Bun wrapper with explicit `--model review-local/review-model` and readiness without credentials or a provider request; do not accept a default `unknown/unknown` model state.
   Record the discovery characterization without a concrete Nix store hash: the current locked package ran in a disposable `HOME` with `models.json` provider `review-local`, model id `review-model`, inert base URL `http://127.0.0.1:9/v1`, API `openai-completions`, no `apiKey`; `get_state` returned that model, no prompt or provider request occurred, and stdin closure exited zero.
-- [ ] 4.2 Do not rely on the aggregate smoke contract until the assertion-level hermetic reproduction establishes the supported invocation, request sequence, readiness signal, stdin-close behavior, and clean exit status.
+- [x] 4.2 Do not rely on the aggregate smoke contract until the assertion-level hermetic reproduction establishes the supported invocation, request sequence, readiness signal, stdin-close behavior, and clean exit status.
   Use the same credential-free inert registration solely to establish selected startup state; add no secret or API key and send no prompt or provider-facing request.
   If hermetic reproduction differs from discovery characterization, including an exact deployed-package mismatch, stop and ask rather than weakening the contract.
-- [ ] 4.3 After the reproduction passes, create one valid aggregate environment with a fresh writable `HOME` and agent directory, exact store-backed resources/settings, a sentinel scan input representing a direnv runtime value, `PI_OFFLINE=1`, and the Nix sandbox as the actual network boundary; do not require direnv to supply the sentinel to Pi.
-- [ ] 4.4 Start one Pi process only with explicit `--model review-local/review-model`, send no prompt or compaction request, issue `get_state` and `get_commands`, assert the selected registered model and visible extension/skill commands where RPC supports them, and require no resource or extension diagnostic.
-- [ ] 4.5 Structurally assert runtime environment indirection and assert the sentinel value does not occur in Nix expressions, generated configuration, or store-backed content; also assert that Pi makes no provider request, without claiming upstream direnv value-supply behavior or that `PI_OFFLINE=1` alone proves network isolation.
-- [ ] 4.6 After the supported queries, close stdin and require a bounded clean exit status.
+- [x] 4.3 After the reproduction passes, create one valid aggregate environment with a fresh writable `HOME` and agent directory, exact store-backed resources/settings, a sentinel scan input representing a direnv runtime value, `PI_OFFLINE=1`, and the Nix sandbox as the actual network boundary; do not require direnv to supply the sentinel to Pi.
+- [x] 4.4 Start one Pi process only with explicit `--model review-local/review-model`, send no prompt or compaction request, issue `get_state` and `get_commands`, assert the selected registered model and visible extension/skill commands where RPC supports them, and require no resource or extension diagnostic.
+- [x] 4.5 Structurally assert runtime environment indirection and assert the sentinel value does not occur in Nix expressions, generated configuration, or store-backed content; also assert that Pi makes no provider request, without claiming upstream direnv value-supply behavior or that `PI_OFFLINE=1` alone proves network isolation.
+- [x] 4.6 After the supported queries, close stdin and require a bounded clean exit status.
   Leave questionnaire tool registration, stash shortcuts, hooks, and theme introspection to structural or policy evidence because RPC does not expose them fully.
-- [ ] 4.7 Add no `modules/checks/fixtures` directory, per-extension process, or failure-isolation case.
+- [x] 4.7 Add no `modules/checks/fixtures` directory, per-extension process, or failure-isolation case.
 
 ## 5. Provenance, traceability, and pre-activation verification
 
