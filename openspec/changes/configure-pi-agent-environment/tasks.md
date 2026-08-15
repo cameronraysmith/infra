@@ -66,3 +66,12 @@
 - [x] 6.3 Keep every live-state probe blocked and every post-activation task incomplete until Cameron explicitly confirms successful activation.
 - [x] 6.4 After confirmation, inspect representative Pi-managed targets to verify the mutable settings copy, runtime-managed state not converted into immutable executable-resource links, immutable policy/theme/extensions/global-instruction resources, canonical `~/.agents/skills`, absent `~/.pi/agent/skills`, exact selected resources, policy behavior, exclusions, sentinel-secret absence, and slow-mode opt-in with unique non-destructive probes cleaned by `rip`; do not claim exhaustive coverage of every possible Pi path.
 - [x] 6.5 After activation, confirm `/nix/var/nix/profiles/system` points to the new active `system-N-link`, the link recorded in 6.1 is the immediately previous `system-(N-1)-link`, and that recorded link remains present and resolvable for rollback.
+
+## 7. Post-activation review remediation
+
+- [x] 7.1 Add exact RED rows proving that `curl --expand-data`, an unclassified future curl long option, and persistent Git/jj alias invocations with no literal `add` fail open on the activated implementation; retain the complete named failure transcript.
+- [x] 7.2 Make unclassified curl long options and unresolved Git/jj alias-shaped subcommands prompt while preserving explicit safe curl behavior, injected aliases, worktree/workspace built-ins, and recognized ordinary Git/jj commands; make the independent policy regulator GREEN.
+- [x] 7.3 Correct stale brainstorm rollback wording, add a structural literal for the absence of default slow-mode activation settings, and add explicit missing-capability and throwing-capability-factory diagnostic block cases.
+- [x] 7.4 Run automated pre-activation revalidation: formatting, package, independent policy/structural/smoke regulators, relevant Home Manager evaluation/build, approved fast checks, strict temporary-XDG OpenSpec validation, 25-requirement trace/order audit, scope audit, and final diff checks; record the current nix-darwin system profile link and resolved store path without activating.
+- [ ] 7.5 Stop and ask Cameron to run `just activate --ask` for the remediated generation; the implementation agent MUST NOT run activation or inspect live Pi targets before explicit confirmation.
+- [ ] 7.6 After explicit confirmation, verify representative live policy, immutable-resource, slow-mode, and rollback behavior for the remediated generation.
