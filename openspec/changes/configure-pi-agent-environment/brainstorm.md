@@ -37,8 +37,10 @@ Common jj health requires canonical repository identity and target containment, 
 A separate bookmark-listing classification probe must first report the `wip` convention, including a divergent `wip` indicator, before a repository is classified as diamond-managed.
 Only after that report does the unique `wip`-resolution probe produce the absent, moved, or divergent `wip` failure rows.
 A repository with no `wip` report remains eligible for ordinary classification and never reaches a missing-`wip` failure row.
-Diamond health additionally requires stored `@` to be an empty merge commit with at least two parents, exactly one non-divergent `wip` bookmark pointing to `@`, and conflict-free `@` and immediate parents.
-Ordinary jj repositories have no `wip`, empty-merge, or multi-parent requirement, and neither mode requires working-copy cleanliness.
+Diamond health additionally requires `@` to be the nonconflicted, nondivergent `[wip]` commit with exactly one parent and exactly one non-divergent `wip` bookmark pointing to it.
+It probes `@-` separately as the `[merge]` join, requires that join to be nonconflicted with at least two parents, and probes `parents(@-)` separately to require conflict-free immediate parents whose count matches the join report.
+Neither `@` nor `@-` must be empty, and diamond health imposes no working-copy-cleanliness requirement.
+Ordinary jj repositories have no `wip`, diamond-topology, emptiness, or working-copy-cleanliness requirement.
 Malformed, failing, or ambiguous probes, parser failures, capability failures, and prompt decisions without usable interaction block diagnostically rather than fall through.
 No delegated-tool policy is introduced.
 

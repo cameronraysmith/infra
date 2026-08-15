@@ -144,13 +144,15 @@ Common jj health MUST require canonical repository identity and target containme
 A separate bookmark-listing classification probe MUST report the `wip` convention, including a divergent `wip` indicator, before the repository is classified as diamond-managed.
 Only a repository already classified as diamond-managed MUST run the unique `wip`-resolution probe and admit absent, moved, or divergent `wip` failure outcomes.
 A repository with no `wip` report MUST remain eligible for ordinary classification and MUST NOT reach a missing-`wip` failure.
-Diamond health MUST additionally require stored `@` to be an empty merge commit with at least two parents, exactly one non-divergent `wip` bookmark pointing to `@`, and conflict-free `@` plus immediate parents.
-Ordinary jj health MUST impose no `wip`, empty-merge, multi-parent, or working-copy-cleanliness requirement, and diamond health MUST impose no working-copy-cleanliness requirement.
+Diamond health MUST additionally require `@` to be the nonconflicted, nondivergent `[wip]` commit with exactly one parent and exactly one non-divergent `wip` bookmark pointing to it.
+It MUST probe `@-` separately as the `[merge]` join, require that join to be nonconflicted with at least two parents, and probe `parents(@-)` separately to require conflict-free immediate parents whose count matches the join report.
+Neither `@` nor `@-` MUST be required to be empty, and diamond health MUST impose no working-copy-cleanliness requirement.
+Ordinary jj health MUST impose no `wip`, diamond-topology, emptiness, or working-copy-cleanliness requirement.
 
 #### Scenario: Edit is proposed in a jj repository
 
-- **WHEN** the literal policy table evaluates ordinary healthy with no `wip` report, ordinary conflict, ordinary divergent `@`, ordinary `main`/`master` at `@`, diamond healthy after a `wip` classification report, classified-diamond absent/moved/divergent unique-`wip` resolution, nonempty/single-parent/conflicted join, and malformed/failing/ambiguous probe rows
-- **THEN** exactly the two healthy rows are eligible to continue, the ordinary no-`wip` row never reaches missing-`wip` failure, every unhealthy or indeterminate row blocks diagnostically, and every recorded read-only jj argv starts with `jj --ignore-working-copy`
+- **WHEN** the literal policy table evaluates ordinary healthy states, including a nonempty `@`, with no `wip` report; ordinary conflict, divergence, and protected-bookmark states; an actual healthy empty `@` `[wip]` over an empty six-parent `@-` join; healthy nonempty `[wip]` and conflict-resolved nonempty join states; classified-diamond absent, moved, or divergent unique-`wip` resolution; non-single-parent `[wip]`; single-parent or conflicted join; conflicted immediate join parent; join-parent count mismatch; and malformed or failing join probes
+- **THEN** the ordinary healthy rows and all three healthy diamond rows are eligible to continue, the ordinary no-`wip` rows never reach missing-`wip` failure, every unhealthy or indeterminate row blocks diagnostically, and every recorded read-only jj argv exactly matches the ordered `jj --ignore-working-copy` argv oracle
 
 ### Requirement: Fail-closed policy
 
