@@ -3,15 +3,16 @@ linear_story_id: daaea691-9e59-4cba-a99d-0df1e0236b4a
 linear_story_identifier: CAM-33
 linear_story_title: "Configure the Nix-first Pi agent environment"
 linear_story_url: https://linear.app/cameronraysmith/issue/CAM-33/configure-the-nix-first-pi-agent-environment
-linear_story_state: Todo
+linear_story_state: In Progress
 linear_team: CAM
 linear_project: pi-agent-environment
-last_synced_state: Todo
-last_synced_at: 2026-08-13T21:37:14Z
+last_synced_state: In Progress
+last_synced_at: 2026-08-15T00:49:02Z
 review_round: 0
 max_review_rounds: 3
 attempt_log:
   - { at: "2026-08-13T21:37:14Z", transition: "Backlog->Todo", outcome: "posted", note: "proposal bind; existing business-facing description already current; canonical crossing comment posted" }
+  - { at: "2026-08-15T00:49:02Z", transition: "Todo->In Progress", outcome: "posted", note: "first tasks.md checkbox completed; canonical crossing comment posted" }
 ---
 
 ## Why
