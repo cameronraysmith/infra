@@ -106,11 +106,10 @@
           default = assetsDir + "/schemas/superpowers-bridge";
           defaultText = lib.literalExpression ''inputs.self + "/modules/home/ai/openspec/assets/schemas/superpowers-bridge"'';
           description = ''
-            Schema bundle materialized (recursively, via lndir) under
+            Schema bundle delivered as a single directory symlink at
             {file}`~/.local/share/openspec/schemas/superpowers-bridge` so that
-            `openspec new --schema superpowers-bridge` resolves. `recursive = true`
-            is required: OpenSpec's discovery skips symlinked directories. Set to
-            null to deliver no schema bundle.
+            `openspec new --schema superpowers-bridge` resolves. Set to null to
+            deliver no schema bundle.
           '';
         };
 
@@ -162,14 +161,12 @@
         # exists; null disables installing it.
         home.packages = lib.mkIf (cfg.package != null) [ cfg.package ];
 
-        # Deliver the schema bundle user-global. recursive = true is REQUIRED:
-        # OpenSpec's schema discovery skips directory SYMLINKS (listSchemas gates on
-        # dirent.isDirectory(), false for a symlinked dir), so lndir materializes a
-        # real dir with symlinked file leaves, which discovery enumerates fine. A
-        # bare `.source` symlink is invisible ("Unknown schema"). See assets/schemas/README.md.
+        # OpenSpec canonicalizes <schema dir>/schema.yaml and rejects a result outside
+        # the canonicalized schema directory (resolver.js getSchemaCandidateDir ->
+        # FileSystemUtils.assertPathWithin), so per-file symlinks into the store are
+        # unresolvable: `recursive = true` here breaks schema resolution.
         home.file.".local/share/openspec/schemas/superpowers-bridge" = lib.mkIf (cfg.schemaDir != null) {
           source = cfg.schemaDir;
-          recursive = true;
         };
 
         # Deliver the global config.json via the json format generator (RFC-42
