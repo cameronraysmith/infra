@@ -36,10 +36,17 @@
           package = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi;
 
           context = config.programs.agents-md.settings.text;
+          extraPackages = [
+            pkgs.direnv
+            pkgs.diffutils
+            pkgs.git
+            pkgs.jujutsu
+            pkgs.rip2
+          ];
 
           # https://pi.dev/docs/latest/settings
           settings = {
-            theme = "dark";
+            theme = "catppuccin-mocha";
             # Anonymous install/update ping to pi.dev on first install and after
             # each changelog-detected update; the store path is replaced by
             # home-manager, so every generation bump would emit one.
@@ -48,7 +55,25 @@
             # Pinned against pi 0.80.9 while we run 0.83.0. The consequence is
             # confined to the catch fallback in src/remote-compaction.ts, whose
             # compact() call passes arguments shifted against 0.83.0's signature.
-            packages = [ "${pkgs.pi-openai-server-compaction}" ];
+            packages = [
+              {
+                source = "${pkgs.pi-agent-extensions}";
+                extensions = [
+                  "direnv/index.ts"
+                  "permission-gate/index.ts"
+                  "questionnaire/index.ts"
+                  "slow-mode/index.ts"
+                  "stash/index.ts"
+                  "statusline/index.ts"
+                  "-fetch/index.ts"
+                  "-notify/index.ts"
+                ];
+                skills = [ ];
+                prompts = [ ];
+                themes = [ ];
+              }
+              "${pkgs.pi-openai-server-compaction}"
+            ];
           };
         };
 
@@ -63,9 +88,10 @@
         # /model, /theme, and `pi install` all persist to it — and a read-only
         # store symlink makes those writes fail. Scoped to settings.json: pi has
         # no writer for keybindings.json or models.json.
-        home.file."${cfg.configDir}/settings.json".enable = lib.mkIf cfg.mutableSettings (
-          lib.mkForce false
-        );
+        home.file = {
+          "${cfg.configDir}/settings.json".enable = lib.mkIf cfg.mutableSettings (lib.mkForce false);
+          "${cfg.configDir}/themes/catppuccin-mocha.json".source = ./themes/catppuccin-mocha.json;
+        };
 
         home.activation.piCodingAgentMutableSettings = lib.mkIf cfg.mutableSettings (
           let
