@@ -2128,107 +2128,155 @@
           return { stdout, stderr, code };
         }
 
-        function jjOutputs(scenario: string) {
-          const current = "change-a\tcommit-a\tfalse\ttrue\t2\n";
-          const diamondCurrent = "change-a\tcommit-a\tfalse\ttrue\t1\n";
-          const diamondJoin = "commit-join\tfalse\ttrue\t6\n";
-          const diamondParents = Array.from(
-            { length: 6 },
-            (_, index) => `parent-''${index + 1}\tfalse\n`,
-          ).join("");
-          const ordinary = [
-            processResult("/repo\n"),
-            processResult(current),
-            processResult("commit-a\n"),
-            processResult(""),
-            processResult(""),
+        type Probe = ReturnType<typeof processResult>;
+
+        const jjCurrent = "change-a\tcommit-a\tfalse\ttrue\t2\n";
+        const diamondCurrent = "change-a\tcommit-a\tfalse\ttrue\t1\n";
+        const diamondJoin = "commit-join\tfalse\ttrue\t6\n";
+        const diamondParents = Array.from(
+          { length: 6 },
+          (_, index) => `parent-''${index + 1}\tfalse\n`,
+        ).join("");
+        const ordinary = [
+          processResult("/repo\n"),
+          processResult(jjCurrent),
+          processResult("commit-a\n"),
+          processResult(""),
+          processResult(""),
+        ];
+        const jjOutside = processResult("", 1, 'Error: There is no jj repo in "."\n');
+
+        type DiamondSlots = {
+          currentProbe: string;
+          classification: Probe;
+          resolution: Probe;
+          joinProbe: Probe;
+          parents: Probe;
+        };
+
+        function diamondFixture(mutate?: (slots: DiamondSlots) => void): Probe[] {
+          const slots: DiamondSlots = {
+            currentProbe: diamondCurrent,
+            classification: processResult("wip\tfalse\n"),
+            resolution: processResult("commit-a\tfalse\n"),
+            joinProbe: processResult(diamondJoin),
+            parents: processResult(diamondParents),
+          };
+          mutate?.(slots);
+          return [
+            ordinary[0],
+            processResult(slots.currentProbe),
+            ordinary[2],
+            ordinary[3],
+            slots.classification,
+            slots.resolution,
+            slots.joinProbe,
+            slots.parents,
           ];
-          const outside = processResult("", 1, 'Error: There is no jj repo in "."\n');
-          switch (scenario) {
-            case "ordinary-healthy": return ordinary;
-            case "ordinary-nonempty-at": return [ordinary[0], processResult("change-a\tcommit-a\tfalse\tfalse\t1\n"), ...ordinary.slice(2)];
-            case "target-jj-cwd-other-repository": return [processResult("/target\n"), ...ordinary.slice(1)];
-            case "ordinary-conflict": return [ordinary[0], processResult("change-a\tcommit-a\ttrue\tfalse\t1\n"), ...ordinary.slice(2)];
-            case "ordinary-divergent-at": return [ordinary[0], ordinary[1], processResult("commit-a\ncommit-b\n"), ...ordinary.slice(3)];
-            case "ordinary-main-at": return [ordinary[0], ordinary[1], ordinary[2], processResult("main\tcommit-a\n"), ordinary[4]];
-            case "ordinary-master-at": return [ordinary[0], ordinary[1], ordinary[2], processResult("master\tcommit-a\n"), ordinary[4]];
-            case "classification-whitespace-only": return [...ordinary.slice(0, 4), processResult(" \n")];
-            case "classification-padded": return [...ordinary.slice(0, 4), processResult(" wip\tfalse\n")];
-            case "classification-extra-blank": return [...ordinary.slice(0, 4), processResult("wip\tfalse\n\n")];
-            case "root-padded": return [processResult(" /repo\n"), ...ordinary.slice(1)];
-            case "current-extra-blank": return [ordinary[0], processResult(current + "\n"), ...ordinary.slice(2)];
-            case "identity-padded": return [ordinary[0], ordinary[1], processResult(" commit-a\n"), ...ordinary.slice(3)];
-            case "defaults-extra-blank": return [ordinary[0], ordinary[1], ordinary[2], processResult("\n"), ordinary[4]];
-            case "resolution-padded": return [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult(" commit-a\tfalse\n"), processResult("parent-a\tfalse\nparent-b\tfalse\n")];
-            case "parents-extra-blank": return [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult("commit-a\tfalse\n"), processResult(diamondJoin), processResult(diamondParents + "\n")];
-            case "malformed-probe": return [ordinary[0], processResult("not-a-record\n")];
-            case "malformed-parent-count-probe": return [ordinary[0], processResult("change-a\tcommit-a\tfalse\ttrue\t2x\n"), ...ordinary.slice(2)];
-            case "failing-probe": return [ordinary[0], processResult("", 2, "probe failed")];
-            case "ambiguous-probe": return [ordinary[0], processResult(current + "change-b\tcommit-b\tfalse\tfalse\t1\n")];
-            case "failing-root-probe": return [processResult("", 1, "permission denied")];
-            case "outside-jj-contradictory-stdout": return [processResult("/repo\n", 1, outside.stderr)];
-            case "outside-jj-wrong-status": return [processResult("", 2, outside.stderr)];
-            case "outside-jj-mixed-diagnostics": return [processResult("", 1, outside.stderr + "Hint: additional diagnostic\n")];
-            case "canonical-root-mismatch": return [processResult("/other\n")];
-            default: {
-              let currentProbe = diamondCurrent;
-              let classification = processResult("wip\tfalse\n");
-              let resolution = processResult("commit-a\tfalse\n");
-              let joinProbe = processResult(diamondJoin);
-              let parents = processResult(diamondParents);
-              if (scenario === "diamond-nonempty-wip") {
-                currentProbe = "change-a\tcommit-a\tfalse\tfalse\t1\n";
-              }
-              if (scenario === "diamond-resolved-nonempty-join") {
-                joinProbe = processResult("commit-join\tfalse\tfalse\t6\n");
-              }
-              if (scenario === "diamond-missing-wip") resolution = processResult("");
-              if (scenario === "diamond-moved-wip") resolution = processResult("commit-other\tfalse\n");
-              if (scenario === "diamond-divergent-wip") {
-                classification = processResult("wip\ttrue\n");
-                resolution = processResult("commit-a\ttrue\ncommit-b\ttrue\n");
-              }
-              if (scenario === "diamond-divergent-wip-without-target") {
-                classification = processResult("wip\ttrue\n");
-                resolution = processResult("");
-              }
-              if (scenario === "diamond-divergent-wip-malformed-resolution") {
-                classification = processResult("wip\ttrue\n");
-                resolution = processResult("malformed-resolution\n");
-              }
-              if (scenario === "diamond-nonsingle-parent-wip") {
-                currentProbe = "change-a\tcommit-a\tfalse\ttrue\t2\n";
-              }
-              if (scenario === "diamond-single-parent-join") {
-                joinProbe = processResult("commit-join\tfalse\ttrue\t1\n");
-                parents = processResult("parent-1\tfalse\n");
-              }
-              if (scenario === "diamond-conflicted-join") {
-                joinProbe = processResult("commit-join\ttrue\tfalse\t6\n");
-              }
-              if (scenario === "diamond-conflicted-immediate-parent") {
-                parents = processResult(diamondParents.replace("parent-6\tfalse", "parent-6\ttrue"));
-              }
-              if (scenario === "diamond-join-parent-count-mismatch") {
-                parents = processResult(diamondParents.replace("parent-6\tfalse\n", ""));
-              }
-              if (scenario === "diamond-malformed-join-probe") {
-                joinProbe = processResult("not-a-join-record\n");
-              }
-              if (scenario === "diamond-failing-join-probe") {
-                joinProbe = processResult("", 2, "join probe failed");
-              }
-              return [
-                ordinary[0],
-                processResult(currentProbe),
-                ordinary[2],
-                ordinary[3],
-                classification,
-                resolution,
-                joinProbe,
-                parents,
-              ];
-            }
+        }
+
+        const jjFixtures: Record<string, () => Probe[]> = {
+          "ordinary-healthy": () => ordinary,
+          "ordinary-nonempty-at": () => [ordinary[0], processResult("change-a\tcommit-a\tfalse\tfalse\t1\n"), ...ordinary.slice(2)],
+          "target-jj-cwd-other-repository": () => [processResult("/target\n"), ...ordinary.slice(1)],
+          "ordinary-conflict": () => [ordinary[0], processResult("change-a\tcommit-a\ttrue\tfalse\t1\n"), ...ordinary.slice(2)],
+          "ordinary-divergent-at": () => [ordinary[0], ordinary[1], processResult("commit-a\ncommit-b\n"), ...ordinary.slice(3)],
+          "ordinary-main-at": () => [ordinary[0], ordinary[1], ordinary[2], processResult("main\tcommit-a\n"), ordinary[4]],
+          "ordinary-master-at": () => [ordinary[0], ordinary[1], ordinary[2], processResult("master\tcommit-a\n"), ordinary[4]],
+          "classification-whitespace-only": () => [...ordinary.slice(0, 4), processResult(" \n")],
+          "classification-padded": () => [...ordinary.slice(0, 4), processResult(" wip\tfalse\n")],
+          "classification-extra-blank": () => [...ordinary.slice(0, 4), processResult("wip\tfalse\n\n")],
+          "root-padded": () => [processResult(" /repo\n"), ...ordinary.slice(1)],
+          "current-extra-blank": () => [ordinary[0], processResult(jjCurrent + "\n"), ...ordinary.slice(2)],
+          "identity-padded": () => [ordinary[0], ordinary[1], processResult(" commit-a\n"), ...ordinary.slice(3)],
+          "defaults-extra-blank": () => [ordinary[0], ordinary[1], ordinary[2], processResult("\n"), ordinary[4]],
+          "resolution-padded": () => [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult(" commit-a\tfalse\n"), processResult("parent-a\tfalse\nparent-b\tfalse\n")],
+          "parents-extra-blank": () => [...ordinary.slice(0, 4), processResult("wip\tfalse\n"), processResult("commit-a\tfalse\n"), processResult(diamondJoin), processResult(diamondParents + "\n")],
+          "malformed-probe": () => [ordinary[0], processResult("not-a-record\n")],
+          "malformed-parent-count-probe": () => [ordinary[0], processResult("change-a\tcommit-a\tfalse\ttrue\t2x\n"), ...ordinary.slice(2)],
+          "failing-probe": () => [ordinary[0], processResult("", 2, "probe failed")],
+          "ambiguous-probe": () => [ordinary[0], processResult(jjCurrent + "change-b\tcommit-b\tfalse\tfalse\t1\n")],
+          "failing-root-probe": () => [processResult("", 1, "permission denied")],
+          "outside-jj-contradictory-stdout": () => [processResult("/repo\n", 1, jjOutside.stderr)],
+          "outside-jj-wrong-status": () => [processResult("", 2, jjOutside.stderr)],
+          "outside-jj-mixed-diagnostics": () => [processResult("", 1, jjOutside.stderr + "Hint: additional diagnostic\n")],
+          "canonical-root-mismatch": () => [processResult("/other\n")],
+          "diamond-healthy": () => diamondFixture(),
+          "diamond-nonempty-wip": () => diamondFixture((slots) => {
+            slots.currentProbe = "change-a\tcommit-a\tfalse\tfalse\t1\n";
+          }),
+          "diamond-resolved-nonempty-join": () => diamondFixture((slots) => {
+            slots.joinProbe = processResult("commit-join\tfalse\tfalse\t6\n");
+          }),
+          "diamond-missing-wip": () => diamondFixture((slots) => {
+            slots.resolution = processResult("");
+          }),
+          "diamond-moved-wip": () => diamondFixture((slots) => {
+            slots.resolution = processResult("commit-other\tfalse\n");
+          }),
+          "diamond-divergent-wip": () => diamondFixture((slots) => {
+            slots.classification = processResult("wip\ttrue\n");
+            slots.resolution = processResult("commit-a\ttrue\ncommit-b\ttrue\n");
+          }),
+          "diamond-divergent-wip-without-target": () => diamondFixture((slots) => {
+            slots.classification = processResult("wip\ttrue\n");
+            slots.resolution = processResult("");
+          }),
+          "diamond-divergent-wip-malformed-resolution": () => diamondFixture((slots) => {
+            slots.classification = processResult("wip\ttrue\n");
+            slots.resolution = processResult("malformed-resolution\n");
+          }),
+          "diamond-nonsingle-parent-wip": () => diamondFixture((slots) => {
+            slots.currentProbe = "change-a\tcommit-a\tfalse\ttrue\t2\n";
+          }),
+          "diamond-single-parent-join": () => diamondFixture((slots) => {
+            slots.joinProbe = processResult("commit-join\tfalse\ttrue\t1\n");
+            slots.parents = processResult("parent-1\tfalse\n");
+          }),
+          "diamond-conflicted-join": () => diamondFixture((slots) => {
+            slots.joinProbe = processResult("commit-join\ttrue\tfalse\t6\n");
+          }),
+          "diamond-conflicted-immediate-parent": () => diamondFixture((slots) => {
+            slots.parents = processResult(diamondParents.replace("parent-6\tfalse", "parent-6\ttrue"));
+          }),
+          "diamond-join-parent-count-mismatch": () => diamondFixture((slots) => {
+            slots.parents = processResult(diamondParents.replace("parent-6\tfalse\n", ""));
+          }),
+          "diamond-malformed-join-probe": () => diamondFixture((slots) => {
+            slots.joinProbe = processResult("not-a-join-record\n");
+          }),
+          "diamond-failing-join-probe": () => diamondFixture((slots) => {
+            slots.joinProbe = processResult("", 2, "join probe failed");
+          }),
+          "target-git-cwd-jj-repository": () => diamondFixture(),
+          "core-throws": () => diamondFixture(),
+          "capability-missing": () => diamondFixture(),
+          "capability-factory-throws": () => diamondFixture(),
+        };
+
+        const withoutJjScenarios = ["git-feature", "git-main", "immutable", "builtin-at-prefix", "outside-headless", "capability-throws"];
+        const withoutJjFixture = (scenario: string) => withoutJjScenarios.includes(scenario) || scenario.startsWith("git-");
+
+        function jjOutputs(scenario: string) {
+          const build = jjFixtures[scenario];
+          if (build === undefined) throw new Error("unknown jj scenario fixture: " + scenario);
+          return build();
+        }
+
+        const fixtureConsumers = new Set(
+          cases
+            .filter((entry: { kind: string }) => entry.kind === "repository" || entry.kind === "adapter")
+            .map((entry: { scenario: string }) => entry.scenario)
+            .filter((scenario: string) => scenario !== "registration" && !withoutJjFixture(scenario)),
+        );
+        for (const scenario of fixtureConsumers) {
+          if (jjFixtures[scenario as string] === undefined) {
+            failures.push("scenario declared in Nix has no TypeScript fixture: " + scenario);
+          }
+        }
+        for (const scenario of Object.keys(jjFixtures)) {
+          if (!fixtureConsumers.has(scenario)) {
+            failures.push("TypeScript fixture is unused by any Nix case: " + scenario);
           }
         }
 
@@ -2240,9 +2288,7 @@
           gitHeadDirectories: string[] = [],
         ) {
           const gitScenario = scenario.startsWith("git-") || scenario === "target-git-cwd-jj-repository";
-          const withoutJj = ["git-feature", "git-main", "immutable", "builtin-at-prefix", "outside-headless", "capability-throws"].includes(scenario) || (gitScenario && scenario !== "target-git-cwd-jj-repository");
-          const jjOutside = processResult("", 1, 'Error: There is no jj repo in "."\n');
-          const outputs = withoutJj ? [jjOutside] : jjOutputs(scenario);
+          const outputs = withoutJjFixture(scenario) ? [jjOutside] : jjOutputs(scenario);
           let jjIndex = 0;
           return {
             filesystem: {
