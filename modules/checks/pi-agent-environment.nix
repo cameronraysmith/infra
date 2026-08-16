@@ -1,3 +1,45 @@
+# Three independent regulators for the Pi coding-agent environment.
+#
+# pi-agent-environment-structural, -policy and -smoke are separate derivations
+# with independent cache boundaries; co-location here groups related definitions
+# and nothing more. See D8 in
+# openspec/changes/archive/2026-08-15-configure-pi-agent-environment/design.md
+# for the decision record, kept there rather than restated here so a second copy
+# cannot drift from the first.
+#
+# Mechanism per check:
+#   structural  mkStructuralCheck diffs eval-time home-manager values against a
+#               literal oracle. modules/lib/mk-eval-check.nix routes assertions
+#               that need full flake evaluation away from nix-unit, so a
+#               runCommand JSON diff is the available shape for these.
+#   policy      runCommand typechecks the deployed policy sources with tsc, then
+#               drives the case table through the pinned permission-gate parser
+#               under bun. No Pi process runs per row.
+#   smoke       runCommand drives one deployed Pi wrapper over RPC in a hermetic
+#               $TMPDIR home.
+#
+# jj argv is asserted exactly rather than by outcome: a probe that silently
+# snapshotted the working copy would still return the correct decision, so
+# read-only-ness is observable only in the argument vector.
+#
+# Evidence boundary. Structural evidence claims declaration shape alone, not
+# runtime loading, live writability, upstream provenance from package metadata,
+# or package-output behavior. The "exactly one by-name package, no flake input"
+# claim comes from a separate pre-activation scope-and-diff scan, not from here,
+# and the theme digest proves checked-in content identity, not upstream fetch.
+# Smoke claims only successful get_state and get_commands responses, no
+# extension_error record, the synthetic smoke-local/smoke-model selection, and a
+# clean exit; its fixture never installs edit-write-policy.ts into the agent
+# extensions directory, so no check here covers that adapter registering against
+# a live host.
+#
+# Falsifiability: dropping a positive selector from modules/home/ai/pi/default.nix
+# flips actual.positiveExtensions against the six-path literal in the expected
+# attrset below.
+#
+# The decomposed conjuncts (contextNixOwned, immutableResourceTargets.*) are
+# per-claim diff granularity, not redundancy: a failure names the violated claim
+# instead of collapsing to one aggregate boolean.
 { self, lib, ... }:
 {
   perSystem =
@@ -807,6 +849,13 @@
           ''commit_id ++ "\t" ++ conflict ++ "\n"''
         ];
       };
+      # The production inspector runs these eight read-only probes straight-line
+      # with early returns (modules/home/ai/pi/policy/edit-write-policy.ts issues
+      # JJ_READ_ARGV.root first, then current, currentIdentity, defaultBookmarks,
+      # classifyWip, resolveWip, join, parents), so every scenario's recorded
+      # argv sequence is a prefix of one total order and is characterized by the
+      # last probe it reaches. A scenario whose probe order is not such a prefix
+      # cannot be expressed as a depth here and needs an explicit literal.
       jjProbeSequence =
         let
           inherit (jjArgvOracle)
@@ -1267,6 +1316,17 @@
           shellCases ++ projectCases ++ coreCases ++ repositoryCases ++ gitRootCases ++ adapterCases
         )
       );
+      # Ambient stand-ins for the only two type surfaces this sandbox cannot
+      # resolve: pkgs/by-name/pi-agent-extensions/package.nix fails the build on
+      # any node_modules, so there is no @types/node and no
+      # @earendil-works/pi-coding-agent package to import from. Each block is
+      # narrowed to the members imported at the top of
+      # modules/home/ai/pi/policy/edit-write-policy.ts and is unverified against
+      # upstream, so tsc proves internal consistency rather than host acceptance;
+      # that file's default export signature is the only line whose host contract
+      # rests on these. permission-rules.ts is unaffected — its sole import
+      # resolves through the tsconfig path alias to the real pinned
+      # permission-gate/types.ts.
       policyTypeDeclarations = pkgs.writeText "pi-agent-environment-policy-external.d.ts" ''
         declare namespace NodeJS {
           interface ErrnoException extends Error { code?: string | number }
@@ -1375,6 +1435,15 @@
         import { pathToFileURL } from "node:url";
         import { mock } from "bun:test";
 
+        // pi injects @mariozechner/* as jiti virtual modules rather than
+        // resolving them from node_modules (docs/notes/development/ai-agents/
+        // pi-integration-reconnaissance.md:103), and the extension package
+        // rejects any node_modules, so under bun these specifiers resolve to
+        // nothing. permission-gate/index.ts value-imports ./ui.ts, which
+        // value-imports exactly these five bindings; widen the mock if a loaded
+        // gate module gains another pi-tui value import. Type-only imports are
+        // erased and need no entry. This call must stay above the gate() imports
+        // below, which load the module graph it patches.
         mock.module("@mariozechner/pi-tui", () => ({
           Editor: class {},
           Key: {},
@@ -2098,6 +2167,14 @@
         pi-agent-environment-smoke =
           let
             jsonFormat = pkgs.formats.json { };
+            # ~/.agents/skills is activation-delivered
+            # (modules/home/ai/skills/default.nix, home.activation
+            # .agentsSkillsRealFiles) and so has no home.file entry to name,
+            # while this regulator must take its fixture resources from
+            # evaluated derivation paths rather than from parsed activation
+            # shell. The Droid .factory/skills entry is built from the same
+            # fileSkills set, so it is the same composed tree under a nameable
+            # key — not a second, Pi-specific skill sink.
             canonicalSkillSource = requiredHomeFileSource ".factory/skills/using-superpowers";
             settingsFixture = jsonFormat.generate "pi-agent-environment-smoke-settings.json" {
               enableInstallTelemetry = false;
