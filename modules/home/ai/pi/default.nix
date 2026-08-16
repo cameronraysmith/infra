@@ -52,9 +52,6 @@
             # home-manager, so every generation bump would emit one.
             enableInstallTelemetry = false;
 
-            # Algal declares Pi >=0.80.9 <0.81.0; the fleet evaluates Pi 0.84.1,
-            # outside that range. Its fallback compact() argument order still
-            # matches exact Pi 0.84.1, while broader API drift remains a calibrated risk.
             packages = [
               {
                 source = "${pkgs.pi-agent-extensions}";
@@ -72,26 +69,45 @@
                 prompts = [ ];
                 themes = [ ];
               }
+              # Algal declares Pi >=0.80.9 <0.81.0; the fleet evaluates Pi
+              # 0.84.1, outside that range. Its fallback compact() argument
+              # order still matches exact Pi 0.84.1, while broader API drift
+              # remains a calibrated risk.
               "${pkgs.pi-openai-server-compaction}"
             ];
           };
         };
 
-        # Mutable settings: suppress the upstream symlink-style home.file entry on
-        # the ABSOLUTE key upstream actually writes to, "${cfg.configDir}/settings.json"
-        # (home-manager modules/programs/pi-coding-agent.nix). A relative key is a
-        # silent no-op that leaves the store symlink in place and only surfaces
-        # later as a checkLinkTargets backup conflict. Mirrors
-        # modules/home/ai/claude-code/default.nix.
-        #
-        # The copy is required because pi rewrites this file in place — /settings,
-        # /model, /theme, and `pi install` all persist to it — and a read-only
-        # store symlink makes those writes fail. Scoped to settings.json: pi has
-        # no writer for keybindings.json or models.json.
         home.file = {
+          # Mutable settings: suppress the upstream symlink-style home.file entry on
+          # the ABSOLUTE key upstream actually writes to, "${cfg.configDir}/settings.json"
+          # (home-manager modules/programs/pi-coding-agent.nix). A relative key is a
+          # silent no-op that leaves the store symlink in place and only surfaces
+          # later as a checkLinkTargets backup conflict. Mirrors
+          # modules/home/ai/claude-code/default.nix.
+          #
+          # The copy is required because pi rewrites this file in place — /settings,
+          # /model, /theme, and `pi install` all persist to it — and a read-only
+          # store symlink makes those writes fail. Scoped to settings.json: pi has
+          # no writer for keybindings.json or models.json.
           "${cfg.configDir}/settings.json".enable = lib.mkIf cfg.mutableSettings (lib.mkForce false);
           "${cfg.configDir}/extensions/edit-write-policy.ts".source = ./policy/edit-write-policy.ts;
+          # Vendored byte-for-byte from aldoborrero/pi-agent-kit commit
+          # 128c4c08396961ea8f934111ba1aad0b33c525b2, path
+          # themes/catppuccin-mocha.json. The in-file $schema URL points at
+          # badlogic/pi-mono, which owns the theme format rather than this
+          # content, so it is not the provenance. JSON admits no comment, so
+          # these coordinates are recorded here and in
+          # openspec/specs/pi-agent-environment/spec.md; the content is pinned by
+          # the sha256 literal in modules/checks/pi-agent-environment.nix, which
+          # must be re-derived alongside any refresh of the copy.
           "${cfg.configDir}/themes/catppuccin-mocha.json".source = ./themes/catppuccin-mocha.json;
+          # permission-gate resolves this path itself rather than through pi's
+          # configDir: its configDir() honours a ~/.pi/agent/pi-agent-extensions.json
+          # override, then $XDG_CONFIG_HOME, then ~/.config. Neither the override
+          # file nor XDG_CONFIG_HOME is set anywhere under modules/home, so this
+          # literal is the path the gate reads. Setting XDG_CONFIG_HOME would
+          # strand this file silently and drop the gate to its built-in rules.
           ".config/pi-agent-extensions/permission-gate/rules.ts".source = ./policy/permission-rules.ts;
         };
 
