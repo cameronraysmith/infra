@@ -24,8 +24,6 @@ export interface ImmutableTarget {
 }
 
 export interface JjCurrentState {
-  readonly changeId: string;
-  readonly commitId: string;
   readonly conflicted: boolean;
   readonly divergent: boolean;
   readonly parentCount: number;
@@ -422,11 +420,19 @@ export const parseGitRootResult = (result: ProcessResult): GitRootResult => {
   };
 };
 
-const runJj = async (
+const readProbeLines = async (
   capabilities: PolicyCapabilities,
   argv: readonly string[],
   cwd: string,
-): Promise<ProcessResult> => capabilities.jj.run(argv, cwd);
+  label: string,
+): Promise<readonly string[] | string> => {
+  const result = await capabilities.jj.run(argv, cwd);
+  if (result.code !== 0) {
+    return `jj ${label} probe failed (${result.code}): ${result.stderr.trim()}`;
+  }
+  const lines = strictOutputLines(result.stdout);
+  return lines === undefined ? `jj ${label} probe is malformed` : lines;
+};
 
 const inspectJj = async (
   root: string,
@@ -438,35 +444,27 @@ const inspectJj = async (
     return invalid("canonical jj root does not contain the canonical target");
   }
 
-  const currentResult = await runJj(capabilities, JJ_READ_ARGV.current, cwd);
+  const currentResult = await capabilities.jj.run(JJ_READ_ARGV.current, cwd);
   const current = parseCurrent(currentResult);
   if (typeof current === "string") return invalid(current);
 
-  const identityResult = await runJj(
+  const identities = await readProbeLines(
     capabilities,
     JJ_READ_ARGV.currentIdentity(current.changeId),
     cwd,
+    "current identity",
   );
-  if (identityResult.code !== 0) {
-    return invalid(
-      `jj current identity probe failed (${identityResult.code}): ${identityResult.stderr.trim()}`,
-    );
-  }
-  const identities = strictOutputLines(identityResult.stdout);
-  if (identities === undefined) return invalid("jj current identity probe is malformed");
+  if (typeof identities === "string") return invalid(identities);
   if (identities.length === 0) return invalid("jj current identity probe is empty");
   const divergent = identities.length !== 1 || identities[0] !== current.commitId;
 
-  const defaultsResult = await runJj(capabilities, JJ_READ_ARGV.defaultBookmarks, cwd);
-  if (defaultsResult.code !== 0) {
-    return invalid(
-      `jj default bookmark probe failed (${defaultsResult.code}): ${defaultsResult.stderr.trim()}`,
-    );
-  }
-  const defaultBookmarkLines = strictOutputLines(defaultsResult.stdout);
-  if (defaultBookmarkLines === undefined) {
-    return invalid("jj default bookmark probe is malformed");
-  }
+  const defaultBookmarkLines = await readProbeLines(
+    capabilities,
+    JJ_READ_ARGV.defaultBookmarks,
+    cwd,
+    "default bookmark",
+  );
+  if (typeof defaultBookmarkLines === "string") return invalid(defaultBookmarkLines);
   const defaultBookmarksAtCurrent: ("main" | "master")[] = [];
   for (const line of defaultBookmarkLines) {
     const fields = line.split("\t");
@@ -483,8 +481,6 @@ const inspectJj = async (
   const common: JjCommonState = {
     root,
     at: {
-      changeId: current.changeId,
-      commitId: current.commitId,
       conflicted: current.conflicted,
       divergent,
       parentCount: current.parentCount,
@@ -492,14 +488,13 @@ const inspectJj = async (
     defaultBookmarksAtCurrent,
   };
 
-  const classificationResult = await runJj(capabilities, JJ_READ_ARGV.classifyWip, cwd);
-  if (classificationResult.code !== 0) {
-    return invalid(
-      `jj wip classification probe failed (${classificationResult.code}): ${classificationResult.stderr.trim()}`,
-    );
-  }
-  const classification = strictOutputLines(classificationResult.stdout);
-  if (classification === undefined) return invalid("jj wip classification probe is malformed");
+  const classification = await readProbeLines(
+    capabilities,
+    JJ_READ_ARGV.classifyWip,
+    cwd,
+    "wip classification",
+  );
+  if (typeof classification === "string") return invalid(classification);
   if (classification.length === 0) {
     return { kind: "jj-ordinary", ...common };
   }
@@ -516,14 +511,13 @@ const inspectJj = async (
     return invalid("jj wip classification probe is malformed");
   }
 
-  const resolutionResult = await runJj(capabilities, JJ_READ_ARGV.resolveWip, cwd);
-  if (resolutionResult.code !== 0) {
-    return invalid(
-      `jj wip resolution probe failed (${resolutionResult.code}): ${resolutionResult.stderr.trim()}`,
-    );
-  }
-  const resolutionLines = strictOutputLines(resolutionResult.stdout);
-  if (resolutionLines === undefined) return invalid("jj wip resolution probe is malformed");
+  const resolutionLines = await readProbeLines(
+    capabilities,
+    JJ_READ_ARGV.resolveWip,
+    cwd,
+    "wip resolution",
+  );
+  if (typeof resolutionLines === "string") return invalid(resolutionLines);
   const resolutionRecords = resolutionLines.map((line) => line.split("\t"));
   const malformedResolution = resolutionRecords.some(
     (fields) =>
@@ -547,18 +541,17 @@ const inspectJj = async (
     wip = { kind: "healthy" };
   }
 
-  const joinResult = await runJj(capabilities, JJ_READ_ARGV.join, cwd);
+  const joinResult = await capabilities.jj.run(JJ_READ_ARGV.join, cwd);
   const join = parseJoin(joinResult);
   if (typeof join === "string") return invalid(join);
 
-  const parentsResult = await runJj(capabilities, JJ_READ_ARGV.parents, cwd);
-  if (parentsResult.code !== 0) {
-    return invalid(
-      `jj immediate parent probe failed (${parentsResult.code}): ${parentsResult.stderr.trim()}`,
-    );
-  }
-  const parentLines = strictOutputLines(parentsResult.stdout);
-  if (parentLines === undefined) return invalid("jj immediate parent probe is malformed");
+  const parentLines = await readProbeLines(
+    capabilities,
+    JJ_READ_ARGV.parents,
+    cwd,
+    "immediate parent",
+  );
+  if (typeof parentLines === "string") return invalid(parentLines);
   let parentsConflicted = false;
   for (const line of parentLines) {
     const fields = line.split("\t");
@@ -594,7 +587,7 @@ export async function inspectRepository(
     return invalid("repository inspection directory does not contain the canonical target");
   }
 
-  const jjRootResult = await runJj(capabilities, JJ_READ_ARGV.root, inspectionDirectory);
+  const jjRootResult = await capabilities.jj.run(JJ_READ_ARGV.root, inspectionDirectory);
   let jjRoot: string | undefined;
   if (jjRootResult.code === 0) {
     const roots = strictOutputLines(jjRootResult.stdout);
