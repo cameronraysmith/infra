@@ -198,14 +198,15 @@ The flake MUST expose exactly three custom Pi derivations named `pi-agent-enviro
 
 ### Requirement: Offline aggregate smoke
 
-The smoke regulator MUST start the actual deployed Pi 0.84.1 Bun binary once in one valid aggregate environment with a fresh writable home and agent directory, exact store-backed resources and settings, `PI_OFFLINE=1`, and the Nix sandbox network boundary, without a prompt, compaction, credentials, provider request, or process per extension.
-It MUST reproduce at assertion level the discovery characterization of the exact installed/deployed wrapper from the current locked package: disposable `HOME`, credential-free provider `review-local`, model id `review-model`, inert base URL `http://127.0.0.1:9/v1`, API `openai-completions`, no `apiKey`, explicit model selection, `get_state` returning that model, no prompt or provider request, and zero exit after stdin closure.
-The discovered concrete Nix store hash MUST NOT become a future contract, and any hermetic reproduction difference MUST stop implementation for a question.
+The smoke regulator MUST execute the evaluated deployed Pi wrapper once in a hermetic fresh home with `PI_OFFLINE=1`, test-owned settings and model fixtures, and extension and canonical-skill resources supplied through first-class evaluated derivation paths rather than parsed Home Manager activation shell.
+It MUST use an explicit synthetic model from a deterministic local mock-provider registration and bound both stdin closure and process exit.
+It MUST assert only distinct cross-platform runtime compatibility evidence observable from the Pi process or RPC protocol: startup and successful RPC responses, no `extension_error`, required extension and canonical-skill commands, the explicit synthetic model selection, no reported session file under `--no-session`, and exit status zero after stdin closure.
+Structural declarations, policy behavior, activation, credentials, resource ownership, and fixture contents remain outside this smoke regulator's envelope.
 
-#### Scenario: Aggregate environment reaches RPC readiness
+#### Scenario: Deployed wrapper reaches bounded RPC readiness
 
-- **WHEN** the hermetic reproduction starts with explicit `--model review-local/review-model`, receives `get_state` and `get_commands`, and then has stdin closed
-- **THEN** it matches the discovery-characterized selected model and no-request behavior, exposes commands where RPC supports them, emits no resource or extension diagnostic, performs no provider call, and returns exit status zero
+- **WHEN** the hermetic fixture starts the evaluated wrapper with explicit `--model smoke-local/smoke-model`, requests `get_state` and `get_commands`, and closes stdin
+- **THEN** Pi reports the selected synthetic model without a session file, exposes the required extension and canonical-skill commands without `extension_error`, and exits zero within the bound
 
 ### Requirement: Stale Pi version cleanup
 
