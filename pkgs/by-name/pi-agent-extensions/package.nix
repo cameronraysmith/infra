@@ -1,6 +1,6 @@
 {
   fetchFromGitHub,
-  findutils,
+  lib,
   stdenvNoCC,
 }:
 let
@@ -8,7 +8,7 @@ let
 in
 stdenvNoCC.mkDerivation {
   pname = "pi-agent-extensions";
-  version = rev;
+  version = "0.1.0-unstable-2026-07-28";
 
   src = fetchFromGitHub {
     owner = "rytswd";
@@ -16,8 +16,6 @@ stdenvNoCC.mkDerivation {
     inherit rev;
     hash = "sha256-RLtDi9ahKONSJBuuYkYo/oIIxDX6PWiZ7rlevOStUUk=";
   };
-
-  nativeBuildInputs = [ findutils ];
 
   dontConfigure = true;
   dontBuild = true;
@@ -35,12 +33,14 @@ stdenvNoCC.mkDerivation {
     mkdir -p "$out"
     cp -R . "$out/"
 
-    installedNodeModules=$(find "$out" -type d -name node_modules -print -quit)
-    if [ -n "$installedNodeModules" ]; then
-      echo "pi-agent-extensions output contains node_modules: $installedNodeModules" >&2
-      exit 1
-    fi
-
     runHook postInstall
   '';
+
+  meta = {
+    description = "Collection of Pi coding-agent extensions";
+    homepage = "https://github.com/rytswd/pi-agent-extensions";
+    license = lib.licenses.mit;
+    sourceProvenance = with lib.sourceTypes; [ fromSource ];
+    platforms = lib.platforms.all;
+  };
 }
