@@ -20,6 +20,7 @@
   makeBinaryWrapper,
   versionCheckHook,
   writableTmpDirAsHomeHook,
+  runCommand,
   jq,
   fd,
   ripgrep,
@@ -135,7 +136,31 @@ else
 
     strictDeps = true;
 
-    passthru.updateScript = ./update.sh;
+    passthru = {
+      updateScript = ./update.sh;
+
+      # doInstallCheck runs against $out while it is still being built and
+      # still writable. This runs the same launcher against the finished,
+      # read-only store path, which is the condition the split launcher and
+      # its sidecar payload actually have to survive.
+      tests.help =
+        runCommand "atomic-test-help"
+          {
+            meta.timeout = 60;
+          }
+          ''
+            export HOME="$PWD/home"
+            mkdir -p "$HOME"
+
+            ${lib.getExe finalAttrs.finalPackage} --help > help.txt
+
+            grep -q "AI coding assistant" help.txt
+            grep -q "atomic \[options\] \[@files\.\.\.\] \[messages\.\.\.\]" help.txt
+            grep -q "Install extension source and add to settings" help.txt
+
+            touch "$out"
+          '';
+    };
 
     meta = {
       description = "Coding agent CLI with read, bash, edit, and write tools and session management";
