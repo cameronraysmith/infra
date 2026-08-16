@@ -2096,6 +2096,7 @@
         };
         const hasPermissionPolicy = permissionModule.policyPresent === true && typeof permissionModule.default === "function";
         const hasEditPolicy = editModule.policyPresent === true && typeof editModule.decideEditWrite === "function";
+        const editPolicyKinds = new Set(["git-root", "core", "repository", "adapter"]);
         const customConfig = hasPermissionPolicy ? permissionModule.default(helpers) : {};
 
         function classify(command: string, userCode: unknown, project: unknown, headless: boolean) {
@@ -2371,7 +2372,7 @@
               }
               continue;
             }
-            if (!hasEditPolicy) {
+            if (editPolicyKinds.has(entry.kind) && !hasEditPolicy) {
               failures.push(entry.name + ": missing edit-write policy");
               continue;
             }
@@ -2476,7 +2477,9 @@
               const result = await handler({ toolName: entry.tool, toolCallId: "call-1", input: entry.input }, context);
               const actual = result?.block === true ? "block" : "pass";
               check(entry.name, actual, entry.expected, result?.reason ?? "", entry.reason);
+              continue;
             }
+            failures.push(entry.name + ": unrecognized policy case kind " + JSON.stringify(entry.kind));
           } catch (error) {
             failures.push(entry.name + ": uncaught exception: " + String(error));
           }
