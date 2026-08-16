@@ -40,6 +40,12 @@
         && file.enable
         && file.source != null
         && lib.hasPrefix builtins.storeDir (toString file.source);
+      homeFileSourceIs =
+        target: expected:
+        let
+          file = homeFileAt target;
+        in
+        file != null && file.source != null && toString file.source == toString expected;
       hasImmutableHomeFileAtOrBelow =
         target:
         lib.any (name: (name == target || lib.hasPrefix "${target}/" name) && homeFileImmutable name) (
@@ -2647,6 +2653,10 @@
               extensions = immutableExtensionTargets;
               globalInstructions = if globalInstructionsNixOwned then [ "~/.pi/agent/AGENTS.md" ] else [ ];
             };
+            policySourcesCheckedIn = {
+              permissionRules = homeFileSourceIs permissionRulesTarget permissionRulesPath;
+              editWritePolicy = homeFileSourceIs editWritePolicyTarget editWritePolicyPath;
+            };
             contextNixOwned = piConfig.context == homeConfig.programs.agents-md.settings.text;
             theme = {
               contentName = themeJson.name or null;
@@ -2654,6 +2664,7 @@
               target =
                 if homeFileAt themeTarget == null then null else "~/.pi/agent/themes/catppuccin-mocha.json";
               targetImmutable = homeFileImmutable themeTarget;
+              sourceCheckedIn = homeFileSourceIs themeTarget themePath;
               sha256 = if themePresent then builtins.hashFile "sha256" themePath else null;
               standalonePackagePresent = lib.any (name: lib.hasInfix "catppuccin-mocha" name) (
                 builtins.attrNames self'.packages
@@ -2730,12 +2741,17 @@
               ];
               globalInstructions = [ "~/.pi/agent/AGENTS.md" ];
             };
+            policySourcesCheckedIn = {
+              permissionRules = true;
+              editWritePolicy = true;
+            };
             contextNixOwned = true;
             theme = {
               contentName = "catppuccin-mocha";
               selected = "catppuccin-mocha";
               target = "~/.pi/agent/themes/catppuccin-mocha.json";
               targetImmutable = true;
+              sourceCheckedIn = true;
               sha256 = "5858d086e155246d48e5b7a2ac372988fe2d1a028d2b77b5f0a7670088a8642b";
               standalonePackagePresent = false;
             };
