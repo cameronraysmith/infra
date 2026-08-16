@@ -534,6 +534,19 @@
           custom = true;
           headless = true;
         }
+        # Pins gate discovery of rules.ts at the path home-manager installs it
+        # to. The reason is a custom-rule phrase the built-in ruleset never
+        # emits, so a broken discovery path allows here instead of blocking
+        # rather than failing as a module resolution error.
+        {
+          kind = "shell";
+          name = "gate discovers the deployed rules module";
+          command = "rm file.txt";
+          expected = "block";
+          reason = "rip";
+          custom = true;
+          headless = true;
+        }
         # A rule that throws is reported as a block carrying the diagnostic rather
         # than falling through to allow.
         {
@@ -868,26 +881,33 @@
           probes = 8;
           expected = "allow";
         }
+        # These four share an identical 8-probe argv, so only the reason phrase
+        # separates absent from moved from divergent. The phrase is spelled in
+        # full because the bare discriminant "divergent" is also emitted by the
+        # unrelated current-change identity check.
         {
           scenario = "diamond-missing-wip";
           probes = 8;
           expected = "block";
+          reason = "wip bookmark is absent";
         }
         {
           scenario = "diamond-moved-wip";
           probes = 8;
           expected = "block";
+          reason = "wip bookmark is moved";
         }
         {
           scenario = "diamond-divergent-wip";
           probes = 8;
           expected = "block";
+          reason = "wip bookmark is divergent";
         }
         {
           scenario = "diamond-divergent-wip-without-target";
           probes = 8;
           expected = "block";
-          reason = "divergent";
+          reason = "wip bookmark is divergent";
         }
         {
           scenario = "diamond-divergent-wip-malformed-resolution";
@@ -1898,6 +1918,19 @@
             packageSkills = if extensionEntry == null then [ ] else extensionEntry.skills or [ ];
             packagePrompts = if extensionEntry == null then [ ] else extensionEntry.prompts or [ ];
             packageThemes = if extensionEntry == null then [ ] else extensionEntry.themes or [ ];
+            # Presence of the three keys is load-bearing beyond their values:
+            # pi's package-manager treats an omitted key as autoload-everything
+            # and an empty list as disable-everything, so the `[ ]` declarations
+            # in modules/home/ai/pi/default.nix must survive a pin bump.
+            packageResourceKindsDeclared =
+              if extensionEntry == null then
+                [ ]
+              else
+                builtins.filter (kind: builtins.hasAttr kind extensionEntry) [
+                  "skills"
+                  "prompts"
+                  "themes"
+                ];
             extraPackages = map lib.getName piConfig.extraPackages;
             compactionRetained =
               compactionSource != null
@@ -1961,6 +1994,11 @@
             packageSkills = [ ];
             packagePrompts = [ ];
             packageThemes = [ ];
+            packageResourceKindsDeclared = [
+              "skills"
+              "prompts"
+              "themes"
+            ];
             extraPackages = [
               "direnv"
               "diffutils"
