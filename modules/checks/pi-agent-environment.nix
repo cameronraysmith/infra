@@ -126,7 +126,6 @@
         lib.any (name: lib.hasInfix ".pi/agent/skills" name) (builtins.attrNames homeConfig.home.file)
         || lib.any (script: lib.hasInfix ".pi/agent/skills" script) activationScripts;
       contextTarget = "${piConfig.configDir}/AGENTS.md";
-      contextFile = homeFileAt contextTarget;
       globalInstructionsNixOwned =
         piConfig.context == homeConfig.programs.agents-md.settings.text && homeFileImmutable contextTarget;
       themeTarget = "${piConfig.configDir}/themes/catppuccin-mocha.json";
@@ -1602,7 +1601,7 @@
           "capability-factory-throws": () => diamondFixture(),
         };
 
-        const withoutJjScenarios = ["git-feature", "git-main", "immutable", "builtin-at-prefix", "outside-headless", "capability-throws"];
+        const withoutJjScenarios = ["immutable", "builtin-at-prefix", "outside-headless", "capability-throws"];
         const withoutJjFixture = (scenario: string) => withoutJjScenarios.includes(scenario) || scenario.startsWith("git-");
 
         function jjOutputs(scenario: string) {
@@ -1660,7 +1659,7 @@
                 if (scenario === "colocated-divergent-roots") {
                   return { kind: "inside", root: "/repo/.claude/worktrees/linked" };
                 }
-                if (["git-feature", "git-main", "target-git-cwd-jj-repository"].includes(scenario) || gitScenario) {
+                if (gitScenario) {
                   return { kind: "inside", root: scenario === "target-git-cwd-jj-repository" ? "/target" : "/repo" };
                 }
                 return { kind: "outside" };
@@ -1878,7 +1877,6 @@
             deployedPiCandidateCount = builtins.length deployedPiCandidates;
             inherit deployedPiIsOuterWrapper;
             canonicalSkillImmutable = homeFileImmutable ".factory/skills/using-superpowers";
-            extensionPackagePresent = extensionPackage != null;
             extensionPackageName = if extensionPackage == null then null else lib.getName extensionPackage;
             inherit positiveExtensions negativeExtensions;
             packageSkills = if extensionEntry == null then [ ] else extensionEntry.skills or [ ];
@@ -1931,7 +1929,6 @@
             deployedPiCandidateCount = 1;
             deployedPiIsOuterWrapper = true;
             canonicalSkillImmutable = true;
-            extensionPackagePresent = true;
             extensionPackageName = "pi-agent-extensions";
             positiveExtensions = [
               "direnv/index.ts"
