@@ -1673,6 +1673,14 @@
           "git-detached-head" = [ root ];
           "git-malformed-head" = [ root ];
           "git-multiline-head" = [ root ];
+          "colocated-healthy" = [
+            root
+            current
+            currentIdentity
+            defaultBookmarks
+            classifyWip
+          ];
+          "colocated-divergent-roots" = [ root ];
         };
       repositoryScenarios = [
         "ordinary-healthy"
@@ -1721,6 +1729,8 @@
         "git-detached-head"
         "git-malformed-head"
         "git-multiline-head"
+        "colocated-healthy"
+        "colocated-divergent-roots"
       ];
       repositoryCases = map (
         scenario:
@@ -1740,6 +1750,7 @@
                 "diamond-healthy"
                 "diamond-nonempty-wip"
                 "diamond-resolved-nonempty-join"
+                "colocated-healthy"
               ]
             then
               "allow"
@@ -1818,6 +1829,18 @@
         // lib.optionalAttrs (scenario == "diamond-divergent-wip-malformed-resolution") {
           reason = "malformed";
         }
+        // lib.optionalAttrs (scenario == "colocated-divergent-roots") {
+          reason = "ambiguous";
+        }
+        //
+          lib.optionalAttrs
+            (builtins.elem scenario [
+              "colocated-healthy"
+              "colocated-divergent-roots"
+            ])
+            {
+              expectedGitRootDirectory = "/repo";
+            }
       ) repositoryScenarios;
       gitRootCases = [
         {
@@ -2249,6 +2272,8 @@
             slots.joinProbe = processResult("", 2, "join probe failed");
           }),
           "target-git-cwd-jj-repository": () => diamondFixture(),
+          "colocated-healthy": () => ordinary,
+          "colocated-divergent-roots": () => [ordinary[0]],
           "core-throws": () => diamondFixture(),
           "capability-missing": () => diamondFixture(),
           "capability-factory-throws": () => diamondFixture(),
@@ -2308,6 +2333,10 @@
             git: {
               root: async (directory: string) => {
                 gitRootDirectories.push(directory);
+                if (scenario === "colocated-healthy") return { kind: "inside", root: "/repo" };
+                if (scenario === "colocated-divergent-roots") {
+                  return { kind: "inside", root: "/repo/.claude/worktrees/linked" };
+                }
                 if (["git-feature", "git-main", "target-git-cwd-jj-repository"].includes(scenario) || gitScenario) {
                   return { kind: "inside", root: scenario === "target-git-cwd-jj-repository" ? "/target" : "/repo" };
                 }
