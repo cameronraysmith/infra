@@ -1113,6 +1113,7 @@
           name = "headless HTTP prompt blocks";
           command = "curl -XPOST https://example.invalid";
           expected = "block";
+          reason = "no UI";
           custom = true;
           headless = true;
         }
@@ -2078,7 +2079,7 @@
         }
       );
       policyHarness = pkgs.writeText "pi-agent-environment-policy-test.ts" ''
-        import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+        import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
         import { tmpdir } from "node:os";
         import { join } from "node:path";
         import { pathToFileURL } from "node:url";
@@ -2122,7 +2123,7 @@
         const editPolicyKinds = new Set(["git-root", "core", "repository", "adapter"]);
         const customConfig = hasPermissionPolicy ? permissionModule.default(helpers) : {};
 
-        function classify(command: string, userCode: unknown, project: unknown, headless: boolean) {
+        function classify(command: string, userCode: unknown, project: unknown) {
           const warnings: string[] = [];
           try {
             const rules = config.compileRules(
@@ -2132,18 +2133,84 @@
                 project: config.sanitizeConfig(project, ".pi/permission-gate.json", false, (warning: string) => warnings.push(warning)),
               },
               (warning: string) => warnings.push(warning),
-              { headless },
             );
             const matched = matcher.matchRules(command, rules);
             const blocked = matched.find((rule: { action: string }) => rule.action === "block");
             if (blocked) return { decision: "block", reason: blocked.reason ?? "Blocked", warnings };
             const prompted = matched.find((rule: { action: string }) => rule.action === "prompt");
             if (!prompted) return { decision: "allow", reason: "", warnings };
-            return headless
-              ? { decision: "block", reason: "Dangerous command blocked — no UI", warnings }
-              : { decision: "prompt", reason: "", warnings };
+            return { decision: "prompt", reason: "", warnings };
           } catch (error) {
             return { decision: "block", reason: "rule evaluation failed: " + String(error), warnings };
+          }
+        }
+
+        async function runGateHandler(options: {
+          rulesSource?: string;
+          rulesInline?: string;
+          projectConfig?: unknown;
+          command: string;
+          hasUI: boolean;
+        }) {
+          const configRoot = mkdtempSync(join(tmpdir(), "permission-gate-handler-"));
+          const rulesDirectory = join(configRoot, "pi-agent-extensions", "permission-gate");
+          mkdirSync(rulesDirectory, { recursive: true });
+          if (options.rulesInline !== undefined) {
+            writeFileSync(join(rulesDirectory, "rules.mjs"), options.rulesInline);
+          } else if (options.rulesSource !== undefined) {
+            copyFileSync(options.rulesSource, join(rulesDirectory, "rules.ts"));
+          }
+          if (options.projectConfig !== undefined) {
+            mkdirSync(join(configRoot, ".pi"), { recursive: true });
+            writeFileSync(
+              join(configRoot, ".pi", "permission-gate.json"),
+              JSON.stringify(options.projectConfig),
+            );
+          }
+          const previousConfigHome = process.env.XDG_CONFIG_HOME;
+          const previousNoGate = process.env.PI_NO_GATE;
+          const previousError = console.error;
+          const warnings: string[] = [];
+          process.env.XDG_CONFIG_HOME = configRoot;
+          delete process.env.PI_NO_GATE;
+          console.error = (message: unknown) => {
+            warnings.push(String(message));
+          };
+          try {
+            const handlers = new Map<string, Array<(event: unknown, context: unknown) => unknown>>();
+            const pi = {
+              on: (name: string, handler: (event: unknown, context: unknown) => unknown) => {
+                const registered = handlers.get(name) ?? [];
+                registered.push(handler);
+                handlers.set(name, registered);
+              },
+              registerCommand: () => {},
+              events: { on: () => () => {}, emit: () => {} },
+            };
+            gateIndex.default(pi);
+            const context = { hasUI: options.hasUI, cwd: configRoot };
+            for (const handler of handlers.get("session_start") ?? []) {
+              await handler({}, context);
+            }
+            let result: { block?: boolean; reason?: string } | undefined;
+            for (const handler of handlers.get("tool_call") ?? []) {
+              result = await handler(
+                { toolName: "bash", input: { command: options.command } },
+                context,
+              ) as { block?: boolean; reason?: string } | undefined;
+            }
+            return {
+              decision: result?.block === true ? "block" : "allow",
+              reason: result?.reason ?? "",
+              warnings,
+            };
+          } finally {
+            console.error = previousError;
+            if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
+            else process.env.XDG_CONFIG_HOME = previousConfigHome;
+            if (previousNoGate === undefined) delete process.env.PI_NO_GATE;
+            else process.env.PI_NO_GATE = previousNoGate;
+            rmSync(configRoot, { recursive: true, force: true });
           }
         }
 
@@ -2384,63 +2451,38 @@
                 failures.push(entry.name + ": missing permission-rules policy");
                 continue;
               }
-              const result = classify(entry.command, entry.custom ? customConfig : {}, {}, entry.headless === true);
+              if (entry.headless === true) {
+                const gated = await runGateHandler({
+                  rulesSource: entry.custom ? process.env.PERMISSION_RULES_MODULE : undefined,
+                  command: entry.command,
+                  hasUI: false,
+                });
+                check(entry.name, gated.decision, entry.expected, gated.reason, entry.reason);
+                continue;
+              }
+              const result = classify(entry.command, entry.custom ? customConfig : {}, {});
               check(entry.name, result.decision, entry.expected, result.reason, entry.reason);
               continue;
             }
             if (entry.kind === "shell-error") {
-              const configRoot = mkdtempSync(join(tmpdir(), "permission-gate-handler-"));
-              const rulesDirectory = join(configRoot, "pi-agent-extensions", "permission-gate");
-              mkdirSync(rulesDirectory, { recursive: true });
-              writeFileSync(
-                join(rulesDirectory, "rules.mjs"),
-                'export default () => ({ extraRules: [{ label: "synthetic throwing rule", action: "prompt", test: () => { throw new Error("synthetic parser fault"); } }] });\n',
-              );
-              const previousConfigHome = process.env.XDG_CONFIG_HOME;
-              const previousNoGate = process.env.PI_NO_GATE;
-              process.env.XDG_CONFIG_HOME = configRoot;
-              delete process.env.PI_NO_GATE;
-              try {
-                const handlers = new Map<string, Array<(event: unknown, context: unknown) => unknown>>();
-                const pi = {
-                  on: (name: string, handler: (event: unknown, context: unknown) => unknown) => {
-                    const registered = handlers.get(name) ?? [];
-                    registered.push(handler);
-                    handlers.set(name, registered);
-                  },
-                  registerCommand: () => {},
-                  events: { on: () => () => {}, emit: () => {} },
-                };
-                gateIndex.default(pi);
-                const context = { hasUI: false, cwd: configRoot };
-                for (const handler of handlers.get("session_start") ?? []) {
-                  await handler({}, context);
-                }
-                let result: { block?: boolean; reason?: string } | undefined;
-                for (const handler of handlers.get("tool_call") ?? []) {
-                  result = await handler(
-                    { toolName: "bash", input: { command: "printf safe" } },
-                    context,
-                  ) as { block?: boolean; reason?: string } | undefined;
-                }
-                check(
-                  entry.name,
-                  result?.block === true ? "block" : "allow",
-                  entry.expected,
-                  result?.reason ?? "",
-                  entry.reason,
-                );
-              } finally {
-                if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
-                else process.env.XDG_CONFIG_HOME = previousConfigHome;
-                if (previousNoGate === undefined) delete process.env.PI_NO_GATE;
-                else process.env.PI_NO_GATE = previousNoGate;
-                rmSync(configRoot, { recursive: true, force: true });
-              }
+              const gated = await runGateHandler({
+                rulesInline:
+                  'export default () => ({ extraRules: [{ label: "synthetic throwing rule", action: "prompt", test: () => { throw new Error("synthetic parser fault"); } }] });\n',
+                command: "printf safe",
+                hasUI: false,
+              });
+              check(entry.name, gated.decision, entry.expected, gated.reason, entry.reason);
               continue;
             }
             if (entry.kind === "project") {
-              const result = classify(entry.command, {}, entry.project, entry.headless === true);
+              const result =
+                entry.headless === true
+                  ? await runGateHandler({
+                      projectConfig: entry.project,
+                      command: entry.command,
+                      hasUI: false,
+                    })
+                  : classify(entry.command, {}, entry.project);
               check(entry.name, result.decision, entry.expected, result.reason);
               if (!result.warnings.some((warning: string) => warning.includes(entry.warning))) {
                 failures.push(entry.name + ": expected warning containing " + JSON.stringify(entry.warning) + ", got " + JSON.stringify(result.warnings));
