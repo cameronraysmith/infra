@@ -132,11 +132,9 @@
       themePath = "${toString ../home/ai/pi}/themes/catppuccin-mocha.json";
       themePresent = builtins.pathExists themePath;
       themeJson = if themePresent then builtins.fromJSON (builtins.readFile themePath) else { };
-      immutableExtensionTargets =
-        if extensionSourceImmutable then
-          map (selector: "pi-agent-extensions/${selector}") positiveExtensions
-        else
-          [ ];
+      immutableExtensionTargets = lib.optionals extensionSourceImmutable (
+        map (selector: "pi-agent-extensions/${selector}") positiveExtensions
+      );
       permissionRulesTarget = ".config/pi-agent-extensions/permission-gate/rules.ts";
       editWritePolicyTarget = "${piConfig.configDir}/extensions/edit-write-policy.ts";
       immutablePolicyTargets =
@@ -1899,10 +1897,9 @@
             inherit runtimeStateOutsideImmutableLinks;
             immutableResourceTargets = {
               policy = immutablePolicyTargets;
-              theme =
-                if homeFileImmutable themeTarget then [ "~/.pi/agent/themes/catppuccin-mocha.json" ] else [ ];
+              theme = lib.optional (homeFileImmutable themeTarget) "~/.pi/agent/themes/catppuccin-mocha.json";
               extensions = immutableExtensionTargets;
-              globalInstructions = if globalInstructionsNixOwned then [ "~/.pi/agent/AGENTS.md" ] else [ ];
+              globalInstructions = lib.optional globalInstructionsNixOwned "~/.pi/agent/AGENTS.md";
             };
             policySourcesCheckedIn = {
               permissionRules = homeFileSourceIs permissionRulesTarget permissionRulesPath;
