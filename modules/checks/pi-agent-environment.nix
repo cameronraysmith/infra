@@ -1389,7 +1389,7 @@
           ''commit_id ++ "\t" ++ conflict ++ "\n"''
         ];
       };
-      expectedJjArgvByScenario =
+      jjProbeSequence =
         let
           inherit (jjArgvOracle)
             classifyWip
@@ -1402,453 +1402,300 @@
             root
             ;
         in
+        [
+          root
+          current
+          currentIdentity
+          defaultBookmarks
+          classifyWip
+          resolveWip
+          join
+          parents
+        ];
+      # inspectJj in edit-write-policy.ts runs these eight read-only probes
+      # straight-line with early returns, so every scenario's recorded argv
+      # sequence is a prefix of one total order and is characterized by the count
+      # of probes it reaches. A scenario whose probe order is not such a prefix
+      # cannot be expressed here and needs an explicit expectedJjArgv literal.
+      repositoryCaseTable = [
         {
-          "ordinary-healthy" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "ordinary-nonempty-at" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "ordinary-conflict" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "ordinary-divergent-at" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "ordinary-main-at" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "ordinary-master-at" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "diamond-healthy" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-nonempty-wip" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-resolved-nonempty-join" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-missing-wip" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-moved-wip" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-divergent-wip" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-divergent-wip-without-target" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-divergent-wip-malformed-resolution" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-          ];
-          "diamond-nonsingle-parent-wip" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-single-parent-join" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-conflicted-join" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-conflicted-immediate-parent" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-join-parent-count-mismatch" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "diamond-malformed-join-probe" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-          ];
-          "diamond-failing-join-probe" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-          ];
-          "malformed-probe" = [
-            root
-            current
-          ];
-          "malformed-parent-count-probe" = [
-            root
-            current
-          ];
-          "failing-probe" = [
-            root
-            current
-          ];
-          "ambiguous-probe" = [
-            root
-            current
-          ];
-          "failing-root-probe" = [ root ];
-          "outside-jj-contradictory-stdout" = [ root ];
-          "outside-jj-wrong-status" = [ root ];
-          "outside-jj-mixed-diagnostics" = [ root ];
-          "classification-whitespace-only" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "classification-padded" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "classification-extra-blank" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "root-padded" = [ root ];
-          "current-extra-blank" = [
-            root
-            current
-          ];
-          "identity-padded" = [
-            root
-            current
-            currentIdentity
-          ];
-          "defaults-extra-blank" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-          ];
-          "resolution-padded" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-          ];
-          "parents-extra-blank" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-            resolveWip
-            join
-            parents
-          ];
-          "canonical-root-mismatch" = [ root ];
-          "target-jj-cwd-other-repository" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "target-git-cwd-jj-repository" = [ root ];
-          "git-protected-head" = [ root ];
-          "git-feature-head" = [ root ];
-          "git-detached-head" = [ root ];
-          "git-malformed-head" = [ root ];
-          "git-multiline-head" = [ root ];
-          "colocated-healthy" = [
-            root
-            current
-            currentIdentity
-            defaultBookmarks
-            classifyWip
-          ];
-          "colocated-divergent-roots" = [ root ];
-        };
-      repositoryScenarios = [
-        "ordinary-healthy"
-        "ordinary-nonempty-at"
-        "ordinary-conflict"
-        "ordinary-divergent-at"
-        "ordinary-main-at"
-        "ordinary-master-at"
-        "diamond-healthy"
-        "diamond-nonempty-wip"
-        "diamond-resolved-nonempty-join"
-        "diamond-missing-wip"
-        "diamond-moved-wip"
-        "diamond-divergent-wip"
-        "diamond-divergent-wip-without-target"
-        "diamond-divergent-wip-malformed-resolution"
-        "diamond-nonsingle-parent-wip"
-        "diamond-single-parent-join"
-        "diamond-conflicted-join"
-        "diamond-conflicted-immediate-parent"
-        "diamond-join-parent-count-mismatch"
-        "diamond-malformed-join-probe"
-        "diamond-failing-join-probe"
-        "malformed-probe"
-        "malformed-parent-count-probe"
-        "failing-probe"
-        "ambiguous-probe"
-        "failing-root-probe"
-        "outside-jj-contradictory-stdout"
-        "outside-jj-wrong-status"
-        "outside-jj-mixed-diagnostics"
-        "classification-whitespace-only"
-        "classification-padded"
-        "classification-extra-blank"
-        "root-padded"
-        "current-extra-blank"
-        "identity-padded"
-        "defaults-extra-blank"
-        "resolution-padded"
-        "parents-extra-blank"
-        "canonical-root-mismatch"
-        "target-jj-cwd-other-repository"
-        "target-git-cwd-jj-repository"
-        "git-protected-head"
-        "git-feature-head"
-        "git-detached-head"
-        "git-malformed-head"
-        "git-multiline-head"
-        "colocated-healthy"
-        "colocated-divergent-roots"
-      ];
-      repositoryCases = map (
-        scenario:
-        {
-          kind = "repository";
-          name = "repository ${scenario}";
-          inherit scenario;
-          expected =
-            if
-              builtins.elem scenario [
-                "ordinary-healthy"
-                "ordinary-nonempty-at"
-                "target-jj-cwd-other-repository"
-                "target-git-cwd-jj-repository"
-                "git-feature-head"
-                "git-detached-head"
-                "diamond-healthy"
-                "diamond-nonempty-wip"
-                "diamond-resolved-nonempty-join"
-                "colocated-healthy"
-              ]
-            then
-              "allow"
-            else
-              "block";
-          expectedJjArgv = expectedJjArgvByScenario.${scenario} or null;
+          scenario = "ordinary-healthy";
+          probes = 5;
+          expected = "allow";
         }
-        //
-          lib.optionalAttrs
-            (builtins.elem scenario [
-              "target-jj-cwd-other-repository"
-              "target-git-cwd-jj-repository"
-            ])
-            {
-              target = "/target/new/file.ts";
-              cwd = "/cwd";
-              expectedProbeCwd = "/target";
-            }
-        // lib.optionalAttrs (scenario == "target-git-cwd-jj-repository") {
+        {
+          scenario = "ordinary-nonempty-at";
+          probes = 5;
+          expected = "allow";
+        }
+        {
+          scenario = "ordinary-conflict";
+          probes = 5;
+          expected = "block";
+        }
+        {
+          scenario = "ordinary-divergent-at";
+          probes = 5;
+          expected = "block";
+        }
+        {
+          scenario = "ordinary-main-at";
+          probes = 5;
+          expected = "block";
+        }
+        {
+          scenario = "ordinary-master-at";
+          probes = 5;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-healthy";
+          probes = 8;
+          expected = "allow";
+        }
+        {
+          scenario = "diamond-nonempty-wip";
+          probes = 8;
+          expected = "allow";
+        }
+        {
+          scenario = "diamond-resolved-nonempty-join";
+          probes = 8;
+          expected = "allow";
+        }
+        {
+          scenario = "diamond-missing-wip";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-moved-wip";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-divergent-wip";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-divergent-wip-without-target";
+          probes = 8;
+          expected = "block";
+          reason = "divergent";
+        }
+        {
+          scenario = "diamond-divergent-wip-malformed-resolution";
+          probes = 6;
+          expected = "block";
+          reason = "malformed";
+        }
+        {
+          scenario = "diamond-nonsingle-parent-wip";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-single-parent-join";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-conflicted-join";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-conflicted-immediate-parent";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-join-parent-count-mismatch";
+          probes = 8;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-malformed-join-probe";
+          probes = 7;
+          expected = "block";
+        }
+        {
+          scenario = "diamond-failing-join-probe";
+          probes = 7;
+          expected = "block";
+        }
+        {
+          scenario = "malformed-probe";
+          probes = 2;
+          expected = "block";
+        }
+        {
+          scenario = "malformed-parent-count-probe";
+          probes = 2;
+          expected = "block";
+        }
+        {
+          scenario = "failing-probe";
+          probes = 2;
+          expected = "block";
+        }
+        {
+          scenario = "ambiguous-probe";
+          probes = 2;
+          expected = "block";
+        }
+        {
+          scenario = "failing-root-probe";
+          probes = 1;
+          expected = "block";
+        }
+        {
+          scenario = "outside-jj-contradictory-stdout";
+          probes = 1;
+          expected = "block";
+          reason = "jj root";
+        }
+        {
+          scenario = "outside-jj-wrong-status";
+          probes = 1;
+          expected = "block";
+          reason = "jj root";
+        }
+        {
+          scenario = "outside-jj-mixed-diagnostics";
+          probes = 1;
+          expected = "block";
+          reason = "jj root";
+        }
+        {
+          scenario = "classification-whitespace-only";
+          probes = 5;
+          expected = "block";
+          reason = "classification";
+        }
+        {
+          scenario = "classification-padded";
+          probes = 5;
+          expected = "block";
+          reason = "classification";
+        }
+        {
+          scenario = "classification-extra-blank";
+          probes = 5;
+          expected = "block";
+          reason = "classification";
+        }
+        {
+          scenario = "root-padded";
+          probes = 1;
+          expected = "block";
+          reason = "root";
+        }
+        {
+          scenario = "current-extra-blank";
+          probes = 2;
+          expected = "block";
+          reason = "current";
+        }
+        {
+          scenario = "identity-padded";
+          probes = 3;
+          expected = "block";
+          reason = "identity";
+        }
+        {
+          scenario = "defaults-extra-blank";
+          probes = 4;
+          expected = "block";
+          reason = "default bookmark";
+        }
+        {
+          scenario = "resolution-padded";
+          probes = 6;
+          expected = "block";
+          reason = "resolution";
+        }
+        {
+          scenario = "parents-extra-blank";
+          probes = 8;
+          expected = "block";
+          reason = "parent";
+        }
+        {
+          scenario = "canonical-root-mismatch";
+          probes = 1;
+          expected = "block";
+        }
+        {
+          scenario = "target-jj-cwd-other-repository";
+          probes = 5;
+          expected = "allow";
+          target = "/target/new/file.ts";
+          cwd = "/cwd";
+          expectedProbeCwd = "/target";
+        }
+        {
+          scenario = "target-git-cwd-jj-repository";
+          probes = 1;
+          expected = "allow";
+          target = "/target/new/file.ts";
+          cwd = "/cwd";
+          expectedProbeCwd = "/target";
           expectedGitRootDirectory = "/target";
           expectedGitHeadDirectory = "/target";
         }
-        // lib.optionalAttrs (scenario == "git-protected-head") {
+        {
+          scenario = "git-protected-head";
+          probes = 1;
+          expected = "block";
           reason = "main";
         }
-        //
-          lib.optionalAttrs
-            (builtins.elem scenario [
-              "classification-whitespace-only"
-              "classification-padded"
-              "classification-extra-blank"
-            ])
-            {
-              reason = "classification";
-            }
-        // lib.optionalAttrs (scenario == "root-padded") {
-          reason = "root";
+        {
+          scenario = "git-feature-head";
+          probes = 1;
+          expected = "allow";
         }
-        //
-          lib.optionalAttrs
-            (builtins.elem scenario [
-              "outside-jj-contradictory-stdout"
-              "outside-jj-wrong-status"
-              "outside-jj-mixed-diagnostics"
-            ])
-            {
-              reason = "jj root";
-            }
-        // lib.optionalAttrs (scenario == "current-extra-blank") {
-          reason = "current";
+        {
+          scenario = "git-detached-head";
+          probes = 1;
+          expected = "allow";
         }
-        // lib.optionalAttrs (scenario == "identity-padded") {
-          reason = "identity";
+        {
+          scenario = "git-malformed-head";
+          probes = 1;
+          expected = "block";
+          reason = "Git head";
         }
-        // lib.optionalAttrs (scenario == "defaults-extra-blank") {
-          reason = "default bookmark";
+        {
+          scenario = "git-multiline-head";
+          probes = 1;
+          expected = "block";
+          reason = "Git head";
         }
-        // lib.optionalAttrs (scenario == "resolution-padded") {
-          reason = "resolution";
+        {
+          scenario = "colocated-healthy";
+          probes = 5;
+          expected = "allow";
+          expectedGitRootDirectory = "/repo";
         }
-        // lib.optionalAttrs (scenario == "parents-extra-blank") {
-          reason = "parent";
-        }
-        //
-          lib.optionalAttrs
-            (builtins.elem scenario [
-              "git-malformed-head"
-              "git-multiline-head"
-            ])
-            {
-              reason = "Git head";
-            }
-        // lib.optionalAttrs (scenario == "diamond-divergent-wip-without-target") {
-          reason = "divergent";
-        }
-        // lib.optionalAttrs (scenario == "diamond-divergent-wip-malformed-resolution") {
-          reason = "malformed";
-        }
-        // lib.optionalAttrs (scenario == "colocated-divergent-roots") {
+        {
+          scenario = "colocated-divergent-roots";
+          probes = 1;
+          expected = "block";
           reason = "ambiguous";
+          expectedGitRootDirectory = "/repo";
         }
-        //
-          lib.optionalAttrs
-            (builtins.elem scenario [
-              "colocated-healthy"
-              "colocated-divergent-roots"
-            ])
-            {
-              expectedGitRootDirectory = "/repo";
-            }
-      ) repositoryScenarios;
+      ];
+      repositoryCases = map (
+        row:
+        builtins.removeAttrs row [ "probes" ]
+        // {
+          kind = "repository";
+          name = "repository ${row.scenario}";
+          expectedJjArgv = if row ? probes then lib.take row.probes jjProbeSequence else null;
+        }
+      ) repositoryCaseTable;
       gitRootCases = [
         {
           kind = "git-root";
