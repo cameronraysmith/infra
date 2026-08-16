@@ -1082,7 +1082,7 @@ export default function permissionRules(helpers: GateHelpers): GateConfig {
       action: "block",
       test: (pipeline) =>
         helpers.anyCmd(pipeline, "pi", (args) =>
-          ["install", "remove", "uninstall", "update"].includes(args[0] ?? ""),
+          ["config", "install", "remove", "uninstall", "update"].includes(args[0] ?? ""),
         ),
       reason:
         "Pi package mutation is blocked. Change the Nix pin and Home Manager package selection instead.",

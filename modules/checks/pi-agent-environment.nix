@@ -654,6 +654,21 @@
         }
         {
           kind = "shell";
+          name = "pi config blocks";
+          command = "pi config";
+          expected = "block";
+          reason = "Nix";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "pi list remains allowed";
+          command = "pi list";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "curl separate request mutation prompts";
           command = "curl --request POST https://example.invalid";
           expected = "prompt";
