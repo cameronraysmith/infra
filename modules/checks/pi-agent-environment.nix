@@ -872,6 +872,27 @@
         }
         {
           kind = "shell";
+          name = "curl read-only method cannot mask data mutation";
+          command = "curl -XGET --data payload https://example.invalid/resource";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl read-only method cannot mask upload mutation";
+          command = "curl -XGET --upload-file payload https://example.invalid/resource";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "curl get conversion with read-only method remains allowed";
+          command = "curl -G -XGET --data payload https://example.invalid/resource";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "wget separate method mutation prompts";
           command = "wget --method POST https://example.invalid";
           expected = "prompt";
@@ -888,6 +909,13 @@
           kind = "shell";
           name = "wget post data mutation prompts";
           command = "wget --post-data=payload https://example.invalid";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "wget read-only method cannot mask body mutation";
+          command = "wget --method=GET --body-data=payload https://example.invalid/resource";
           expected = "prompt";
           custom = true;
         }

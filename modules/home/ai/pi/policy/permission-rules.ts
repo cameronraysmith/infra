@@ -495,6 +495,9 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
 const curlTransferMutates = (args: readonly string[]): boolean => {
   const analysis = analyzeCurlTransfer(args);
   if (analysis.malformed || analysis.hasOpaqueConfig || analysis.hasUnclassifiedOption) return true;
+  // A request body mutates whatever method is declared; -G is curl's documented
+  // conversion of that data into the query string, so it transmits no body.
+  if (analysis.hasData && !analysis.usesGet) return true;
   if (analysis.explicitMethod !== undefined) {
     return !READ_ONLY_METHODS.has(analysis.explicitMethod);
   }
