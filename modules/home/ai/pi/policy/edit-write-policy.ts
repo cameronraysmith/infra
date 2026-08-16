@@ -321,6 +321,12 @@ interface CurrentRecord {
   readonly changeId: string;
   readonly commitId: string;
   readonly conflicted: boolean;
+  // Validated as part of the probe's strict column shape — a non-boolean here
+  // makes the probe malformed — but deliberately never consulted by a decision:
+  // neither @ nor @- may be required to be empty, and diamond health imposes no
+  // working-copy-cleanliness requirement. Not dead code; dropping it would
+  // loosen the template's shape check and invite the emptiness gate this policy
+  // must not have.
   readonly empty: boolean;
   readonly parentCount: number;
 }
@@ -359,6 +365,7 @@ const parseCurrent = (result: ProcessResult): CurrentRecord | string => {
 interface JoinRecord {
   readonly commitId: string;
   readonly conflicted: boolean;
+  // Shape-validated, never consulted; see CurrentRecord.empty.
   readonly empty: boolean;
   readonly parentCount: number;
 }
@@ -747,7 +754,16 @@ const parseToolInput = (input: unknown): string | undefined => {
   if (input === null || typeof input !== "object") return undefined;
   const path = (input as { readonly path?: unknown }).path;
   if (typeof path !== "string") return undefined;
+  // Pi's file-mention syntax hands the tool an @-prefixed path. Stripping the
+  // prefix before resolution keeps "@/nix/store/..." absolute, so it reaches the
+  // immutable-root check instead of resolving relative to cwd. Covered by the
+  // "adapter normalizes Pi at-prefixed paths" case in
+  // modules/checks/pi-agent-environment.nix.
   const normalized = path.startsWith("@") ? path.slice(1) : path;
+  // The trim is a rejection predicate only. Returning normalized.trim() would
+  // canonicalize a different string than the tool mutates, and relaxing the
+  // predicate to normalized.length > 0 would admit "   ", which resolve() maps
+  // to a directory under cwd instead of being blocked as malformed input.
   return normalized.trim().length > 0 ? normalized : undefined;
 };
 
