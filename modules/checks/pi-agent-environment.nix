@@ -10,11 +10,28 @@
     let
       mkCheck = self.lib.mkStructuralCheck pkgs;
       piModuleText = builtins.readFile ../home/ai/pi/default.nix;
-      piReconnaissanceText = builtins.readFile ../../docs/notes/development/ai-agents/pi-integration-reconnaissance.md;
+      # Anchored so a version-shaped 0.83 is distinguished from an incidental
+      # digit run: 10.83, 0.830 and 20.83% must not count as references.
+      pi083Pattern = "(.*[^0-9])?0\\.83([^0-9].*)?";
+      pi083References =
+        text:
+        lib.pipe (lib.splitString "\n" text) [
+          (lib.imap1 (index: line: { inherit index line; }))
+          (builtins.filter (entry: builtins.match pi083Pattern entry.line != null))
+          (map (entry: "${toString entry.index}: ${entry.line}"))
+        ];
+      # docs/notes/ is a lifecycle-managed working-notes tree, so guard the read:
+      # builtins.readFile on a missing path aborts evaluation of the whole check.
+      piReconnaissancePath = ../../docs/notes/development/ai-agents/pi-integration-reconnaissance.md;
+      piReconnaissancePresent = builtins.pathExists piReconnaissancePath;
+      piReconnaissanceText =
+        if piReconnaissancePresent then builtins.readFile piReconnaissancePath else "";
       homeConfig = self.homeConfigurations."crs58@${system}".config;
       piConfig = homeConfig.programs.pi-coding-agent;
       extensionPackage = self'.packages.pi-agent-extensions or null;
       extensionSource = if extensionPackage == null then null else toString extensionPackage;
+      compactionPackage = self'.packages.pi-openai-server-compaction or null;
+      compactionSource = if compactionPackage == null then null else toString compactionPackage;
       packageEntries = piConfig.settings.packages or [ ];
       extensionEntry = lib.findFirst (
         entry: builtins.isAttrs entry && (entry.source or null) == extensionSource
@@ -120,7 +137,7 @@
       );
       activationScripts = map (entry: entry.data or "") (builtins.attrValues homeConfig.home.activation);
       canonicalSkillsScript = lib.findFirst (
-        script: lib.hasInfix "$HOME/.agents/skills" script
+        script: lib.hasInfix "/.agents/skills" script
       ) "" activationScripts;
       piSpecificSkillsPresent =
         lib.any (name: lib.hasInfix ".pi/agent/skills" name) (builtins.attrNames homeConfig.home.file)
@@ -1869,8 +1886,9 @@
         pi-agent-environment-structural = mkCheck {
           name = "pi-agent-environment";
           actual = {
-            piModuleHasNoPi083 = !lib.hasInfix "0.83" piModuleText;
-            piReconnaissanceHasNoPi083 = !lib.hasInfix "0.83" piReconnaissanceText;
+            piModulePi083References = pi083References piModuleText;
+            inherit piReconnaissancePresent;
+            piReconnaissancePi083References = pi083References piReconnaissanceText;
             piPackageVersion = lib.getVersion piConfig.package;
             deployedPiCandidateCount = builtins.length deployedPiCandidates;
             inherit deployedPiIsOuterWrapper;
@@ -1881,9 +1899,9 @@
             packagePrompts = if extensionEntry == null then [ ] else extensionEntry.prompts or [ ];
             packageThemes = if extensionEntry == null then [ ] else extensionEntry.themes or [ ];
             extraPackages = map lib.getName piConfig.extraPackages;
-            compactionRetained = lib.any (
-              entry: !builtins.isAttrs entry && lib.hasInfix "pi-openai-server-compaction" (toString entry)
-            ) packageEntries;
+            compactionRetained =
+              compactionSource != null
+              && lib.any (entry: !builtins.isAttrs entry && entry == compactionSource) packageEntries;
             inherit globalInstructionsNixOwned piSpecificSkillsPresent;
             canonicalSkills = if canonicalSkillsScript == "" then null else "~/.agents/skills";
             slowModeSettingsShape = builtins.attrNames piConfig.settings;
@@ -1920,8 +1938,9 @@
             };
           };
           expected = {
-            piModuleHasNoPi083 = true;
-            piReconnaissanceHasNoPi083 = true;
+            piModulePi083References = [ ];
+            piReconnaissancePresent = true;
+            piReconnaissancePi083References = [ ];
             piPackageVersion = "0.84.1";
             deployedPiCandidateCount = 1;
             deployedPiIsOuterWrapper = true;
