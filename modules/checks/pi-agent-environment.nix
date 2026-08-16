@@ -60,33 +60,19 @@
         "piCodingAgentMutableSettings"
       ] { } homeConfig.home.activation;
       settingsActivationData = settingsActivation.data or "";
+      # These stay total and defer their diagnostics to build-time guards in the
+      # smoke check: a `throw` here aborts evaluation of the whole flake-check
+      # set, which would preempt the structural check's readable diff.
       deployedPiCandidates = builtins.filter (
-        package: (package.meta.mainProgram or null) == "pi" && lib.getVersion package == "0.84.1"
+        package: (package.meta.mainProgram or null) == "pi"
       ) homeConfig.home.packages;
       deployedPiPackage =
-        if builtins.length deployedPiCandidates == 1 then
-          builtins.head deployedPiCandidates
-        else
-          throw "pi-agent-environment-smoke: expected one deployed Home Manager Pi main program at version 0.84.1";
-      deployedPiExecutable =
-        if toString deployedPiPackage != toString piConfig.package then
-          lib.getExe deployedPiPackage
-        else
-          throw "pi-agent-environment-smoke: deployed Pi must be the Home Manager outer wrapper";
+        if builtins.length deployedPiCandidates == 1 then builtins.head deployedPiCandidates else null;
+      deployedPiIsOuterWrapper =
+        deployedPiPackage != null && toString deployedPiPackage != toString piConfig.package;
+      deployedPiExecutable = if deployedPiIsOuterWrapper then lib.getExe deployedPiPackage else "";
       requiredHomeFileSource =
-        target:
-        let
-          file = homeFileAt target;
-        in
-        if
-          file != null
-          && file.enable
-          && file.source != null
-          && lib.hasPrefix builtins.storeDir (toString file.source)
-        then
-          file.source
-        else
-          throw "pi-agent-environment-smoke: missing immutable Home Manager resource at ${target}";
+        target: if homeFileImmutable target then (homeFileAt target).source else null;
       # Pi persists several runtime-state categories into one file: settings.json
       # takes model selection, thinking preferences, and `pi install` extension
       # state (see the home.file comment in modules/home/ai/pi/default.nix), and
@@ -1860,6 +1846,9 @@
             piModuleHasNoPi083 = !lib.hasInfix "0.83" piModuleText;
             piReconnaissanceHasNoPi083 = !lib.hasInfix "0.83" piReconnaissanceText;
             piPackageVersion = lib.getVersion piConfig.package;
+            deployedPiCandidateCount = builtins.length deployedPiCandidates;
+            inherit deployedPiIsOuterWrapper;
+            canonicalSkillImmutable = homeFileImmutable ".factory/skills/using-superpowers";
             extensionPackagePresent = extensionPackage != null;
             extensionPackageName = if extensionPackage == null then null else lib.getName extensionPackage;
             inherit positiveExtensions negativeExtensions;
@@ -1910,6 +1899,9 @@
             piModuleHasNoPi083 = true;
             piReconnaissanceHasNoPi083 = true;
             piPackageVersion = "0.84.1";
+            deployedPiCandidateCount = 1;
+            deployedPiIsOuterWrapper = true;
+            canonicalSkillImmutable = true;
             extensionPackagePresent = true;
             extensionPackageName = "pi-agent-extensions";
             positiveExtensions = [
@@ -2177,11 +2169,40 @@
             {
               nativeBuildInputs = [ pkgs.python3 ];
               PI_EXECUTABLE = deployedPiExecutable;
+              DEPLOYED_PI_CANDIDATE_COUNT = toString (builtins.length deployedPiCandidates);
               SETTINGS_FIXTURE = settingsFixture;
               MODELS_FIXTURE = modelsFixture;
-              CANONICAL_SKILL_SOURCE = canonicalSkillSource;
+              CANONICAL_SKILL_SOURCE = if canonicalSkillSource == null then "" else canonicalSkillSource;
             }
             ''
+              if [ -z "$PI_EXECUTABLE" ]; then
+                echo "pi-agent-environment-smoke: no deployed Pi outer wrapper to run" >&2
+                echo "  home.packages entries with meta.mainProgram = pi: $DEPLOYED_PI_CANDIDATE_COUNT" >&2
+                echo >&2
+                echo "This check exercises the wrapper Home Manager actually installs, so it" >&2
+                echo "needs exactly one such candidate and that candidate must differ from" >&2
+                echo "programs.pi-coding-agent.package." >&2
+                echo >&2
+                echo "Remediation: with a count other than 1, reconcile home.packages in" >&2
+                echo "modules/home/ai/pi/default.nix so the Pi wrapper is the only main" >&2
+                echo "program named pi. With a count of 1, the outer wrapper collapsed onto" >&2
+                echo "programs.pi-coding-agent.package and the module no longer wraps it." >&2
+                echo "After an llm-agents bump also update the piPackageVersion literal in the" >&2
+                echo "expected attrset of modules/checks/pi-agent-environment.nix." >&2
+                exit 1
+              fi
+              if [ -z "$CANONICAL_SKILL_SOURCE" ]; then
+                echo "pi-agent-environment-smoke: no immutable Home Manager resource at" >&2
+                echo "  .factory/skills/using-superpowers" >&2
+                echo >&2
+                echo "The fixture seeds ~/.agents/skills from that home.file entry, which the" >&2
+                echo ".factory/skills mapping in modules/home/ai/skills/default.nix produces" >&2
+                echo "from the same composed skill set activation delivers." >&2
+                echo >&2
+                echo "Remediation: restore that mapping in modules/home/ai/skills/default.nix," >&2
+                echo "or repoint canonicalSkillSource in this file at the entry replacing it." >&2
+                exit 1
+              fi
               home="$TMPDIR/home"
               agent="$home/.pi/agent"
               mkdir -p \
