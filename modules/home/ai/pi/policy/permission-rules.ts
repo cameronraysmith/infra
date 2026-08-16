@@ -259,6 +259,11 @@ const CURL_VALUE_LONG_OPTIONS = new Set([
   "--user-agent",
   "--write-out",
 ]);
+const curlLongOptionTakesValue = (option: string): boolean =>
+  option === "--request" ||
+  CURL_DATA_LONG_OPTIONS.has(option) ||
+  CURL_VALUE_LONG_OPTIONS.has(option);
+
 const CURL_SAFE_FLAG_SHORT_OPTIONS = new Set([
   "#",
   "0",
@@ -413,7 +418,7 @@ const WGET_VALUE_SHORT_OPTIONS = new Set([
 ]);
 const WGET_FLAG_SHORT_OPTIONS = new Set(["c", "d", "h", "n", "N", "q", "r", "S", "v", "V"]);
 
-interface CurlAnalysis {
+interface HttpClientAnalysis {
   readonly explicitMethod?: string;
   readonly hasData: boolean;
   readonly usesGet: boolean;
@@ -422,7 +427,34 @@ interface CurlAnalysis {
   readonly malformed: boolean;
 }
 
-const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
+/**
+ * Grammar of one GNU-style HTTP client's argv, consumed by `analyzeHttpClientArgv`.
+ *
+ * `safeShort` and `valueShort` must be disjoint. The walker tests `safeShort`
+ * first and treats a hit as a no-value flag, so a short option appearing in
+ * both would stop consuming its value and misread the remainder of the cluster
+ * and of argv as options.
+ */
+interface HttpClientArgvSpec {
+  readonly safeLongFlag: (option: string) => boolean;
+  readonly valueLong: (option: string) => boolean;
+  readonly dataLong: (option: string) => boolean;
+  readonly opaqueLong: (option: string) => boolean;
+  readonly methodLong: string;
+  readonly getOnLong?: string;
+  readonly getOffLong?: string;
+  readonly safeShort: ReadonlySet<string>;
+  readonly valueShort: ReadonlySet<string>;
+  readonly dataShort: ReadonlySet<string>;
+  readonly opaqueShort: ReadonlySet<string>;
+  readonly methodShort?: string;
+  readonly getOnShort?: string;
+}
+
+const analyzeHttpClientArgv = (
+  args: readonly string[],
+  spec: HttpClientArgvSpec,
+): HttpClientAnalysis => {
   let explicitMethod: string | undefined;
   let hasData = false;
   let usesGet = false;
@@ -437,25 +469,22 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
       const equals = argument.indexOf("=");
       const option = equals === -1 ? argument : argument.slice(0, equals);
       const inlineValue = equals === -1 ? undefined : argument.slice(equals + 1);
-      if (isSafeCurlLongFlag(option)) {
-        if (option === "--get" || option === "--no-get") usesGet = option === "--get";
+      if (spec.safeLongFlag(option)) {
+        if (option === spec.getOnLong) usesGet = true;
+        else if (option === spec.getOffLong) usesGet = false;
         malformed ||= inlineValue !== undefined;
         continue;
       }
-      const takesValue =
-        option === "--request" ||
-        CURL_DATA_LONG_OPTIONS.has(option) ||
-        CURL_VALUE_LONG_OPTIONS.has(option);
-      if (!takesValue) {
+      if (!spec.valueLong(option)) {
         hasUnclassifiedOption = true;
         continue;
       }
       const value = inlineValue ?? args[index + 1];
       if (inlineValue === undefined) index += 1;
       if (value === undefined || value.length === 0) malformed = true;
-      if (option === "--request") explicitMethod = value;
-      if (option === "--config") hasOpaqueConfig = true;
-      if (CURL_DATA_LONG_OPTIONS.has(option)) hasData = true;
+      if (option === spec.methodLong) explicitMethod = value;
+      if (spec.opaqueLong(option)) hasOpaqueConfig = true;
+      if (spec.dataLong(option)) hasData = true;
       continue;
     }
     if (!argument.startsWith("-") || argument === "-") continue;
@@ -463,11 +492,11 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
     const cluster = argument.slice(1);
     for (let position = 0; position < cluster.length; position += 1) {
       const option = cluster[position];
-      if (CURL_SAFE_FLAG_SHORT_OPTIONS.has(option)) {
-        if (option === "G") usesGet = true;
+      if (spec.safeShort.has(option)) {
+        if (option === spec.getOnShort) usesGet = true;
         continue;
       }
-      if (!CURL_VALUE_SHORT_OPTIONS.has(option)) {
+      if (!spec.valueShort.has(option)) {
         hasUnclassifiedOption = true;
         continue;
       }
@@ -475,9 +504,9 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
       const value = inlineValue.length > 0 ? inlineValue : args[index + 1];
       if (inlineValue.length === 0) index += 1;
       if (value === undefined || value.length === 0) malformed = true;
-      if (option === "X") explicitMethod = value;
-      if (option === "K") hasOpaqueConfig = true;
-      if (option === "d" || option === "F" || option === "T") hasData = true;
+      if (option === spec.methodShort) explicitMethod = value;
+      if (spec.opaqueShort.has(option)) hasOpaqueConfig = true;
+      if (spec.dataShort.has(option)) hasData = true;
       break;
     }
   }
@@ -492,8 +521,24 @@ const analyzeCurlTransfer = (args: readonly string[]): CurlAnalysis => {
   };
 };
 
+const CURL_ARGV_SPEC: HttpClientArgvSpec = {
+  safeLongFlag: isSafeCurlLongFlag,
+  valueLong: curlLongOptionTakesValue,
+  dataLong: (option) => CURL_DATA_LONG_OPTIONS.has(option),
+  opaqueLong: (option) => option === "--config",
+  methodLong: "--request",
+  getOnLong: "--get",
+  getOffLong: "--no-get",
+  safeShort: CURL_SAFE_FLAG_SHORT_OPTIONS,
+  valueShort: CURL_VALUE_SHORT_OPTIONS,
+  dataShort: new Set(["d", "F", "T"]),
+  opaqueShort: new Set(["K"]),
+  methodShort: "X",
+  getOnShort: "G",
+};
+
 const curlTransferMutates = (args: readonly string[]): boolean => {
-  const analysis = analyzeCurlTransfer(args);
+  const analysis = analyzeHttpClientArgv(args, CURL_ARGV_SPEC);
   if (analysis.malformed || analysis.hasOpaqueConfig || analysis.hasUnclassifiedOption) return true;
   // A request body mutates whatever method is declared; -G is curl's documented
   // conversion of that data into the query string, so it transmits no body.
@@ -534,10 +579,7 @@ const curlTransfers = (args: readonly string[]): readonly string[][] => {
       append(argument);
       const option = argument.split("=", 1)[0];
       const hasInlineValue = argument.includes("=");
-      const takesValue =
-        option === "--request" ||
-        CURL_DATA_LONG_OPTIONS.has(option) ||
-        CURL_VALUE_LONG_OPTIONS.has(option);
+      const takesValue = curlLongOptionTakesValue(option);
       if (takesValue && !hasInlineValue && args[index + 1] !== undefined) {
         append(args[index + 1]);
         index += 1;
@@ -582,68 +624,28 @@ const curlTransfers = (args: readonly string[]): readonly string[][] => {
 
 const curlMutates = (args: string[]): boolean => curlTransfers(args).some(curlTransferMutates);
 
-interface WgetAnalysis {
-  readonly explicitMethod?: string;
-  readonly hasBody: boolean;
-  readonly hasOpaqueConfig: boolean;
-  readonly malformedOrAmbiguous: boolean;
-}
-
-const analyzeWget = (args: readonly string[]): WgetAnalysis => {
-  let explicitMethod: string | undefined;
-  let hasBody = false;
-  let hasOpaqueConfig = false;
-  let malformedOrAmbiguous = false;
-
-  for (let index = 0; index < args.length; index += 1) {
-    const argument = args[index];
-    if (argument === "--") break;
-    if (argument.startsWith("--")) {
-      const equals = argument.indexOf("=");
-      const option = equals === -1 ? argument : argument.slice(0, equals);
-      const inlineValue = equals === -1 ? undefined : argument.slice(equals + 1);
-      if (WGET_FLAG_LONG_OPTIONS.has(option)) {
-        malformedOrAmbiguous ||= inlineValue !== undefined;
-        continue;
-      }
-      if (!WGET_VALUE_LONG_OPTIONS.has(option)) {
-        malformedOrAmbiguous = true;
-        continue;
-      }
-      const value = inlineValue ?? args[index + 1];
-      if (inlineValue === undefined) index += 1;
-      if (value === undefined || value.length === 0) malformedOrAmbiguous = true;
-      if (option === "--method") explicitMethod = value;
-      if (WGET_BODY_OPTIONS.has(option)) hasBody = true;
-      if (WGET_OPAQUE_OPTIONS.has(option)) hasOpaqueConfig = true;
-      continue;
-    }
-    if (!argument.startsWith("-") || argument === "-") continue;
-
-    const cluster = argument.slice(1);
-    let consumed = false;
-    for (let position = 0; position < cluster.length; position += 1) {
-      const option = cluster[position];
-      if (WGET_VALUE_SHORT_OPTIONS.has(option)) {
-        const inlineValue = cluster.slice(position + 1);
-        const value = inlineValue.length > 0 ? inlineValue : args[index + 1];
-        if (inlineValue.length === 0) index += 1;
-        if (value === undefined || value.length === 0) malformedOrAmbiguous = true;
-        if (option === "e") hasOpaqueConfig = true;
-        consumed = true;
-        break;
-      }
-      if (!WGET_FLAG_SHORT_OPTIONS.has(option)) malformedOrAmbiguous = true;
-    }
-    if (!consumed && cluster.length === 0) malformedOrAmbiguous = true;
-  }
-
-  return { explicitMethod, hasBody, hasOpaqueConfig, malformedOrAmbiguous };
+const WGET_ARGV_SPEC: HttpClientArgvSpec = {
+  safeLongFlag: (option) => WGET_FLAG_LONG_OPTIONS.has(option),
+  valueLong: (option) => WGET_VALUE_LONG_OPTIONS.has(option),
+  dataLong: (option) => WGET_BODY_OPTIONS.has(option),
+  opaqueLong: (option) => WGET_OPAQUE_OPTIONS.has(option),
+  methodLong: "--method",
+  safeShort: WGET_FLAG_SHORT_OPTIONS,
+  valueShort: WGET_VALUE_SHORT_OPTIONS,
+  dataShort: new Set<string>(),
+  opaqueShort: new Set(["e"]),
 };
 
 const wgetMutates = (args: string[]): boolean => {
-  const analysis = analyzeWget(args);
-  if (analysis.malformedOrAmbiguous || analysis.hasOpaqueConfig || analysis.hasBody) return true;
+  const analysis = analyzeHttpClientArgv(args, WGET_ARGV_SPEC);
+  if (
+    analysis.malformed ||
+    analysis.hasUnclassifiedOption ||
+    analysis.hasOpaqueConfig ||
+    analysis.hasData
+  ) {
+    return true;
+  }
   return analysis.explicitMethod !== undefined && !READ_ONLY_METHODS.has(analysis.explicitMethod);
 };
 
