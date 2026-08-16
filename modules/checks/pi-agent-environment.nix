@@ -1261,6 +1261,30 @@
           export function resolve(...paths: string[]): string;
           export const sep: string;
         }
+        declare module "node:fs" {
+          export function copyFileSync(source: string, destination: string): void;
+          export function mkdirSync(path: string, options?: { recursive?: boolean }): void;
+          export function mkdtempSync(prefix: string): string;
+          export function readFileSync(path: string, encoding: "utf8"): string;
+          export function rmSync(path: string, options?: { recursive?: boolean; force?: boolean }): void;
+          export function writeFileSync(path: string, data: string): void;
+        }
+        declare module "node:os" {
+          export function tmpdir(): string;
+        }
+        declare module "node:url" {
+          export function pathToFileURL(path: string): { href: string };
+        }
+        declare module "bun:test" {
+          export const mock: { module(specifier: string, factory: () => unknown): void };
+        }
+        declare const process: {
+          env: Record<string, string> & {
+            XDG_CONFIG_HOME?: string;
+            PI_NO_GATE?: string;
+          };
+          exit(code: number): never;
+        };
         declare module "@earendil-works/pi-coding-agent" {
           interface ToolCallEvent {
             readonly toolName: string;
@@ -1285,6 +1309,10 @@
           }
         }
       '';
+      # Residual limit: the harness reads its case table as JSON.parse output, so
+      # every entry.<field> access is `any`. tsc validates the harness's own
+      # helpers, locals and signatures, never a field access against the six case
+      # shapes the Nix tables emit.
       policyTsconfig = pkgs.writeText "pi-agent-environment-policy-tsconfig.json" (
         builtins.toJSON {
           compilerOptions = {
@@ -1302,6 +1330,7 @@
             "./external.d.ts"
             "./permission-rules.ts"
             "./edit-write-policy.ts"
+            "./policy-test.ts"
           ];
         }
       );
@@ -2008,6 +2037,7 @@
               ln -s "$PERMISSION_RULES_MODULE" typecheck/permission-rules.ts
               ln -s "$EDIT_WRITE_POLICY_MODULE" typecheck/edit-write-policy.ts
               ln -s "$POLICY_TYPE_DECLARATIONS" typecheck/external.d.ts
+              ln -s "$POLICY_HARNESS" typecheck/policy-test.ts
               ln -s "$POLICY_TSCONFIG" typecheck/tsconfig.json
               tsc -p typecheck/tsconfig.json
               bun "$POLICY_HARNESS"
