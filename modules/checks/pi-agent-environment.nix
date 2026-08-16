@@ -622,6 +622,118 @@
         }
         {
           kind = "shell";
+          name = "jj help remains allowed";
+          command = "jj help";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj revert remains allowed";
+          command = "jj revert -r @";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj bisect remains allowed";
+          command = "jj bisect run true";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj sign remains allowed";
+          command = "jj sign -r @";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj operation alias remains allowed";
+          command = "jj op log";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj status alias remains allowed";
+          command = "jj st";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj long version remains allowed";
+          command = "jj --version";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj short version remains allowed";
+          command = "jj -V";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj long help remains allowed";
+          command = "jj --help";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj short help remains allowed";
+          command = "jj -h";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj subcommand help remains allowed";
+          command = "jj help workspace";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj informational version short-circuits workspace add";
+          command = "jj --version workspace add ../feature";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj informational help short-circuits workspace add";
+          command = "jj --help workspace add";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj at-operation log remains allowed";
+          command = "jj --at-op @ log -r @";
+          expected = "allow";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "jj at-operation workspace add still prompts";
+          command = "jj --at-op @ workspace add ../feature";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
+          name = "unknown jj command prompts";
+          command = "jj frobnicate";
+          expected = "prompt";
+          custom = true;
+        }
+        {
+          kind = "shell";
           name = "pi install blocks";
           command = "pi install npm:example";
           expected = "block";

@@ -756,17 +756,23 @@ const GIT_INFORMATIONAL_GLOBAL_OPTIONS = new Set([
   "-v",
 ]);
 
-const NO_INFORMATIONAL_GLOBAL_OPTIONS: ReadonlySet<string> = new Set();
+const JJ_INFORMATIONAL_GLOBAL_OPTIONS = new Set(["--help", "--version", "-h", "-V"]);
 
 const JJ_GLOBAL_OPTIONS: GlobalOptionSpec = {
   flags: new Set([
     "--debug",
+    "--help",
     "--ignore-immutable",
     "--ignore-working-copy",
+    "--no-integrate-operation",
     "--no-pager",
     "--quiet",
+    "--version",
+    "-V",
+    "-h",
   ]),
   values: new Set([
+    "--at-op",
     "--at-operation",
     "--color",
     "--config",
@@ -775,6 +781,8 @@ const JJ_GLOBAL_OPTIONS: GlobalOptionSpec = {
     "--repository",
     "-R",
   ]),
+  // "--at-op" must stay out of gluedValues: "--at-operation".startsWith("--at-op"),
+  // so the glued branch would consume the long spelling as the value "eration".
   gluedValues: new Set(["-R"]),
 };
 
@@ -925,41 +933,57 @@ const KNOWN_GIT_BUILTIN_COMMANDS = new Set([
   "worktree",
   "write-tree",
 ]);
+// jj 0.43.0 top-level commands and built-in aliases, from the deployed Nix package (`jj --help`).
 const KNOWN_JJ_COMMANDS = new Set([
   "abandon",
   "absorb",
+  "arrange",
+  "b",
+  "bisect",
   "bookmark",
+  "ci",
   "commit",
   "config",
+  "desc",
   "describe",
   "diff",
+  "diffedit",
   "duplicate",
   "edit",
   "evolog",
+  "evolution-log",
   "file",
   "fix",
+  "gerrit",
   "git",
+  "help",
   "interdiff",
   "log",
+  "metaedit",
   "new",
   "next",
+  "op",
   "operation",
   "parallelize",
   "prev",
   "rebase",
+  "redo",
   "resolve",
   "restore",
+  "revert",
   "root",
   "run",
   "show",
+  "sign",
   "simplify-parents",
   "sparse",
   "split",
   "squash",
+  "st",
   "status",
   "tag",
   "undo",
-  "unsquash",
+  "unsign",
   "util",
   "version",
   "workspace",
@@ -1050,7 +1074,7 @@ const createsWorkspace = (args: string[]): boolean =>
     JJ_GLOBAL_OPTIONS,
     "workspace",
     KNOWN_JJ_COMMANDS,
-    NO_INFORMATIONAL_GLOBAL_OPTIONS,
+    JJ_INFORMATIONAL_GLOBAL_OPTIONS,
     (values) => jjAliasesFor(values, "workspace"),
   );
 
