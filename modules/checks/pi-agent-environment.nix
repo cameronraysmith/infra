@@ -169,951 +169,354 @@
           pkgs.writeText "missing-edit-write-policy.ts" ''
             export const policyPresent = false;
           '';
+      # A shell case without `custom` runs against the built-in ruleset: the
+      # harness passes `{}` in place of the deployed customConfig when `custom` is
+      # falsy, so builtinShell and customShell exercise different engines.
+      builtinShell = expected: name: command: {
+        kind = "shell";
+        inherit name command expected;
+      };
+      customShell =
+        expected: name: command:
+        (builtinShell expected name command) // { custom = true; };
+      customShellBecause =
+        expected: reason: name: command:
+        (customShell expected name command) // { inherit reason; };
       shellCases = [
-        {
-          kind = "shell";
-          name = "safe command is allowed";
-          command = "printf '%s\\n' safe";
-          expected = "allow";
-        }
-        {
-          kind = "shell";
-          name = "safe curl GET is allowed";
-          command = "curl --request GET https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe wget GET is allowed";
-          command = "wget https://example.invalid/file";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl HEAD is allowed";
-          command = "curl --request HEAD https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl silent flag is allowed";
-          command = "curl --silent https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl head flag is allowed";
-          command = "curl --head https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl location flag is allowed";
-          command = "curl --location https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl combined long flags are allowed";
-          command = "curl --silent --show-error --location https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl negated long flag is allowed";
-          command = "curl --no-location https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl combined silent short flags are allowed";
-          command = "curl -sS https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl combined head and location short flags are allowed";
-          command = "curl -IL https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe curl ordinary short flag cluster is allowed";
-          command = "curl -fsSL https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "safe wget OPTIONS is allowed";
-          command = "wget --method OPTIONS https://example.invalid";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "dangerous built-in sudo prompts";
-          command = "sudo id";
-          expected = "prompt";
-        }
-        {
-          kind = "shell";
-          name = "direct rm blocks";
-          command = "rm file.txt";
-          expected = "block";
-          reason = "rip";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "composed rm blocks";
-          command = "printf done && rm -f file.txt";
-          expected = "block";
-          reason = "rip";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "deferred rm blocks";
-          command = "find . -name '*.tmp' -exec rm {} +";
-          expected = "block";
-          reason = "rip";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "git worktree creation prompts";
-          command = "git worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj workspace creation prompts";
-          command = "jj workspace add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "git global option before worktree prompts";
-          command = "git -C /repo worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped Git global option before worktree prompts";
-          command = "env git --no-pager -C /repo worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "composed jj global option before workspace prompts";
-          command = "printf ready && jj -R /repo workspace add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "git short paginate alias before worktree prompts";
-          command = "git -p worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped Git short no-pager alias before worktree prompts";
-          command = "env git -P worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "composed jj debug flag before workspace prompts";
-          command = "printf ready && jj --debug workspace add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "unknown Git global cannot hide worktree creation";
-          command = "git --future-global value worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped unknown jj global cannot hide workspace creation";
-          command = "env jj --future-global value workspace add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "composed unknown Git global cannot hide worktree creation";
-          command = "printf ready && git --future-global=value worktree add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global option value is not a worktree subcommand";
-          command = "git -C worktree add ../feature feature";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj global option value followed by unresolved alias prompts";
-          command = "jj -R workspace add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "argv-injected Git worktree alias prompts";
-          command = "git -c alias.wt=worktree wt add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped argv-injected jj workspace alias prompts";
-          command = "env jj --config 'aliases.ws=[\"workspace\"]' ws add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git injected alias overriding known command prompts";
-          command = "git -c alias.remote=worktree remote add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj injected alias overriding known command prompts";
-          command = "jj --config 'aliases.bookmark=[\"workspace\"]' bookmark add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git injected alias embedding worktree add prompts";
-          command = "git -c 'alias.wa=worktree add' wa ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped Git injected alias embedding worktree add prompts";
-          command = "env git -c 'alias.wa=worktree add' wa ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj injected alias embedding workspace add prompts";
-          command = "jj --config 'aliases.wa=[\"workspace\",\"add\"]' wa ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped jj injected alias embedding workspace add prompts";
-          command = "env jj --config 'aliases.wa=[\"workspace\",\"add\"]' wa ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git mixed-quoted embedded-add alias prompts";
-          command = "git -c 'alias.wa=worktree \"add\"' wa ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped jj literal-string embedded-add alias prompts";
-          command = "env jj --config \"aliases.wa=['workspace','add']\" wa ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "unparseable invoked injected alias prompts";
-          command = "git -c 'alias.wa=!complex shell expansion' wa ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "composed argv-injected jj TOML workspace alias prompts";
-          command = "printf ready && jj --config-toml 'aliases.ws = [\"workspace\"]' ws add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "persistent unknown Git alias-shaped add prompts";
-          command = "git wt add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "persistent Git alias embedding worktree add prompts without literal add";
-          command = "git wa ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped persistent unknown jj alias-shaped add prompts";
-          command = "env jj ws add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "persistent jj alias embedding workspace add prompts without literal add";
-          command = "jj wa ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "unknown Git global cannot hide persistent alias-shaped add";
-          command = "git --future-global value wt add ../feature feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "known Git remote add remains allowed";
-          command = "git remote add origin https://example.invalid/repo.git";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git status remains allowed";
-          command = "git status --short";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git grep remains allowed";
-          command = "git grep needle";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git blame remains allowed";
-          command = "git blame -- file.ts";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git rev-parse remains allowed";
-          command = "git rev-parse HEAD";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git ls-files remains allowed";
-          command = "git ls-files";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git archive remains allowed";
-          command = "git archive --format=tar HEAD";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary Git show-ref remains allowed";
-          command = "git show-ref";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global version information remains allowed";
-          command = "git --version";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global version ignores mutation-shaped trailing argv";
-          command = "git --version worktree add ../feature feature";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global help remains allowed";
-          command = "git --help";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global help ignores worktree subcommand argv";
-          command = "git --help worktree add";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global HTML path remains allowed";
-          command = "git --html-path";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global man path remains allowed";
-          command = "git --man-path";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global info path remains allowed";
-          command = "git --info-path";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "Git global exec path remains allowed";
-          command = "git --exec-path";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary jj bookmark list remains allowed";
-          command = "jj bookmark list";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "ordinary jj log remains allowed";
-          command = "jj log -r @";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj help remains allowed";
-          command = "jj help";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj revert remains allowed";
-          command = "jj revert -r @";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj bisect remains allowed";
-          command = "jj bisect run true";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj sign remains allowed";
-          command = "jj sign -r @";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj operation alias remains allowed";
-          command = "jj op log";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj status alias remains allowed";
-          command = "jj st";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj long version remains allowed";
-          command = "jj --version";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj short version remains allowed";
-          command = "jj -V";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj long help remains allowed";
-          command = "jj --help";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj short help remains allowed";
-          command = "jj -h";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj subcommand help remains allowed";
-          command = "jj help workspace";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj informational version short-circuits workspace add";
-          command = "jj --version workspace add ../feature";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj informational help short-circuits workspace add";
-          command = "jj --help workspace add";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj at-operation log remains allowed";
-          command = "jj --at-op @ log -r @";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "jj at-operation workspace add still prompts";
-          command = "jj --at-op @ workspace add ../feature";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "unknown jj command prompts";
-          command = "jj frobnicate";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "pi install blocks";
-          command = "pi install npm:example";
-          expected = "block";
-          reason = "Nix";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "pi remove blocks through wrapper";
-          command = "env pi remove npm:example";
-          expected = "block";
-          reason = "Nix";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "pi uninstall blocks";
-          command = "pi uninstall npm:example";
-          expected = "block";
-          reason = "Nix";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "pi update blocks";
-          command = "pi update";
-          expected = "block";
-          reason = "Nix";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "pi config blocks";
-          command = "pi config";
-          expected = "block";
-          reason = "Nix";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "pi list remains allowed";
-          command = "pi list";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl separate request mutation prompts";
-          command = "curl --request POST https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl equals request mutation prompts";
-          command = "curl --request=PATCH https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl glued request mutation prompts";
-          command = "curl -XDELETE https://example.invalid/item";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl glued data value containing XGET prompts";
-          command = "curl -dXGET https://example.invalid/item";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl glued header value containing XGET is allowed";
-          command = "curl -HXGET https://example.invalid/item";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl valid short option cluster request mutation prompts";
-          command = "curl -sXPOST https://example.invalid/item";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl final request option controls mutation";
-          command = "curl -XGET --request DELETE https://example.invalid/item";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl next transfer cannot hide earlier mutation";
-          command = "curl -XPOST https://example.invalid/first --next -XGET https://example.invalid/second";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl short next alias cannot hide earlier mutation";
-          command = "curl -XPOST https://example.invalid/first -: -XGET https://example.invalid/second";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl long next token consumed as header value is allowed";
-          command = "curl -H --next https://example.invalid/resource";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl short next token consumed as header value is allowed";
-          command = "curl -H -: https://example.invalid/resource";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl next tokens after end-of-options are positional";
-          command = "curl -- --next -:";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl safe long multi-transfer is allowed";
-          command = "curl -XGET https://example.invalid/first --next -XHEAD https://example.invalid/second";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl safe short multi-transfer is allowed";
-          command = "curl -XGET https://example.invalid/first -: -XHEAD https://example.invalid/second";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl mutation after long boundary prompts";
-          command = "curl -XGET https://example.invalid/first --next -XPOST https://example.invalid/second";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl mutation after short boundary prompts";
-          command = "curl -XGET https://example.invalid/first -: -XPOST https://example.invalid/second";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl WebDAV MKCOL prompts";
-          command = "curl --request MKCOL https://example.invalid/collection";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl custom explicit method prompts";
-          command = "curl -XFROB https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl lowercase method is not read-only GET";
-          command = "curl --request get https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl long config prompts";
-          command = "curl --config request.conf https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl glued short config prompts";
-          command = "curl -Krequest.conf https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl data mutation prompts";
-          command = "curl --data=value https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl no-get after get restores data mutation";
-          command = "curl --get --no-get --data payload URL";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl no-get after short get restores upload mutation";
-          command = "curl -G --no-get --upload-file payload URL";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl later get restores GET semantics";
-          command = "curl --get --no-get --get --data payload URL";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl expand-data mutation prompts";
-          command = "curl --expand-data=payload https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl unclassified future long option prompts";
-          command = "curl --future-option value https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl unclassified future short option prompts";
-          command = "curl -W https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl upload mutation prompts";
-          command = "curl -Tpayload https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl read-only method cannot mask data mutation";
-          command = "curl -XGET --data payload https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl read-only method cannot mask upload mutation";
-          command = "curl -XGET --upload-file payload https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "curl get conversion with read-only method remains allowed";
-          command = "curl -G -XGET --data payload https://example.invalid/resource";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget separate method mutation prompts";
-          command = "wget --method POST https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget equals method mutation prompts";
-          command = "wget --method=DELETE https://example.invalid/item";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget post data mutation prompts";
-          command = "wget --post-data=payload https://example.invalid";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget read-only method cannot mask body mutation";
-          command = "wget --method=GET --body-data=payload https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget WebDAV MOVE prompts";
-          command = "wget --method MOVE https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget custom explicit method prompts";
-          command = "wget --method=FROB https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget lowercase method is not read-only HEAD";
-          command = "wget --method=head https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget header value resembling method cannot mask post data";
-          command = "wget --header --method=GET --post-data payload https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "composed wget body value resembling safe method prompts";
-          command = "printf ready && wget --post-data --method=GET https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget ordinary header value remains allowed";
-          command = "wget --header 'Accept: application/json' https://example.invalid/resource";
-          expected = "allow";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget opaque config prompts";
-          command = "wget --config=request.conf https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wrapped wget short execute prompts";
-          command = "env wget -euse_proxy=yes https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget long execute prompts";
-          command = "wget --execute=use_proxy=yes https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget malformed method prompts";
-          command = "wget --method";
-          expected = "prompt";
-          custom = true;
-        }
-        {
-          kind = "shell";
-          name = "wget ambiguous unknown option prompts";
-          command = "wget --future-option value https://example.invalid/resource";
-          expected = "prompt";
-          custom = true;
-        }
+        # Baseline: a command matching no gated verb reaches the built-in engine
+        # unchanged.
+        (builtinShell "allow" "safe command is allowed" "printf '%s\\n' safe")
+        # Read-only HTTP stays allowed. curl and wget default to GET, and none of
+        # these spellings, long or negated or glued or short-clustered, sets a
+        # request method or attaches a body.
+        (customShell "allow" "safe curl GET is allowed" "curl --request GET https://example.invalid")
+        (customShell "allow" "safe wget GET is allowed" "wget https://example.invalid/file")
+        (customShell "allow" "safe curl HEAD is allowed" "curl --request HEAD https://example.invalid")
+        (customShell "allow" "safe curl silent flag is allowed" "curl --silent https://example.invalid")
+        (customShell "allow" "safe curl head flag is allowed" "curl --head https://example.invalid")
+        (customShell "allow" "safe curl location flag is allowed" "curl --location https://example.invalid")
+        (customShell "allow" "safe curl combined long flags are allowed"
+          "curl --silent --show-error --location https://example.invalid"
+        )
+        (customShell "allow" "safe curl negated long flag is allowed"
+          "curl --no-location https://example.invalid"
+        )
+        (customShell "allow" "safe curl combined silent short flags are allowed"
+          "curl -sS https://example.invalid"
+        )
+        (customShell "allow" "safe curl combined head and location short flags are allowed"
+          "curl -IL https://example.invalid"
+        )
+        (customShell "allow" "safe curl ordinary short flag cluster is allowed"
+          "curl -fsSL https://example.invalid"
+        )
+        (customShell "allow" "safe wget OPTIONS is allowed" "wget --method OPTIONS https://example.invalid")
+        # sudo is a built-in prompt rule, so this row must reach the built-in engine
+        # to assert it.
+        (builtinShell "prompt" "dangerous built-in sudo prompts" "sudo id")
+        # rm is blocked wherever the pipeline can reach it: direct, composed, and
+        # deferred through -exec.
+        (customShellBecause "block" "rip" "direct rm blocks" "rm file.txt")
+        (customShellBecause "block" "rip" "composed rm blocks" "printf done && rm -f file.txt")
+        (customShellBecause "block" "rip" "deferred rm blocks" "find . -name '*.tmp' -exec rm {} +")
+        # Worktree and workspace creation prompts. The rows below walk every route to
+        # the subcommand, starting with the direct one.
+        (customShell "prompt" "git worktree creation prompts" "git worktree add ../feature feature")
+        (customShell "prompt" "jj workspace creation prompts" "jj workspace add ../feature")
+        # A global option may not hide the subcommand, whether it is known, wrapped,
+        # composed, or unrecognized.
+        (customShell "prompt" "git global option before worktree prompts"
+          "git -C /repo worktree add ../feature feature"
+        )
+        (customShell "prompt" "wrapped Git global option before worktree prompts"
+          "env git --no-pager -C /repo worktree add ../feature feature"
+        )
+        (customShell "prompt" "composed jj global option before workspace prompts"
+          "printf ready && jj -R /repo workspace add ../feature"
+        )
+        (customShell "prompt" "git short paginate alias before worktree prompts"
+          "git -p worktree add ../feature feature"
+        )
+        (customShell "prompt" "wrapped Git short no-pager alias before worktree prompts"
+          "env git -P worktree add ../feature feature"
+        )
+        (customShell "prompt" "composed jj debug flag before workspace prompts"
+          "printf ready && jj --debug workspace add ../feature"
+        )
+        (customShell "prompt" "unknown Git global cannot hide worktree creation"
+          "git --future-global value worktree add ../feature feature"
+        )
+        (customShell "prompt" "wrapped unknown jj global cannot hide workspace creation"
+          "env jj --future-global value workspace add ../feature"
+        )
+        (customShell "prompt" "composed unknown Git global cannot hide worktree creation"
+          "printf ready && git --future-global=value worktree add ../feature feature"
+        )
+        # A global option's value is a value, not a subcommand. jj still prompts here
+        # because -R consumes `workspace`, leaving `add` in command position as an
+        # alias the gate cannot resolve.
+        (customShell "allow" "Git global option value is not a worktree subcommand"
+          "git -C worktree add ../feature feature"
+        )
+        (customShell "prompt" "jj global option value followed by unresolved alias prompts"
+          "jj -R workspace add ../feature"
+        )
+        # Aliases injected on the argv are parsed out of the -c/--config entries, so
+        # quoting, embedded `add`, and the TOML spelling all resolve to the same
+        # creation.
+        (customShell "prompt" "argv-injected Git worktree alias prompts"
+          "git -c alias.wt=worktree wt add ../feature feature"
+        )
+        (customShell "prompt" "wrapped argv-injected jj workspace alias prompts"
+          "env jj --config 'aliases.ws=[\"workspace\"]' ws add ../feature"
+        )
+        (customShell "prompt" "Git injected alias overriding known command prompts"
+          "git -c alias.remote=worktree remote add ../feature feature"
+        )
+        (customShell "prompt" "jj injected alias overriding known command prompts"
+          "jj --config 'aliases.bookmark=[\"workspace\"]' bookmark add ../feature"
+        )
+        (customShell "prompt" "Git injected alias embedding worktree add prompts"
+          "git -c 'alias.wa=worktree add' wa ../feature feature"
+        )
+        (customShell "prompt" "wrapped Git injected alias embedding worktree add prompts"
+          "env git -c 'alias.wa=worktree add' wa ../feature feature"
+        )
+        (customShell "prompt" "jj injected alias embedding workspace add prompts"
+          "jj --config 'aliases.wa=[\"workspace\",\"add\"]' wa ../feature"
+        )
+        (customShell "prompt" "wrapped jj injected alias embedding workspace add prompts"
+          "env jj --config 'aliases.wa=[\"workspace\",\"add\"]' wa ../feature"
+        )
+        (customShell "prompt" "Git mixed-quoted embedded-add alias prompts"
+          "git -c 'alias.wa=worktree \"add\"' wa ../feature feature"
+        )
+        (customShell "prompt" "wrapped jj literal-string embedded-add alias prompts"
+          "env jj --config \"aliases.wa=['workspace','add']\" wa ../feature"
+        )
+        (customShell "prompt" "unparseable invoked injected alias prompts"
+          "git -c 'alias.wa=!complex shell expansion' wa ../feature feature"
+        )
+        (customShell "prompt" "composed argv-injected jj TOML workspace alias prompts"
+          "printf ready && jj --config-toml 'aliases.ws = [\"workspace\"]' ws add ../feature"
+        )
+        # A persistent alias is defined in config the gate cannot read, so an
+        # unresolvable command in alias position prompts rather than being assumed
+        # benign.
+        (customShell "prompt" "persistent unknown Git alias-shaped add prompts"
+          "git wt add ../feature feature"
+        )
+        (customShell "prompt" "persistent Git alias embedding worktree add prompts without literal add"
+          "git wa ../feature feature"
+        )
+        (customShell "prompt" "wrapped persistent unknown jj alias-shaped add prompts"
+          "env jj ws add ../feature"
+        )
+        (customShell "prompt" "persistent jj alias embedding workspace add prompts without literal add"
+          "jj wa ../feature"
+        )
+        (customShell "prompt" "unknown Git global cannot hide persistent alias-shaped add"
+          "git --future-global value wt add ../feature feature"
+        )
+        # Ordinary Git commands stay allowed.
+        (customShell "allow" "known Git remote add remains allowed"
+          "git remote add origin https://example.invalid/repo.git"
+        )
+        (customShell "allow" "ordinary Git status remains allowed" "git status --short")
+        (customShell "allow" "ordinary Git grep remains allowed" "git grep needle")
+        (customShell "allow" "ordinary Git blame remains allowed" "git blame -- file.ts")
+        (customShell "allow" "ordinary Git rev-parse remains allowed" "git rev-parse HEAD")
+        (customShell "allow" "ordinary Git ls-files remains allowed" "git ls-files")
+        (customShell "allow" "ordinary Git archive remains allowed" "git archive --format=tar HEAD")
+        (customShell "allow" "ordinary Git show-ref remains allowed" "git show-ref")
+        # Git's informational globals short-circuit before any subcommand, so
+        # mutation-shaped trailing argv is inert.
+        (customShell "allow" "Git global version information remains allowed" "git --version")
+        (customShell "allow" "Git global version ignores mutation-shaped trailing argv"
+          "git --version worktree add ../feature feature"
+        )
+        (customShell "allow" "Git global help remains allowed" "git --help")
+        (customShell "allow" "Git global help ignores worktree subcommand argv" "git --help worktree add")
+        (customShell "allow" "Git global HTML path remains allowed" "git --html-path")
+        (customShell "allow" "Git global man path remains allowed" "git --man-path")
+        (customShell "allow" "Git global info path remains allowed" "git --info-path")
+        (customShell "allow" "Git global exec path remains allowed" "git --exec-path")
+        # The jj surface mirrors the Git one: ordinary commands and built-in aliases
+        # allowed, informational globals short-circuiting, and anything the gate
+        # cannot resolve prompting.
+        (customShell "allow" "ordinary jj bookmark list remains allowed" "jj bookmark list")
+        (customShell "allow" "ordinary jj log remains allowed" "jj log -r @")
+        (customShell "allow" "jj help remains allowed" "jj help")
+        (customShell "allow" "jj revert remains allowed" "jj revert -r @")
+        (customShell "allow" "jj bisect remains allowed" "jj bisect run true")
+        (customShell "allow" "jj sign remains allowed" "jj sign -r @")
+        (customShell "allow" "jj operation alias remains allowed" "jj op log")
+        (customShell "allow" "jj status alias remains allowed" "jj st")
+        (customShell "allow" "jj long version remains allowed" "jj --version")
+        (customShell "allow" "jj short version remains allowed" "jj -V")
+        (customShell "allow" "jj long help remains allowed" "jj --help")
+        (customShell "allow" "jj short help remains allowed" "jj -h")
+        (customShell "allow" "jj subcommand help remains allowed" "jj help workspace")
+        (customShell "allow" "jj informational version short-circuits workspace add"
+          "jj --version workspace add ../feature"
+        )
+        (customShell "allow" "jj informational help short-circuits workspace add" "jj --help workspace add")
+        (customShell "allow" "jj at-operation log remains allowed" "jj --at-op @ log -r @")
+        (customShell "prompt" "jj at-operation workspace add still prompts"
+          "jj --at-op @ workspace add ../feature"
+        )
+        (customShell "prompt" "unknown jj command prompts" "jj frobnicate")
+        # Pi package state is pinned by Nix (modules/home/ai/pi/default.nix), so the
+        # mutating pi subcommands are blocked while read-only ones stay allowed.
+        (customShellBecause "block" "Nix" "pi install blocks" "pi install npm:example")
+        (customShellBecause "block" "Nix" "pi remove blocks through wrapper" "env pi remove npm:example")
+        (customShellBecause "block" "Nix" "pi uninstall blocks" "pi uninstall npm:example")
+        (customShellBecause "block" "Nix" "pi update blocks" "pi update")
+        (customShellBecause "block" "Nix" "pi config blocks" "pi config")
+        (customShell "allow" "pi list remains allowed" "pi list")
+        # curl request-method state. The argv is replayed as a state machine: the
+        # last method-setting option wins, option values are never re-read as
+        # options, and --next or -: opens a transfer that cannot retroactively
+        # launder an earlier mutation.
+        (customShell "prompt" "curl separate request mutation prompts"
+          "curl --request POST https://example.invalid"
+        )
+        (customShell "prompt" "curl equals request mutation prompts"
+          "curl --request=PATCH https://example.invalid"
+        )
+        (customShell "prompt" "curl glued request mutation prompts"
+          "curl -XDELETE https://example.invalid/item"
+        )
+        (customShell "prompt" "curl glued data value containing XGET prompts"
+          "curl -dXGET https://example.invalid/item"
+        )
+        (customShell "allow" "curl glued header value containing XGET is allowed"
+          "curl -HXGET https://example.invalid/item"
+        )
+        (customShell "prompt" "curl valid short option cluster request mutation prompts"
+          "curl -sXPOST https://example.invalid/item"
+        )
+        (customShell "prompt" "curl final request option controls mutation"
+          "curl -XGET --request DELETE https://example.invalid/item"
+        )
+        (customShell "prompt" "curl next transfer cannot hide earlier mutation"
+          "curl -XPOST https://example.invalid/first --next -XGET https://example.invalid/second"
+        )
+        (customShell "prompt" "curl short next alias cannot hide earlier mutation"
+          "curl -XPOST https://example.invalid/first -: -XGET https://example.invalid/second"
+        )
+        (customShell "allow" "curl long next token consumed as header value is allowed"
+          "curl -H --next https://example.invalid/resource"
+        )
+        (customShell "allow" "curl short next token consumed as header value is allowed"
+          "curl -H -: https://example.invalid/resource"
+        )
+        (customShell "allow" "curl next tokens after end-of-options are positional" "curl -- --next -:")
+        (customShell "allow" "curl safe long multi-transfer is allowed"
+          "curl -XGET https://example.invalid/first --next -XHEAD https://example.invalid/second"
+        )
+        (customShell "allow" "curl safe short multi-transfer is allowed"
+          "curl -XGET https://example.invalid/first -: -XHEAD https://example.invalid/second"
+        )
+        (customShell "prompt" "curl mutation after long boundary prompts"
+          "curl -XGET https://example.invalid/first --next -XPOST https://example.invalid/second"
+        )
+        (customShell "prompt" "curl mutation after short boundary prompts"
+          "curl -XGET https://example.invalid/first -: -XPOST https://example.invalid/second"
+        )
+        (customShell "prompt" "curl WebDAV MKCOL prompts"
+          "curl --request MKCOL https://example.invalid/collection"
+        )
+        (customShell "prompt" "curl custom explicit method prompts"
+          "curl -XFROB https://example.invalid/resource"
+        )
+        (customShell "prompt" "curl lowercase method is not read-only GET"
+          "curl --request get https://example.invalid/resource"
+        )
+        # A method the gate cannot see is a mutation: an opaque config file, a body,
+        # an upload, or an option the spec does not classify.
+        (customShell "prompt" "curl long config prompts"
+          "curl --config request.conf https://example.invalid"
+        )
+        (customShell "prompt" "curl glued short config prompts"
+          "curl -Krequest.conf https://example.invalid"
+        )
+        (customShell "prompt" "curl data mutation prompts" "curl --data=value https://example.invalid")
+        (customShell "prompt" "curl no-get after get restores data mutation"
+          "curl --get --no-get --data payload URL"
+        )
+        (customShell "prompt" "curl no-get after short get restores upload mutation"
+          "curl -G --no-get --upload-file payload URL"
+        )
+        (customShell "allow" "curl later get restores GET semantics"
+          "curl --get --no-get --get --data payload URL"
+        )
+        (customShell "prompt" "curl expand-data mutation prompts"
+          "curl --expand-data=payload https://example.invalid"
+        )
+        (customShell "prompt" "curl unclassified future long option prompts"
+          "curl --future-option value https://example.invalid"
+        )
+        (customShell "prompt" "curl unclassified future short option prompts"
+          "curl -W https://example.invalid"
+        )
+        (customShell "prompt" "curl upload mutation prompts" "curl -Tpayload https://example.invalid")
+        (customShell "prompt" "curl read-only method cannot mask data mutation"
+          "curl -XGET --data payload https://example.invalid/resource"
+        )
+        (customShell "prompt" "curl read-only method cannot mask upload mutation"
+          "curl -XGET --upload-file payload https://example.invalid/resource"
+        )
+        (customShell "allow" "curl get conversion with read-only method remains allowed"
+          "curl -G -XGET --data payload https://example.invalid/resource"
+        )
+        # wget replays the same state machine over its own spelling: --method,
+        # --post-data and --body-data, --config, and --execute.
+        (customShell "prompt" "wget separate method mutation prompts"
+          "wget --method POST https://example.invalid"
+        )
+        (customShell "prompt" "wget equals method mutation prompts"
+          "wget --method=DELETE https://example.invalid/item"
+        )
+        (customShell "prompt" "wget post data mutation prompts"
+          "wget --post-data=payload https://example.invalid"
+        )
+        (customShell "prompt" "wget read-only method cannot mask body mutation"
+          "wget --method=GET --body-data=payload https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget WebDAV MOVE prompts"
+          "wget --method MOVE https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget custom explicit method prompts"
+          "wget --method=FROB https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget lowercase method is not read-only HEAD"
+          "wget --method=head https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget header value resembling method cannot mask post data"
+          "wget --header --method=GET --post-data payload https://example.invalid/resource"
+        )
+        (customShell "prompt" "composed wget body value resembling safe method prompts"
+          "printf ready && wget --post-data --method=GET https://example.invalid/resource"
+        )
+        (customShell "allow" "wget ordinary header value remains allowed"
+          "wget --header 'Accept: application/json' https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget opaque config prompts"
+          "wget --config=request.conf https://example.invalid/resource"
+        )
+        (customShell "prompt" "wrapped wget short execute prompts"
+          "env wget -euse_proxy=yes https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget long execute prompts"
+          "wget --execute=use_proxy=yes https://example.invalid/resource"
+        )
+        (customShell "prompt" "wget malformed method prompts" "wget --method")
+        (customShell "prompt" "wget ambiguous unknown option prompts"
+          "wget --future-option value https://example.invalid/resource"
+        )
+        # Without a UI there is nothing to prompt, so a prompt decision degrades to a
+        # block.
         {
           kind = "shell";
           name = "headless HTTP prompt blocks";
@@ -1123,6 +526,8 @@
           custom = true;
           headless = true;
         }
+        # A rule that throws is reported as a block carrying the diagnostic rather
+        # than falling through to allow.
         {
           kind = "shell-error";
           name = "throwing parser rule blocks diagnostically";
@@ -1172,9 +577,8 @@
           headless = true;
         }
       ];
-      coreCases = [
+      coreCases = map (case: { kind = "core"; } // case) [
         {
-          kind = "core";
           name = "mutable path outside repository prompts";
           expected = "prompt";
           input = {
@@ -1187,7 +591,6 @@
           };
         }
         {
-          kind = "core";
           name = "nix store target blocks";
           expected = "block";
           reason = "immutable";
@@ -1201,7 +604,6 @@
           };
         }
         {
-          kind = "core";
           name = "declared immutable root blocks";
           expected = "block";
           reason = "immutable";
@@ -1215,7 +617,6 @@
           };
         }
         {
-          kind = "core";
           name = "git feature branch allows";
           expected = "allow";
           input = {
@@ -1235,7 +636,6 @@
           };
         }
         {
-          kind = "core";
           name = "git double-dot-prefixed child allows";
           expected = "allow";
           input = {
@@ -1255,7 +655,6 @@
           };
         }
         {
-          kind = "core";
           name = "git main blocks";
           expected = "block";
           reason = "main";
@@ -1276,7 +675,6 @@
           };
         }
         {
-          kind = "core";
           name = "git master blocks";
           expected = "block";
           reason = "master";
@@ -1297,7 +695,6 @@
           };
         }
         {
-          kind = "core";
           name = "invalid repository state blocks";
           expected = "block";
           reason = "ambiguous";
@@ -1696,9 +1093,8 @@
           expectedJjArgv = if row ? probes then lib.take row.probes jjProbeSequence else null;
         }
       ) repositoryCaseTable;
-      gitRootCases = [
+      gitRootCases = map (case: { kind = "git-root"; } // case) [
         {
-          kind = "git-root";
           name = "characterized Git outside result is accepted";
           result = {
             stdout = "";
@@ -1708,7 +1104,6 @@
           expected = "outside";
         }
         {
-          kind = "git-root";
           name = "Git outside result with contradictory stdout is invalid";
           result = {
             stdout = "/repo\n";
@@ -1719,7 +1114,6 @@
           reason = "Git root";
         }
         {
-          kind = "git-root";
           name = "Git outside result with wrong status is invalid";
           result = {
             stdout = "";
@@ -1730,7 +1124,6 @@
           reason = "Git root";
         }
         {
-          kind = "git-root";
           name = "Git outside result with mixed diagnostics is invalid";
           result = {
             stdout = "";
@@ -1741,15 +1134,13 @@
           reason = "Git root";
         }
       ];
-      adapterCases = [
+      adapterCases = map (case: { kind = "adapter"; } // case) [
         {
-          kind = "adapter";
           name = "adapter registers only tool_call handler";
           scenario = "registration";
           expected = "pass";
         }
         {
-          kind = "adapter";
           name = "adapter translates edit allow";
           scenario = "git-feature";
           tool = "edit";
@@ -1757,7 +1148,6 @@
           expected = "pass";
         }
         {
-          kind = "adapter";
           name = "adapter translates write allow";
           scenario = "git-feature";
           tool = "write";
@@ -1765,7 +1155,6 @@
           expected = "pass";
         }
         {
-          kind = "adapter";
           name = "adapter translates edit diagnostic block";
           scenario = "immutable";
           tool = "edit";
@@ -1774,7 +1163,6 @@
           reason = "immutable";
         }
         {
-          kind = "adapter";
           name = "adapter normalizes Pi at-prefixed paths";
           scenario = "builtin-at-prefix";
           tool = "write";
@@ -1783,7 +1171,6 @@
           reason = "immutable";
         }
         {
-          kind = "adapter";
           name = "adapter translates write diagnostic block";
           scenario = "git-main";
           tool = "write";
@@ -1792,7 +1179,6 @@
           reason = "main";
         }
         {
-          kind = "adapter";
           name = "adapter passes unrelated tools through";
           scenario = "capability-throws";
           tool = "read";
@@ -1800,7 +1186,6 @@
           expected = "pass";
         }
         {
-          kind = "adapter";
           name = "adapter blocks malformed tool input";
           scenario = "git-feature";
           tool = "edit";
@@ -1809,7 +1194,6 @@
           reason = "malformed";
         }
         {
-          kind = "adapter";
           name = "adapter blocks core exceptions";
           scenario = "core-throws";
           tool = "edit";
@@ -1818,7 +1202,6 @@
           reason = "policy evaluation failed";
         }
         {
-          kind = "adapter";
           name = "adapter blocks capability exceptions";
           scenario = "capability-throws";
           tool = "write";
@@ -1827,7 +1210,6 @@
           reason = "capability failed";
         }
         {
-          kind = "adapter";
           name = "adapter blocks a missing filesystem capability";
           scenario = "capability-missing";
           tool = "edit";
@@ -1836,7 +1218,6 @@
           reason = "capability failed";
         }
         {
-          kind = "adapter";
           name = "adapter blocks a throwing capability factory";
           scenario = "capability-factory-throws";
           tool = "write";
@@ -1845,7 +1226,6 @@
           reason = "adapter failed";
         }
         {
-          kind = "adapter";
           name = "adapter blocks unavailable interaction";
           scenario = "outside-headless";
           tool = "edit";
