@@ -87,18 +87,26 @@
           file.source
         else
           throw "pi-agent-environment-smoke: missing immutable Home Manager resource at ${target}";
+      # Pi persists several runtime-state categories into one file: settings.json
+      # takes model selection, thinking preferences, and `pi install` extension
+      # state (see the home.file comment in modules/home/ai/pi/default.nix), and
+      # sessions/ holds compaction state. The eight spec categories therefore
+      # reduce to five distinct probes, and rows sharing a probe cannot disagree
+      # by construction.
+      settingsFileDeclared = homeFileEnabled settingsTarget;
+      sessionsTreeImmutable = hasImmutableHomeFileAtOrBelow sessionsTarget;
       runtimeStateCategories = [
         {
           name = "settings";
-          immutable = homeFileEnabled settingsTarget;
+          immutable = settingsFileDeclared;
         }
         {
           name = "sessions";
-          immutable = hasImmutableHomeFileAtOrBelow sessionsTarget;
+          immutable = sessionsTreeImmutable;
         }
         {
           name = "compaction";
-          immutable = hasImmutableHomeFileAtOrBelow sessionsTarget;
+          immutable = sessionsTreeImmutable;
         }
         {
           name = "authentication";
@@ -110,15 +118,15 @@
         }
         {
           name = "model-selection";
-          immutable = homeFileEnabled settingsTarget;
+          immutable = settingsFileDeclared;
         }
         {
           name = "thinking-preferences";
-          immutable = homeFileEnabled settingsTarget;
+          immutable = settingsFileDeclared;
         }
         {
           name = "extension-state";
-          immutable = homeFileEnabled settingsTarget || hasImmutableHomeFileAtOrBelow extensionStateTarget;
+          immutable = settingsFileDeclared || hasImmutableHomeFileAtOrBelow extensionStateTarget;
         }
       ];
       runtimeStateOutsideImmutableLinks = map (entry: entry.name) (
