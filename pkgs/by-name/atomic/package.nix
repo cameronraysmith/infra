@@ -102,7 +102,11 @@ else
         [ -f "$pkgdir/native/pg-symlinks.json" ] || continue
         jq -r '.[] | [.source, .target] | @tsv' "$pkgdir/native/pg-symlinks.json" \
           | while IFS=$'\t' read -r source target; do
-            ln -s "$(basename "$source")" "$pkgdir$target"
+            # upstream's own script swallows an existing target, so a release
+            # that starts shipping these links stays a no-op here rather than
+            # failing the build
+            [ -e "$pkgdir$target" ] || [ -L "$pkgdir$target" ] \
+              || ln -s "$(basename "$source")" "$pkgdir$target"
           done
       done
     '';
