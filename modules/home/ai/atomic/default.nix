@@ -16,6 +16,11 @@
 # modules/home/ai/agent-settings.nix so that pi's settings.json and this one
 # cannot drift apart. auth.json and models-store.json are runtime state and are
 # not managed here.
+#
+# packages is the one key the two agents do not share verbatim: atomic takes
+# packagesForAtomic, which carries the extension exclusions that agent-settings
+# declares for it. The key is still written rather than dropped, because
+# merge-settings.sh can update a nix-owned key but not retract one.
 { ... }:
 {
   flake.modules.homeManager.ai =
@@ -58,7 +63,8 @@
           enable = lib.mkDefault true;
 
           settings = {
-            inherit (config.aiAgentSettings) theme enableInstallTelemetry packages;
+            inherit (config.aiAgentSettings) theme enableInstallTelemetry;
+            packages = config.aiAgentSettings.packagesForAtomic;
           };
         };
 
