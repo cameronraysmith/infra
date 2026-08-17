@@ -7,6 +7,15 @@
 # input, so lib.mkPackageOption resolves it: modules/nixpkgs/compose.nix merges
 # the perSystem packages set into flake.overlays.default, which
 # modules/nixpkgs/base-defaults.nix wires into every machine's nixpkgs.overlays.
+#
+# settings.json is merged rather than installed. atomic writes its own keys into
+# that file — onboardedVersion, the changelog marker, the provider and model
+# selection — and an install(1) of a nix-generated file would drop them, which
+# for onboardedVersion means re-running the first-run wizard on every
+# activation. The merge writes only the keys declared below, which come from
+# modules/home/ai/agent-settings.nix so that pi's settings.json and this one
+# cannot drift apart. auth.json and models-store.json are runtime state and are
+# not managed here.
 { ... }:
 {
   flake.modules.homeManager.ai =
@@ -18,18 +27,51 @@
     }:
     let
       cfg = config.programs.atomic;
+      jsonFormat = pkgs.formats.json { };
+      mergeSettings = pkgs.writeShellApplication {
+        name = "atomic-merge-settings";
+        runtimeInputs = [ pkgs.jq ];
+        text = builtins.readFile ./merge-settings.sh;
+      };
     in
     {
       options.programs.atomic = {
         enable = lib.mkEnableOption "atomic, a terminal coding agent with read, bash, edit, and write tools and session management";
 
         package = lib.mkPackageOption pkgs "atomic" { };
+
+        configDir = lib.mkOption {
+          type = lib.types.str;
+          default = "${config.home.homeDirectory}/.atomic/agent";
+          description = "Directory atomic reads its configuration and runtime state from.";
+        };
+
+        settings = lib.mkOption {
+          type = jsonFormat.type;
+          default = { };
+          description = "Nix-owned subset of atomic's settings.json. Each declared key is overwritten on activation; every key atomic writes and nix does not declare survives untouched.";
+        };
       };
 
       config = {
-        programs.atomic.enable = lib.mkDefault true;
+        programs.atomic = {
+          enable = lib.mkDefault true;
+
+          settings = {
+            inherit (config.aiAgentSettings) theme enableInstallTelemetry packages;
+          };
+        };
 
         home.packages = lib.mkIf cfg.enable [ cfg.package ];
+
+        home.activation.atomicMergeSettings = lib.mkIf cfg.enable (
+          let
+            settingsFile = jsonFormat.generate "atomic-settings.json" cfg.settings;
+          in
+          lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            $DRY_RUN_CMD ${lib.getExe mergeSettings} ${settingsFile} ${cfg.configDir}/settings.json
+          ''
+        );
       };
     };
 }
