@@ -45,36 +45,11 @@
           ];
 
           # https://pi.dev/docs/latest/settings
+          #
+          # These three keys are declared in modules/home/ai/agent-settings.nix
+          # so pi's file and atomic's are generated from one expression.
           settings = {
-            theme = "catppuccin-mocha";
-            # Anonymous install/update ping to pi.dev on first install and after
-            # each changelog-detected update; the store path is replaced by
-            # home-manager, so every generation bump would emit one.
-            enableInstallTelemetry = false;
-
-            packages = [
-              {
-                source = "${pkgs.pi-agent-extensions}";
-                extensions = [
-                  "direnv/index.ts"
-                  "permission-gate/index.ts"
-                  "questionnaire/index.ts"
-                  "slow-mode/index.ts"
-                  "stash/index.ts"
-                  "statusline/index.ts"
-                  "-fetch/index.ts"
-                  "-notify/index.ts"
-                ];
-                skills = [ ];
-                prompts = [ ];
-                themes = [ ];
-              }
-              # Algal declares Pi >=0.80.9 <0.81.0; the fleet evaluates Pi
-              # 0.84.1, outside that range. Its fallback compact() argument
-              # order still matches exact Pi 0.84.1, while broader API drift
-              # remains a calibrated risk.
-              "${pkgs.pi-openai-server-compaction}"
-            ];
+            inherit (config.aiAgentSettings) theme enableInstallTelemetry packages;
           };
         };
 
