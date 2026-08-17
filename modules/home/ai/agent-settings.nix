@@ -109,6 +109,54 @@
             excluded extension later leaves `packages`.
           '';
         };
+
+        piOnlyExtensions = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "edit-write-policy.ts" ];
+          description = ''
+            Files in pi's own `extensions/` directory that only pi may load, named
+            relative to that directory.
+
+            These never appear in `packages`; modules/home/ai/pi/default.nix writes
+            them straight into `~/.pi/agent/extensions/`, and atomic picks them up
+            anyway. `getAgentDirs` (packages/coding-agent/src/config.ts:376) returns
+            `[~/.atomic/agent, ~/.pi/agent]` with no filesystem test -- the only
+            escapes are the ATOMIC_CODING_AGENT_DIR environment variable and atomic
+            being named pi -- and `addAutoDiscoveredResources`
+            (core/package-manager-auto-resources.ts:188) scans both roots' extension
+            directories additively. So a populated `~/.atomic/agent` does not
+            suppress the pi root, and every `.ts` file placed there runs under both
+            agents whether or not either settings file mentions it. This option is
+            the only surface on which pi-only scope can be stated.
+
+            edit-write-policy.ts reads a top-level `path` off the tool input, which
+            is pi's `edit` and `write` schema. atomic's `write` also has `path`, but
+            its `edit` takes a single hashline `input` string under
+            `additionalProperties: false`, so a `path` can never reach the policy
+            from atomic and every atomic edit was refused as malformed input.
+          '';
+        };
+
+        extensionsForAtomic = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = map (extension: "-extensions/${extension}") config.aiAgentSettings.piOnlyExtensions;
+          description = ''
+            atomic's top-level `extensions` settings key, carrying `piOnlyExtensions`
+            as `-`-prefixed force-excludes.
+
+            This is a different override channel from `packagesForAtomic`, and the
+            two are not interchangeable. A pattern in a `packages` entry is matched
+            against the package source directory, while this key is matched against
+            each scanned config root
+            (core/package-manager-auto-resources.ts:199 passes `configDir` as the
+            base), so an entry here is written relative to `~/.pi/agent` and needs
+            its `extensions/` segment. The `-` arm compares only that relative path
+            or the absolute path and never the basename
+            (core/package-manager-resource-patterns.ts matchesAnyExactPattern), so
+            the bare `-edit-write-policy.ts` spelling is a silent no-op that loads
+            the extension anyway.
+          '';
+        };
       };
     };
 }

@@ -2025,6 +2025,28 @@
               permissionRules = homeFileSourceIs permissionRulesTarget permissionRulesPath;
               editWritePolicy = homeFileSourceIs editWritePolicyTarget editWritePolicyPath;
             };
+            # atomic inherits ~/.pi/agent as a configuration root unconditionally
+            # and scans its extensions directory, so a file written only for pi
+            # runs under atomic unless atomic's own settings refuse it by name.
+            # Nothing else in this repository observes that coupling, and the
+            # edit/write policy reached atomic through it for three days.
+            piOnlyExtensionScope =
+              let
+                declared = homeConfig.aiAgentSettings.piOnlyExtensions;
+                forceExcludes = homeConfig.programs.atomic.settings.extensions or [ ];
+              in
+              {
+                inherit declared;
+                atomicForceExcludes = forceExcludes;
+                everyDeclaredExcluded = lib.all (
+                  extension: builtins.elem "-extensions/${extension}" forceExcludes
+                ) declared;
+                # atomic matches a force-exclude against the path relative to the
+                # scanned configuration root, never the basename, so the bare
+                # spelling loads the extension it claims to refuse.
+                noBareBasenameSpelling =
+                  !lib.any (entry: lib.any (extension: entry == "-${extension}") declared) forceExcludes;
+              };
             contextNixOwned = piConfig.context == homeConfig.programs.agents-md.settings.text;
             theme = {
               contentName = themeJson.name or null;
@@ -2120,6 +2142,12 @@
             policySourcesCheckedIn = {
               permissionRules = true;
               editWritePolicy = true;
+            };
+            piOnlyExtensionScope = {
+              declared = [ "edit-write-policy.ts" ];
+              atomicForceExcludes = [ "-extensions/edit-write-policy.ts" ];
+              everyDeclaredExcluded = true;
+              noBareBasenameSpelling = true;
             };
             contextNixOwned = true;
             theme = {

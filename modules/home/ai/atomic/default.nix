@@ -21,6 +21,13 @@
 # packagesForAtomic, which carries the extension exclusions that agent-settings
 # declares for it. The key is still written rather than dropped, because
 # merge-settings.sh can update a nix-owned key but not retract one.
+#
+# extensions is atomic's alone. It carries the force-excludes that keep pi-only
+# extensions out of atomic, which is not a redundancy with packagesForAtomic:
+# atomic inherits ~/.pi/agent as a config root unconditionally, so a file pi
+# writes into its own extensions/ directory is loaded by atomic without either
+# settings file naming it, and only this key can refuse it. See
+# aiAgentSettings.piOnlyExtensions for the mechanism.
 { ... }:
 {
   flake.modules.homeManager.ai =
@@ -65,6 +72,7 @@
           settings = {
             inherit (config.aiAgentSettings) theme enableInstallTelemetry;
             packages = config.aiAgentSettings.packagesForAtomic;
+            extensions = config.aiAgentSettings.extensionsForAtomic;
           };
         };
 

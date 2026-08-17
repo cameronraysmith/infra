@@ -127,11 +127,17 @@ Nix-owned permission-gate rules MUST classify dangerous commands, semantic mutat
 
 A compact first-party pure decision core with a thin Pi adapter MUST evaluate non-Bash `edit` and `write` tool calls and block targets beneath `/nix/store` or another declared immutable resource root.
 The exported adapter factory or handler seam MUST be directly executable as policy evidence.
+The extension is scoped to Pi, and the system MUST declare that scope to atomic rather than relying on either agent's default discovery, because atomic inherits Pi's configuration root and loads Pi's extension directory unconditionally.
 
 #### Scenario: Non-Bash mutation reaches policy
 
 - **WHEN** the policy harness runs pure-core rows and directly invokes the exported adapter seam with synthetic edit/write allow and block calls, an unrelated tool, malformed tool input, and core or capability exceptions
 - **THEN** the core returns the literal decisions, the adapter translates allow and block correctly, passes unrelated tools through, and converts malformed input or exceptions into diagnostic blocks without starting a Pi process per row
+
+#### Scenario: Pi-only scope is declared to atomic
+
+- **WHEN** the generated atomic settings are inspected
+- **THEN** every Pi-only extension is named as a force-exclude relative to the inherited Pi configuration root, in the spelling atomic matches against that root
 
 ### Requirement: Git default-branch boundary
 
