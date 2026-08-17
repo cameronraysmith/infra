@@ -26,8 +26,7 @@ Gated patterns (each returns permissionDecision "ask"):
   Privilege escalation
     sudo *
 
-  Git: push and destructive operations (matches through global options like -C, --no-pager)
-    git [-C path] [--global-opts...] push
+  Git: destructive operations (matches through global options like -C, --no-pager)
     git [-C path] [--global-opts...] reset --hard *
     git [-C path] [--global-opts...] clean *
     git [-C path] [--global-opts...] checkout [--] .
@@ -46,10 +45,6 @@ Gated patterns (each returns permissionDecision "ask"):
     gh release create/delete
     gh workflow run
     gh gist create
-
-  Nix: arbitrary code execution
-    nix run *
-    nix shell *
 
   Infrastructure mutation
     tofu/terraform apply/destroy
@@ -180,21 +175,6 @@ notify_permitted() {
   disown
 }
 
-# Inspect git push args (everything after 'push'); return 0 if safe to auto-permit.
-# Escalates on: bare push, --force/--force-with-lease, --all/--mirror/--tags,
-# delete refspec (:branch), or any token referencing main/master/default ref.
-push_is_safe() {
-  local args="$1"
-  [[ -z "${args// }" ]] && return 1
-  echo "$args" | grep -qE '(^|[[:space:]])(-f\b|--force\b|--force-with-lease\b|--all\b|--mirror\b|--tags\b)' && return 1
-  echo "$args" | grep -qE '(^|[[:space:]]):[^[:space:]]' && return 1
-  local default_ref
-  default_ref=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
-  default_ref="${default_ref:-main}"
-  echo "$args" | grep -qE "(^|[[:space:]:/])(${default_ref}|main|master)([[:space:]:/]|\$)" && return 1
-  return 0
-}
-
 # Inspect jj git push args; return 0 if safe to auto-permit.
 # Escalates on: bare push, --all-bookmarks/--deleted, --force*, or bookmark
 # targeting main/master/trunk.
@@ -213,17 +193,11 @@ cmd_match 'sudo\s' && REASON="sudo requires approval"
 
 # --- Git: push and destructive operations ---
 # Uses git_cmd_match to handle global options (e.g. -C, --no-pager) between 'git' and subcommand.
-# Push to non-default refs auto-permits with a NOTICE; pushes to main/master or with
-# destructive flags continue to escalate.
+# git push auto-permits with a NOTICE in every form. Agent workers launched with
+# permissions bypassed still stall on a PreToolUse "ask", and push is unavoidable
+# in normal work here, so the confirmation is traded for a notification.
 if [ -z "$REASON" ]; then
-  if git_cmd_match 'push(\s|$)'; then
-    PUSH_ARGS=$(echo "$COMMAND" | sed -nE 's/.*\bgit\b[^|;&>]*\bpush\b[[:space:]]*([^|;&>]*).*/\1/p')
-    if push_is_safe "$PUSH_ARGS"; then
-      notify_permitted "git push (non-default ref)"
-    else
-      REASON="git push requires approval"
-    fi
-  fi
+  git_cmd_match 'push(\s|$)' && notify_permitted "git push"
 fi
 if [ -z "$REASON" ]; then
   if jj_cmd_match 'git\s+push(\s|$)'; then
@@ -304,11 +278,6 @@ if [ -z "$REASON" ]; then
 fi
 if [ -z "$REASON" ]; then
   cmd_match 'gh gist create\b' && REASON="gh gist create may expose code publicly"
-fi
-
-# --- Nix: arbitrary code execution ---
-if [ -z "$REASON" ]; then
-  cmd_match 'nix (run|shell)\s' && REASON="nix run/shell executes arbitrary code"
 fi
 
 # --- Infrastructure mutation ---

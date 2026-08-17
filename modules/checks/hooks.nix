@@ -45,6 +45,31 @@
             # A safe-looking segment must not launder a later unsafe one.
             "ask kill 1308; kill $OTHER"
             "ask ps aux | xargs kill"
+
+            # nix run/shell and git push are ungated in every form. An "ask" is a
+            # hard stall for an agent worker launched with permissions bypassed,
+            # and both commands are unavoidable in normal work in this repository.
+            "allow nix run nixpkgs#hello"
+            "allow nix run .#some-app -- --flag"
+            "allow nix shell nixpkgs#jq"
+            "allow git push"
+            "allow git push -u origin fm/some-branch"
+            "allow git -C /some/path push"
+            "allow git push --force origin main"
+            # nix subcommands that were never gated stay ungated.
+            "allow nix build .#checks.aarch64-darwin.hook-gate-dangerous-commands"
+
+            # Neighbouring gates are unaffected by the two lifts above.
+            "ask jj git push"
+            "ask jj git push --all-bookmarks"
+            "ask git reset --hard HEAD~1"
+            "ask git clean -fd"
+            "ask sudo systemctl restart foo"
+            "ask dd if=/dev/zero of=/dev/disk2"
+            "ask truncate -s 0 important.log"
+            "ask shred -u secrets.env"
+            "ask gh workflow run ci.yml"
+            "ask kubectl delete pod foo"
           ];
         in
         pkgs.runCommand "hook-gate-dangerous-commands"

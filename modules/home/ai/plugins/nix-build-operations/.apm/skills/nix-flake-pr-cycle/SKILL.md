@@ -99,7 +99,8 @@ Push the bookmark to the GitHub remote.
 jj git push -b <bookmark-name>
 ```
 
-Pushes to non-default refs are auto-permitted by the `gate-dangerous-commands` hook with an ntfy NOTICE; pushes to `main` remain gated and require explicit confirmation.
+`jj git push` to a non-default bookmark is auto-permitted by the `gate-dangerous-commands` hook with an ntfy NOTICE; `jj git push` to `main` remains gated and requires explicit confirmation.
+Plain `git push` is auto-permitted with a NOTICE in every form, because an interactive prompt stalls agent workers launched with permissions bypassed.
 The NOTICE is informational rather than blocking — it surfaces the push to the user's notification stream so a foreground operator can intervene if the push was accidental, while permitting routine bookmark publication without interactive prompts.
 
 ## Phase 4 — draft pull request creation
@@ -218,7 +219,7 @@ Suppress NOTICEs during dense local iteration (rapid push-monitor-fix cycles) an
 `just check-fast` enumerates `currentSystem` only; multi-platform coverage across the fleet is buildbot's domain in CI and is not exercised by the local closure-operator invocation.
 Mergify's `author-approved` label auto-approves only for `author=cameronraysmith`; for other authors the label is inert with respect to auto-approval.
 Skill content (this SKILL.md) activates via `home-manager switch`; the working-tree path is canonical during authoring sessions, but the symlinked store path that agents read at runtime lags by one switch cycle.
-The `gate-dangerous-commands` hook auto-permits non-default-ref pushes and the canonical `gh pr create -d ... -b ""` triad; updates to the hook itself similarly lag by one switch cycle.
+The `gate-dangerous-commands` hook auto-permits `git push` in every form, `jj git push` to non-default bookmarks, and the canonical `gh pr create -d ... -b ""` triad; updates to the hook itself similarly lag by one switch cycle.
 
 The phase numbering is procedural rather than rigid — entering at Phase 3 with an already-validated chain is legitimate, as is iterating Phase 1–2 multiple times before any push.
 The numbering reflects the natural order when starting from a fresh chain and pursuing integration; it is not a sequence the agent is obligated to execute monolithically.

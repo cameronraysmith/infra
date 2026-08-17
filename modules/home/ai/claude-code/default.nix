@@ -323,8 +323,7 @@
                 ask = [
                   # # Privilege escalation
                   # "Bash(sudo *)"
-                  # # Git: push and destructive operations
-                  # "Bash(git push *)"
+                  # # Git: destructive operations
                   # "Bash(git reset --hard*)"
                   # "Bash(git clean *)"
                   # "Bash(git checkout .)"
@@ -353,9 +352,6 @@
                   # "Bash(gh release delete *)"
                   # "Bash(gh workflow run *)"
                   # "Bash(gh gist create *)"
-                  # # Nix: arbitrary code execution
-                  # "Bash(nix run *)"
-                  # "Bash(nix shell *)"
                   # # Infrastructure mutation
                   # "Bash(tofu apply*)"
                   # "Bash(tofu destroy*)"
