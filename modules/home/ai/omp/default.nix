@@ -5,33 +5,40 @@
 # import it, which is the opposite of what hunk and worktrunk do with theirs.
 #
 # That module carries three options. Two of them, enable and package, are the
-# declarations below, and the third is the reason to decline it: `settings`
+# declarations below, and the third is the reason to decline it: its `settings`
 # writes ~/.omp/agent/config.yml as a read-only store symlink, while omp's
 # settings singleton persists to that same file in the background
 # (packages/coding-agent/src/config/settings.ts). Its own option description
 # concedes the result -- changes made from inside omp "replace it but revert on
-# the next home-manager switch". That is the conflict this repository has
-# already resolved twice in the other direction: programs.pi-coding-agent.
-# mutableSettings installs a writable copy, and atomic merges rather than
-# installs so its first-run wizard is not re-armed on every activation.
-# Importing would therefore add a flake input, and nix-bun as a new lock node,
-# to obtain an enable flag, a package option, and one home.packages entry,
-# because the only option with content in it is the one we would refuse.
+# the next home-manager switch". The activation below takes the other route
+# this repository has twice chosen instead, merging rather than installing, so
+# that setupVersion and anything else omp owns survives a switch.
 #
 # If upstream's module later grows options worth having, adopting it is
-# deleting these two declarations and adding one imports line; the cost of
-# waiting is that migration, against an input carried from now until then. If a
-# key ever needs to be declared rather than left to omp, the shape that fits is
-# modules/home/ai/atomic/default.nix' merge activation with yq, not upstream's
-# writer.
+# deleting these declarations and adding one imports line; the cost of waiting
+# is that migration, against an input carried from now until then.
 #
-# No configuration file is written here. omp resolves .omp, .claude, .codex,
-# and .gemini as configuration bases at both user and project level and scans
-# each for commands, agents, and skills (packages/coding-agent/src/config.ts),
-# so the skills delivered to ~/.claude/skills reach it with nothing declared.
-# It does not inherit ~/.pi/agent as a configuration root the way atomic does;
-# only the LSP loader consults ~/.pi/agent/lsp.* (src/lsp/config.ts), so
+# Two files are nix-owned, both at user scope, and omp writes both at runtime:
+# config.yml from the /settings, /model, and /theme screens, and WATCHDOG.yml
+# whole from the /advisor editor (src/modes/components/advisor-config.ts). The
+# merge shape and its retract limitation are documented in merge-config.sh.
+# WATCHDOG.yml is discovered at ${configDir}/WATCHDOG.yml and combined with any
+# project-level roster rather than overridden by it (src/advisor/watchdog.ts
+# collectConfigCandidates), so what is declared here is the fleet-wide baseline.
+#
+# Nothing else is written. omp resolves .omp, .claude, .codex, and .gemini as
+# configuration bases at both user and project level and scans each for
+# commands, agents, and skills (packages/coding-agent/src/config.ts), so the
+# skills delivered to ~/.claude/skills reach it with nothing declared. It does
+# not inherit ~/.pi/agent as a configuration root the way atomic does; only the
+# LSP loader consults ~/.pi/agent/lsp.* (src/lsp/config.ts), so
 # aiAgentSettings.piOnlyExtensions has no bearing on it.
+#
+# LSP servers are not declared here either. omp auto-detects them from its
+# 54-entry registry (src/lsp/defaults.json) by requiring a root marker in the
+# project and a resolvable binary, so the roster follows whatever PATH omp is
+# launched with. Pinning it would mean an lsp.yml, which unlike config.yml omp
+# only ever reads, so it would not need this merge.
 { ... }:
 {
   flake.modules.homeManager.ai =
@@ -44,6 +51,12 @@
     }:
     let
       cfg = config.programs.omp;
+      yamlFormat = pkgs.formats.yaml { };
+      mergeConfig = pkgs.writeShellApplication {
+        name = "omp-merge-config";
+        runtimeInputs = [ pkgs.yq-go ];
+        text = builtins.readFile ./merge-config.sh;
+      };
     in
     {
       options.programs.omp = {
@@ -61,12 +74,103 @@
             arrives as a substitution instead of a source build.
           '';
         };
+
+        configDir = lib.mkOption {
+          type = lib.types.str;
+          default = "${config.home.homeDirectory}/.omp/agent";
+          description = "Directory omp reads its configuration and runtime state from.";
+        };
+
+        settings = lib.mkOption {
+          type = yamlFormat.type;
+          default = { };
+          description = ''
+            Nix-owned subset of {file}`config.yml`. Each declared key wins on
+            activation; every key omp writes and nix does not declare, setupVersion
+            among them, survives untouched.
+          '';
+        };
+
+        watchdog = lib.mkOption {
+          type = yamlFormat.type;
+          default = { };
+          description = ''
+            Nix-owned subset of {file}`WATCHDOG.yml`, the advisor roster the
+            {command}`/advisor` editor reads and rewrites.
+
+            `advisors` is a sequence, and sequences are replaced rather than merged,
+            so this states the roster outright. Disable one entry with
+            `enabled = false` rather than removing it: merge-config.sh cannot retract
+            a key, and a dropped advisor would otherwise persist from the last
+            activation that declared it.
+          '';
+        };
       };
 
       config = {
-        programs.omp.enable = lib.mkDefault true;
+        programs.omp = {
+          enable = lib.mkDefault true;
+
+          settings = {
+            # omp kept pi's key name and semantics for this one
+            # (src/config/settings-schema.ts), so the fleet-wide default reaches a
+            # third pi-lineage agent from the same expression.
+            hideThinkingBlock = lib.mkDefault config.aiAgentSettings.hideThinkingBlock;
+            symbolPreset = lib.mkDefault "nerd";
+            # Named for omp's own theme registry rather than the catppuccin flavor
+            # aiAgentSettings.theme carries, which pi and atomic resolve against a
+            # vendored theme file; the two are not interchangeable strings.
+            theme.dark = lib.mkDefault "dark-catppuccin";
+            modelRoles = {
+              default = lib.mkDefault "zai/glm-5.3:high";
+              advisor = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
+              plan = lib.mkDefault "anthropic/claude-opus-5:xhigh";
+              designer = lib.mkDefault "anthropic/claude-opus-5:xhigh";
+              smol = lib.mkDefault "openrouter/moonshotai/kimi-k3:high";
+              slow = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
+              vision = lib.mkDefault "openrouter/google/gemini-3.7-flash:high";
+              commit = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
+              tiny = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
+              task = lib.mkDefault "anthropic/claude-sonnet-5:high";
+            };
+          };
+
+          watchdog = {
+            instructions = lib.mkDefault "Shared review baseline for all advisors.";
+            advisors = lib.mkDefault [
+              {
+                name = "Watchdog";
+                model = "openai-codex/gpt-5.6-sol:xhigh";
+                instructions = "Continuous duty: wrong-direction detection, missing constraints, hallucinated APIs, plan/todo drift. Prefer concern over nit.";
+              }
+              {
+                name = "Fable";
+                model = "anthropic/claude-fable-5:xhigh";
+                instructions = "Deep-review duty: architectural soundness, subtle correctness, cross-module invariants. Invoked deliberately; be thorough.";
+                enabled = false;
+              }
+            ];
+          };
+        };
 
         home.packages = lib.mkIf cfg.enable [ cfg.package ];
+
+        home.activation.ompMergeConfig = lib.mkIf cfg.enable (
+          let
+            merge =
+              declared: target: "$DRY_RUN_CMD ${lib.getExe mergeConfig} ${declared} ${cfg.configDir}/${target}";
+          in
+          lib.hm.dag.entryAfter [ "writeBoundary" ] (
+            lib.concatStringsSep "\n" (
+              lib.optional (cfg.settings != { }) (
+                merge (yamlFormat.generate "omp-config.yml" cfg.settings) "config.yml"
+              )
+              ++ lib.optional (cfg.watchdog != { }) (
+                merge (yamlFormat.generate "omp-watchdog.yml" cfg.watchdog) "WATCHDOG.yml"
+              )
+            )
+          )
+        );
       };
     };
 }
