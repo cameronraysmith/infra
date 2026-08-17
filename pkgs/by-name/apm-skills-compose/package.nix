@@ -58,6 +58,13 @@
   unslopSrc ? inputs.self.packages.${stdenv.hostPlatform.system}.agent-plugins-unslop,
   unslopRev ? unslopSrc.rev,
 
+  # Flake-pinned github/gh-stack tree feeding apm's git checkout cache so the
+  # skill-bundle remote dep resolves with zero network. ghStackRev is the single SHA
+  # source of truth (the fetchFromGitHub rev), reconciled against the apm.yml pin by
+  # the drift guard in the build script.
+  ghStackSrc ? inputs.self.packages.${stdenv.hostPlatform.system}.agent-plugins-gh-stack,
+  ghStackRev ? ghStackSrc.rev,
+
   targets ? [
     "agent-skills"
     "claude"
@@ -199,6 +206,24 @@ runCommandLocal "apm-skills-compose"
       exit 1
     fi
 
+    # Same offline pre-seed for the gh-stack remote dep declared in
+    # version-control-and-forge/apm.yml. apm types it SKILL_BUNDLE (nested
+    # skills/<name>/SKILL.md, no plugin manifest and no apm.yml) and installs the
+    # skills/gh-stack/ directory with its references/ siblings.
+    GH_SHA=${ghStackRev}
+    SHARD_GH=$(printf '%s' 'https://github.com/github/gh-stack' | sha256sum | cut -c1-16)
+    CK_GH="$APM_CACHE_DIR/git/checkouts_v1/$SHARD_GH/$GH_SHA/full"
+    mkdir -p "$CK_GH"
+    cp -RL ${ghStackSrc}/. "$CK_GH"/
+    chmod -R u+w "$CK_GH"
+    mkdir -p "$CK_GH/.git"
+    printf '%s\n' "$GH_SHA" > "$CK_GH/.git/HEAD"
+
+    if ! grep -q "$GH_SHA" ./version-control-and-forge/apm.yml; then
+      echo "apm-skills-compose: gh-stack SHA drift — version-control-and-forge/apm.yml does not pin $GH_SHA" >&2
+      exit 1
+    fi
+
     cp ${rootConsumerManifest} ./apm.yml
     # agent-skills,claude only: the codex/hermes/opencode/droid harnesses are
     # fanned out nix-side from this composed $out in a later task, not by apm.
@@ -222,7 +247,10 @@ runCommandLocal "apm-skills-compose"
       "$out/.claude/skills/code-review/SKILL.md" \
       "$out/.claude/skills/unslop/SKILL.md" \
       "$out/.agents/skills/unslop/SKILL.md" \
-      "$out/.claude/skills/unslop/scripts/banned_phrase_scan.py"; do
+      "$out/.claude/skills/unslop/scripts/banned_phrase_scan.py" \
+      "$out/.claude/skills/gh-stack/SKILL.md" \
+      "$out/.agents/skills/gh-stack/SKILL.md" \
+      "$out/.claude/skills/gh-stack/references/commands.md"; do
       if [ ! -f "$expected" ]; then
         echo "apm-skills-compose assertion failed: missing $expected" >&2
         exit 1

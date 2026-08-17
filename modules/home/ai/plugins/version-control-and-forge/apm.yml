@@ -11,3 +11,14 @@ dependencies:
     - git: max-sixty/worktrunk
       ref: 5175153b39d2737b4c35810fc58b0fd1a58ee609
       skills: [worktrunk, wt-switch-create]
+    # gh-stack is a Go CLI repo that also ships one agent skill under
+    # skills/gh-stack/. apm types it SKILL_BUNDLE (nested skills/<name>/SKILL.md,
+    # no plugin manifest and no apm.yml) and installs the skill directory with its
+    # references/ siblings. Same offline resolution as worktrunk above: the nix
+    # compose pre-seeds apm's git checkout cache from the flake-pinned tree, and the
+    # full 40-char SHA is required because a short ref forces a network fetch. The
+    # `gh stack` extension the skill drives is installed by
+    # modules/home/development/gh.nix.
+    - git: github/gh-stack
+      ref: 14fc42ed9b6c376a53b2f999f138d3bd26dac546
+      skills: [gh-stack]
