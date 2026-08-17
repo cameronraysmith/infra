@@ -2292,6 +2292,7 @@
             piSpecificSkillsPresent = false;
             slowModeSettingsShape = [
               "enableInstallTelemetry"
+              "hideThinkingBlock"
               "packages"
               "theme"
             ];

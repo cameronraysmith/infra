@@ -70,7 +70,7 @@
           enable = lib.mkDefault true;
 
           settings = {
-            inherit (config.aiAgentSettings) theme enableInstallTelemetry;
+            inherit (config.aiAgentSettings) theme enableInstallTelemetry hideThinkingBlock;
             packages = config.aiAgentSettings.packagesForAtomic;
             extensions = config.aiAgentSettings.extensionsForAtomic;
           };

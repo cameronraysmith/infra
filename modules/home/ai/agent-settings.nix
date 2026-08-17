@@ -37,6 +37,33 @@
           description = "Anonymous install/update ping on first install and after each changelog-detected update. The store path is replaced by home-manager, so every generation bump would emit one.";
         };
 
+        hideThinkingBlock = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collapse each run of thinking blocks to a single label rather than
+            rendering the full reasoning trace.
+
+            Display only: `defaultThinkingLevel` and the `shift+tab` cycle decide
+            whether the model reasons at all, and for Z.AI's thinking format a
+            level of `off` sends `thinking: { type: "disabled" }` rather than
+            merely hiding what came back. `ctrl+t` (`app.thinking.toggle`)
+            expands the whole transcript retroactively.
+
+            Both agents read this key. pi documents it at docs/settings.md and
+            renders the collapsed label from
+            packages/coding-agent/src/modes/interactive/components/assistant-message.ts;
+            atomic carries the same key and renderer.
+
+            pi persists a `ctrl+t` expansion by writing the global settings.json,
+            which this module reinstalls wholesale on activation, so the
+            expansion lasts until the next generation. A project
+            `.pi/settings.json` entry wins over the global file on every read and
+            is never rewritten by the toggle, which is the per-repository way to
+            keep expansion from becoming the default.
+          '';
+        };
+
         packages = lib.mkOption {
           type = lib.types.listOf (lib.types.either lib.types.str jsonFormat.type);
           default = [

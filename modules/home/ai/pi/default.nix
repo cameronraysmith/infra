@@ -46,10 +46,15 @@
 
           # https://pi.dev/docs/latest/settings
           #
-          # These three keys are declared in modules/home/ai/agent-settings.nix
+          # These four keys are declared in modules/home/ai/agent-settings.nix
           # so pi's file and atomic's are generated from one expression.
           settings = {
-            inherit (config.aiAgentSettings) theme enableInstallTelemetry packages;
+            inherit (config.aiAgentSettings)
+              theme
+              enableInstallTelemetry
+              hideThinkingBlock
+              packages
+              ;
           };
         };
 
