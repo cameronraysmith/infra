@@ -27,6 +27,10 @@ Gated patterns (each returns permissionDecision "ask"):
     sudo *
 
   Git: destructive operations (matches through global options like -C, --no-pager)
+    git [-C path] [--global-opts...] push --force|-f|--force-with-lease  (default ref only)
+    git [-C path] [--global-opts...] push --mirror|--all
+    git [-C path] [--global-opts...] push [remote] :branch   (delete refspec)
+    git [-C path] [--global-opts...] push -d|--delete *
     git [-C path] [--global-opts...] reset --hard *
     git [-C path] [--global-opts...] clean *
     git [-C path] [--global-opts...] checkout [--] .
@@ -175,6 +179,33 @@ notify_permitted() {
   disown
 }
 
+# Inspect git push args (everything after 'push'); return 0 when the push is
+# destructive enough to require approval.
+# Escalates on: a force-flavored push (-f/--force/--force-with-lease) whose
+# refspec names main, master, or the resolved default ref; a delete refspec in
+# either the `:branch` or the `-d/--delete` form; and --mirror/--all, since
+# --mirror deletes remote refs that are absent locally.
+# Everything else auto-permits, including --force-with-lease to a task branch --
+# the rebase-then-push flow every agent worker runs, where an "ask" is a hard
+# stall -- and ordinary pushes to the default ref, which the repository's own
+# merge helper performs to fast-forward main.
+# A force-flavored push carrying no refspec is not escalated: which ref it
+# rewrites depends on push.default and the checked-out branch, neither of which
+# this hook can see.
+push_is_destructive() {
+  local args="$1"
+  echo "$args" | grep -qE '(^|[[:space:]])(--mirror|--all)([[:space:]]|$)' && return 0
+  echo "$args" | grep -qE '(^|[[:space:]])\+?:[^[:space:]]' && return 0
+  echo "$args" | grep -qE '(^|[[:space:]])(-d|--delete)([[:space:]]|$)' && return 0
+  if echo "$args" | grep -qE '(^|[[:space:]])(-f|--force|--force-with-lease)([[:space:]=]|$)'; then
+    local default_ref
+    default_ref=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || true)
+    default_ref="${default_ref:-main}"
+    echo "$args" | grep -qE "(^|[[:space:]:/=])(${default_ref}|main|master)([[:space:]:/]|\$)" && return 0
+  fi
+  return 1
+}
+
 # Inspect jj git push args; return 0 if safe to auto-permit.
 # Escalates on: bare push, --all-bookmarks/--deleted, --force*, or bookmark
 # targeting main/master/trunk.
@@ -193,11 +224,21 @@ cmd_match 'sudo\s' && REASON="sudo requires approval"
 
 # --- Git: push and destructive operations ---
 # Uses git_cmd_match to handle global options (e.g. -C, --no-pager) between 'git' and subcommand.
-# git push auto-permits with a NOTICE in every form. Agent workers launched with
-# permissions bypassed still stall on a PreToolUse "ask", and push is unavoidable
-# in normal work here, so the confirmation is traded for a notification.
+# git push auto-permits with a NOTICE except for the destructive forms
+# push_is_destructive names. Agent workers launched with permissions bypassed
+# stall on a PreToolUse "ask", and the ordinary forms are unavoidable in normal
+# work here, so for those the confirmation is traded for a notification.
+# The match is over the raw command bytes, so a push performed inside a script
+# is invisible to this arm: the tool call is the script name.
 if [ -z "$REASON" ]; then
-  git_cmd_match 'push(\s|$)' && notify_permitted "git push"
+  if git_cmd_match 'push(\s|$)'; then
+    PUSH_ARGS=$(echo "$COMMAND" | sed -nE 's/.*\bgit\b[^|;&>]*\bpush\b[[:space:]]*([^|;&>]*).*/\1/p')
+    if push_is_destructive "$PUSH_ARGS"; then
+      REASON="destructive git push requires approval"
+    else
+      notify_permitted "git push"
+    fi
+  fi
 fi
 if [ -z "$REASON" ]; then
   if jj_cmd_match 'git\s+push(\s|$)'; then

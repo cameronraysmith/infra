@@ -324,6 +324,11 @@
                   # # Privilege escalation
                   # "Bash(sudo *)"
                   # # Git: destructive operations
+                  # # (push gating is conditional on the refspec, which a static
+                  # # pattern cannot express; see push_is_destructive in the hook)
+                  # "Bash(git push --mirror*)"
+                  # "Bash(git push --all*)"
+                  # "Bash(git push --delete *)"
                   # "Bash(git reset --hard*)"
                   # "Bash(git clean *)"
                   # "Bash(git checkout .)"

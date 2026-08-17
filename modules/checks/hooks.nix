@@ -46,18 +46,44 @@
             "ask kill 1308; kill $OTHER"
             "ask ps aux | xargs kill"
 
-            # nix run/shell and git push are ungated in every form. An "ask" is a
-            # hard stall for an agent worker launched with permissions bypassed,
-            # and both commands are unavoidable in normal work in this repository.
+            # nix run/shell is ungated in every form. An "ask" is a hard stall for
+            # an agent worker launched with permissions bypassed, and nix run is
+            # unavoidable in normal work in this repository.
             "allow nix run nixpkgs#hello"
             "allow nix run .#some-app -- --flag"
             "allow nix shell nixpkgs#jq"
+            # nix subcommands that were never gated stay ungated.
+            "allow nix build .#checks.aarch64-darwin.hook-gate-dangerous-commands"
+
+            # Ordinary git push is ungated for the same reason, including to the
+            # default ref, which the repository's own merge helper pushes to.
             "allow git push"
             "allow git push -u origin fm/some-branch"
             "allow git -C /some/path push"
-            "allow git push --force origin main"
-            # nix subcommands that were never gated stay ungated.
-            "allow nix build .#checks.aarch64-darwin.hook-gate-dangerous-commands"
+            "allow git push origin main"
+            "allow git push origin HEAD:main"
+            # --force-with-lease to a task branch is the rebase-then-push flow every
+            # agent worker runs, and gating it is what stalled four of them. It fails
+            # safe on its own: it refuses when the remote moved.
+            "allow git push --force-with-lease origin fm/some-branch"
+            "allow git push --force-with-lease=fm/some-branch origin fm/some-branch"
+            "allow git -C /some/path push --force-with-lease origin fm/some-branch"
+            # A branch name merely containing the default ref is not the default ref.
+            "allow git push --force origin fm/main-guards"
+
+            # The destructive push forms stay gated.
+            "ask git push --force origin main"
+            "ask git push -f origin main"
+            "ask git push --force-with-lease origin main"
+            "ask git push --force-with-lease=main origin main"
+            "ask git push --force origin master"
+            "ask git push --force origin HEAD:main"
+            "ask git -C /some/path push --force origin main"
+            "ask git push origin :some-branch"
+            "ask git push origin --delete some-branch"
+            "ask git push -d origin some-branch"
+            "ask git push --mirror origin"
+            "ask git push --all origin"
 
             # Neighbouring gates are unaffected by the two lifts above.
             "ask jj git push"
