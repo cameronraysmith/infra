@@ -642,41 +642,13 @@
       ];
       coreCases = map (case: { kind = "core"; } // case) [
         {
-          name = "mutable path outside repository prompts";
-          expected = "prompt";
+          name = "path outside any repository blocks as unrecoverable";
+          expected = "block";
+          reason = "outside a recognized repository";
           input = {
             operation = "edit";
-            target = {
-              kind = "mutable";
-              canonicalPath = "/workspace/note.txt";
-            };
+            target.canonicalPath = "/workspace/note.txt";
             repository.kind = "outside-repository";
-          };
-        }
-        {
-          name = "nix store target blocks";
-          expected = "block";
-          reason = "immutable";
-          input = {
-            operation = "write";
-            target = {
-              kind = "immutable";
-              canonicalPath = "/nix/store/abc-policy";
-              root = "/nix/store";
-            };
-          };
-        }
-        {
-          name = "declared immutable root blocks";
-          expected = "block";
-          reason = "immutable";
-          input = {
-            operation = "edit";
-            target = {
-              kind = "immutable";
-              canonicalPath = "/immutable/config.json";
-              root = "/immutable";
-            };
           };
         }
         {
@@ -684,10 +656,7 @@
           expected = "allow";
           input = {
             operation = "edit";
-            target = {
-              kind = "mutable";
-              canonicalPath = "/repo/file.ts";
-            };
+            target.canonicalPath = "/repo/file.ts";
             repository = {
               kind = "git";
               root = "/repo";
@@ -703,10 +672,7 @@
           expected = "allow";
           input = {
             operation = "edit";
-            target = {
-              kind = "mutable";
-              canonicalPath = "/repo/..config";
-            };
+            target.canonicalPath = "/repo/..config";
             repository = {
               kind = "git";
               root = "/repo";
@@ -718,15 +684,29 @@
           };
         }
         {
-          name = "git main blocks";
+          name = "git target outside the repository root blocks";
           expected = "block";
+          reason = "does not contain the canonical target";
+          input = {
+            operation = "write";
+            target.canonicalPath = "/elsewhere/file.ts";
+            repository = {
+              kind = "git";
+              root = "/repo";
+              head = {
+                kind = "feature";
+                branch = "feature/policy";
+              };
+            };
+          };
+        }
+        {
+          name = "git main notifies and allows";
+          expected = "notify";
           reason = "main";
           input = {
             operation = "write";
-            target = {
-              kind = "mutable";
-              canonicalPath = "/repo/file.ts";
-            };
+            target.canonicalPath = "/repo/file.ts";
             repository = {
               kind = "git";
               root = "/repo";
@@ -738,15 +718,12 @@
           };
         }
         {
-          name = "git master blocks";
-          expected = "block";
+          name = "git master notifies and allows";
+          expected = "notify";
           reason = "master";
           input = {
             operation = "edit";
-            target = {
-              kind = "mutable";
-              canonicalPath = "/repo/file.ts";
-            };
+            target.canonicalPath = "/repo/file.ts";
             repository = {
               kind = "git";
               root = "/repo";
@@ -758,15 +735,11 @@
           };
         }
         {
-          name = "invalid repository state blocks";
-          expected = "block";
-          reason = "ambiguous";
+          name = "indeterminate repository state allows";
+          expected = "allow";
           input = {
             operation = "edit";
-            target = {
-              kind = "mutable";
-              canonicalPath = "/repo/file.ts";
-            };
+            target.canonicalPath = "/repo/file.ts";
             repository = {
               kind = "invalid";
               diagnostic = "ambiguous repository identity";
@@ -898,22 +871,22 @@
         {
           scenario = "ordinary-conflict";
           probes = 5;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "ordinary-divergent-at";
           probes = 5;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "ordinary-main-at";
           probes = 5;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "ordinary-master-at";
           probes = 5;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "diamond-healthy";
@@ -937,169 +910,169 @@
         {
           scenario = "diamond-missing-wip";
           probes = 8;
-          expected = "block";
+          expected = "notify";
           reason = "wip bookmark is absent";
         }
         {
           scenario = "diamond-moved-wip";
           probes = 8;
-          expected = "block";
+          expected = "notify";
           reason = "wip bookmark is moved";
         }
         {
           scenario = "diamond-divergent-wip";
           probes = 8;
-          expected = "block";
+          expected = "notify";
           reason = "wip bookmark is divergent";
         }
         {
           scenario = "diamond-divergent-wip-without-target";
           probes = 8;
-          expected = "block";
+          expected = "notify";
           reason = "wip bookmark is divergent";
         }
         {
           scenario = "diamond-divergent-wip-malformed-resolution";
           probes = 6;
-          expected = "block";
-          reason = "malformed";
+          expected = "allow";
         }
         {
           scenario = "diamond-nonsingle-parent-wip";
           probes = 8;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "diamond-single-parent-join";
           probes = 8;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "diamond-conflicted-join";
           probes = 8;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "diamond-conflicted-immediate-parent";
           probes = 8;
-          expected = "block";
+          expected = "notify";
         }
         {
           scenario = "diamond-join-parent-count-mismatch";
           probes = 8;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "diamond-malformed-join-probe";
           probes = 7;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "diamond-failing-join-probe";
           probes = 7;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "malformed-probe";
           probes = 2;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "malformed-parent-count-probe";
           probes = 2;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "failing-probe";
           probes = 2;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "ambiguous-probe";
           probes = 2;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "failing-root-probe";
           probes = 1;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "outside-jj-contradictory-stdout";
           probes = 1;
-          expected = "block";
-          reason = "jj root";
+          expected = "allow";
         }
         {
           scenario = "outside-jj-wrong-status";
           probes = 1;
-          expected = "block";
-          reason = "jj root";
+          expected = "allow";
         }
         {
           scenario = "outside-jj-mixed-diagnostics";
           probes = 1;
           expected = "block";
-          reason = "jj root";
+          reason = "outside a recognized repository";
+        }
+        {
+          # Regression oracle for the anchored jj diagnostic. jujutsu 0.43.0
+          # appends the Hint lines below whenever the probed directory holds a
+          # .git directory, which is exactly the case that has to reach the Git
+          # branch. While the match was anchored at the end of stderr this row
+          # blocked with "jj root", so the Git arm was unreachable at the root
+          # of every ordinary Git repository.
+          scenario = "outside-jj-hint-git-main";
+          probes = 1;
+          expected = "notify";
+          reason = "main";
         }
         {
           scenario = "classification-whitespace-only";
           probes = 5;
-          expected = "block";
-          reason = "classification";
+          expected = "allow";
         }
         {
           scenario = "classification-padded";
           probes = 5;
-          expected = "block";
-          reason = "classification";
+          expected = "allow";
         }
         {
           scenario = "classification-extra-blank";
           probes = 5;
-          expected = "block";
-          reason = "classification";
+          expected = "allow";
         }
         {
           scenario = "root-padded";
           probes = 1;
-          expected = "block";
-          reason = "root";
+          expected = "allow";
         }
         {
           scenario = "current-extra-blank";
           probes = 2;
-          expected = "block";
-          reason = "current";
+          expected = "allow";
         }
         {
           scenario = "identity-padded";
           probes = 3;
-          expected = "block";
-          reason = "identity";
+          expected = "allow";
         }
         {
           scenario = "defaults-extra-blank";
           probes = 4;
-          expected = "block";
-          reason = "default bookmark";
+          expected = "allow";
         }
         {
           scenario = "resolution-padded";
           probes = 6;
-          expected = "block";
-          reason = "resolution";
+          expected = "allow";
         }
         {
           scenario = "parents-extra-blank";
           probes = 8;
-          expected = "block";
-          reason = "parent";
+          expected = "allow";
         }
         {
           scenario = "canonical-root-mismatch";
           probes = 1;
-          expected = "block";
+          expected = "allow";
         }
         {
           scenario = "target-jj-cwd-other-repository";
@@ -1122,7 +1095,7 @@
         {
           scenario = "git-protected-head";
           probes = 1;
-          expected = "block";
+          expected = "notify";
           reason = "main";
         }
         {
@@ -1138,14 +1111,12 @@
         {
           scenario = "git-malformed-head";
           probes = 1;
-          expected = "block";
-          reason = "Git head";
+          expected = "allow";
         }
         {
           scenario = "git-multiline-head";
           probes = 1;
-          expected = "block";
-          reason = "Git head";
+          expected = "allow";
         }
         {
           scenario = "colocated-healthy";
@@ -1156,8 +1127,7 @@
         {
           scenario = "colocated-divergent-roots";
           probes = 1;
-          expected = "block";
-          reason = "ambiguous";
+          expected = "allow";
           expectedGitRootDirectory = "/repo";
         }
       ];
@@ -1201,14 +1171,16 @@
           reason = "Git root";
         }
         {
-          name = "Git outside result with mixed diagnostics is invalid";
+          # Prefix match: Git appends advice after the diagnostic in some
+          # configurations, and treating that as unparseable is what made the
+          # jj analogue swallow every write at a repository root.
+          name = "Git outside result with trailing diagnostics is accepted";
           result = {
             stdout = "";
             stderr = "fatal: not a git repository (or any of the parent directories): .git\nadditional diagnostic\n";
             code = 128;
           };
-          expected = "invalid";
-          reason = "Git root";
+          expected = "outside";
         }
       ];
       adapterCases = map (case: { kind = "adapter"; } // case) [
@@ -1232,28 +1204,41 @@
           expected = "pass";
         }
         {
-          name = "adapter translates edit diagnostic block";
-          scenario = "immutable";
-          tool = "edit";
-          input.path = "/nix/store/abc";
-          expected = "block";
-          reason = "immutable";
-        }
-        {
-          name = "adapter normalizes Pi at-prefixed paths";
-          scenario = "builtin-at-prefix";
-          tool = "write";
-          input.path = "@/nix/store/abc";
-          expected = "block";
-          reason = "immutable";
-        }
-        {
-          name = "adapter translates write diagnostic block";
+          name = "adapter permits a notify decision and announces it";
           scenario = "git-main";
           tool = "write";
           input.path = "/repo/file.ts";
+          expected = "pass";
+          expectedNotification = "main";
+        }
+        {
+          name = "adapter blocks a target outside any repository";
+          scenario = "outside-repository";
+          tool = "edit";
+          input.path = "/workspace/file.ts";
           expected = "block";
-          reason = "main";
+          reason = "outside a recognized repository";
+        }
+        {
+          # Without the @ strip this resolves under cwd and lands inside the
+          # repository, so the row discriminates the normalization rather than
+          # merely exercising it.
+          name = "adapter strips a Pi at-prefix before resolving";
+          scenario = "outside-repository";
+          tool = "write";
+          input.path = "@/workspace/file.ts";
+          expected = "block";
+          reason = "outside a recognized repository";
+        }
+        {
+          # Likewise: unexpanded, "~/secret" resolves to <cwd>/~/secret, which
+          # is inside the repository and would have been permitted.
+          name = "adapter expands a leading tilde before resolving";
+          scenario = "outside-repository";
+          tool = "write";
+          input.path = "~/secret";
+          expected = "block";
+          reason = "outside a recognized repository";
         }
         {
           name = "adapter passes unrelated tools through";
@@ -1263,7 +1248,7 @@
           expected = "pass";
         }
         {
-          name = "adapter blocks malformed tool input";
+          name = "adapter blocks a non-string path";
           scenario = "git-feature";
           tool = "edit";
           input.path = 42;
@@ -1271,49 +1256,190 @@
           reason = "malformed";
         }
         {
-          name = "adapter blocks core exceptions";
+          name = "adapter blocks an empty path";
+          scenario = "git-feature";
+          tool = "write";
+          input.path = "";
+          expected = "block";
+          reason = "malformed";
+        }
+        {
+          name = "adapter blocks a whitespace-only path";
+          scenario = "git-feature";
+          tool = "write";
+          input.path = "   ";
+          expected = "block";
+          reason = "malformed";
+        }
+        {
+          name = "adapter blocks a missing path key";
+          scenario = "git-feature";
+          tool = "edit";
+          input = { };
+          expected = "block";
+          reason = "malformed";
+        }
+        {
+          # atomic's edit tool takes a single hashline string under
+          # additionalProperties: false, so no path can ever reach this adapter
+          # from that agent and every atomic edit was refused as malformed.
+          # This row records why the extension is scoped to Pi in
+          # modules/home/ai/agent-settings.nix rather than taught a second tool
+          # grammar; it is the shape the policy must never be asked to judge.
+          name = "adapter cannot read atomic hashline edit input";
+          scenario = "git-feature";
+          tool = "edit";
+          input.input = "[greeter.ts#A18E]\nreplace 1..1:\n+const x = 2;\n";
+          expected = "block";
+          reason = "malformed";
+        }
+        {
+          name = "adapter permits core exceptions";
           scenario = "core-throws";
           tool = "edit";
           input.path = "/repo/file.ts";
-          expected = "block";
-          reason = "policy evaluation failed";
+          expected = "pass";
         }
         {
-          name = "adapter blocks capability exceptions";
+          name = "adapter permits capability exceptions";
           scenario = "capability-throws";
           tool = "write";
           input.path = "/repo/file.ts";
-          expected = "block";
-          reason = "capability failed";
+          expected = "pass";
         }
         {
-          name = "adapter blocks a missing filesystem capability";
+          name = "adapter permits a missing filesystem capability";
           scenario = "capability-missing";
           tool = "edit";
           input.path = "/repo/file.ts";
-          expected = "block";
-          reason = "capability failed";
+          expected = "pass";
         }
         {
-          name = "adapter blocks a throwing capability factory";
+          name = "adapter permits a throwing capability factory";
           scenario = "capability-factory-throws";
           tool = "write";
           input.path = "/repo/file.ts";
-          expected = "block";
-          reason = "adapter failed";
+          expected = "pass";
         }
         {
-          name = "adapter blocks unavailable interaction";
-          scenario = "outside-headless";
-          tool = "edit";
-          input.path = "/workspace/file.ts";
-          expected = "block";
-          reason = "interaction unavailable";
+          name = "adapter permits a throwing notification capability";
+          scenario = "notification-throws";
+          tool = "write";
+          input.path = "/repo/file.ts";
+          expected = "pass";
+        }
+      ];
+      normalizeCases = map (case: { kind = "normalize"; } // case) [
+        {
+          name = "normalize keeps an ordinary relative path";
+          input = "src/a.ts";
+          expected = "src/a.ts";
+        }
+        {
+          name = "normalize strips a Pi at-prefix";
+          input = "@/nix/store/x/f";
+          expected = "/nix/store/x/f";
+        }
+        {
+          name = "normalize expands a bare tilde";
+          input = "~";
+          expected = "/home/tester";
+        }
+        {
+          name = "normalize expands a tilde path";
+          input = "~/secret";
+          expected = "/home/tester/secret";
+        }
+        {
+          name = "normalize expands a tilde path behind an at-prefix";
+          input = "@~/secret";
+          expected = "/home/tester/secret";
+        }
+        {
+          name = "normalize converts a file URL";
+          input = "file:///etc/hosts";
+          expected = "/etc/hosts";
+        }
+        {
+          name = "normalize folds unicode space variants";
+          input = builtins.fromJSON ''"a\u00a0b.txt"'';
+          expected = "a b.txt";
+        }
+        {
+          name = "normalize rejects a whitespace-only path";
+          input = "   ";
+          expected = "(undefined)";
+        }
+        {
+          name = "normalize rejects a bare at-prefix";
+          input = "@";
+          expected = "(undefined)";
+        }
+      ];
+      classificationCases = map (case: { kind = "classification"; } // case) [
+        {
+          name = "classification reports a malformed current probe";
+          scenario = "malformed-probe";
+          expected = "invalid";
+          reason = "jj current probe is malformed";
+        }
+        {
+          name = "classification reports a failing current probe";
+          scenario = "failing-probe";
+          expected = "invalid";
+          reason = "jj current probe failed";
+        }
+        {
+          name = "classification reports an ambiguous current probe";
+          scenario = "ambiguous-probe";
+          expected = "invalid";
+          reason = "jj current probe is ambiguous";
+        }
+        {
+          name = "classification reports a failing root probe";
+          scenario = "failing-root-probe";
+          expected = "invalid";
+          reason = "jj root probe failed";
+        }
+        {
+          name = "classification reports a malformed join probe";
+          scenario = "diamond-malformed-join-probe";
+          expected = "invalid";
+          reason = "join probe is malformed";
+        }
+        {
+          name = "classification reports a canonical root mismatch";
+          scenario = "canonical-root-mismatch";
+          expected = "invalid";
+          reason = "does not contain the canonical target";
+        }
+        {
+          name = "classification reports ambiguous Git and jj identities";
+          scenario = "colocated-divergent-roots";
+          expected = "invalid";
+          reason = "ambiguous Git and jj repository identities";
+        }
+        {
+          name = "classification reports a healthy diamond";
+          scenario = "diamond-healthy";
+          expected = "jj-diamond";
+        }
+        {
+          name = "classification reports an ordinary jj repository";
+          scenario = "ordinary-healthy";
+          expected = "jj-ordinary";
         }
       ];
       policyCases = pkgs.writeText "pi-agent-environment-policy-cases.json" (
         builtins.toJSON (
-          shellCases ++ projectCases ++ coreCases ++ repositoryCases ++ gitRootCases ++ adapterCases
+          shellCases
+          ++ projectCases
+          ++ coreCases
+          ++ repositoryCases
+          ++ gitRootCases
+          ++ adapterCases
+          ++ normalizeCases
+          ++ classificationCases
         )
       );
       # Ambient stand-ins for the only two type surfaces this sandbox cannot
@@ -1364,9 +1490,11 @@
           export function writeFileSync(path: string, data: string): void;
         }
         declare module "node:os" {
+          export function homedir(): string;
           export function tmpdir(): string;
         }
         declare module "node:url" {
+          export function fileURLToPath(url: string): string;
           export function pathToFileURL(path: string): { href: string };
         }
         declare module "bun:test" {
@@ -1389,7 +1517,7 @@
             readonly cwd: string;
             readonly hasUI: boolean;
             readonly ui: {
-              confirm(title: string, message: string): Promise<boolean>;
+              notify(message: string, type?: "info" | "warning" | "error"): void;
             };
           }
           export interface ExtensionAPI {
@@ -1479,7 +1607,7 @@
         };
         const hasPermissionPolicy = permissionModule.policyPresent === true && typeof permissionModule.default === "function";
         const hasEditPolicy = editModule.policyPresent === true && typeof editModule.decideEditWrite === "function";
-        const editPolicyKinds = new Set(["git-root", "core", "repository", "adapter"]);
+        const editPolicyKinds = new Set(["git-root", "core", "repository", "adapter", "normalize", "classification"]);
         const customConfig = hasPermissionPolicy ? permissionModule.default(helpers) : {};
 
         function classify(command: string, userCode: unknown, project: unknown) {
@@ -1697,6 +1825,15 @@
           "diamond-failing-join-probe": () => diamondFixture((slots) => {
             slots.joinProbe = processResult("", 2, "join probe failed");
           }),
+          "outside-jj-hint-git-main": () => [
+            processResult(
+              "",
+              1,
+              jjOutside.stderr +
+                "Hint: It looks like this is a git repo. You can create a jj repo backed by it by running this:\n" +
+                "jj git init\n",
+            ),
+          ],
           "target-git-cwd-jj-repository": () => diamondFixture(),
           "colocated-healthy": () => ordinary,
           "colocated-divergent-roots": () => [ordinary[0]],
@@ -1705,7 +1842,7 @@
           "capability-factory-throws": () => diamondFixture(),
         };
 
-        const withoutJjScenarios = ["immutable", "builtin-at-prefix", "outside-headless", "capability-throws"];
+        const withoutJjScenarios = ["outside-repository", "capability-throws", "notification-throws"];
         const withoutJjFixture = (scenario: string) => withoutJjScenarios.includes(scenario) || scenario.startsWith("git-");
 
         function jjOutputs(scenario: string) {
@@ -1716,7 +1853,7 @@
 
         const fixtureConsumers = new Set(
           cases
-            .filter((entry: { kind: string }) => entry.kind === "repository" || entry.kind === "adapter")
+            .filter((entry: { kind: string }) => entry.kind === "repository" || entry.kind === "adapter" || entry.kind === "classification")
             .map((entry: { scenario: string }) => entry.scenario)
             .filter((scenario: string) => scenario !== "registration" && !withoutJjFixture(scenario)),
         );
@@ -1737,24 +1874,28 @@
           jjCwds: string[],
           gitRootDirectories: string[] = [],
           gitHeadDirectories: string[] = [],
+          notifications: string[] = [],
         ) {
-          const gitScenario = scenario.startsWith("git-") || scenario === "target-git-cwd-jj-repository";
+          const gitScenario =
+              scenario.startsWith("git-") ||
+              scenario === "target-git-cwd-jj-repository" ||
+              scenario === "outside-jj-hint-git-main" ||
+              scenario === "notification-throws";
           const outputs = withoutJjFixture(scenario) ? [jjOutside] : jjOutputs(scenario);
           let jjIndex = 0;
           return {
             filesystem: {
+              homeDirectory: () => "/home/tester",
               canonicalize: async (target: string) => {
                 if (scenario === "capability-throws") throw new Error("filesystem unavailable");
-                if (scenario === "immutable") return "/nix/store/abc";
-                if (scenario === "builtin-at-prefix" && target.startsWith("@")) return "/repo/escaped-at-prefix";
                 return target;
               },
               inspectionDirectory: async (target: string) => {
                 if (target.startsWith("/target/")) return "/target";
                 if (target.startsWith("/workspace/")) return "/workspace";
+                if (target.startsWith("/home/")) return "/home/tester";
                 return "/repo";
               },
-              immutableRoots: async () => ["/nix/store", "/immutable"],
             },
             git: {
               root: async (directory: string) => {
@@ -1770,7 +1911,12 @@
               },
               head: async (root: string) => {
                 gitHeadDirectories.push(root);
-                if (scenario === "git-main" || scenario === "git-protected-head") return processResult("main\n");
+                if (
+                  scenario === "git-main" ||
+                  scenario === "git-protected-head" ||
+                  scenario === "outside-jj-hint-git-main" ||
+                  scenario === "notification-throws"
+                ) return processResult("main\n");
                 if (scenario === "git-multiline-head") return processResult("main\nfeature/policy\n");
                 if (scenario === "git-malformed-head") return processResult("feature branch\n");
                 if (scenario === "git-detached-head") return processResult("", 1, "");
@@ -1790,9 +1936,11 @@
                 return outputs[jjIndex++] ?? processResult("", 99, "unexpected jj probe");
               },
             },
-            interaction: {
-              available: scenario !== "outside-headless",
-              confirm: async () => true,
+            notification: {
+              notify: (message: string) => {
+                if (scenario === "notification-throws") throw new Error("notification unavailable");
+                notifications.push(message);
+              },
             },
           };
         }
@@ -1877,17 +2025,25 @@
               const jjCwds: string[] = [];
               const gitRootDirectories: string[] = [];
               const gitHeadDirectories: string[] = [];
+              const notifications: string[] = [];
               const capabilities = fakeCapabilities(
                 entry.scenario,
                 calls,
                 jjCwds,
                 gitRootDirectories,
                 gitHeadDirectories,
+                notifications,
               );
               const target = entry.target ?? "/repo/file.ts";
               const cwd = entry.cwd ?? "/repo";
               const input = await editModule.evaluateEditWrite("edit", target, cwd, capabilities);
               check(entry.name, input.decision, entry.expected, input.reason ?? "", entry.reason);
+              // A notify decision that announces nothing is a bare allow, which
+              // is a different decision from the one this policy declares.
+              const expectedNotifications = entry.expected === "notify" ? 1 : 0;
+              if (notifications.length !== expectedNotifications) {
+                failures.push(entry.name + ": expected " + expectedNotifications + " announcement(s), got " + JSON.stringify(notifications));
+              }
               for (const argv of calls) {
                 if (argv[0] !== "jj" || argv[1] !== "--ignore-working-copy") {
                   failures.push(entry.name + ": jj argv does not start with jj --ignore-working-copy: " + JSON.stringify(argv));
@@ -1921,6 +2077,34 @@
               }
               continue;
             }
+            if (entry.kind === "normalize") {
+              if (typeof editModule.normalizeToolPath !== "function") {
+                failures.push(entry.name + ": missing tool path normalizer");
+                continue;
+              }
+              const actual = editModule.normalizeToolPath(entry.input, "/home/tester");
+              check(entry.name, actual ?? "(undefined)", entry.expected, "");
+              continue;
+            }
+            if (entry.kind === "classification") {
+              if (typeof editModule.inspectRepository !== "function") {
+                failures.push(entry.name + ": missing repository inspector");
+                continue;
+              }
+              const calls: string[][] = [];
+              const jjCwds: string[] = [];
+              const capabilities = fakeCapabilities(entry.scenario, calls, jjCwds);
+              const target = entry.target ?? "/repo/file.ts";
+              const state = await editModule.inspectRepository(target, entry.inspectionDirectory ?? "/repo", capabilities);
+              check(
+                entry.name,
+                state.kind,
+                entry.expected,
+                state.kind === "invalid" ? state.diagnostic : "",
+                entry.reason,
+              );
+              continue;
+            }
             if (entry.kind === "adapter") {
               if (entry.scenario === "registration") {
                 const registrations: Array<{ event: string; handler: unknown }> = [];
@@ -1934,7 +2118,8 @@
                 continue;
               }
               const calls: string[][] = [];
-              const capabilities = fakeCapabilities(entry.scenario, calls, []);
+              const notifications: string[] = [];
+              const capabilities = fakeCapabilities(entry.scenario, calls, [], [], [], notifications);
               if (entry.scenario === "capability-missing") {
                 delete (capabilities as { filesystem?: unknown }).filesystem;
               }
@@ -1947,12 +2132,16 @@
               const handler = editModule.createEditWriteToolCallHandler(capabilityFactory, options);
               const context = {
                 cwd: "/repo",
-                hasUI: entry.scenario !== "outside-headless",
-                ui: { confirm: async () => true },
+                ui: { notify: (message: string) => notifications.push(message) },
               };
               const result = await handler({ toolName: entry.tool, toolCallId: "call-1", input: entry.input }, context);
               const actual = result?.block === true ? "block" : "pass";
               check(entry.name, actual, entry.expected, result?.reason ?? "", entry.reason);
+              if (entry.expectedNotification !== undefined) {
+                if (!notifications.some((message: string) => message.includes(entry.expectedNotification))) {
+                  failures.push(entry.name + ": expected an announcement containing " + JSON.stringify(entry.expectedNotification) + ", got " + JSON.stringify(notifications));
+                }
+              }
               continue;
             }
             failures.push(entry.name + ": unrecognized policy case kind " + JSON.stringify(entry.kind));

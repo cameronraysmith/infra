@@ -125,32 +125,47 @@ Nix-owned permission-gate rules MUST classify dangerous commands, semantic mutat
 
 ### Requirement: Non-Bash edit and write policy
 
-A compact first-party pure decision core with a thin Pi adapter MUST evaluate non-Bash `edit` and `write` tool calls and block targets beneath `/nix/store` or another declared immutable resource root.
+A compact first-party pure decision core with a thin Pi adapter MUST evaluate non-Bash `edit` and `write` tool calls and classify each outcome as allow, notify-and-allow, or block.
+It MUST refuse only a mutation version control could not recover, and MUST announce rather than refuse every condition whose target is inside a repository.
 The exported adapter factory or handler seam MUST be directly executable as policy evidence.
 The extension is scoped to Pi, and the system MUST declare that scope to atomic rather than relying on either agent's default discovery, because atomic inherits Pi's configuration root and loads Pi's extension directory unconditionally.
+The policy MUST normalize a tool path exactly as Pi resolves it, covering the `@` prefix, a leading `~`, a `file://` URL, and Unicode space variants, so the path the policy judges is the path the tool opens.
 
 #### Scenario: Non-Bash mutation reaches policy
 
-- **WHEN** the policy harness runs pure-core rows and directly invokes the exported adapter seam with synthetic edit/write allow and block calls, an unrelated tool, malformed tool input, and core or capability exceptions
-- **THEN** the core returns the literal decisions, the adapter translates allow and block correctly, passes unrelated tools through, and converts malformed input or exceptions into diagnostic blocks without starting a Pi process per row
+- **WHEN** the policy harness runs pure-core rows and directly invokes the exported adapter seam with synthetic edit/write allow, notify, and block calls, an unrelated tool, malformed tool input, atomic's headerless `edit` input shape, and core or capability exceptions
+- **THEN** the core returns the literal decisions, the adapter translates block and passes allow and notify through, passes unrelated tools through, converts malformed input into a diagnostic block, converts exceptions into permission, and starts no Pi process per row
 
 #### Scenario: Pi-only scope is declared to atomic
 
 - **WHEN** the generated atomic settings are inspected
 - **THEN** every Pi-only extension is named as a force-exclude relative to the inherited Pi configuration root, in the spelling atomic matches against that root
 
+#### Scenario: Tool path is normalized as Pi resolves it
+
+- **WHEN** the policy normalizes `@`-prefixed, `~`-prefixed, `file://`, Unicode-space, and ordinary relative paths
+- **THEN** each result equals the path Pi's own resolution produces, and a path that normalizes to nothing is rejected as malformed
+
 ### Requirement: Git default-branch boundary
 
-The first-party policy extension MUST block non-Bash edits and writes while the target Git repository is on `main` or `master`.
+The first-party policy extension MUST announce, and allow, a non-Bash edit or write while the target Git repository is on `main` or `master`.
+It MUST block a target the identified Git repository does not contain.
+The Git branch of repository inspection MUST remain reachable when the jj probe reports an outside-repository diagnostic followed by additional advisory lines.
 
 #### Scenario: Edit is proposed on a Git branch
 
 - **WHEN** injected repository capabilities report a feature branch, `main`, or `master`
-- **THEN** feature-branch mutation is eligible to continue and default-branch mutation is blocked
+- **THEN** feature-branch mutation is eligible to continue, default-branch mutation is announced and eligible to continue, and a target outside the repository is blocked
+
+#### Scenario: Jj reports outside a repository with trailing advice
+
+- **WHEN** the jj root probe exits non-zero with the outside-repository diagnostic followed by the trailing `Hint:` lines jujutsu emits inside a Git repository
+- **THEN** inspection falls through to the Git branch rather than treating the probe as indeterminate
 
 ### Requirement: Jj diamond boundary
 
 The first-party policy extension MUST consume typed, discriminated repository state and admit both healthy ordinary and healthy diamond-managed jj repositories before non-Bash edits and writes.
+Every unhealthy jj condition other than target containment MUST be announced and allowed rather than refused, because its target is inside a repository whose history can recover it.
 Common jj health MUST require canonical repository identity and target containment; unambiguous, conflict-free `@`; a non-divergent current `@` change identity; neither `main` nor `master` pointing directly to `@`; and successful, unambiguous parsing of every read-only probe, each invoked with `jj --ignore-working-copy`.
 A separate bookmark-listing classification probe MUST report the `wip` convention, including a divergent `wip` indicator, before the repository is classified as diamond-managed.
 Only a repository already classified as diamond-managed MUST run the unique `wip`-resolution probe and admit absent, moved, or divergent `wip` failure outcomes.
@@ -163,16 +178,24 @@ Ordinary jj health MUST impose no `wip`, diamond-topology, emptiness, or working
 #### Scenario: Edit is proposed in a jj repository
 
 - **WHEN** the literal policy table evaluates ordinary healthy states, including a nonempty `@`, with no `wip` report; ordinary conflict, divergence, and protected-bookmark states; an actual healthy empty `@` `[wip]` over an empty six-parent `@-` join; healthy nonempty `[wip]` and conflict-resolved nonempty join states; classified-diamond absent, moved, or divergent unique-`wip` resolution; non-single-parent `[wip]`; single-parent or conflicted join; conflicted immediate join parent; join-parent count mismatch; and malformed or failing join probes
-- **THEN** the ordinary healthy rows and all three healthy diamond rows are eligible to continue, the ordinary no-`wip` rows never reach missing-`wip` failure, every unhealthy or indeterminate row blocks diagnostically, and every recorded read-only jj argv exactly matches the ordered `jj --ignore-working-copy` argv oracle
+- **THEN** the ordinary healthy rows and all three healthy diamond rows are eligible to continue, the ordinary no-`wip` rows never reach missing-`wip` failure, every unhealthy row is announced diagnostically and eligible to continue, every indeterminate row is eligible to continue while still classifying its diagnostic, a target the repository does not contain blocks, and every recorded read-only jj argv exactly matches the ordered `jj --ignore-working-copy` argv oracle
 
-### Requirement: Fail-closed policy
+### Requirement: Fail-open policy
 
-Parser errors, core or adapter exceptions, ambiguous repository state, missing or throwing capabilities, malformed tool input, and prompt-class decisions without usable interaction MUST block the affected tool call with a diagnostic reason.
+Parser errors, core or adapter exceptions, ambiguous repository state, and missing or throwing capabilities MUST permit the affected tool call rather than refuse it.
+None of these establishes that a mutation is unsafe, and refusing on them has cost every edit and write in an affected repository while preventing no unsafe mutation.
+Malformed tool input remains the one refusal drawn from an unreadable request rather than an unrecoverable target.
+The policy MUST NOT require an interactive answer to permit a mutation, because Pi has no permission system and an unanswerable dialog on an autonomous session stalls it indefinitely.
 
 #### Scenario: Policy cannot decide safely
 
-- **WHEN** the policy harness injects each parser, decision, adapter, repository, capability, malformed-input, or headless failure
-- **THEN** the result is a named diagnostic block rather than permission or an uncaught exception
+- **WHEN** the policy harness injects each parser, decision, adapter, repository, or capability failure
+- **THEN** the result is permission rather than a block or an uncaught exception, and the repository classification still reports its diagnostic
+
+#### Scenario: Announcement channel is unavailable
+
+- **WHEN** the notification capability is absent or throws on a notify-class decision
+- **THEN** the mutation remains permitted rather than becoming refused
 
 ### Requirement: Secret-safe direnv
 

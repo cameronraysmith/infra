@@ -1,26 +1,27 @@
 import { execFile } from "node:child_process";
 import { realpath, stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export const policyPresent = true;
 
 export type EditWriteOperation = "edit" | "write";
 
+// Decisions are classified by recoverability rather than severity: a mutation
+// version control can undo is announced and allowed, and only a mutation
+// nothing would bring back is refused. "notify" exists because Pi has no
+// permission system, so a confirmation dialog on an autonomous session can
+// have nobody to answer it and becomes an indefinite stall; announcing costs
+// no turn and cannot deadlock.
 export type PolicyDecision =
   | { readonly decision: "allow" }
-  | { readonly decision: "prompt"; readonly reason: string }
+  | { readonly decision: "notify"; readonly reason: string }
   | { readonly decision: "block"; readonly reason: string };
 
-export interface MutableTarget {
-  readonly kind: "mutable";
+export interface EditWriteTarget {
   readonly canonicalPath: string;
-}
-
-export interface ImmutableTarget {
-  readonly kind: "immutable";
-  readonly canonicalPath: string;
-  readonly root: string;
 }
 
 export interface JjCurrentState {
@@ -65,16 +66,11 @@ export type RepositoryState =
     } & JjCommonState)
   | { readonly kind: "invalid"; readonly diagnostic: string };
 
-export type EditWriteInput =
-  | {
-      readonly operation: EditWriteOperation;
-      readonly target: ImmutableTarget;
-    }
-  | {
-      readonly operation: EditWriteOperation;
-      readonly target: MutableTarget;
-      readonly repository: RepositoryState;
-    };
+export interface EditWriteInput {
+  readonly operation: EditWriteOperation;
+  readonly target: EditWriteTarget;
+  readonly repository: RepositoryState;
+}
 
 export interface ProcessResult {
   readonly stdout: string;
@@ -89,9 +85,9 @@ export type GitRootResult =
 
 export interface PolicyCapabilities {
   readonly filesystem: {
+    homeDirectory(): string;
     canonicalize(target: string, cwd: string): Promise<string>;
     inspectionDirectory(target: string): Promise<string>;
-    immutableRoots(): Promise<readonly string[]>;
   };
   readonly git: {
     root(directory: string): Promise<GitRootResult>;
@@ -100,9 +96,12 @@ export interface PolicyCapabilities {
   readonly jj: {
     run(argv: readonly string[], cwd: string): Promise<ProcessResult>;
   };
-  readonly interaction: {
-    readonly available: boolean;
-    confirm(message: string): Promise<boolean>;
+  readonly notification: {
+    // Pi's ui.notify is a no-op whenever the host has no dialog-capable UI
+    // (core/extensions/runner.ts noOpUIContext), so a print-mode session
+    // announces nothing. That is the accepted cost of never stalling: notify
+    // is fire-and-forget in every mode and can therefore never deadlock.
+    notify(message: string): void;
   };
 }
 
@@ -113,9 +112,8 @@ export interface ToolCallEvent {
 
 export interface ToolCallContext {
   readonly cwd: string;
-  readonly hasUI: boolean;
   readonly ui: {
-    confirm(title: string, message: string): Promise<boolean>;
+    notify(message: string, type?: "info" | "warning" | "error"): void;
   };
 }
 
@@ -179,6 +177,7 @@ export const JJ_READ_ARGV = {
 } as const;
 
 const block = (reason: string): PolicyDecision => ({ decision: "block", reason });
+const notify = (reason: string): PolicyDecision => ({ decision: "notify", reason });
 const allow = (): PolicyDecision => ({ decision: "allow" });
 
 const containsPath = (root: string, target: string): boolean => {
@@ -192,14 +191,17 @@ const unreachable = (state: never): never => {
   throw new Error(`unhandled repository state: ${JSON.stringify(state)}`);
 };
 
+// Containment is the one jj condition that stays refusing: it means the probe
+// resolved a repository the target does not live in, so version control is not
+// covering the file about to change.
 const validateJjCommon = (state: JjCommonState, target: string): PolicyDecision | undefined => {
   if (!containsPath(state.root, target)) {
     return block("jj repository identity does not contain the canonical target");
   }
-  if (state.at.conflicted) return block("jj current change is conflicted");
-  if (state.at.divergent) return block("jj current change identity is divergent");
+  if (state.at.conflicted) return notify("jj current change is conflicted");
+  if (state.at.divergent) return notify("jj current change identity is divergent");
   if (state.defaultBookmarksAtCurrent.length > 0) {
-    return block(
+    return notify(
       `jj current change carries protected bookmark ${state.defaultBookmarksAtCurrent.join(", ")}`,
     );
   }
@@ -207,26 +209,22 @@ const validateJjCommon = (state: JjCommonState, target: string): PolicyDecision 
 };
 
 export function decideEditWrite(input: EditWriteInput): PolicyDecision {
-  if (!("repository" in input)) {
-    return block(
-      `Target ${input.target.canonicalPath} is contained by immutable root ${input.target.root}`,
-    );
-  }
-
   const repository = input.repository;
   const target = input.target.canonicalPath;
   switch (repository.kind) {
     case "outside-repository":
-      return {
-        decision: "prompt",
-        reason: `${input.operation} targets a mutable path outside a recognized repository`,
-      };
+      // No repository holds this path, so no history would return it. This is
+      // the same hazard the containment refusals cover, reached by a different
+      // route.
+      return block(
+        `${input.operation} targets a path outside a recognized repository, where version control cannot recover it`,
+      );
     case "git":
       if (!containsPath(repository.root, target)) {
         return block("Git repository identity does not contain the canonical target");
       }
       if (repository.head.kind === "protected") {
-        return block(`Mutation on protected Git branch ${repository.head.branch} is blocked`);
+        return notify(`Mutation on protected Git branch ${repository.head.branch}`);
       }
       return allow();
     case "jj-ordinary": {
@@ -237,22 +235,29 @@ export function decideEditWrite(input: EditWriteInput): PolicyDecision {
       const unhealthy = validateJjCommon(repository, target);
       if (unhealthy !== undefined) return unhealthy;
       if (repository.wip.kind !== "healthy") {
-        return block(`diamond wip bookmark is ${repository.wip.kind}`);
+        return notify(`diamond wip bookmark is ${repository.wip.kind}`);
       }
       if (repository.at.parentCount !== 1) {
-        return block("diamond wip does not have exactly one parent");
+        return notify("diamond wip does not have exactly one parent");
       }
-      if (repository.join.conflicted) return block("diamond join is conflicted");
+      if (repository.join.conflicted) return notify("diamond join is conflicted");
       if (repository.join.parentCount < 2) {
-        return block("diamond join has fewer than two parents");
+        return notify("diamond join has fewer than two parents");
       }
       if (repository.join.parentsConflicted) {
-        return block("diamond join has a conflicted immediate parent");
+        return notify("diamond join has a conflicted immediate parent");
       }
       return allow();
     }
     case "invalid":
-      return block(`Repository inspection failed: ${repository.diagnostic}`);
+      // Fail open. A probe this policy could not parse says nothing about
+      // whether the mutation is safe, and the two defects that made this arm
+      // fire in practice -- a jj release adding a Hint line, an agent whose
+      // edit tool carries no path field -- were both environmental. Refusing
+      // on them cost every edit in the affected repositories and prevented no
+      // unsafe write. The classification still carries its diagnostic so the
+      // probe parsers stay observable to the policy check.
+      return allow();
     default:
       return unreachable(repository);
   }
@@ -398,7 +403,21 @@ const invalid = (diagnostic: string): RepositoryState => ({
   diagnostic,
 });
 
-const JJ_OUTSIDE_REPOSITORY_DIAGNOSTIC = /^Error: There is no jj repo in "[^"\r\n]+"\n$/;
+// Both diagnostics match a prefix rather than the whole of stderr, because both
+// tools append advice after the error line. jj 0.43.0 emits, whenever the probed
+// directory holds a `.git` directory:
+//
+//   Error: There is no jj repo in "."
+//   Hint: It looks like this is a git repo. You can create a jj repo backed by it by running this:
+//   jj git init
+//
+// which is precisely the case that has to fall through to the Git branch below.
+// Anchoring the match at the end of stderr made that fall-through unreachable at
+// the root of every ordinary Git repository, so the Git arm of decideEditWrite
+// was dead code exactly where it was meant to apply. The exit-code and
+// empty-stdout conjuncts are kept: they are what distinguishes this diagnostic
+// from a probe that failed some other way.
+const JJ_OUTSIDE_REPOSITORY_DIAGNOSTIC = /^Error: There is no jj repo in "[^"\r\n]+"\n/;
 const GIT_OUTSIDE_REPOSITORY_DIAGNOSTIC =
   "fatal: not a git repository (or any of the parent directories): .git\n";
 
@@ -417,7 +436,7 @@ export const parseGitRootResult = (result: ProcessResult): GitRootResult => {
   if (
     result.code === 128 &&
     result.stdout.length === 0 &&
-    result.stderr === GIT_OUTSIDE_REPOSITORY_DIAGNOSTIC
+    result.stderr.startsWith(GIT_OUTSIDE_REPOSITORY_DIAGNOSTIC)
   ) {
     return { kind: "outside" };
   }
@@ -630,6 +649,9 @@ export async function inspectRepository(
   return { kind: "outside-repository" };
 }
 
+export const MALFORMED_TOOL_INPUT_REASON =
+  "malformed edit/write tool input: path must be a nonempty string";
+
 export async function evaluateEditWrite(
   operation: EditWriteOperation,
   target: string,
@@ -639,47 +661,61 @@ export async function evaluateEditWrite(
 ): Promise<PolicyDecision> {
   let input: EditWriteInput;
   try {
-    const canonicalPath = await capabilities.filesystem.canonicalize(target, cwd);
-    const immutableRoots = await capabilities.filesystem.immutableRoots();
-    let immutableTarget: ImmutableTarget | undefined;
-    for (const declaredRoot of immutableRoots) {
-      const root = await capabilities.filesystem.canonicalize(declaredRoot, cwd);
-      if (containsPath(root, canonicalPath)) {
-        immutableTarget = { kind: "immutable", canonicalPath, root };
-        break;
-      }
-    }
-    if (immutableTarget !== undefined) {
-      input = { operation, target: immutableTarget };
-    } else {
-      const mutableTarget: MutableTarget = { kind: "mutable", canonicalPath };
-      const inspectionDirectory = await capabilities.filesystem.inspectionDirectory(canonicalPath);
-      const repository = await inspectRepository(canonicalPath, inspectionDirectory, capabilities);
-      input = { operation, target: mutableTarget, repository };
-    }
+    const normalized = normalizeToolPath(target, capabilities.filesystem.homeDirectory());
+    if (normalized === undefined) return block(MALFORMED_TOOL_INPUT_REASON);
+    const canonicalPath = await capabilities.filesystem.canonicalize(normalized, cwd);
+    const inspectionDirectory = await capabilities.filesystem.inspectionDirectory(canonicalPath);
+    const repository = await inspectRepository(canonicalPath, inspectionDirectory, capabilities);
+    input = { operation, target: { canonicalPath }, repository };
   } catch (error) {
-    return block(`policy capability failed: ${String(error)}`);
+    // Fail open, as for an unparseable probe: a capability that threw has not
+    // established that the mutation is unsafe.
+    void error;
+    return allow();
   }
 
   let decision: PolicyDecision;
   try {
     decision = decide(input);
   } catch (error) {
-    return block(`policy evaluation failed: ${String(error)}`);
+    void error;
+    return allow();
   }
 
-  if (decision.decision !== "prompt") return decision;
-  if (!capabilities.interaction.available) {
-    return block("interaction unavailable for required mutation confirmation");
-  }
+  if (decision.decision !== "notify") return decision;
   try {
-    return (await capabilities.interaction.confirm(decision.reason))
-      ? allow()
-      : block("mutation rejected by user");
+    capabilities.notification.notify(`${operation}: ${decision.reason}`);
   } catch (error) {
-    return block(`interaction capability failed: ${String(error)}`);
+    // A host that cannot display the announcement must not turn a permitted
+    // mutation into a refused one.
+    void error;
   }
+  return decision;
 }
+
+// Mirrors Pi's resolveToCwd normalization (core/tools/path-utils.ts calling
+// utils/paths.ts normalizePath with normalizeUnicodeSpaces and stripAtPrefix,
+// expandTilde defaulting on) in the same order Pi applies it. The policy has to
+// canonicalize the string Pi will actually open: resolving "~/secret" as a
+// cwd-relative path put it inside the repository and permitted a write that
+// really landed in the home directory. The Windows shell-path arm of Pi's
+// normalizePath is omitted; this policy is deployed only to darwin and linux.
+const UNICODE_SPACES = /[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g;
+
+export const normalizeToolPath = (target: string, homeDirectory: string): string | undefined => {
+  let normalized = target.replace(UNICODE_SPACES, " ");
+  if (normalized.startsWith("@")) normalized = normalized.slice(1);
+  if (normalized === "~") return homeDirectory;
+  if (normalized.startsWith("~/")) return join(homeDirectory, normalized.slice(2));
+  if (/^file:\/\//.test(normalized)) {
+    try {
+      return fileURLToPath(normalized);
+    } catch {
+      return undefined;
+    }
+  }
+  return normalized.trim().length > 0 ? normalized : undefined;
+};
 
 const canonicalizePath = async (target: string, cwd: string): Promise<string> => {
   const absolute = resolve(cwd, target);
@@ -733,9 +769,9 @@ const defaultGitHead = (root: string): Promise<ProcessResult> =>
 
 export const createNodePolicyCapabilities: CapabilityFactory = (context) => ({
   filesystem: {
+    homeDirectory: homedir,
     canonicalize: canonicalizePath,
     inspectionDirectory: deepestExistingDirectory,
-    immutableRoots: async () => ["/nix/store"],
   },
   git: {
     root: defaultGitRoot,
@@ -744,27 +780,27 @@ export const createNodePolicyCapabilities: CapabilityFactory = (context) => ({
   jj: {
     run: runProcess,
   },
-  interaction: {
-    available: context.hasUI,
-    confirm: (message) => context.ui.confirm("Confirm file mutation", message),
+  notification: {
+    notify: (message) => context.ui.notify(message, "warning"),
   },
 });
 
+// Extraction only; normalizeToolPath owns every rewrite of the string, so that
+// the value this policy canonicalizes and the value the tool opens are produced
+// by one implementation. The predicate rejects a whitespace-only path here
+// rather than letting resolve() map it to a directory under cwd.
+//
+// This shape is Pi's: both `edit` and `write` declare a required top-level
+// `path` string. It is deliberately not atomic's -- atomic's `edit` takes a
+// single hashline `input` string with `additionalProperties: false`, so no
+// `path` can ever reach this function from that agent. That is why
+// modules/home/ai/agent-settings.nix keeps this extension out of atomic rather
+// than teaching the adapter a second tool grammar.
 const parseToolInput = (input: unknown): string | undefined => {
   if (input === null || typeof input !== "object") return undefined;
   const path = (input as { readonly path?: unknown }).path;
   if (typeof path !== "string") return undefined;
-  // Pi's file-mention syntax hands the tool an @-prefixed path. Stripping the
-  // prefix before resolution keeps "@/nix/store/..." absolute, so it reaches the
-  // immutable-root check instead of resolving relative to cwd. Covered by the
-  // "adapter normalizes Pi at-prefixed paths" case in
-  // modules/checks/pi-agent-environment.nix.
-  const normalized = path.startsWith("@") ? path.slice(1) : path;
-  // The trim is a rejection predicate only. Returning normalized.trim() would
-  // canonicalize a different string than the tool mutates, and relaxing the
-  // predicate to normalized.length > 0 would admit "   ", which resolve() maps
-  // to a directory under cwd instead of being blocked as malformed input.
-  return normalized.trim().length > 0 ? normalized : undefined;
+  return path.trim().length > 0 ? path : undefined;
 };
 
 export function createEditWriteToolCallHandler(
@@ -774,12 +810,11 @@ export function createEditWriteToolCallHandler(
   return async (event, context) => {
     if (event.toolName !== "edit" && event.toolName !== "write") return undefined;
     const target = parseToolInput(event.input);
-    if (target === undefined) {
-      return {
-        block: true,
-        reason: "malformed edit/write tool input: path must be a nonempty string",
-      };
-    }
+    // The one refusal that survives an unreadable request rather than an
+    // unrecoverable target: a tool call whose path this policy cannot read is a
+    // call it cannot reason about at all, and letting it through would mean
+    // permitting an unexamined mutation rather than an examined one.
+    if (target === undefined) return { block: true, reason: MALFORMED_TOOL_INPUT_REASON };
 
     try {
       const decision = await evaluateEditWrite(
@@ -791,10 +826,10 @@ export function createEditWriteToolCallHandler(
       );
       return decision.decision === "block" ? { block: true, reason: decision.reason } : undefined;
     } catch (error) {
-      return {
-        block: true,
-        reason: `edit/write policy adapter failed: ${String(error)}`,
-      };
+      // Fail open on an adapter fault for the same reason the decision core
+      // does: a thrown capability has established nothing about the mutation.
+      void error;
+      return undefined;
     }
   };
 }
