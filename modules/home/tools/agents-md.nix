@@ -1,5 +1,7 @@
 # AI agent documentation generation
-# Generates unified CLAUDE.md, AGENTS.md, GEMINI.md, CRUSH.md, OPENCODE.md
+# Generates ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md, ~/.factory/AGENTS.md,
+# ~/.gemini/GEMINI.md, ~/.hermes/SOUL.md, ~/.config/crush/CRUSH.md, and
+# ~/.config/opencode/AGENTS.md (plus pi via programs.pi-coding-agent.context)
 # from shared configuration with references to preference documents
 { ... }:
 {
@@ -27,22 +29,12 @@
           2. Are there ambiguities requiring clarification before I proceed?
           3. Would local access to external source code or documentation improve
           this work? Whenever a repository is named, resolve it to a local path
-          before reasoning about it. Resolve the org first: a bare name is often
-          ambiguous — `gh search repos <name>` returns dozens of matches for a
-          common word — and the org determines everything downstream, so when
-          more than one plausible match exists, ask which one rather than
-          guessing. A fully-qualified `org/repo` or a forge URL settles it. Then
-          branch on authorship. A repository we maintain, meaning we cut
-          releases or land commits upstream, lives at
-          `~/projects/<topic>-workspace/<repo>/`; find it with `fd -t d -d 4
-          '^<repo>$' ~/projects`, confirm with `git remote -v`, and on a miss
-          ask the user to clone it there. A repository we only read lives at
-          `~/ghq/<host>/<org>/<repo>`; `ghq list -p <name>` is authoritative
-          because it walks the filesystem, `zoxide query -l <name>` is a cache
-          whose hits must be validated against it, and on a miss `ghq-sync
-          <url>` clones shallow and blobless and registers the path. A shallow
-          clone sits at HEAD, which is usually not the revision we pin, so read
-          at the pinned rev or every line anchor you cite will be wrong.
+          before reasoning about it: resolve the org first, then route by
+          authorship — repositories we maintain live under `~/projects/<repo>/`,
+          repositories we only read live under `~/ghq/<host>/<org>/<repo>/`. The
+          full lookup procedure, on-miss acquisition, and the `(see local)`
+          marker directive live in
+          ${skillsPath}/dependency-source-acquisition/SKILL.md.
           4. Should I present my task decomposition for approval before
           dispatching?
 
@@ -64,6 +56,8 @@
 
           - style and conventions: @${skillsPath}/preferences-style-and-conventions/SKILL.md
           - git version control: @${skillsPath}/preferences-git-version-control/SKILL.md
+          - prose clarity (sentence-level writing discipline, reader processing cost, calibrated claims, editing others' text): ${skillsPath}/preferences-prose-clarity/SKILL.md
+          - essential complexity (complexity pays rent in domain invariants; refinement-chain care scaling; falsifiable rigor, sorry-debt): ${skillsPath}/preferences-essential-complexity/SKILL.md
           - git history cleanup: ${skillsPath}/preferences-git-history-cleanup/SKILL.md
           - comment cleanup (uncomment-driven noise-comment removal, load-bearing marker preservation; operational arm of the code-comments policy): ${skillsPath}/preferences-comment-cleanup/SKILL.md
           - jj version control: ${skillsPath}/jj-summary/SKILL.md
@@ -123,6 +117,7 @@
           - nix flake checks architecture (check taxonomy, derivation patterns, VM tests): ${skillsPath}/preferences-nix-checks-architecture/SKILL.md
           - nix CI/CD integration (nix-fast-build, buildbot-nix, effects, migration): ${skillsPath}/preferences-nix-ci-cd-integration/SKILL.md
           - nix flake PR cycle (enumerate checks, probe via nix eval/build, just check-fast, draft PR, buildbot monitor, ready, Mergify): ${skillsPath}/nix-flake-pr-cycle/SKILL.md
+          - CI workflow log verification (GHA + buildbot unified retrieval, full log archives, buildbot-logs): ${skillsPath}/ci-log-verification/SKILL.md
           - python development: ${skillsPath}/preferences-python-development/SKILL.md
           - rust development: ${skillsPath}/preferences-rust-development/SKILL.md
           - haskell development: ${skillsPath}/preferences-haskell-development/SKILL.md
@@ -137,24 +132,35 @@
           # Temporal provenance awareness
 
           When reading information from multiple files during any task, be alert
-          to potential contradictions between sources. When conflicting or
-          potentially outdated information is detected:
+          to contradictions between sources, and weigh recency of the specific
+          conflicting content over document type: a recently edited working note
+          can supersede an older formal spec, and vice versa.
+          Assess recency through git history, never filesystem mtime — `git log
+          --follow -1 --format='%ai' -- <file>` for file-level provenance, `git
+          blame -L <start>,<end> <file>` for line-level. Flag detected
+          contradictions to the user with provenance evidence — file paths,
+          dates, relevant line ranges — rather than silently choosing one
+          interpretation. The full procedure and its application scope live in
+          ${skillsPath}/preferences-documentation/SKILL.md under "Temporal
+          provenance".
 
-          1. Compare file provenance using git history (not filesystem mtime,
-          which is unreliable after checkout or rebase):
-             - Last commit touching the file:
-             `git log --follow -1 --format='%ai' -- <file>`
-             - Last edit to specific lines: `git blame -L <start>,<end> <file>`
-          2. Assume more recently edited content is more likely to be current.
-          There is no rigid document type hierarchy — a recently edited working
-          note can supersede an older formal spec, and vice versa.
-          3. Flag detected contradictions to the user with provenance evidence
-          (file paths, dates, relevant line ranges) rather than silently
-          choosing one interpretation.
+          # Operating principles
 
-          This applies to all document types: skills, AGENTS.md (or CLAUDE.md)
-          sections, docs/development/ specs, docs/notes/ working notes, and
-          inline code comments.
+          Every element of an artifact — a type, an abstraction, a sentence, a
+          qualifier — must pay rent in invariants enforced or value delivered to
+          its consumer. Stated confidence must match evidence. Uncertainty is
+          information to state precisely, never a substitute for a decision:
+          commit, state the tradeoff taken and what would change your mind.
+          Scale care to blast radius: what binds others (specs, APIs, published
+          prose) gets strong care; what a spec already constrains gets fast
+          decisions. These principles govern artifact-level choices within
+          confirmed intent; the session protocol above governs task-level
+          ambiguity — ask there, commit here. When sections or skills conflict,
+          the more specific scope wins; when in doubt, minimize consumer
+          processing cost — reader or maintainer.
+          Applied per medium:
+          - prose, any writing or editing: ${skillsPath}/preferences-prose-clarity/SKILL.md
+          - code, specs, and proofs: ${skillsPath}/preferences-essential-complexity/SKILL.md
 
           # Engineering standards
 
@@ -180,6 +186,9 @@
           a type-checkable Lean specification beside the implementation and
           closing the spec-to-code gap through refinement and translation
           validation.
+          That ideal governs direction of travel; the operating principles above
+          govern what ships today — nothing lands that does not pay rent in
+          enforced invariants or delivered value.
 
           ## Code comments
 
@@ -261,23 +270,15 @@
 
           When the work involves parallel independent work streams, adversarial
           review, multi-perspective analysis, or long-running collaborative
-          phases, consider using agent teams as a second orchestration mode.
-          Agent teams spawn persistent teammates that coordinate via shared task
-          list and messaging rather than returning results.
-
-          Orchestration mode selection criteria:
-          - DAG dispatch (subagent Tasks): sequential dependencies, focused
-          research, tight orchestrator control, one-shot work items that return
-          a result
-          - Agent teams: parallel independent work streams, adversarial review
-          (e.g. dispatching code-reviewer as a teammate), multi-perspective
-          analysis, long-running collaborative phases
-          - Hybrid: DAG dispatch for initial research, then spawn a team for
-          implementation and review
-
-          For detailed agent team conventions including teammate isolation,
-          Linear/OpenSpec-to-task-list mirroring, and the orient/checkpoint
-          lifecycle, see ${skillsPath}/meta-agent-teams/SKILL.md
+          phases, agent teams are the second orchestration mode: persistent
+          teammates coordinating via shared task list and messaging rather than
+          one-shot results. Selection: DAG dispatch (subagent Tasks) for
+          sequential dependencies, focused research, and tight orchestrator
+          control; agent teams for parallel independent streams and adversarial
+          review; hybrid — DAG research first, then a team for implementation
+          and review. For teammate isolation, Linear/OpenSpec-to-task-list
+          mirroring, and the orient/checkpoint lifecycle, see
+          ${skillsPath}/meta-agent-teams/SKILL.md
 
           # Version control and work dispatch
 
@@ -340,74 +341,31 @@
 
           ## Working-copy hazards
 
-          - Splicing chain-bound content is often structurally impossible. An
-          edit whose anchor was created by a chain commit has no anchor below
-          the join, so a splice-below-join instruction cannot be satisfied and
-          fails in a way that looks like a jj bug. Refuse such an instruction
-          and ask.
-          - `clan machines install` makes its own git commit mid-run (message
-          form `inventory.json: update install time of <machine>`). jj imports
-          the HEAD move and mints a working-copy commit on top, so the join
-          gains a second child and the change exists twice, in jj's wip snapshot
-          and in clan's commit. Verify `jj diff --from <clan-commit> --to <wip>`
-          is empty before folding.
-          - A `--from @` squash that empties `@` slides the pushed `wip`
-          bookmark down onto the join. Machines rebuild from that bookmark, so
-          restore it with `jj bookmark set wip -r @`.
-          - `snapshot.max-new-file-size` gates new files only. Once jj tracks a
-          file, every later snapshot ingests it whole at any size, and only a
-          gitignore entry prevents that. Never download into a working copy.
-          - A concurrent session's uncommitted work appears in your `jj status`
-          as a foreign modification, then vanishes when that session commits it,
-          which reads as a file mutating itself. Do not chase it or revert it.
-          - One file per agent is not isolation. jj snapshots the entire working
-          copy rather than the file an agent touched, so concurrent editors can
-          still produce divergent commits and a conflicted `wip??` bookmark. A
-          wholesale `--from @` squash sweeps a concurrent session's work into
-          your chain, so path-scope every squash; the scoping protects only the
-          routing. Check for `(divergent)` and `wip??` before squashing. A
-          subagent is the sole editor of one chain, never of the working copy.
-          - Auto-rebase moves the commit ids on your own chain when a neighbour
-          splices below it. Change ids and content are both untouched, so
-          compare a diff digest rather than commit ids to prove nothing changed.
-          - A surprising read of shared state is a transient until `jj op log`
-          says otherwise. `--ignore-working-copy` stops you perturbing the
-          working copy and gives no consistent view across a concurrent
-          rewrite, so `jj diff --stat` reports zero files for a commit that
-          holds content while another session rebases. A changed `@` change id
-          is the signature of a destroyed working-copy commit and a promoted
-          one alike. Promotion leaves the old change in place with describe,
-          bookmark and rebase entries. Destruction shows a squash that omitted
-          `--keep-emptied`, with the old change abandoned. Recovery for the
-          second is `jj undo`; the first needs nothing.
+          Three headlines: never relocate `@` off the wip join; path-scope every
+          squash and check for `(divergent)` and `wip??` before squashing; treat
+          surprising reads of shared state as transients until `jj op log` says
+          otherwise. Recovery for the destructive class is top-level `jj undo`;
+          there is no `jj op undo`. The full catalog — splice impossibility
+          below the join, the clan-install second child, the `wip` bookmark
+          slide, snapshot size gating, concurrent-session foreign modifications,
+          auto-rebase commit-id churn — lives in
+          ${skillsPath}/jj-version-control/hazards.md.
 
           ## Worktree interop and external frameworks
 
-          The worktree-creating surfaces are ask-gated rather than denied.
-          Answer affirmatively only when a separate filesystem tree is itself
-          the point, and otherwise stay on the development join. In a flake
-          repository that tree must be a git worktree rather than `jj workspace
-          add`.
-
-          The discipline is exclusive branch ownership and return-by-ref. A
-          branch belongs to the jj primary or to one worktree, never both, so
-          never point a worktree at a bookmark on or under the primary's `@` or
-          at one a live development join includes. Work returns by ref: commit
-          in the worktree, let the primary import it, then integrate with `jj
-          new <branch>` or `jj bookmark set <target> -r <branch>`. The primary's
-          HEAD stays detached throughout; that is healthy and never drift to
-          repair. Never run `git checkout` or `git switch` to reattach, `git
-          checkout -f`, `git branch -D`, or `git fetch --prune`, and never use
-          `git stash` in a jj working copy. If jj moves a bookmark a worktree
-          holds, that worktree's HEAD detaches at the old commit with files
-          intact; recover with `git symbolic-ref HEAD refs/heads/<branch>`. Ref
-          deletion is the destructive class here, and its recovery is the same
-          top-level `jj undo`.
-
-          An external agent framework such as firstmate gets its own clone
-          rather than a symlink to a working copy we also use, because its
-          fleet-sync runs exactly the operations forbidden above. See
-          ${skillsPath}/jj-version-control/SKILL.md for the mechanics.
+          Worktree creation is ask-gated: answer affirmatively only when a
+          separate filesystem tree is itself the point; otherwise stay on the
+          development join. In a flake repository that tree must be a git
+          worktree rather than `jj workspace add`. The discipline is exclusive
+          branch ownership — a branch belongs to the jj primary or to one
+          worktree, never both — and return-by-ref: commit in the worktree,
+          integrate by ref in the primary. The primary's HEAD stays detached
+          throughout; never reattach it, force-checkout, delete branches, `git
+          fetch --prune`, or `git stash` in a jj working copy. An external agent
+          framework such as firstmate gets its own clone rather than a symlink
+          to a working copy we also use, because its fleet-sync runs exactly the
+          operations forbidden above. Full mechanics and recovery:
+          ${skillsPath}/jj-version-control/hazards.md
         '';
       };
     };
