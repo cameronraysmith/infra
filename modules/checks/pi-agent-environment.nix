@@ -74,6 +74,8 @@
       extensionSource = if extensionPackage == null then null else toString extensionPackage;
       compactionPackage = self'.packages.pi-openai-server-compaction or null;
       compactionSource = if compactionPackage == null then null else toString compactionPackage;
+      vimPackage = self'.packages.pi-vim or null;
+      vimSource = if vimPackage == null then null else toString vimPackage;
       packageEntries = piConfig.settings.packages or [ ];
       extensionEntry = lib.findFirst (
         entry: builtins.isAttrs entry && (entry.source or null) == extensionSource
@@ -2193,6 +2195,15 @@
             compactionRetained =
               compactionSource != null
               && lib.any (entry: !builtins.isAttrs entry && entry == compactionSource) packageEntries;
+            # pi's `packages` is the shared list plus aiAgentSettings.piOnlyPackages.
+            # This claims only that pi receives the vim entry through that channel;
+            # modules/checks/atomic-agent-environment.nix owns the other half, that
+            # atomic does not.
+            vimRetained =
+              vimSource != null && lib.any (entry: !builtins.isAttrs entry && entry == vimSource) packageEntries;
+            vimViaPiOnlyChannel = builtins.elem vimSource (
+              map toString homeConfig.aiAgentSettings.piOnlyPackages
+            );
             inherit globalInstructionsNixOwned piSpecificSkillsPresent;
             canonicalSkills = if canonicalSkillsScript == "" then null else "~/.agents/skills";
             slowModeSettingsShape = builtins.attrNames piConfig.settings;
@@ -2287,6 +2298,8 @@
               "rip2"
             ];
             compactionRetained = true;
+            vimRetained = true;
+            vimViaPiOnlyChannel = true;
             globalInstructionsNixOwned = true;
             canonicalSkills = "~/.agents/skills";
             piSpecificSkillsPresent = false;

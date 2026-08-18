@@ -94,6 +94,45 @@
           description = "Extension packages registered with every pi-lineage agent, in pi's settings.json packages format.";
         };
 
+        piOnlyPackages = lib.mkOption {
+          type = lib.types.listOf (lib.types.either lib.types.str jsonFormat.type);
+          default = [ "${pkgs.pi-vim}" ];
+          description = ''
+            Extension packages registered with pi and with no other pi-lineage agent.
+
+            This is a third divergence channel, distinct from both
+            `packagesForAtomic` and `extensionsForAtomic`, and it needs no
+            force-exclude at all. `readMergedSettings` deep-merges the two
+            settings files (core/settings-storage.ts:70-81) and `deepMergeObjects`
+            treats an array as unmergeable (core/settings-merge.ts:3-5), so it
+            assigns the override wholesale: atomic declaring its own `packages`
+            key shadows pi's outright and an entry here reaches pi alone.
+            modules/checks/atomic-agent-environment.nix asserts that atomic keeps
+            declaring the key, which is the premise this relies on. Contrast
+            `piOnlyExtensions`, which needs force-excludes precisely because the
+            `~/.pi/agent/extensions/` directory is scanned unconditionally by both
+            agents (core/package-manager-auto-resources.ts:188).
+
+            pi-vim is here because modal editing is pi-only in practice, not
+            because atomic fails to load it. Under the npm distribution
+            pkgs/by-name/atomic now builds, atomic resolves
+            `@earendil-works/pi-coding-agent` through the `_aliases` map and
+            pi-vim 0.14.1 loads with exit status 0. What is dead is the editor:
+            `ctx.ui.setEditorComponent` is a warn-once stub in every atomic
+            distribution, never remoted to the isolated interactive engine child
+            the way `EngineCustomUiService` remotes `ctx.ui.custom`, so under
+            atomic the extension registers, warns, and leaves the native editor
+            in place with no modal keybindings. Registering it there would spend
+            a startup warning and a 58 KB source tree to change nothing an
+            operator can observe. Restoring it under atomic is an upstream fix
+            (route `setEditorComponent` through the existing remoting machinery)
+            or a ground-up atomic-native extension on `ctx.ui.custom`, not a
+            packaging change here. See
+            docs/notes/development/atomic-npm-distribution-compat.md for the
+            per-extension load matrix this rests on.
+          '';
+        };
+
         atomicExtensionExclusions = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [ "statusline/index.ts" ];

@@ -46,15 +46,21 @@
 
           # https://pi.dev/docs/latest/settings
           #
-          # These four keys are declared in modules/home/ai/agent-settings.nix
-          # so pi's file and atomic's are generated from one expression.
+          # These keys are declared in modules/home/ai/agent-settings.nix so
+          # pi's file and atomic's are generated from one expression.
+          #
+          # `packages` is the exception: pi's value is the shared list plus
+          # piOnlyPackages, which atomic never sees because its own `packages`
+          # declaration shadows pi's rather than merging with it. See that
+          # option's description for the mechanism and for why pi-vim is scoped
+          # this way.
           settings = {
             inherit (config.aiAgentSettings)
               theme
               enableInstallTelemetry
               hideThinkingBlock
-              packages
               ;
+            packages = config.aiAgentSettings.packages ++ config.aiAgentSettings.piOnlyPackages;
           };
         };
 

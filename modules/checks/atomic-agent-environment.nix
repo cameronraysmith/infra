@@ -6,7 +6,10 @@
 #
 # What this guards. modules/home/ai/agent-settings.nix generates one settings
 # payload for two agents, and `packages` is the single key they do not share
-# verbatim: atomic takes packagesForAtomic, which appends
+# verbatim. It diverges twice over, through two different mechanisms that this
+# check asserts separately because a change can break either one alone.
+#
+# Within a shared package entry, atomic takes packagesForAtomic, which appends
 # atomicExtensionExclusions as `-`-prefixed force-excludes. The divergence is
 # deliberate and one-sided, and both halves have to hold at once — atomic must
 # exclude statusline because atomic 0.9.13's isolated interactive engine refuses
@@ -14,9 +17,18 @@
 # Asserting only atomic's half would pass a change that silently disarmed the
 # extension for both agents.
 #
+# At the level of whole entries, pi's list is the shared one plus
+# aiAgentSettings.piOnlyPackages, which needs no force-exclude: atomic declaring
+# its own `packages` shadows pi's array wholesale. pi-vim is the entry that
+# relies on this, and the claim is two-sided for the same reason — an entry that
+# reached atomic too would load, warn on the setEditorComponent stub, and leave
+# atomic's native editor in place with no modal keybindings, which is invisible
+# from atomic's side alone.
+#
 # Falsifiability: dropping "statusline/index.ts" from atomicExtensionExclusions
 # flips atomicNegativeExtensions against the literal below; propagating the
-# exclusion to pi flips piNegativeExtensions.
+# exclusion to pi flips piNegativeExtensions. Moving pi-vim from piOnlyPackages
+# into packages flips atomicPiOnlyPackages; dropping it flips piOnlyPackages.
 #
 # The retraction claim is why atomicDeclaresPackages is asserted separately
 # rather than inferred from the selector lists. modules/home/ai/atomic/
@@ -58,6 +70,28 @@
       piSelectors = selectorsFor piConfig.settings;
       positive = builtins.filter (selector: !lib.hasPrefix "-" selector);
       negative = builtins.filter (selector: lib.hasPrefix "-" selector);
+      # A piOnlyPackages entry is a bare store-path string. It is reported by
+      # package name rather than by path: a hash in the oracle would churn on
+      # every unrelated rebuild, and mkStructuralCheck serializes `actual` into a
+      # derivation attribute, which refuses a string carrying store-path context.
+      piOnlyPaths = map toString homeConfig.aiAgentSettings.piOnlyPackages;
+      nameOf =
+        path:
+        let
+          base = builtins.unsafeDiscardStringContext (builtins.baseNameOf path);
+          stripped = builtins.match "[a-z0-9]+-(.*)" base;
+        in
+        lib.getName (if stripped == null then base else builtins.head stripped);
+      piOnlyNamesIn =
+        settings:
+        let
+          declared = settings.packages or [ ];
+        in
+        map nameOf (
+          builtins.filter (
+            path: lib.any (entry: !builtins.isAttrs entry && entry == path) declared
+          ) piOnlyPaths
+        );
     in
     {
       checks = {
@@ -73,6 +107,11 @@
             # two sources would make the lists incomparable and the exclusion
             # meaningless.
             sharedExtensionSource = atomicSelectors != [ ] && piSelectors != [ ];
+            # Whole-entry divergence, the channel that carries no force-exclude
+            # and is therefore invisible in the selector lists above.
+            piOnlyPackages = map nameOf piOnlyPaths;
+            piPiOnlyPackages = piOnlyNamesIn piConfig.settings;
+            atomicPiOnlyPackages = piOnlyNamesIn atomicConfig.settings;
           };
           expected = {
             atomicDeclaresPackages = true;
@@ -105,6 +144,9 @@
               "-notify/index.ts"
             ];
             sharedExtensionSource = true;
+            piOnlyPackages = [ "pi-vim" ];
+            piPiOnlyPackages = [ "pi-vim" ];
+            atomicPiOnlyPackages = [ ];
           };
         };
       };
