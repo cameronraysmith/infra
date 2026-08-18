@@ -133,6 +133,27 @@
               tiny = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
               task = lib.mkDefault "anthropic/claude-sonnet-5:high";
             };
+            # Hindsight is omp's native memory backend, reached over HTTP by a
+            # hand-rolled client (src/hindsight/backend.ts) with no MCP server in
+            # the path. Only backend and apiUrl change behaviour; the remaining six
+            # restate the schema defaults omp carries at 17.3.5, declared so an
+            # upstream default change surfaces as a diff here rather than as a
+            # silent shift in what the fleet retains.
+            #
+            # bankId is deliberately left unset. Under per-project-tagged scoping
+            # that resolves to the base bank `omp` (src/hindsight/bank.ts), one
+            # shared bank whose entries are tagged with the project name, which is
+            # what recall across the fleet's repositories wants.
+            memory.backend = lib.mkDefault "hindsight";
+            hindsight = {
+              apiUrl = lib.mkDefault "https://api.hindsight.vectorize.io";
+              scoping = lib.mkDefault "per-project-tagged";
+              retainMode = lib.mkDefault "full-session";
+              autoRecall = lib.mkDefault true;
+              autoRetain = lib.mkDefault true;
+              mentalModelsEnabled = lib.mkDefault true;
+              mentalModelAutoSeed = lib.mkDefault true;
+            };
           };
 
           watchdog = {
@@ -154,6 +175,29 @@
         };
 
         home.packages = lib.mkIf cfg.enable [ cfg.package ];
+
+        # The Hindsight token reaches omp through the environment and never
+        # through settings above. omp parses config.yml as plain YAML and expands
+        # nothing, so a `${HINDSIGHT_API_TOKEN}` written into hindsight.apiToken is
+        # sent verbatim as the bearer token; docs/memory.md shows that form anyway,
+        # and it fails as a literal string whenever the variable is unset and is
+        # dead configuration whenever it is set, because the environment outranks
+        # the settings file (src/hindsight/config.ts). A real token written there
+        # would be worse still: cfg.settings renders into a world-readable store
+        # path, and merge-config.sh leaves the target at 0644.
+        #
+        # ~/.omp/.env is the fourth of the five sources omp's loader consults --
+        # process environment, project .env, ${configDir}/.env, ~/.omp/.env,
+        # ~/.env -- each filling only keys still unset, so every launch path picks
+        # the token up with no wrapper. Rendering it as a sops template keeps the
+        # plaintext out of the nix store entirely.
+        sops.templates = lib.mkIf cfg.enable {
+          omp-env = {
+            mode = "0400";
+            path = "${config.home.homeDirectory}/.omp/.env";
+            content = "HINDSIGHT_API_TOKEN=${config.sops.placeholder."hindsight-api-token"}\n";
+          };
+        };
 
         home.activation.ompMergeConfig = lib.mkIf cfg.enable (
           let

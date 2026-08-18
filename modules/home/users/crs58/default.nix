@@ -129,7 +129,7 @@ let
       };
 
       # sops-nix configuration for crs58/cameron user
-      # 15 secrets: development + ai + shell aggregates
+      # 22 secrets: development + ai + shell aggregates
       sops = {
         defaultSopsFile = flake.inputs.self + "/secrets/home-manager/users/crs58/secrets.yaml";
         secrets = {
@@ -148,6 +148,9 @@ let
           linear-workspace-personal = { };
           linear-workspace-work = { };
           context7-api-key = { };
+          # Hindsight cloud token for omp's memory backend, rendered to
+          # ~/.omp/.env by the sops template in modules/home/ai/omp.
+          hindsight-api-token = { };
           # Per-host scoped cognee X-Api-Key for the always-on cognee-memory
           # plugin and the cognee-cli wrapper. Declared here; its ciphertext is
           # added to secrets.yaml after the one-time owner-authenticated mint
