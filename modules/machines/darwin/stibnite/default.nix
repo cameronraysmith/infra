@@ -33,6 +33,7 @@ in
         base
         casks
         ssh-ca-trust
+        sshd-server
         ssh-known-hosts
         beads-ui
         colima
