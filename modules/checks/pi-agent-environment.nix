@@ -2254,7 +2254,7 @@
             piModulePi083References = [ ];
             piReconnaissancePresent = true;
             piReconnaissancePi083References = [ ];
-            piPackageVersion = "0.84.1";
+            piPackageVersion = "0.84.2";
             deployedPiCandidateCount = 1;
             deployedPiIsOuterWrapper = true;
             canonicalSkillImmutable = true;
