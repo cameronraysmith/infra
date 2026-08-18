@@ -1,187 +1,156 @@
-# atomic is Bastani's terminal coding agent, packaged from the upstream
-# prebuilt release tarball. Each archive is produced by `bun build --compile`
-# as a split launcher: a small `atomic` executable that resolves `app.js` and a
-# prebundled node_modules relative to the directory of its own execPath. Bun
-# resolves execPath through symlinks, but the launcher is wrapped rather than
-# symlinked so the runtime tool lookups below can be satisfied. The napi
-# natives ship prebuilt in that bundle, so nothing here needs a Rust toolchain
-# and the release archive is preferred over the published npm package.
+# atomic is Bastani's terminal coding agent, packaged from the published npm
+# distribution. The previous release-archive split launcher (a bun --compile
+# binary) could not resolve @earendil-works/* extension imports: its bundle
+# selects loader-virtual-modules' virtualModules map, which omits the pi
+# coding-agent specifiers, while the npm dist selects the _aliases map, which
+# carries @earendil-works/pi-coding-agent. Every pi-ecosystem extension that
+# value-imports that scope is a fatal load error under the old binary and
+# loads cleanly under this one.
 #
-# Version and per-platform checksums live in manifest.json alongside this file
-# rather than in this expression.
+# The npm tarball ships dist/ prebuilt (upstream's prepublishOnly runs
+# `bun run build` plus a shrinkwrap generator), so nothing is compiled here:
+# the build is `npm ci --ignore-scripts` + `npm rebuild` (which runs the
+# dependencies' install scripts, e.g. @embedded-postgres' pg-symlinks
+# recreation) from the shipped npm-shrinkwrap.json, and the install hook packs
+# the declared `files` and copies node_modules next to them.
 #
+# Pinning: the registry tarball by its sha256 (cross-checkable against the
+# registry's published integrity) and the dependency closure by npmDepsHash
+# over the shipped npm-shrinkwrap.json (lockfileVersion 3, 359 packages).
+#
+# Two upstream-shrinkwrap repairs live in npm-dist-repairs.patch:
+#  - the prepublishOnly generator emits the 9 @bastani/atomic-natives*
+#    entries without `integrity`, which nix's prefetch-npm-deps parser refuses
+#    outright ("non-git dependencies should have associated integrity"); the
+#    patch adds the registry's published sha512 for exactly those 9 tarballs.
+#  - the published package.json retains 12 devDependencies the generated
+#    shrinkwrap does not cover, so `npm ci` tries to resolve them from the
+#    registry and dies ENOTCACHED; dist/ is already built, so they are dead
+#    weight and are removed.
+#
+# The repairs apply in postPatch rather than `patches` because this
+# buildNpmPackage forwards `patches` to its internal fetchNpmDeps but strips it
+# from the main derivation (observed: env.patches empty, the hook's
+# lockfile-consistency check then fails), while postPatch reaches both.
+#
+# Version lives in manifest.json alongside this file; update.sh re-derives the
+# tarball hash, the repairs patch, and npmDepsHash from the registry per bump.
 # update: nix run .#update-atomic
 # source: https://github.com/bastani-inc/atomic
 {
   lib,
-  stdenv,
+  buildNpmPackage,
+  nodejs_22,
   fetchurl,
-  autoPatchelfHook,
   makeBinaryWrapper,
-  versionCheckHook,
-  writableTmpDirAsHomeHook,
-  runCommand,
-  jq,
   fd,
   ripgrep,
+  runCommand,
+  versionCheckHook,
+  writableTmpDirAsHomeHook,
 }:
 let
   manifest = lib.importJSON ./manifest.json;
-  platforms = {
-    x86_64-linux = "linux-x64";
-    aarch64-linux = "linux-arm64";
-    aarch64-darwin = "darwin-arm64";
-  };
-  platform = platforms.${stdenv.hostPlatform.system} or null;
 in
-# The flake forces `checks.<system>` for every system it evaluates, so a system
-# outside the map has to make this attribute absent rather than throw when the
-# derivation is forced.
-if platform == null then
-  null
-else
-  stdenv.mkDerivation (finalAttrs: {
-    pname = "atomic";
-    inherit (manifest) version;
+buildNpmPackage (finalAttrs: {
+  pname = "atomic";
+  inherit (manifest) version;
 
-    src = fetchurl {
-      url = "https://github.com/bastani-inc/atomic/releases/download/${finalAttrs.version}/atomic-${platform}.tar.gz";
-      sha256 = manifest.platforms.${platform}.checksum;
-    };
+  src = fetchurl {
+    url = "https://registry.npmjs.org/@bastani/atomic/-/atomic-${finalAttrs.version}.tgz";
+    hash = "sha256-Q/JiNxkoMaCN59R+EkIgzIyOfrClUFc8BKMqlOmLPFc=";
+  };
+  sourceRoot = "package";
 
-    sourceRoot = "atomic";
+  nodejs = nodejs_22;
+  npmDepsHash = "sha256-DQr7M0nSI/ojZOocCYq3R/sSQSZnI60RVTE34tuj+3g=";
 
-    dontConfigure = true;
-    dontBuild = true;
+  postPatch = ''
+    patch -p1 < ${./npm-dist-repairs.patch}
+  '';
 
-    # the launcher carries its bytecode payload past the end of the executable
-    # image, which stripping discards
-    dontStrip = true;
+  # dist/ is prebuilt in the tarball; there is nothing to npm-run.
+  dontNpmBuild = true;
 
-    nativeBuildInputs = [
-      makeBinaryWrapper
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isElf [
-      autoPatchelfHook
-      jq
-    ];
+  nativeBuildInputs = [ makeBinaryWrapper ];
 
-    buildInputs = lib.optionals stdenv.hostPlatform.isElf [
-      stdenv.cc.cc.lib
-    ];
+  # atomic resolves fd and rg from PATH and otherwise downloads a release
+  # binary from GitHub at first use. PATH is suffixed so the caller's own
+  # tools still win.
+  postFixup = ''
+    wrapProgram "$out/bin/atomic" \
+      --set ATOMIC_SKIP_VERSION_CHECK 1 \
+      --suffix PATH : ${
+        lib.makeBinPath [
+          fd
+          ripgrep
+        ]
+      }
+  '';
+  nativeInstallCheckInputs = [
+    versionCheckHook
+    writableTmpDirAsHomeHook
+  ];
+  doInstallCheck = true;
+  # --version (versionCheckHook) proves dist/cli.js and its node_modules
+  # closure load; --help additionally proves the CLI surface imports.
+  postInstallCheck = ''
+    "$out/bin/atomic" --help | grep -q "AI coding assistant"
+  '';
 
-    installPhase = ''
-      runHook preInstall
+  strictDeps = true;
 
-      mkdir -p "$out/lib"
-      cp -R . "$out/lib/atomic"
+  passthru = {
+    updateScript = ./update.sh;
 
-      # atomic resolves fd and rg from PATH and otherwise downloads a release
-      # binary from GitHub at first use, which cannot run against this libc.
-      # PATH is suffixed so the caller's own tools still win.
-      makeWrapper "$out/lib/atomic/atomic" "$out/bin/atomic" \
-        --set ATOMIC_SKIP_VERSION_CHECK 1 \
-        --suffix PATH : ${
-          lib.makeBinPath [
-            fd
-            ripgrep
-          ]
+    # doInstallCheck runs against $out while it is still being built and still
+    # writable. This runs the same CLI against the finished, read-only store
+    # path.
+    tests.help =
+      runCommand "atomic-test-help"
+        {
+          meta.timeout = 60;
         }
+        ''
+          export HOME="$PWD/home"
+          mkdir -p "$HOME"
 
-      runHook postInstall
-    '';
+          ${lib.getExe finalAttrs.finalPackage} --help > help.txt
 
-    # @embedded-postgres carries its shared libraries as versioned files with
-    # the SONAME links recorded in native/pg-symlinks.json, which upstream's
-    # npm postinstall recreates; a release tarball never runs that script, so
-    # the links are absent. The postgres binaries resolve their libraries
-    # through an $ORIGIN-relative rpath, so without the links autoPatchelf
-    # cannot satisfy libicuuc.so.60 and the durable-workflow database has no
-    # runtime. Upstream ships this payload in the linux-x64 archive only.
-    postInstall = lib.optionalString stdenv.hostPlatform.isElf ''
-      for pkgdir in "$out"/lib/atomic/node_modules/@embedded-postgres/*/; do
-        [ -f "$pkgdir/native/pg-symlinks.json" ] || continue
-        jq -r '.[] | [.source, .target] | @tsv' "$pkgdir/native/pg-symlinks.json" \
-          | while IFS=$'\t' read -r source target; do
-            # upstream's own script swallows an existing target, so a release
-            # that starts shipping these links stays a no-op here rather than
-            # failing the build
-            [ -e "$pkgdir$target" ] || [ -L "$pkgdir$target" ] \
-              || ln -s "$(basename "$source")" "$pkgdir$target"
-          done
-      done
-    '';
+          grep -q "AI coding assistant" help.txt
+          grep -q "atomic \[options\] \[@files\.\.\.\] \[messages\.\.\.\]" help.txt
+          grep -q "Install extension source and add to settings" help.txt
 
-    # postgres's procedural-language handlers link against the interpreters of
-    # the distribution that built them. atomic loads no PL handler, and nixpkgs
-    # carries none of these interpreter versions.
-    autoPatchelfIgnoreMissingDeps = [
-      "libperl.so.5.26"
-      "libpython3.6m.so.1.0"
-      "libtcl8.6.so"
-    ];
+          touch "$out"
+        '';
+  };
 
-    nativeInstallCheckInputs = [
-      versionCheckHook
-      writableTmpDirAsHomeHook
-    ];
-    versionCheckKeepEnvironment = [ "HOME" ];
-    doInstallCheck = true;
-
-    # the launcher answers --version itself, before importing the sidecar
-    # bundle, so only --help proves the payload resolved
-    postInstallCheck = ''
-      "$out/bin/atomic" --help | grep -q "AI coding assistant"
-    '';
-
-    strictDeps = true;
-
-    passthru = {
-      updateScript = ./update.sh;
-
-      # doInstallCheck runs against $out while it is still being built and
-      # still writable. This runs the same launcher against the finished,
-      # read-only store path, which is the condition the split launcher and
-      # its sidecar payload actually have to survive.
-      tests.help =
-        runCommand "atomic-test-help"
-          {
-            meta.timeout = 60;
-          }
-          ''
-            export HOME="$PWD/home"
-            mkdir -p "$HOME"
-
-            ${lib.getExe finalAttrs.finalPackage} --help > help.txt
-
-            grep -q "AI coding assistant" help.txt
-            grep -q "atomic \[options\] \[@files\.\.\.\] \[messages\.\.\.\]" help.txt
-            grep -q "Install extension source and add to settings" help.txt
-
-            touch "$out"
-          '';
+  meta = {
+    description = "Coding agent CLI with read, bash, edit, write tools and session management";
+    homepage = "https://github.com/bastani-inc/atomic";
+    changelog = "https://github.com/bastani-inc/atomic/releases/tag/${finalAttrs.version}";
+    # LICENSE is the MIT text plus a clause requiring a product above 100
+    # million monthly active users or $20 million monthly revenue to display
+    # 'Atomic' in its interface. That condition is not part of MIT and has no
+    # SPDX identifier, so lib.licenses.mit would misstate the terms; the
+    # repository's package.json nonetheless declares MIT and GitHub reports
+    # the license as NOASSERTION.
+    license = {
+      shortName = "MIT-with-atomic-attribution";
+      fullName = "MIT License with Atomic attribution requirement";
+      url = "https://github.com/bastani-inc/atomic/blob/main/LICENSE";
+      free = true;
+      redistributable = true;
     };
-
-    meta = {
-      description = "Coding agent CLI with read, bash, edit, and write tools and session management";
-      homepage = "https://github.com/bastani-inc/atomic";
-      changelog = "https://github.com/bastani-inc/atomic/releases/tag/${finalAttrs.version}";
-      # LICENSE is the MIT text plus a clause requiring a product above 100
-      # million monthly active users or $20 million monthly revenue to display
-      # 'Atomic' in its interface. That condition is not part of MIT and has no
-      # SPDX identifier, so lib.licenses.mit would misstate the terms; the
-      # repository's package.json nonetheless declares MIT and GitHub reports
-      # the license as NOASSERTION.
-      license = {
-        shortName = "MIT-with-atomic-attribution";
-        fullName = "MIT License with Atomic attribution requirement";
-        url = "https://github.com/bastani-inc/atomic/blob/main/LICENSE";
-        free = true;
-        redistributable = true;
-      };
-      sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
-      mainProgram = "atomic";
-      platforms = lib.attrNames platforms;
-      maintainers = with lib.maintainers; [ cameronraysmith ];
-    };
-  })
+    # dist/ is prebuilt upstream and the napi natives ship prebuilt binaries
+    # through the platform optionalDependencies.
+    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+    mainProgram = "atomic";
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
+    maintainers = [ ];
+  };
+})

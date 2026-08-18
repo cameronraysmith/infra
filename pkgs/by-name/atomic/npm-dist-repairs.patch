@@ -1,0 +1,98 @@
+--- a/npm-shrinkwrap.json
++++ b/npm-shrinkwrap.json
+@@ -519,6 +519,7 @@
+ 		"node_modules/@bastani/atomic-natives": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives/-/atomic-natives-0.9.13.tgz",
++			"integrity": "sha512-JjbUREWq3DT4jnij0HaSW//2YPdZlj7USKyMTK1rjCt5QZlpPax24Vph2x9lF0qHFaFC0kZpTn1dOpkn00x5gA==",
+ 			"license": "MIT",
+ 			"optionalDependencies": {
+ 				"@bastani/atomic-natives-darwin-arm64": "0.9.13",
+@@ -538,6 +539,7 @@
+ 		"node_modules/@bastani/atomic-natives-darwin-arm64": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-darwin-arm64/-/atomic-natives-darwin-arm64-0.9.13.tgz",
++			"integrity": "sha512-rtkme6mGl6LgzBwHyzWylTuHdPMGG0zcKH2ogD3AA+1jj1nZ3UKedgDTyjqR2kxMEoF786+U4DqkGWtQvioXPQ==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"darwin"
+@@ -550,6 +552,7 @@
+ 		"node_modules/@bastani/atomic-natives-darwin-x64": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-darwin-x64/-/atomic-natives-darwin-x64-0.9.13.tgz",
++			"integrity": "sha512-uNdt6IbguaJWbb2RAdrTCi53e6VXSA1EUrq1YjOBBFk1BNbhsNK+YEt8gNw/Kie9edvGrSCXBkwR+UxiLp7t8g==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"darwin"
+@@ -562,6 +565,7 @@
+ 		"node_modules/@bastani/atomic-natives-linux-arm64-gnu": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-linux-arm64-gnu/-/atomic-natives-linux-arm64-gnu-0.9.13.tgz",
++			"integrity": "sha512-t1KAzxsM6i/zzQwVGjbNRm2FNmUT0l2blgueItReGJXaJHl9AroCM/xySTiRo3Ap27Q2eKX/58nwscqWkwfMXg==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"linux"
+@@ -577,6 +581,7 @@
+ 		"node_modules/@bastani/atomic-natives-linux-arm64-musl": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-linux-arm64-musl/-/atomic-natives-linux-arm64-musl-0.9.13.tgz",
++			"integrity": "sha512-4EBuaPiMKJeAxVgtf+78w0KyGbnAUc8cUnsvmyGNHuDqM8D4RhsV2lmo+5/VGCobnjEtJ2uPBDauCYU9yXHUSg==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"linux"
+@@ -592,6 +597,7 @@
+ 		"node_modules/@bastani/atomic-natives-linux-x64-gnu": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-linux-x64-gnu/-/atomic-natives-linux-x64-gnu-0.9.13.tgz",
++			"integrity": "sha512-ynNsMdfa2ZRlz3PRbF607ETerRRuSZzNR/2mIxjvfgRF31CXzBU04cqyTwq4cxXQ6eMHTemWGepA0/9fYbnU4Q==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"linux"
+@@ -607,6 +613,7 @@
+ 		"node_modules/@bastani/atomic-natives-linux-x64-musl": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-linux-x64-musl/-/atomic-natives-linux-x64-musl-0.9.13.tgz",
++			"integrity": "sha512-p6uHPS26Ekjdt66+c0Xn0luRX7xcH2+ee3aq27JXEg8qXZZvdIRc/johEBtKrhnYa7puy9HlHskGfmKD3MI2iw==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"linux"
+@@ -622,6 +629,7 @@
+ 		"node_modules/@bastani/atomic-natives-win32-arm64-msvc": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-win32-arm64-msvc/-/atomic-natives-win32-arm64-msvc-0.9.13.tgz",
++			"integrity": "sha512-7nrpRT/aU+oqXZcyUZuWWo5VpKf65T5DIde1MOJWoesirpP5/lZ7hb6nENPMhk7bhg17yq1iWefw4jK4Se/l/w==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"win32"
+@@ -634,6 +642,7 @@
+ 		"node_modules/@bastani/atomic-natives-win32-x64-msvc": {
+ 			"version": "0.9.13",
+ 			"resolved": "https://registry.npmjs.org/@bastani/atomic-natives-win32-x64-msvc/-/atomic-natives-win32-x64-msvc-0.9.13.tgz",
++			"integrity": "sha512-PNusYua6gdsZ7wntHgKpvWl7MOq36ve6XU1kxrRGiuUpTEl1xJo24Gbe2SCGTeJbfe+voqPSby3bq8vHSB48fA==",
+ 			"license": "MIT",
+ 			"os": [
+ 				"win32"
+--- a/package.json
++++ b/package.json
+@@ -129,20 +129,7 @@
+   "optionalDependencies": {
+     "@mariozechner/clipboard": "0.3.9"
+   },
+-  "devDependencies": {
+-    "@types/cross-spawn": "6.0.6",
+-    "@types/diff": "7.0.2",
+-    "@types/hosted-git-info": "3.0.5",
+-    "@types/ms": "2.1.0",
+-    "@types/node": "24.12.4",
+-    "@types/proper-lockfile": "4.1.4",
+-    "@types/semver": "7.7.1",
+-    "@typescript/native-preview": "7.0.0-dev.20260707.2",
+-    "ajv": "8.20.0",
+-    "shx": "0.4.0",
+-    "typescript": "7.0.2",
+-    "vitest": "4.1.10"
+-  },
++
+   "keywords": [
+     "coding-agent",
+     "ai",
