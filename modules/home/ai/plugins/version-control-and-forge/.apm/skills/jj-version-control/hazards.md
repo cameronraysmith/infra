@@ -54,17 +54,5 @@ Recovery for the second is `jj undo`; the first needs nothing.
 
 ## Worktree interop
 
-The worktree-creating surfaces are ask-gated rather than denied.
-Answer affirmatively only when a separate filesystem tree is itself the point, and otherwise stay on the development join.
-In a flake repository that tree must be a git worktree rather than `jj workspace add`.
-
-The discipline is exclusive branch ownership and return-by-ref.
-A branch belongs to the jj primary or to one worktree, never both, so never point a worktree at a bookmark on or under the primary's `@` or at one a live development join includes.
-Work returns by ref: commit in the worktree, let the primary import it, then integrate with `jj new <branch>` or `jj bookmark set <target> -r <branch>`.
-
-The primary's HEAD stays detached throughout; that is healthy and never drift to repair.
-Never run `git checkout` or `git switch` to reattach, `git checkout -f`, `git branch -D`, or `git fetch --prune`, and never use `git stash` in a jj working copy.
-If jj moves a bookmark a worktree holds, that worktree's HEAD detaches at the old commit with files intact; recover with `git symbolic-ref HEAD refs/heads/<branch>`.
-Ref deletion is the destructive class here, and its recovery is the same top-level `jj undo`.
-
-An external agent framework such as firstmate gets its own clone rather than a symlink to a working copy we also use, because its fleet-sync runs exactly the operations forbidden above.
+`jj-version-control/SKILL.md` §"Worktree interop" is the authority for worktree mechanics — it carries the jj-version provenance and upstream citations this file does not, and the worktree-surface hook messages point there.
+The summary: worktree-creating surfaces are ask-gated; a flake repository's separate tree must be a git worktree rather than `jj workspace add`; the discipline is exclusive branch ownership and return-by-ref; and an external agent framework such as firstmate gets its own clone rather than a symlink to a working copy we also use.

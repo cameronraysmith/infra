@@ -29,7 +29,7 @@ If the mission scope is single-session-single-repo (no parallel streams, no mult
 This skill orchestrates a higher-level protocol that uses the following as components.
 Do not duplicate their functionality; delegate to them.
 
-- `meta-agent-teams` provides teammate spawn conventions, beads-to-task-list mirroring, and the orient/work/checkpoint/shutdown/replace lifecycle for individual pairs
+- `meta-agent-teams` provides teammate spawn conventions, issue-to-task-list mirroring, and the orient/work/checkpoint/shutdown/replace lifecycle for individual pairs
 - `/session-orient` provides the session-level orientation each AC and WO runs after spawn (with a master-supplied addendum)
 - `/session-checkpoint` provides the session-level checkpoint each AC and WO runs at cycle end
 - `/meta-orchestrator-checkpoint` provides the team-level state capture and handoff that this skill consumes when invoked with a checkpoint payload
@@ -203,7 +203,7 @@ An exemplar session covering user→master entry, N-stream decomposition with ra
 ---
 
 *Related skills:*
-- `meta-agent-teams` — teammate isolation, beads-to-task-list mirroring, orient/checkpoint lifecycle
+- `meta-agent-teams` — teammate isolation, issue-to-task-list mirroring, orient/checkpoint lifecycle
 - `meta-orchestrator-checkpoint` — team-level state capture and handoff
 - `/session-orient` — session-level orientation each AC and WO runs with a master addendum
 - `/session-checkpoint` — session-level checkpoint each AC and WO runs at fill

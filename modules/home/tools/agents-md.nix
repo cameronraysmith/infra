@@ -66,7 +66,7 @@
           - documentation: ${skillsPath}/preferences-documentation/SKILL.md
           - change management: ${skillsPath}/preferences-change-management/SKILL.md
           - agentic planning and development (state-machine router across the Linear-canonical board Backlog -> Todo -> In Progress -> In Review -> Done; AFK/HIL/Manual execution-mode fork; four file-anchored OpenSpec-artifact forward gates): ${skillsPath}/agentic-planning-development-workflow/SKILL.md
-          - project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work, beads an optional Manual-mode drill-down): ${skillsPath}/project-management/SKILL.md
+          - project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work): ${skillsPath}/project-management/SKILL.md
           - superpowers discipline gate (invoke the relevant skill before any response or action, including clarifying questions; process-skills-first): ${skillsPath}/using-superpowers/SKILL.md
           - session resumption (resume command, atuin history, session continuation): ${skillsPath}/meta-session-resume/SKILL.md
           - session search (session transcript discovery, keyword intersection): ${skillsPath}/meta-search-sessions/SKILL.md
@@ -287,11 +287,11 @@
           When dispatching a Task for implementation work, the dispatched unit
           is an OpenSpec change — typically bound to one Linear story via
           openspec-linear-sync and driven through the
-          agentic-planning-development-workflow router's HIL mode — not a beads
-          issue. The dispatch protocol depends on the active VCS mode. Detect
-          mode at dispatch time: `.jj/` directory present in the repository root
-          indicates jj mode (the default for this workspace); otherwise almost
-          surely git-native mode.
+          agentic-planning-development-workflow router's HIL mode. The dispatch
+          protocol depends on the active VCS mode. Detect mode at dispatch
+          time: `.jj/` directory present in the repository root indicates jj
+          mode (the default for this workspace); otherwise almost surely
+          git-native mode.
 
           See ${skillsPath}/preferences-git-version-control/SKILL.md for
           working-branch isolation conventions and subagent dispatch in each
@@ -365,7 +365,7 @@
           framework such as firstmate gets its own clone rather than a symlink
           to a working copy we also use, because its fleet-sync runs exactly the
           operations forbidden above. Full mechanics and recovery:
-          ${skillsPath}/jj-version-control/hazards.md
+          ${skillsPath}/jj-version-control/SKILL.md under "Worktree interop"
         '';
       };
     };

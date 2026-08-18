@@ -1,6 +1,6 @@
 name: preferences-code-and-collaboration-conventions
 version: 0.0.0
-description: Code and collaboration conventions — style and conventions, documentation, git version control, git history cleanup, change management.
+description: Code and collaboration conventions — style and conventions, documentation, git version control, git history cleanup, change management, prose clarity, essential complexity.
 dependencies:
   apm:
     # unslop as a walked remote dep pinned to the full 40-char SHA. The repo root is

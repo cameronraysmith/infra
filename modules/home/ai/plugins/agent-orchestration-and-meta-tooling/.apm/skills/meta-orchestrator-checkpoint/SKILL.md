@@ -178,7 +178,7 @@ Determination of variant: closure if all streams have integrated to main and no 
 
 *Related skills:*
 - `/meta-orchestrator-initiate` — team-level orchestrator initialization; consumes this skill's output
-- `meta-agent-teams` — teammate isolation, beads-to-task-list mirroring, orient/checkpoint lifecycle
+- `meta-agent-teams` — teammate isolation, issue-to-task-list mirroring, orient/checkpoint lifecycle
 - `/session-checkpoint` — session-level checkpoint each AC and WO runs at cycle end; this skill references their outputs
 
 *Theoretical anchors:*

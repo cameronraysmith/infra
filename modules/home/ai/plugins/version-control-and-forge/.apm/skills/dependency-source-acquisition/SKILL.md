@@ -1,6 +1,6 @@
 ---
 name: dependency-source-acquisition
-description: Resolve a named repository to a local copy before reasoning about it, and acquire one when missing. Covers both lookup categories: Category 1 (repositories we maintain, under ~/projects/<repo>) and Category 2 (third-party and reference repositories, under ~/ghq via ghq). Use whenever a repository is named in a task, when about to state a substantive technical claim grounded in a project's source, options, defaults, API, or upstream documentation, when resolving a package's source-repository URL from cargo/uv/bun/nix metadata, when a "(see local)" marker is appended to a name, or when given a GitHub file, issue, or PR URL.
+description: Resolve a named repository to a local copy before reasoning about it, and acquire one when missing. Covers both lookup kinds: maintained repositories under ~/projects/<repo> and reference repositories under ~/ghq via ghq. Use whenever a repository is named in a task, when about to state a substantive technical claim grounded in a project's source, options, defaults, API, or upstream documentation, when resolving a package's source-repository URL from cargo/uv/bun/nix metadata, when a "(see local)" marker is appended to a name, or when given a GitHub file, issue, or PR URL.
 ---
 
 # Dependency source acquisition
@@ -14,12 +14,11 @@ Resolve the org first: a bare name is often ambiguous — `gh search repos <name
 A fully-qualified `org/repo` or a forge URL settles identity outright; when more than one plausible match survives a search, ask which one was meant rather than guessing.
 
 Then branch on authorship.
-The distinguishing question: if we cut releases or land commits upstream it is Category 1; if we only read it, it is Category 2.
+The distinguishing question: if we cut releases or land commits upstream it is a maintained repo; if we only read it, it is a reference repo.
 
-## Category 1 lookup — repositories we maintain
+## Maintained-repo lookup
 
-Category 1 lives under `~/projects/<repo>/` (copies may sit deeper; repo names can have variants such as `<repo>.jl` or `<repo>-rs`).
-The firstmate home at `~/firstmate` is itself a maintained repository.
+Maintained repositories live under `~/projects/<repo>/` (copies may sit deeper; repo names can have variants such as `<repo>.jl` or `<repo>-rs`).
 
 1. Search the tree: `fd -t d -d 4 '^<repo>$' ~/projects`
 2. Verify the match: `cd <candidate> && git remote -v` to confirm the origin matches the expected forge URL.
@@ -27,13 +26,23 @@ The firstmate home at `~/firstmate` is itself a maintained repository.
 3. On hit: treat the local path as the source of truth, dispatch research subagents to it, and use that path in prompts and writeups.
 4. On miss: surface the failure to the user and ask them to clone it to `~/projects/<repo>/` (or provide the path if it lives elsewhere) before proceeding; propose the exact command — `git clone <url> ~/projects/<repo>/` for reference-only work, or `gh repo fork <org>/<repo> --clone --remote -- ~/projects/<repo>/` when contribution back upstream is anticipated.
    Do not silently fall back to web tools for substantive research when a local copy would be more authoritative; web tools remain appropriate only for genuinely web-native content (release notes, issue discussions, blog posts).
+   Pause the work thread until the clone is in place or the user provides an alternative path.
 
-Never ask the user to clone a Category-2 repository into `~/projects/`.
+Never ask the user to clone a reference repo into `~/projects/`.
+
+## Reference-repo lookup
+
+The gate is `ghq list -p <name>` (under "Engine: ghq" below): authoritative because it walks the filesystem directly rather than consulting an index.
+`zoxide query -l <name>` is a fast-path cache only — validate any hit against `ghq list -p` before relying on it.
+On a miss, acquire the repository with `ghq-sync <url>`, which clones shallow and blobless and registers the path with zoxide; a raw `ghq get` clone does not register.
+Prefer the canonical upstream; acquire a personal fork only when contribution back to upstream is anticipated.
+A shallow clone sits at HEAD, which is usually not the revision we pin — read at the pinned revision or every line anchor you cite will be wrong.
+This fleet configures `ghq root` to `~/ghq`, so `$(ghq root)/<host>/<org>/<repo>` and `~/ghq/<host>/<org>/<repo>` coincide.
 
 ## The `(see local)` marker
 
 When the user appends `(see local)` — or a close variant such as `(see local clone)` or `(local)` — to a name, the lookup above is unconditional: do not answer from general knowledge, do not reach for web tools, and do not ask whether a clone exists.
-If the lookup returns no hit, fall through to that category's on-miss handling above.
+If the lookup returns no hit, fall through to that category's on-miss handling: the maintained-repo clone request above, or the `ghq-sync` acquisition under "Reference-repo lookup" above.
 
 ## GitHub URL handling
 
@@ -56,14 +65,13 @@ ghq list             # prints host/owner/repo (relative paths) for everything al
 
 A hit means the source is already local — review it in place, do not re-clone.
 
-On a miss, fetch lazily — shallow, blobless, no submodules — which is enough to review the current tree:
+On a miss, fetch with `ghq-sync <url>`, which performs the lazy clone — shallow, blobless, no submodules, enough to review the current tree — and registers the path with zoxide:
 
 ```bash
-ghq get --shallow --partial blobless --no-recursive <host>/<owner>/<repo>
-# also accepts a full https URL
+ghq-sync <url>   # shallow + blobless clone into $(ghq root)/<host>/<org>/<repo>, registered with zoxide
 ```
 
-`--shallow` is depth-1, `--partial blobless` is a blobless partial clone, and `--no-recursive` skips submodules.
+The lower-level `ghq get --shallow --partial blobless --no-recursive <host>/<owner>/<repo>` performs the same clone without registering the path with zoxide; use it only when registration is unwanted, and complete registration manually otherwise.
 
 When the review needs full history, blame, or submodule contents, promote the lazy clone to a full one.
 `ghq get -u` only updates the existing clone in place — it runs a fast-forward pull or fetch and leaves the clone grafted (shallow) and blobless — so it does not promote a lazy clone to full.

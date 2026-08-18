@@ -143,7 +143,7 @@ buildbot-logs <builder_id> <build_number> > "logs/buildbot-<builder_id>-<build_n
 ```
 Set `BUILDBOT_INCLUDE_HIDDEN=1` to include steps marked hidden.
 Authentication uses the buildbot http basic auth password read from sops-decrypted secrets on the master, so the invoking user must have ssh access to the buildbot host and non-interactive sudo privileges to read that secret.
-See the "Unified PR check log retrieval" subsection in `preferences-style-and-conventions` for the cross-backend entry point (`gh pr checks <N>`) that produces the builder/build inputs alongside GitHub Actions run ids.
+See the "Unified PR check log retrieval" section in the `ci-log-verification` skill for the cross-backend entry point (`gh pr checks <N>`) that produces the builder/build inputs alongside GitHub Actions run ids.
 
 Cross-reference `references/buildbot-nix-configuration.md` for the full `buildbot-nix.toml` schema, GitHub App permissions, worker configuration, and effect pipeline details.
 
