@@ -45,6 +45,14 @@
             # A safe-looking segment must not launder a later unsafe one.
             "ask kill 1308; kill $OTHER"
             "ask ps aux | xargs kill"
+            # A `kill` inside a quoted search pattern is data, not a command:
+            # the `|` alternations of an rg pattern are not shell operators.
+            # Observed 2026-08-12: the gate pattern-matched the quoted word and
+            # stalled a crewmate on two read-only ripgrep searches.
+            "allow rg -n \"process group|kill -.*-\\$|setsid|pgid|kill_tree|_drain\" bin/*.sh | head -40"
+            "allow rg -n 'watchdog|kill -9' modules/ | head -20"
+            # A genuine process termination next to a quoted pattern still gates.
+            "ask rg -n \"kill\" bin/*.sh | head -5; kill $WATCHER_PID"
 
             # nix run/shell is ungated in every form. An "ask" is a hard stall for
             # an agent worker launched with permissions bypassed, and nix run is

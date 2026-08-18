@@ -67,6 +67,7 @@ Gated patterns (each returns permissionDecision "ask"):
     pkill * / killall *          (all forms; they select processes by pattern)
     kill <target> where any target is not a literal numeric PID
       (variable, command substitution, glob, job spec, -f, or a pattern)
+      (quoted strings, e.g. a search pattern containing 'kill', are not matched)
     xargs ... kill
     kill [-SIG] <numeric-pid>... and kill -0 * are not gated
 
@@ -125,6 +126,16 @@ jj_cmd_match() {
   echo "$COMMAND" | grep -qE "(^|[;&|]\s*|&&\s*|\|\|?\s*|\\\$\(\s*)jj${jj_opts}\s+$1"
 }
 
+# Remove single- and double-quoted spans from the command text. Used only by
+# the kill gate: shell operators inside a quoted search pattern (e.g. the `|`
+# alternations of an rg pattern) are not command operators, so a `kill`
+# appearing there is data, not a process-termination command. Escaped quote
+# characters inside a span are not handled; this is the quoted-pattern shape
+# only.
+strip_quoted() {
+  printf '%s' "$1" | sed -e "s/'[^']*'//g" -e 's/"[^"]*"//g'
+}
+
 # Return 0 only when every `kill` invocation in $COMMAND targets literal numeric
 # PIDs, optionally after one signal flag (-9, -TERM, -s TERM, --signal=TERM).
 # Anything else -- a variable, command substitution, glob, job spec, -f, or a
@@ -140,7 +151,7 @@ jj_cmd_match() {
 # literal-PID test.
 kill_targets_are_explicit_pids() {
   local segments segment
-  segments="${COMMAND//&&/$'\n'}"
+  segments="${1//&&/$'\n'}"
   segments="${segments//||/$'\n'}"
   segments="${segments//;/$'\n'}"
   segments="${segments//|/$'\n'}"
@@ -391,7 +402,8 @@ if [ -z "$REASON" ]; then
   cmd_match '(pkill|killall)\s' && REASON="pattern-matched process termination"
 fi
 if [ -z "$REASON" ]; then
-  if cmd_match 'kill(\s|$)' && ! kill_targets_are_explicit_pids; then
+  KILL_VIEW=$(strip_quoted "$COMMAND")
+  if printf '%s' "$KILL_VIEW" | grep -qE "(^|[;&|]\s*|&&\s*|\|\|?\s*|\\\$\(\s*)kill(\s|$)" && ! kill_targets_are_explicit_pids "$KILL_VIEW"; then
     REASON="process termination with a target that is not an explicit PID"
   fi
 fi
