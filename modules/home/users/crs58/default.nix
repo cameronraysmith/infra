@@ -206,6 +206,29 @@ let
           '';
         };
 
+        # hindsight CLI credentials, rendered immutably from sops so the CLI
+        # works without a `hindsight configure` step.
+        #
+        # This cannot reuse the ~/.omp/.env file the omp module renders, for two
+        # independent reasons: that file is read by omp's own loader rather than
+        # exported to the shell, and the two tools spell the credential
+        # differently. The CLI reads HINDSIGHT_API_KEY and HINDSIGHT_API_URL
+        # (src/config.rs) and never HINDSIGHT_API_TOKEN, which is the name omp
+        # uses. Its resolution order is environment, then named profile, then
+        # this file, then a localhost default, so writing it here leaves the
+        # environment free to override per invocation.
+        #
+        # Read-only (0400): change the URL with --api-url or the environment,
+        # never via `hindsight configure`, which would clobber this file.
+        templates."hindsight-cli-config" = {
+          mode = "0400";
+          path = "${config.home.homeDirectory}/.hindsight/config";
+          content = ''
+            api_url = "https://api.hindsight.vectorize.io"
+            api_key = "${config.sops.placeholder."hindsight-api-token"}"
+          '';
+        };
+
         # Note: Radicle keys deployed via home.file below (not sops.templates due to pure eval path issues)
       };
 

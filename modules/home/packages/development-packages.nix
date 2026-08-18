@@ -107,6 +107,7 @@
           gemini-cli
           # from pkgs/by-name
           golem-binary
+          hindsight
           linear-cli
           ouroboros
           uncomment-bin
