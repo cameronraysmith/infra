@@ -75,8 +75,7 @@ The combined signal means the agent should adopt the jj workflow described in th
 
 For quick command orientation, see `~/.claude/skills/jj-summary/SKILL.md`.
 For comprehensive command reference, see `~/.claude/skills/jj-workflow/SKILL.md`.
-For git-mode equivalents and beads integration, see `~/.claude/skills/preferences-git-version-control/SKILL.md`.
-For beads command quick reference, see `~/.claude/skills/issues-beads-prime/SKILL.md`.
+For git-mode equivalents, see `~/.claude/skills/preferences-git-version-control/SKILL.md`.
 
 ## Bookmark workflow
 
@@ -117,7 +116,7 @@ Three tiers govern when bookmarks become necessary:
 2. *Second chain initiated*: bookmarks become required for both chains.
    Bookmark the existing chain tip, create a new chain from main, bookmark its tip, then create a multi-parent `@` over both.
 
-3. *Beads epic session*: create bookmarks at session start following the `{epic-ID}-descriptor` naming convention.
+3. *Tracked work-item session*: when working a Linear story or OpenSpec change, create bookmarks at session start following the `{issue-ID}-descriptor` naming convention.
 
 The discipline is "create bookmarks at the moment you need to distinguish chains" — not "always create a bookmark before working."
 
@@ -138,6 +137,11 @@ Recovery patterns:
 - Concurrent operations created divergence: inspect with `jj log` and resolve with `jj bookmark set`
 
 The operation log is your safety net - use it fearlessly.
+
+## Working-copy hazards
+
+Three headlines govern every hazard: never relocate `@` off the wip join; path-scope every squash and check for `(divergent)` and `wip??` before squashing; treat surprising reads of shared state as transients until `jj op log` says otherwise.
+The full catalog — splice impossibility, the clan-install second child, the `wip` bookmark slide, snapshot size gating, foreign modifications from concurrent sessions, auto-rebase id stability, and worktree interop with external frameworks — lives in [hazards.md](hazards.md).
 
 ## Conflict management
 

@@ -98,7 +98,6 @@ Specify how each commit or collection of changes will be verified as useful prog
 This checkpoint converts abstract plans into auditable intentions, reducing rework from misaligned assumptions.
 For each proposed change, identify the confidence level the verification plan is expected to achieve and whether the verification would be severe — would it fail under plausible incorrect implementations?
 See `preferences-validation-assurance` for the severity criterion and confidence promotion chain.
-When working within a beads issue graph, map each proposed file change to the issue it addresses and confirm the change will satisfy that issue's acceptance criteria.
 
 - Always at least consider testing changes with the relevant framework like bash shell commands where you can validate output, `shellcheck` for shell scripts, `cargo test`, `pytest`, `vitest`, `nix eval` or `nix build`, a task runner like `just test` or `make test`, or `gh workflow run` before considering any work to be complete and correct.
 - Be judicious about test execution. If a test might take a very long time, be resource-intensive, or require elevated security privileges but is important, pause to provide the proposed command and reason why it's an important test.
@@ -108,80 +107,11 @@ When working within a beads issue graph, map each proposed file change to the is
 
 ### CI workflow log verification
 
-When validating changes for merge, verify CI results by downloading and analyzing complete workflow logs rather than piecing together fragments via repeated API calls.
-
-Wait for relevant workflows to complete:
-```bash
-gh run watch <run_id>
-# or poll with: gh run list --branch <branch> --status completed
-```
-
-Download the complete logs archive:
-```bash
-run_id=<run_id>
-mkdir -p logs
-gh api "repos/<owner>/<repo>/actions/runs/${run_id}/logs" > "logs/gha-${run_id}.zip"
-unzip -d "logs/gha-${run_id}" "logs/gha-${run_id}.zip"
-```
-
-Survey available jobs and steps:
-```bash
-tree --du -ah "logs/gha-${run_id}"
-```
-
-#### Unified PR check log retrieval
-
-Given only a pull request number, the unified entry point for discovering which checks ran and where their logs live is `PAGER=cat gh pr checks <N>`.
-This command emits one row per check with a direct link, spanning both CI backends used by repositories in this workspace.
-GitHub Actions rows link to `https://github.com/<owner>/<repo>/actions/runs/<run_id>/job/<job_id>`.
-Buildbot-nix rows link to `https://buildbot.scientistexperience.net/#/builders/<builder_id>/builds/<build_number>` and correspond to the `buildbot/nix-eval` and `buildbot/nix-build` status checks described in `preferences-nix-ci-cd-integration`.
-
-Use the JSON output to separate the two categories and drive automation:
-```bash
-gh pr checks <N> --json name,link \
-  | jq -r '.[] | select(.name | test("^buildbot/")) | .link'
-gh pr checks <N> --json name,link \
-  | jq -r '.[] | select(.link | test("/actions/runs/")) | .link'
-```
-
-Route each link to its backend-specific log-download recipe, writing artifacts under a single `logs/` directory (already gitignored):
-```bash
-mkdir -p logs
-
-# GitHub Actions — extract <run_id> from the /runs/<run_id>/job/... URL path
-run_id=<run_id>
-gh api "repos/<owner>/<repo>/actions/runs/${run_id}/logs" > "logs/gha-${run_id}.zip"
-unzip -d "logs/gha-${run_id}" "logs/gha-${run_id}.zip"
-
-# Buildbot-nix — extract <builder_id> and <build_number> from the fragment
-# /#/builders/<builder_id>/builds/<build_number>
-builder_id=<builder_id>
-build_number=<build_number>
-buildbot-logs "${builder_id}" "${build_number}" > "logs/buildbot-${builder_id}-${build_number}.log"
-```
-
-The `buildbot-logs` shell application is defined in this repository; see `preferences-nix-ci-cd-integration` for its interface, ssh transport, and authentication model.
-After download, survey each artifact before dispatching subagents for targeted analysis:
-```bash
-tree --du -ah "logs/gha-${run_id}"
-rg "error:" "logs/buildbot-${builder_id}-${build_number}.log"
-```
-
-Dispatch subagent Tasks to analyze specific log files for the problem at hand rather than manually reading large logs inline.
-This approach provides a complete, well-organized view of CI results and avoids the antipattern of fragmented API-based log retrieval that never yields a clear picture of what happened.
+When validating changes for merge, retrieve and analyze complete workflow logs across both CI backends (GitHub Actions and buildbot-nix) via the recipes in the `ci-log-verification` skill: wait with `gh run watch`, download full log archives, and use `PAGER=cat gh pr checks <N>` to route each check to its backend before analysis.
 - Use performant CLI tools matched to task intent:
   - File search (by name/path): use `fd` instead of `find`
   - Content search (within files): use `rg` (ripgrep) instead of `grep`
   - Disk usage (directory sizes): use `diskus` instead of `du -sh`
   - Clipboard (copy to system clipboard): use `cb copy` (`clipboard-jh`) instead of platform-specific `pbcopy` (macOS) or `xclip`/`xsel` (Linux)
   - Notification (push alert to user): use `ntfy-send "<message>"` where `<message>` includes the repo name and summarizes the completed task (default topic is the local hostname; override with `ntfy-send "<message>" <topic>`)
-- When the user mentions a git repository by name (from GitHub or any other forge), or you are about to state a substantive technical claim grounded in a software project's source, options, defaults, API, or upstream documentation — first check for a local copy before reaching for web tools or asking the user for context. Treat the lookup as default for such claims; bypass it only with explicit justification. Settle the identity before routing, because the authorship test cannot be evaluated without knowing the org: a fully-qualified `org/repo` or a forge URL settles it outright, while a bare name that may match many repositories calls for `gh search repos <name>`, and when more than one plausible match survives, ask the user which they meant rather than guessing. Then route by authorship. *Category 1* is a repository we develop or maintain — we cut releases or land commits upstream — and lives under `~/projects/<topic>-workspace/<repo>/`. *Category 2* is a third-party dependency or research-reference repository we consult but do not maintain, and lives under `~/ghq/<host>/<org>/<repo>`.
-- Category 2 lookup, under `~/ghq/`: `ghq list -p <name>` is authoritative because it walks the filesystem directly rather than consulting an index, while `zoxide query -l <name>` is a fast-path cache only, so validate any hit against `ghq list -p` before relying on it. On hit: treat the local path as the source of truth and use `~/ghq/...` paths in subsequent prompts and writeups. On miss: acquire the repo with `ghq-sync <url>`, which clones shallow and blobless and registers the path with zoxide, where a raw `ghq get` clones without registering. Prefer the canonical upstream; acquire a personal fork only when contribution back to upstream is anticipated. Never ask the user to clone a Category-2 repository into `~/projects/`. See the `dependency-source-acquisition` skill for the full flow.
-- Category 1 lookup, under `~/projects/`. The steps:
-  1. Search the full tree: `fd -t d -d 4 '^<repo>$' ~/projects` (the canonical layout is `~/projects/<topic>-workspace/<repo>/`, but copies may live elsewhere; repo names can have variants such as `<repo>.jl` or `<repo>-rs`).
-  2. Verify the match: `cd candidate-dir && git remote -v` to confirm the origin matches the expected forge URL. Name collisions are common with single-token repo names, so this step is required, not optional, before treating a candidate as authoritative.
-  3. On hit: treat the local path as the source of truth. Dispatch subagent Tasks to that path for research, reference, or comparison, and use `~/projects/...` paths in subsequent prompts and writeups.
-  4. On miss: surface the failure to the user and ask them to clone or fork the repo to `~/projects/<topic>-workspace/<repo>/` (or to provide the path if it lives elsewhere) before proceeding. Do not silently fall back to `WebFetch`/`WebSearch` for substantive research when a local copy would be more authoritative; web tools remain appropriate only for genuinely web-native content (release notes pages, issue discussions, blog posts). When surfacing the miss, propose the exact command: `git clone <url> ~/projects/<topic>-workspace/<repo>/` for reference-only work, or `gh repo fork <org>/<repo> --clone --remote -- ~/projects/<topic>-workspace/<repo>/` when contribution back to upstream is anticipated. Pause the work thread until the clone is in place or the user provides an alternative path.
-- When given a GitHub file URL (e.g., `https://github.com/org/repo/blob/ref/path/to/file.ext#L119-L131`), apply the lookup above for `repo`, then Read the file with the line range. Use `WebFetch` only if no local copy exists and the user has declined to clone.
-- When given a GitHub issue/PR URL (e.g., `https://github.com/org/repo/issues/2491`), use `gh issue view 2491 -R org/repo` or `gh pr view 2491 -R org/repo` to access discussion content and metadata.
-- When the user appends `(see local)` — or a close variant such as `(see local clone)` or `(local)` — to a name, treat it as a mandatory directive to apply the lookup above for that name *before* responding. The marker removes the "could plausibly identify a git repository" judgment from the trigger bullet above: with the marker present, the lookup is unconditional. Do not answer from general knowledge, do not reach for `WebFetch`/`WebSearch`, and do not ask whether a clone exists. If the lookup returns no hit, fall through to that category's on-miss handling: the Category-1 clone request, or `ghq-sync <url>` for Category 2.
+- When a repository is named, or a substantive technical claim is about to rest on a project's source, options, defaults, API, or upstream documentation, resolve it to a local copy before reasoning about it; see `dependency-source-acquisition` for both lookup categories, the `(see local)` marker directive, and GitHub file, issue, and PR URL handling.

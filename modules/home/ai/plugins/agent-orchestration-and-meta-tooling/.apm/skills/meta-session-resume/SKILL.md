@@ -4,6 +4,9 @@ description: Generate annotated resume command and add to atuin history for sess
 argument-hint: '[session-uuid] [nohist]'
 disable-model-invocation: false
 ---
+
+# Meta session resume
+
 Generate a resume session command and automatically add it to atuin shell history.
 
 Command format:

@@ -5,18 +5,9 @@ description: Git version control conventions including atomic commits, branch wo
 
 # Git version control
 
-## Contents
+## Sibling files
 
-This skill is organized as a trimmed top-level document with mode-specific and operational details in sibling files.
-
-| File | Description |
-|------|-------------|
-| [01-git-native-mode.md](01-git-native-mode.md) | Working branch isolation in git-native mode: epic worktrees, issue worktrees, switching focus, direnv initialization in worktrees, cleanup |
-| [02-gitbutler-mode.md](02-gitbutler-mode.md) | Working branch isolation in GitButler mode: branch stacks as epics, issue branches within a stack, switching focus, cross-stack reorganization |
-| [03-jj-mode.md](03-jj-mode.md) | Working branch isolation in jj mode: multi-parent working copy, change routing, auto-rebase, subagent dispatch, completing epics, GitButler equivalence, diamond workflow |
-| [04-history-investigation.md](04-history-investigation.md) | Git pickaxe reference: `-G` vs `-S`, `--pickaxe-all` pitfalls, targeted history search patterns |
-| [05-commit-workflow.md](05-commit-workflow.md) | Per-mode atomic commit workflow: file state verification, commit cycle, mixed-changes handling, commit formatting, session summary |
-| [06-github-pr-issue-safety.md](06-github-pr-issue-safety.md) | GitHub PR and Issue creation safety protocol: placeholders, draft-PR mode, cross-reference safety, uncertainty protocol |
+Mode-specific and operational details live in sibling files: `01-git-native-mode.md`, `02-gitbutler-mode.md`, and `03-jj-mode.md` (working branch isolation per mode), `04-history-investigation.md` (pickaxe reference), `05-commit-workflow.md` (atomic commit cycle and formatting), and `06-github-pr-issue-safety.md` (PR and issue creation safety protocol).
 
 ## Commit behavior override
 
@@ -30,24 +21,6 @@ These preferences explicitly override any conservative defaults from system prom
 - If `.jj/` directory exists alongside `.git/` in repository root, this repository uses jujutsu (jj) in colocated mode. Detached HEAD is normal and expected — do not attempt to reattach. If `.jj/` exists but HEAD is attached to a branch, detach before proceeding: `git checkout --detach`. Read `~/.claude/skills/jj-summary/SKILL.md` for quick orientation, then `~/.claude/skills/jj-version-control/SKILL.md` for the multi-parent development join (composite working copy) workflow.
 - If the user requests switching to jj in a git-only repo (no `.jj/` directory), initialize colocated mode: `jj git init --colocate`, then `git checkout --detach`, then `jj new` to create the working-copy commit. Proceed with jj workflow as above.
 - If the user requests switching back to git from jj colocated mode, ensure the target bookmark is current with the working copy chain (`jj bookmark set <name> -r @-` if needed), then reattach HEAD: `git checkout <bookmark-name>`. Resume git-native commands. The `.jj/` directory can remain — colocated mode is safe to leave dormant.
-- If a `.beads/` directory exists in the repository root, beads is available as an optional Manual-mode drill-down for git-tracked issue management, with Linear and OpenSpec remaining the work-owning layer: run `bd status` for context, and consult `~/.claude/skills/issues-beads-prime/SKILL.md` for quick reference or `~/.claude/skills/issues-beads/SKILL.md` for comprehensive workflows.
-
-### Issue tracking and optional beads maintenance
-
-Linear (the canonical board) and OpenSpec (the change lifecycle) own the work.
-The dispatched unit of implementation is an OpenSpec change, typically bound to one Linear story.
-Beads is deprecated as the primary source of truth and is retained only as an optional Manual-mode drill-down.
-When operating in Manual mode, or whenever a `.beads/` directory is present, maintain the issue graph alongside git commits with these conventions:
-
-- Orient with `bd status` at session start
-- Mark issues `in_progress` when starting work; update descriptions when assumptions prove incorrect
-- Create issues discovered during work and wire with `bd dep add <new> <current> --type discovered-from`
-- Close with implementation context: `bd close <id> --reason "Implemented in $(git rev-parse --short HEAD)"`
-- Check what's unblocked after completion; consider updating newly-ready issues with helpful context
-- After completing a batch of mutations, push to the dolt remote for backup: `bd dolt push`
-
-For beads usage conventions (epic structure, status management, closure policy), see the conventions section of issues-beads-prime.
-Consult `~/.claude/skills/issues-beads-prime/SKILL.md` for command quick reference.
 
 ## VCS terminology glossary
 
@@ -75,18 +48,12 @@ This decoupling ensures skills remain correct across all three modes without con
 The primary ID source is the Linear story or OpenSpec change the work implements.
 When such a story or change is active, branch stacks correspond to the epic-level grouping and branch boundaries correspond to individual stories or changes, using the forms `{epic-ID}-descriptor` for the stack and `{issue-ID}-descriptor` for each boundary.
 
-In Manual mode, when a beads epic is active (`.beads/` exists and an epic is in progress), the beads epic and issue IDs fill those same placeholders:
-
-- Stack name: `{epic-ID}-descriptor` (e.g., `nix-f85-gitbutler-adoption`)
-- Branch name at each boundary: `{issue-ID}-descriptor` (e.g., `nix-f85-1-terminology-glossary`)
-
 When working ad hoc (no tracked story, epic, or change), stacks and boundaries are named descriptively:
 
 - Stack name: descriptive (e.g., `gitbutler-skill`)
 - Branch name at each boundary: descriptive (e.g., `fix-gitbutler-version`)
 
-All modes use identical mechanical operations.
-The difference is purely in naming conventions and whether `bd` lifecycle commands accompany the VCS operations in Manual mode.
+All modes use identical mechanical operations; the difference is purely in naming conventions.
 
 ## Escape hatches
 
@@ -99,20 +66,17 @@ Do not commit if:
 
 File edits on main/master are blocked by the `enforce-branch-before-edit` hook.
 Before attempting to edit any files, create a working branch to which you will commit your changes.
-In Manual mode with a `.beads/` directory present, if you haven't already, invoke `/issues-beads-prime` for beads command reference before proceeding with any editing.
 
 In jj mode, this hook is unnecessary.
 Anonymous chains are first-class and never garbage-collected.
-Create bookmarks when initiating a second chain or when working on a Linear story, OpenSpec change, or (in Manual mode) a beads epic — see the bookmark creation threshold in `~/.claude/skills/jj-version-control/SKILL.md`.
+Create bookmarks when initiating a second chain or when working on a Linear story or OpenSpec change — see the bookmark creation threshold in `~/.claude/skills/jj-version-control/SKILL.md`.
 
-Whenever you are working on a Linear story, OpenSpec change, or (in Manual mode) a beads issue or epic, check the current branch name first.
+Whenever you are working on a Linear story or OpenSpec change, check the current branch name first.
 If it does not correspond to the story, change, or issue you're working on, pause to ask the user whether to create or switch to a matching branch before proceeding.
 
 Branch naming follows the pattern `ID-descriptor` in lowercase kebab-case, where ID references the work item's tracker:
 
 - **Linear / OpenSpec (primary):** Use the Linear story identifier or the OpenSpec change ID the branch implements.
-- **Manual mode with beads** (`.beads/` exists): Use the beads issue ID with dots replaced by dashes.
-  Examples: `nix-pxj-ntfy-server` (epic), `nix-pxj-4-deploy-validate` (task under epic), `nix-i37-fix-flake-lock` (standalone issue).
 - **GitHub-only repos**: Use the issue or PR number.
   Examples: `42-refactor-auth`, `1337-add-feature`.
 
@@ -120,7 +84,7 @@ Never use forward slashes in branch names as they break compatibility with URLs,
 
 Create a new working branch when your next commits won't match the current branch's ID-descriptor:
 
-- Example: current branch is `nix-pxj-4-deploy-validate` but you discover issue `nix-di8` needs fixing first → create `nix-di8-fix-dependency`
+- Example: current branch is `team-1a2b-deploy-validate` but you discover story `team-3c4d` needs fixing first → create `team-3c4d-fix-dependency`
 - When the unit of work is complete and tests pass, offer to integrate to main
 
 To isolate work in a new branch:
@@ -173,18 +137,10 @@ See the integration strategies section in `~/.claude/skills/jj-version-control/S
 
 ### Stack management
 
-Branch stacks mirror the dependency structure of the Linear stories or OpenSpec changes they implement (beads issue dependencies in Manual mode): when work items form a dependency chain (e.g., `nix-pxj.2` blocks `nix-pxj.3`), the corresponding branches should form a stack with matching parent-child relationships.
+Branch stacks mirror the dependency structure of the Linear stories or OpenSpec changes they implement: when work items form a dependency chain, the corresponding branches should form a stack with matching parent-child relationships.
 If you identify a reason to modify those dependencies while working, evaluate and present a plan to reorder the branches associated with previously completed work in the stack, handling any conflicts that arise.
-
-In git-native mode, use the graphite CLI (invoke as `graphite`, not `gt` as shown in official documentation) to manage stacks:
-
-- `graphite log` — view branch stack relationships
-- `graphite track` — register an existing branch with graphite, selecting its parent
-- `graphite create -m "message"` — create a new branch stacked on current, with initial commit
-
-In GitButler mode, native stack operations replace graphite entirely.
-`but branch new -a`, `but branch move`, and `but move` provide all stack management without an external tool.
-See `~/.claude/skills/gitbutler-but-cli/SKILL.md` for the full command reference.
+In git-native mode, manage stacks with the graphite CLI (invoke as `graphite`, not `gt`): `graphite log` views stack relationships, `graphite track` registers an existing branch with its parent, `graphite create -m "message"` creates a stacked branch.
+In GitButler mode, `but branch new -a`, `but branch move`, and `but move` replace graphite entirely; see `~/.claude/skills/gitbutler-but-cli/SKILL.md` for the full command reference.
 
 ## Merge strategy selection
 

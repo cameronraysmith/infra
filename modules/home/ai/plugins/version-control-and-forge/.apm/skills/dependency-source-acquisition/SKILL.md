@@ -1,19 +1,44 @@
 ---
 name: dependency-source-acquisition
-description: Acquire a correct local copy of a dependency's or research-reference repo's upstream source and review it whole, instead of reading it one file at a time through the GitHub API or web UI. Use when acquiring or reviewing the source of a Category-2 dependency or reference repo, downloading upstream source to study locally, resolving a package's source-repository URL from cargo/uv/bun/nix metadata, or working with ghq to clone and catalog upstream sources.
+description: Resolve a named repository to a local copy before reasoning about it, and acquire one when missing. Covers both lookup categories: Category 1 (repositories we maintain, under ~/projects/<repo>) and Category 2 (third-party and reference repositories, under ~/ghq via ghq). Use whenever a repository is named in a task, when about to state a substantive technical claim grounded in a project's source, options, defaults, API, or upstream documentation, when resolving a package's source-repository URL from cargo/uv/bun/nix metadata, when a "(see local)" marker is appended to a name, or when given a GitHub file, issue, or PR URL.
 ---
 
 # Dependency source acquisition
 
 ## When to fire
 
-When working in — or researching for potential inclusion — a dependency or reference repository we do not primarily maintain, acquire a correct local copy of its upstream source and review it as a whole, rather than fetching one file at a time through the GitHub API or web UI.
+When a repository is named — or a substantive technical claim is about to rest on a project's source, options, defaults, API, or upstream documentation — check for a local copy first; treat the lookup as the default and bypass it only with explicit justification.
 Whole-tree review with `rg`, `fd`, and direct file reads surfaces cross-file structure, call sites, and conventions that piecemeal API fetches miss, and it costs one clone instead of many round trips.
 
-This skill governs Category 2 only.
-Category 1 — repositories we develop or maintain — stays under `~/projects/<topic>-workspace/<repo>/` per the `~/projects/` lookup convention in preferences-style-and-conventions.
-Category 2 — third-party dependencies and research-reference repositories we consult but do not maintain — is acquired and cataloged through ghq, described below.
-The distinguishing question is authorship: if we cut releases or land commits upstream it is Category 1; if we only read it, it is Category 2.
+Resolve the org first: a bare name is often ambiguous — `gh search repos <name>` returns dozens of matches for a common word — and the org determines everything downstream.
+A fully-qualified `org/repo` or a forge URL settles identity outright; when more than one plausible match survives a search, ask which one was meant rather than guessing.
+
+Then branch on authorship.
+The distinguishing question: if we cut releases or land commits upstream it is Category 1; if we only read it, it is Category 2.
+
+## Category 1 lookup — repositories we maintain
+
+Category 1 lives under `~/projects/<repo>/` (copies may sit deeper; repo names can have variants such as `<repo>.jl` or `<repo>-rs`).
+The firstmate home at `~/firstmate` is itself a maintained repository.
+
+1. Search the tree: `fd -t d -d 4 '^<repo>$' ~/projects`
+2. Verify the match: `cd <candidate> && git remote -v` to confirm the origin matches the expected forge URL.
+   Name collisions are common with single-token repo names, so this step is required, not optional, before treating a candidate as authoritative.
+3. On hit: treat the local path as the source of truth, dispatch research subagents to it, and use that path in prompts and writeups.
+4. On miss: surface the failure to the user and ask them to clone it to `~/projects/<repo>/` (or provide the path if it lives elsewhere) before proceeding; propose the exact command — `git clone <url> ~/projects/<repo>/` for reference-only work, or `gh repo fork <org>/<repo> --clone --remote -- ~/projects/<repo>/` when contribution back upstream is anticipated.
+   Do not silently fall back to web tools for substantive research when a local copy would be more authoritative; web tools remain appropriate only for genuinely web-native content (release notes, issue discussions, blog posts).
+
+Never ask the user to clone a Category-2 repository into `~/projects/`.
+
+## The `(see local)` marker
+
+When the user appends `(see local)` — or a close variant such as `(see local clone)` or `(local)` — to a name, the lookup above is unconditional: do not answer from general knowledge, do not reach for web tools, and do not ask whether a clone exists.
+If the lookup returns no hit, fall through to that category's on-miss handling above.
+
+## GitHub URL handling
+
+Given a GitHub file URL (e.g. `https://github.com/org/repo/blob/ref/path#L119-L131`), apply the lookup for `repo`, then read the file with the line range.
+Given an issue or PR URL (e.g. `https://github.com/org/repo/issues/2491`), use `gh issue view 2491 -R org/repo` or `gh pr view 2491 -R org/repo`.
 
 ## Engine: ghq
 
@@ -132,4 +157,4 @@ On a gap, fall back to `https://pypi.org/pypi/<pkg>/json` `.info.project_urls` (
 Once the source is local, review the whole tree with `rg`, `fd`, and file reads rather than fetching individual files through the GitHub API.
 Record nothing extra: `ghq list` is the catalog, so there is no manifest to maintain.
 
-The `~/projects/` Category-1 lookup convention in preferences-style-and-conventions is the policy anchor for this skill; this skill is its Category-2 arm.
+This skill is the canonical home for both lookup categories; the global context file's session protocol and the style skill both defer to it.
