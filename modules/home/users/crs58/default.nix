@@ -129,7 +129,7 @@ let
       };
 
       # sops-nix configuration for crs58/cameron user
-      # 22 secrets: development + ai + shell aggregates
+      # 23 secrets: development + ai + shell aggregates
       sops = {
         defaultSopsFile = flake.inputs.self + "/secrets/home-manager/users/crs58/secrets.yaml";
         secrets = {
@@ -157,6 +157,15 @@ let
           # against the live magnetite server (a user-run bootstrap gate), so
           # home-manager activation requires the minted value to be present.
           cognee-api-key = { };
+          # Moshi pairing token, copied from the app's Settings -> Hooks screen
+          # and consumed once per host by the moshi-hook launcher in
+          # modules/home/ai/moshi. Seeded blank in secrets.yaml because
+          # sops-nix validates every declared key when the generation is built:
+          # the key has to exist before the token does. A blank value leaves
+          # the daemon serving its local socket unpaired.
+          moshi-pairing-token = {
+            mode = "0400";
+          };
           bitwarden-email = { };
           atuin-key = { };
           mcp-agent-mail-bearer-token = { };
@@ -231,6 +240,11 @@ let
 
         # Note: Radicle keys deployed via home.file below (not sops.templates due to pure eval path issues)
       };
+
+      # The token is a bearer credential for registering this host with Moshi,
+      # so the daemon is handed the decrypted path rather than the value; see
+      # modules/home/ai/moshi for how the launcher consumes it.
+      services.moshi-hook.pairingTokenFile = config.sops.secrets.moshi-pairing-token.path;
 
       # Deploy radicle public key (not secret - can be plaintext, but identity-bound)
       # This is the SSH public key used for Radicle node identity
