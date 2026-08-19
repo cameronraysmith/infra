@@ -9,7 +9,7 @@
 # The daemon is per-user, not per-machine: it owns a Unix socket that the user's
 # agent processes post hook events to, and a WebSocket carrying that user's
 # Moshi pairing. Nothing about it belongs to a system-wide service manager, so
-# home-manager -- which reaches every host in this fleet where agent sessions
+# home-manager -- which reaches every host in this repository where agent sessions
 # run -- is the layer that carries it.
 #
 # Upstream defaults the macOS secret store to Keychain, which cannot be reached
@@ -225,7 +225,7 @@
 
           # Agent-hook reconciliation.
           #
-          # This fleet generates the agent configuration files that
+          # This repository generates the agent configuration files that
           # `moshi-hook install` also writes into -- ~/.claude/settings.json and
           # ~/.codex/config.toml are reinstalled wholesale on every activation,
           # so anything moshi added to them is gone by the time the daemon next
@@ -258,7 +258,7 @@
                 $DRY_RUN_CMD install -d -m 0700 ${lib.escapeShellArg cfg.stateDir}
 
                 # Reported, not swallowed, and not fatal: a malformed config file
-                # belonging to an agent this fleet does not manage would otherwise
+                # belonging to an agent this repository does not manage would otherwise
                 # be able to fail an entire generation switch.
                 if ! $DRY_RUN_CMD ${localBinAbs}/moshi-hook install; then
                   warnEcho "moshi-hook install failed; agent hooks may be stale. Re-run ${localBinAbs}/moshi-hook install"
