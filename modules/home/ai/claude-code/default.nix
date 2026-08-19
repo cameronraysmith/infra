@@ -135,7 +135,7 @@
                 # cognee
                 "cognee-memory@cognee" = false;
                 # cloudflare
-                "cloudflare@cloudflare" = true;
+                "cloudflare@cloudflare" = false;
                 # dagster
                 "dagster-expert@dagster" = true;
                 "dignified-python@dagster" = false;
@@ -152,7 +152,7 @@
                 "clinical-trial-protocol@life-sciences" = false;
                 "clinical-trials@life-sciences" = false;
                 # ouroboros
-                "ouroboros@ouroboros" = true;
+                "ouroboros@ouroboros" = false;
               };
               voiceEnabled = true;
               remoteControlAtStartup = true;
