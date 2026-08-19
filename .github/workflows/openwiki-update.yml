@@ -1,0 +1,5 @@
+# dummy workflow: use cli to update
+name: OpenWiki Update
+on:
+  workflow_dispatch:
+
