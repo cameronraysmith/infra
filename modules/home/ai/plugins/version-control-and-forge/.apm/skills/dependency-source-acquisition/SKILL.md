@@ -1,6 +1,6 @@
 ---
 name: dependency-source-acquisition
-description: Resolve a named repository to a local copy before reasoning about it, and acquire one when missing. Covers both lookup kinds: maintained repositories under ~/projects/<repo> and reference repositories under ~/ghq via ghq. Use whenever a repository is named in a task, when about to state a substantive technical claim grounded in a project's source, options, defaults, API, or upstream documentation, when resolving a package's source-repository URL from cargo/uv/bun/nix metadata, when a "(see local)" marker is appended to a name, or when given a GitHub file, issue, or PR URL.
+description: Resolve a named repository to a local copy before reasoning about it, and acquire one when missing. Covers two lookup kinds, maintained repositories under ~/projects/<repo> and reference repositories under ~/ghq via ghq. Use whenever a repository is named in a task, when about to state a substantive technical claim grounded in a project's source, options, defaults, API, or upstream documentation, when resolving a package's source-repository URL from cargo/uv/bun/nix metadata, when a "(see local)" marker is appended to a name, or when given a GitHub file, issue, or PR URL.
 ---
 
 # Dependency source acquisition
