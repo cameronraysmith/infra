@@ -15,7 +15,7 @@ This change is itself built in HIL mode through the superpowers-bridge as a dogf
 
 **Goals:**
 
-Establish three skills that compose existing surfaces by delegation: a Claude-Code-only state-machine router, an agent-general project-management hub, and an agent-general linear-cli-driven Linear↔OpenSpec sync overlay.
+Establish three skills that compose existing surfaces by delegation: a Claude-Code-only state-machine router, an agent-general linear project management hub, and an agent-general linear-cli-driven Linear↔OpenSpec sync overlay.
 Make the Linear-story↔OpenSpec-change binding the primary cross-reference, stored in the change's proposal.md frontmatter (linear_story_*, linear_team, linear_project) and resolved against the openspec/linear.yaml monorepo registry, and bind technical status roll-up to four forward lifecycle transitions plus a re-queue and two terminal exits.
 Specify a minimal per-change sync ledger in proposal.md frontmatter (HIL-only; AFK keeps counter and attempt-log equivalents in its plan file, Manual carries none) as the authoritative current-phase signal and the home of idempotency, the bounded-retries counter, and a best-effort-write attempt log.
 Encode the Linear workspace safety gate as the hardest constraint, keyed on confirmed credentials rather than on LINEAR_WORKSPACE.
@@ -37,7 +37,7 @@ Do not resolve the apply-phase jj-versus-worktree reconciliation here; it is con
 
 Choice: build three skills with placement following the house nix-discovery convention.
 The router lands at `modules/home/ai/skills/src/claude/agentic-planning-development-workflow/` because it depends on Claude-Code-only orchestration surfaces (slash commands, Task/subagent dispatch, Claude Code Workflows); src/claude is appended only to Claude Code.
-The PM hub lands at `modules/home/ai/skills/src/core/project-management/` and the sync overlay at `modules/home/ai/skills/src/core/openspec-linear-sync/`; both are agent-general, and src/core flows to all agents.
+The PM hub lands at `modules/home/ai/skills/src/core/linear-project-management/` and the sync overlay at `modules/home/ai/skills/src/core/openspec-linear-sync/`; both are agent-general, and src/core flows to all agents.
 Each directory is auto-discovered by `readSkillsFrom` in `modules/home/ai/skills/default.nix`; no manual nix registration is needed.
 
 All three reference trees are one level deep, per the agentskills spec ("Keep file references one level deep from SKILL.md", specification.mdx:235) and the house precedent that no existing skill nests references two levels.
@@ -57,8 +57,8 @@ src/claude/agentic-planning-development-workflow/
     codex-review.md                 (the roborev sub-gate binding: inline codex review runbook, diamond-safe range, advisory verdict, panel mode)
     collaborators.md                (the four-collaborator ownership map: PM hub, this router, the opsx+superpowers-bridge flow, openspec-linear-sync)
 
-src/core/project-management/
-  SKILL.md                          (human-facing PM hub; lean index + Contents table grouped by prefix)
+src/core/linear-project-management/
+  SKILL.md                          (linear project management hub; lean index + Contents table grouped by prefix)
   references/
     linear-overview.md              (Initiative > Project > Milestone > Issue; Cycles as overlay)
     linear-workspace-safety-gate.md (the hardest constraint; auth whoami gate)
@@ -81,7 +81,7 @@ The subfile cuts follow progressive disclosure: the router splits along the axes
 The three SKILL.md descriptions carry explicit "Load when" triggers in house frontmatter form, written for keyword non-overlap as a skill-quality discipline:
 
 - router: "State-machine router across a Linear-canonical board with an AFK/HIL/Manual execution-mode fork. Load when selecting an execution mode for a change, driving the agentic planning-and-development board, or routing a change between board states." Keywords avoid the session-advisor routing vocabulary (it owns beads-graph-metric routing), the issues-beads vocabulary (issue tracking), and the linear-cli skill vocabulary (Linear verbs).
-- PM hub: "Human-facing project-management hub for the Linear Method ontology, conventions, and the workspace safety gate. Load when reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers." Keywords avoid routing and avoid raw Linear CLI verbs.
+- PM hub: "Linear project management hub for the Linear Method ontology, conventions, and the workspace safety gate. Load when reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers." Keywords avoid routing and avoid raw Linear CLI verbs.
 - sync overlay: "linear-cli-driven Linear↔OpenSpec lifecycle sync. Load when binding a Linear story to an OpenSpec change, mirroring lifecycle phase to Linear state, or running the archive-time document upsert." Keywords avoid project-management ontology and avoid mode-routing.
 
 Trigger non-collision against session-advisor (routing), issues-beads (issue tracking), and the bundled linear-cli skill (Linear verbs) is a self-imposed, human-adjudicated skill-quality gate with no machine enforcement.
@@ -312,4 +312,4 @@ The session-advisor↔router routing overlap is a deferred follow-up by explicit
 The AFK delegation dispatch surface is recorded as a bounded open question: the router's AFK behavior is "hand off to the Claude Code Workflows feature and track via its plan checkboxes," but whether the concrete dispatch target is the Claude Code Workflows feature directly or a named cc-dynamic-workflow (cross-referencing the ouroboros-loop cc-dynamic-workflow skill) is left open for the apply gate.
 
 The OpenSpec change name (agentic-planning-development-management-skills) intentionally differs from deliverable 1's router skill directory name (agentic-planning-development-workflow); confirm the change name and the router skill name are meant to stay distinct.
-The three naming axes are deliberately distinct and each axis is internally self-consistent: the spec capability name `agentic-workflow-routing` (spec-dir == proposal-capability), the router skill-dir-plus-frontmatter name `agentic-planning-development-workflow` (skill-dir == frontmatter-name), and the change name `agentic-planning-development-management-skills`; likewise the PM-hub capability `project-management-hub` versus its skill-dir-plus-frontmatter name `project-management`, so a capability name need not correspond to any file or directory.
+The three naming axes are deliberately distinct and each axis is internally self-consistent: the spec capability name `agentic-workflow-routing` (spec-dir == proposal-capability), the router skill-dir-plus-frontmatter name `agentic-planning-development-workflow` (skill-dir == frontmatter-name), and the change name `agentic-planning-development-management-skills`; likewise the PM-hub capability `project-management-hub` versus its skill-dir-plus-frontmatter name `linear-project-management`, so a capability name need not correspond to any file or directory.

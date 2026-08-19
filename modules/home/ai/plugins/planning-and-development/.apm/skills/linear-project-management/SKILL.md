@@ -1,9 +1,9 @@
 ---
-name: project-management
-description: Human-facing project-management hub for the Linear Method ontology, conventions, and the workspace safety gate. Load when reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers.
+name: linear-project-management
+description: Linear project management hub for the Linear Method ontology, conventions, and the workspace safety gate. Load when reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers.
 ---
 
-# Project management hub
+# Linear project management hub
 
 This is the human-facing hub for how work is structured across the layers in this workspace.
 It documents the project-management model, conventions, and constraints; it does not itself mutate any tracker.

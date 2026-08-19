@@ -30,7 +30,7 @@ The team is required but the project is optional: an issue with no Linear projec
 The overlay never auto-selects a Backlog candidate: a candidate that could be inferred is still deferred to the human.
 Spec content is mirrored to Linear only at archive time; no design.md or tasks.md content is ever copied to Linear.
 
-The Linear workspace safety gate is the hardest constraint and is owned by the project-management hub's `linear-workspace-safety-gate.md`: never propose a mutation until `linear auth whoami` confirms the correct personal-versus-work workspace, key the gate on confirmed credentials rather than on LINEAR_WORKSPACE, pass an explicit `--workspace <slug>` (or rely on the confirmed `credentials.toml` default) on every mutation, and never run a mutating `linear auth` command.
+The Linear workspace safety gate is the hardest constraint and is owned by the linear-project-management hub's `linear-workspace-safety-gate.md`: never propose a mutation until `linear auth whoami` confirms the correct personal-versus-work workspace, key the gate on confirmed credentials rather than on LINEAR_WORKSPACE, pass an explicit `--workspace <slug>` (or rely on the confirmed `credentials.toml` default) on every mutation, and never run a mutating `linear auth` command.
 
 ## Contents
 

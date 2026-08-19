@@ -193,7 +193,7 @@ The eight non-`preferences` packages (56 skills):
 |---|---|---|
 | beads-issue-tracking-and-session-workflow (14) | toggle-off | issues-beads, issues-beads-audit, issues-beads-checkpoint, issues-beads-evolve, issues-beads-init, issues-beads-orient, issues-beads-prime, issues-beads-seed, session-advisor, session-orient, session-plan, session-review, session-checkpoint, stigmergic-convention |
 | formal-specification-and-refinement (2) | fresh-retain | nucleus-platform, refinement-driven-development |
-| planning-and-development (3) | fresh-retain | agentic-planning-development-workflow, openspec-linear-sync, project-management |
+| planning-and-development (3) | fresh-retain | agentic-planning-development-workflow, openspec-linear-sync, linear-project-management |
 | agent-orchestration-and-meta-tooling (15) | stable | meta-agent-teams, meta-list-all-agents, meta-list-all-tools, meta-load-cc-docs, meta-orchestrate-dispatch, meta-orchestrator-checkpoint, meta-orchestrator-initiate, meta-search-sessions, meta-session-resume, meta-skill-creator, meta-create-workspace-agents-md, meta-generate-context-test, meta-generate-handoff-prompt, meta-load-prompting-docs, meta-optimize-prompt |
 | version-control-and-forge (8) | stable | jj-git-interactive-rebase-to-jj, jj-history-cleanup, jj-summary, jj-version-control, jj-workflow, gitbutler-but-cli, git-commit-prompt, github-browse |
 | document-authoring-and-visualization (6) | stable | doc-to-md, doc-to-md-cmd, web-to-markdown, knowledge-graph, scientific-visualization, text-to-visual-iteration |

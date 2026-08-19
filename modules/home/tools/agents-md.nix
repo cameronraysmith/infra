@@ -66,7 +66,7 @@
           - documentation: ${skillsPath}/preferences-documentation/SKILL.md
           - change management: ${skillsPath}/preferences-change-management/SKILL.md
           - agentic planning and development (state-machine router across the Linear-canonical board Backlog -> Todo -> In Progress -> In Review -> Done; AFK/HIL/Manual execution-mode fork; four file-anchored OpenSpec-artifact forward gates): ${skillsPath}/agentic-planning-development-workflow/SKILL.md
-          - project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work): ${skillsPath}/project-management/SKILL.md
+          - linear project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work): ${skillsPath}/linear-project-management/SKILL.md
           - superpowers discipline gate (invoke the relevant skill before any response or action, including clarifying questions; process-skills-first): ${skillsPath}/using-superpowers/SKILL.md
           - session resumption (resume command, atuin history, session continuation): ${skillsPath}/meta-session-resume/SKILL.md
           - session search (session transcript discovery, keyword intersection): ${skillsPath}/meta-search-sessions/SKILL.md

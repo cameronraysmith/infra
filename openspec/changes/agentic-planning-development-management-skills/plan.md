@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) to implement this plan task-by-task, or take the documented manual-fallback opt-in path described in the Apply execution note below. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build three composing-by-delegation agent skills (a Claude-Code-only state-machine router, an agent-general project-management hub, and an agent-general linear-cli-driven Linear-to-OpenSpec sync overlay) realizing design.md D1 through D11.
+**Goal:** Build three composing-by-delegation agent skills (a Claude-Code-only state-machine router, an agent-general linear project management hub, and an agent-general linear-cli-driven Linear-to-OpenSpec sync overlay) realizing design.md D1 through D11.
 
 **Architecture:** Three skill directories drop into the nix-discovery skills tree (router under `src/claude/`, hub and sync overlay under `src/core/`), auto-discovered by `readSkillsFrom` with no manual registration; each SKILL.md is a lean index plus Contents table under roughly 350 lines with operational detail in flat one-level references leaves; the only modified file is a stale comment in crs58's home module.
 
@@ -75,18 +75,18 @@ Expected: matches only in the negative-assertion context (the router states it d
 
 Commit the four router references. (Apply executor: route per the agreed jj routing; no `git worktree add`.)
 
-## Task 3: PM hub SKILL.md index (project-management-hub)
+## Task 3: PM hub SKILL.md index (linear-project-management)
 
 **Files:**
-- Create: `modules/home/ai/skills/src/core/project-management/SKILL.md`
+- Create: `modules/home/ai/skills/src/core/linear-project-management/SKILL.md`
 
 - [ ] **Step 1: Write the SKILL.md frontmatter and prefix-grouped index**
 
-Frontmatter `name: project-management`. Description is the design D1 hub trigger: "Human-facing project-management hub for the Linear Method ontology, conventions, and the workspace safety gate. Load when reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers." Body is a lean index with a Contents table grouped by the four filename prefixes (linear, github, beads, method).
+Frontmatter `name: linear-project-management`. Description is the design D1 hub trigger: "Linear project management hub for the Linear Method ontology, conventions, and the workspace safety gate. Load when reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers." Body is a lean index with a Contents table grouped by the four filename prefixes (linear, github, beads, method).
 
 - [ ] **Step 2: Verify the index parses, the frontmatter name matches the directory, and the Contents table groups by prefix**
 
-Run: `wc -l modules/home/ai/skills/src/core/project-management/SKILL.md`, `rg -n '^name: project-management$' modules/home/ai/skills/src/core/project-management/SKILL.md` (asserting the frontmatter `name` equals the directory basename, load-bearing for `readSkillsFrom` discovery), and `rg -n "linear-|github-|beads-|method-" modules/home/ai/skills/src/core/project-management/SKILL.md`
+Run: `wc -l modules/home/ai/skills/src/core/linear-project-management/SKILL.md`, `rg -n '^name: linear-project-management$' modules/home/ai/skills/src/core/linear-project-management/SKILL.md` (asserting the frontmatter `name` equals the directory basename, load-bearing for `readSkillsFrom` discovery), and `rg -n "linear-|github-|beads-|method-" modules/home/ai/skills/src/core/linear-project-management/SKILL.md`
 Expected: under ~350 lines; the frontmatter assertion returns one match; the Contents table references the six prefixed leaves.
 
 - [ ] **Step 3: Commit**
@@ -96,12 +96,12 @@ Commit the PM hub index. (Apply executor: route per the agreed jj routing; no `g
 ## Task 4: PM hub references leaves
 
 **Files:**
-- Create: `.../project-management/references/linear-overview.md`
-- Create: `.../project-management/references/linear-workspace-safety-gate.md`
-- Create: `.../project-management/references/linear-conventions.md`
-- Create: `.../project-management/references/github-overview.md`
-- Create: `.../project-management/references/beads-overview.md`
-- Create: `.../project-management/references/method-overview.md`
+- Create: `.../linear-project-management/references/linear-overview.md`
+- Create: `.../linear-project-management/references/linear-workspace-safety-gate.md`
+- Create: `.../linear-project-management/references/linear-conventions.md`
+- Create: `.../linear-project-management/references/github-overview.md`
+- Create: `.../linear-project-management/references/beads-overview.md`
+- Create: `.../linear-project-management/references/method-overview.md`
 
 - [ ] **Step 1: Write linear-overview.md**
 
@@ -129,12 +129,12 @@ Committed (not optional). Synthesize Linear Method plus CCPM principles with no 
 
 - [ ] **Step 7: Verify references are flat and the safety gate is present**
 
-Run: `fd . modules/home/ai/skills/src/core/project-management/references -t f` (expect six flat leaves) and `rg -n "linear auth whoami" modules/home/ai/skills/src/core/project-management/references/linear-workspace-safety-gate.md` (expect a match).
+Run: `fd . modules/home/ai/skills/src/core/linear-project-management/references -t f` (expect six flat leaves) and `rg -n "linear auth whoami" modules/home/ai/skills/src/core/linear-project-management/references/linear-workspace-safety-gate.md` (expect a match).
 Expected: six files; the gate text present.
 
 - [ ] **Step 8: Verify no copied upstream text**
 
-Run: `rg -n "LINEAR_WORKSPACE" modules/home/ai/skills/src/core/project-management/references/linear-workspace-safety-gate.md`
+Run: `rg -n "LINEAR_WORKSPACE" modules/home/ai/skills/src/core/linear-project-management/references/linear-workspace-safety-gate.md`
 Expected: matches appear only in the do-not-key-on-this negative context.
 
 - [ ] **Step 9: Commit**
@@ -205,12 +205,12 @@ Commit the three sync overlay references. (Apply executor: route per the agreed 
 - [ ] **Step 1: Adjudicate trigger non-overlap as a self-imposed skill-quality gate and record the verdict**
 
 This is a self-imposed, human-adjudicated skill-quality gate with NO machine enforcement: the bridge verify check 6 is the `docs/superpowers/specs/*.md` output-routing leak detector (it passes trivially here because this change writes no such files), not a SKILL.md trigger-collision detector. Perform the comparison and record the verdict explicitly so a reviewer sees it was done.
-Run: `rg -n "Load when" modules/home/ai/skills/src/{claude/agentic-planning-development-workflow,core/project-management,core/openspec-linear-sync}/SKILL.md`
+Run: `rg -n "Load when" modules/home/ai/skills/src/{claude/agentic-planning-development-workflow,core/linear-project-management,core/openspec-linear-sync}/SKILL.md`
 Expected: the router trigger avoids routing-by-graph-metrics (session-advisor), issue-tracking (issues-beads), and raw Linear-verb (linear-cli) vocabulary; the hub avoids routing and raw verbs; the sync avoids PM ontology and mode-routing. Compare against `rg -n "description:" modules/home/ai/skills/src/core/session-advisor/SKILL.md modules/home/ai/skills/src/core/issues-beads/SKILL.md` and the bundled linear-cli skill description, then record the human-adjudicated non-collision verdict (carried into verify.md at the verify gate).
 
 - [ ] **Step 2: Assert references-by-delegation, not duplication**
 
-Run: `rg -n "session-orient|session-advisor|issues-beads|linear-cli|opsx|superpowers" modules/home/ai/skills/src/claude/agentic-planning-development-workflow/ modules/home/ai/skills/src/core/project-management/ modules/home/ai/skills/src/core/openspec-linear-sync/`
+Run: `rg -n "session-orient|session-advisor|issues-beads|linear-cli|opsx|superpowers" modules/home/ai/skills/src/claude/agentic-planning-development-workflow/ modules/home/ai/skills/src/core/linear-project-management/ modules/home/ai/skills/src/core/openspec-linear-sync/`
 Expected: each skill references the existing skills by name (delegation) without inlining their content.
 
 - [ ] **Step 3: Commit**
@@ -253,9 +253,9 @@ Expected: the build succeeds and the three new skills are present in the store o
 - [ ] **Step 2: Confirm symlink wiring for src/core versus src/claude**
 
 After switching the target host, enumerate the resolved Claude Code skill symlinks and assert membership:
-Run: `fd -t l 'project-management|openspec-linear-sync|agentic-planning-development-workflow' ~/.claude/skills` and, for the agent-general pair, `fd -t l 'project-management|openspec-linear-sync' ~/.factory/skills`.
-Alternatively, on the build host, a `nix eval` attrName-membership check on the skills attrset (for example `nix eval .#darwinConfigurations.stibnite.config.programs.claude-code.skills --apply 'x: builtins.attrNames x' 2>&1 | rg 'agentic-planning-development-workflow|project-management|openspec-linear-sync'`).
-Expected: all three resolve under Claude Code (`~/.claude/skills`); only `project-management` and `openspec-linear-sync` resolve under the agent-general directories (`~/.factory/skills`), confirming the router is Claude-Code-only (src/claude) while the hub and sync are agent-general (src/core).
+Run: `fd -t l 'linear-project-management|openspec-linear-sync|agentic-planning-development-workflow' ~/.claude/skills` and, for the agent-general pair, `fd -t l 'linear-project-management|openspec-linear-sync' ~/.factory/skills`.
+Alternatively, on the build host, a `nix eval` attrName-membership check on the skills attrset (for example `nix eval .#darwinConfigurations.stibnite.config.programs.claude-code.skills --apply 'x: builtins.attrNames x' 2>&1 | rg 'agentic-planning-development-workflow|linear-project-management|openspec-linear-sync'`).
+Expected: all three resolve under Claude Code (`~/.claude/skills`); only `linear-project-management` and `openspec-linear-sync` resolve under the agent-general directories (`~/.factory/skills`), confirming the router is Claude-Code-only (src/claude) while the hub and sync are agent-general (src/core).
 
 - [ ] **Step 3: OpenSpec delta-spec structural validity check**
 
@@ -264,7 +264,7 @@ Expected: every item reports valid (this is the verify gate's first check; runni
 
 - [ ] **Step 4: Workspace-safety-gate presence check**
 
-Run: `rg -n "linear auth whoami" modules/home/ai/skills/src/core/project-management/ modules/home/ai/skills/src/core/openspec-linear-sync/`
+Run: `rg -n "linear auth whoami" modules/home/ai/skills/src/core/linear-project-management/ modules/home/ai/skills/src/core/openspec-linear-sync/`
 Expected: the gate text present in both the hub and the sync overlay surfaces.
 
 - [ ] **Step 5: Commit**
@@ -278,7 +278,7 @@ Commit any wiring fixes surfaced by the build. (Apply executor: route per the ag
 
 - [ ] **Step 1: Confirm the structural acceptance criteria**
 
-Run: `wc -l modules/home/ai/skills/src/{claude/agentic-planning-development-workflow,core/project-management,core/openspec-linear-sync}/SKILL.md`
+Run: `wc -l modules/home/ai/skills/src/{claude/agentic-planning-development-workflow,core/linear-project-management,core/openspec-linear-sync}/SKILL.md`
 Expected: each under ~350 lines, in lean-index plus Contents-table form with detail in references leaves.
 
 - [ ] **Step 2: Confirm the dogfood lifecycle reaches archive without linear_story_* frontmatter**

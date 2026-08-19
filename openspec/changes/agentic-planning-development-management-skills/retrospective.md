@@ -28,7 +28,7 @@ b7e09bc9 docs(agentic-planning): scaffold superpowers-bridge change + brainstorm
 03872564 docs(agentic-planning): proposal + design artifacts
 c2636986 docs(agentic-planning): specs + tasks + plan artifacts
 623d18f8 feat(skills/agentic-planning-development-workflow): state-machine router skill
-70a6e054 feat(skills/project-management): human-facing PM hub skill
+70a6e054 feat(skills/linear-project-management): linear project management hub skill
 a17212f5 feat(skills/openspec-linear-sync): linear-cli Linear/OpenSpec sync overlay skill
 f91a755e fix(home/crs58): correct stale linear-cli bundled-skills comment (38 -> 1 dir/16 refs)
 29114371 docs(agentic-planning): verify artifact (PASS WITH WARNINGS)

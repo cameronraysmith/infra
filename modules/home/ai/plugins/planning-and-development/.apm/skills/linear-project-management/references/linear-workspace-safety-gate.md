@@ -1,6 +1,6 @@
 # Linear workspace safety gate
 
-This is the hardest constraint in the entire project-management hub.
+This is the hardest constraint in the entire linear project management hub.
 Read it before proposing any Linear mutation, in this hub or in the openspec-linear-sync overlay.
 
 ## The gate

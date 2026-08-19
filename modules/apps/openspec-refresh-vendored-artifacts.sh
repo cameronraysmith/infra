@@ -31,7 +31,7 @@ repo_root="$(git rev-parse --show-toplevel)"
 # the 12 generated openspec-* skills are vendored into the planning-and-development
 # apm package so they ship through apm-skills-compose; this directory ALSO holds
 # four hand-authored skills (agentic-planning-development-workflow,
-# openspec-bdd-bridge, openspec-linear-sync, project-management) which this script
+# openspec-bdd-bridge, openspec-linear-sync, linear-project-management) which this script
 # must never touch. the openspec module's assets/ tree now holds only the
 # superpowers-bridge schema bundle (no skills/).
 skills_target="${repo_root}/modules/home/ai/plugins/planning-and-development/.apm/skills"

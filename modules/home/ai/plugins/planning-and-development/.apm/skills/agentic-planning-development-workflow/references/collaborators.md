@@ -5,7 +5,7 @@ This file names each one and what it owns; the front-door quickstart that walks 
 
 ## The four collaborators
 
-project-management is the human-facing project-management hub.
+linear-project-management is the linear project management hub.
 It owns the Linear Method ontology, the cross-layer conventions, and the workspace safety gate (the LINEAR_API_KEY and LINEAR_WORKSPACE asserts plus the `linear auth whoami --workspace <slug>` identity confirmation).
 It documents the model and mutates no tracker.
 

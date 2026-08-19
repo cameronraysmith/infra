@@ -8,9 +8,9 @@
 - [x] 1.6 Confirm the router SKILL.md is one level deep in its references and asserts that the router does not read beads graph metrics or the stigmergic signal table
 - [x] 1.7 Enumerate the three router references added after the initial four (`board-state-machine.mermaid` and `collaborators.md` in the founding router commit; `references/codex-review.md` binding the roborev sub-gate to the inline codex review) so the router reference set is the seven shipped files, all one level deep
 
-## 2. Project-management hub skill (project-management-hub)
+## 2. Linear project management hub skill (linear-project-management)
 
-- [x] 2.1 Create `modules/home/ai/skills/src/core/project-management/SKILL.md` as a lean index plus Contents table grouped by reference-file prefix under roughly 350 lines, with frontmatter `name` matching the directory and the PM-hub "Load when" trigger from design D1
+- [x] 2.1 Create `modules/home/ai/skills/src/core/linear-project-management/SKILL.md` as a lean index plus Contents table grouped by reference-file prefix under roughly 350 lines, with frontmatter `name` matching the directory and the PM-hub "Load when" trigger from design D1
 - [x] 2.2 Create `references/linear-overview.md` covering the Initiative greater than Project greater than Milestone greater than Issue ontology with Cycles as an orthogonal overlay
 - [x] 2.3 Create `references/linear-workspace-safety-gate.md` encoding the hardest constraint: the `linear auth whoami` gate keyed on confirmed credentials and an explicit `--workspace`, never on LINEAR_WORKSPACE, never running mutating `linear auth`
 - [x] 2.4 Create `references/linear-conventions.md` covering the issue-body TL;DR/Deliverables/Acceptance convention, the SYNC and NOSYNC markers, and issue sizing
@@ -33,7 +33,7 @@
 
   Trigger-comparison verdict (recorded): the three "Load when" triggers are mutually non-overlapping and do not collide with the three reference skills.
   - router: "selecting an execution mode for a change, driving the agentic planning-and-development board, or routing a change between board states" — execution-mode and board-state vocabulary. Avoids session-advisor's beads-graph-metric routing vocabulary, issues-beads' issue-tracking verbs, and linear-cli's raw Linear verbs.
-  - project-management hub: "reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers" — PM-model/conventions vocabulary. It documents structure rather than mutating a tracker, so it does not collide with linear-cli (verbs) or issues-beads (bd CLI).
+  - linear-project-management hub: "reasoning about project/issue structure, Linear conventions, or how OpenSpec, beads, and GitHub relate as PM layers" — PM-model/conventions vocabulary. It documents structure rather than mutating a tracker, so it does not collide with linear-cli (verbs) or issues-beads (bd CLI).
   - openspec-linear-sync: "binding a Linear story to an OpenSpec change, mirroring lifecycle phase to Linear state, or running the archive-time document upsert" — link-and-sync-policy vocabulary. Distinct from linear-cli (it composes linear-cli rather than re-stating verbs) and from the router (no execution-mode/board-routing keywords).
   - session-advisor (routing) reads beads graph metrics and the stigmergic signal table; none of the three triggers use that vocabulary, and the router explicitly defers graph-metric routing to session-advisor. issues-beads (issue tracking) and the bundled linear-cli skill (Linear verbs) are referenced by name from the hub and overlay rather than re-triggered. The build review independently confirmed non-overlap. The session-advisor↔router routing overlap is a recorded deferred follow-up, not a trigger collision in scope here.
 - [x] 4.2 Verify each skill references existing skills (session-orient, session-advisor, issues-beads, linear-cli, the opsx and superpowers bridge skills) by delegation rather than duplicating their content

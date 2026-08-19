@@ -27,8 +27,8 @@ The first deliverable is agentic-planning-development-workflow, targeting module
 It is a state-machine router across a board re-cast onto Linear's canonical states (Backlog -> Todo -> In Progress -> In Review -> Done, plus the inert Canceled/Duplicate terminals, with roborev and documenter as ordered sub-gates inside In Review) with a three-way Execution-mode fork (AFK, HIL, Manual) at the Todo -> In Progress boundary.
 It composes existing skills by delegation and never re-implements them, and it carries jj and workspace isolation guidance for the HIL apply phase.
 
-The second deliverable is project-management, targeting modules/home/ai/skills/src/core/.
-It is a human-facing project-management hub with references organized into linear/, github/, beads/, and method/ sub-areas.
+The second deliverable is linear-project-management, targeting modules/home/ai/skills/src/core/.
+It is a linear project management hub with references organized into linear/, github/, beads/, and method/ sub-areas.
 The linear sub-area carries the workspace safety gate.
 
 The third deliverable is openspec-linear-sync, targeting modules/home/ai/skills/src/core/.
