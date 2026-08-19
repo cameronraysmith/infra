@@ -122,11 +122,12 @@
             # vendored theme file; the two are not interchangeable strings.
             theme.dark = lib.mkDefault "dark-catppuccin";
             modelRoles = {
-              default = lib.mkDefault "zai/glm-5.3:high";
+              default = lib.mkDefault "anthropic/claude-opus-5:xhigh";
               advisor = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
               plan = lib.mkDefault "anthropic/claude-opus-5:xhigh";
               designer = lib.mkDefault "anthropic/claude-opus-5:xhigh";
-              smol = lib.mkDefault "openrouter/moonshotai/kimi-k3:high";
+              # smol = lib.mkDefault "openrouter/moonshotai/kimi-k3:high";
+              smol = lib.mkDefault "zai/glm-5.3:high";
               slow = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
               vision = lib.mkDefault "openrouter/google/gemini-3.7-flash:high";
               commit = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
