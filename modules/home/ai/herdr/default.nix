@@ -11,13 +11,20 @@
     let
       herdr = lib.getExe config.programs.herdr.package;
       # Open a new focused herdr tab and run the given command in it, labelled
-      # after the command. herdr has no single-shot "new tab running X", so this
-      # creates the tab then runs the command in its root pane over the socket.
+      # after the command unless `--label NAME` overrides it. herdr has no
+      # single-shot "new tab running X", so this creates the tab then runs the
+      # command in its root pane over the socket.
       htab = pkgs.writeShellApplication {
         name = "htab";
         runtimeInputs = [ pkgs.jq ];
         text = ''
-          pane_id="$(${herdr} tab create --label "$1" --focus | jq -r '.result.root_pane.pane_id')"
+          if [ "''${1:-}" = "--label" ]; then
+            label="$2"
+            shift 2
+          else
+            label="$1"
+          fi
+          pane_id="$(${herdr} tab create --label "$label" --focus | jq -r '.result.root_pane.pane_id')"
           exec ${herdr} pane run "$pane_id" "$*"
         '';
       };

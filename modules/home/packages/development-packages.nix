@@ -86,7 +86,6 @@
           dvcWithOptionalRemotes
           forgejo-cli
           ghq
-          gh-dash
           git-filter-repo
           git-machete
           git-revise
