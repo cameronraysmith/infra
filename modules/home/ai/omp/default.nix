@@ -134,26 +134,89 @@
               tiny = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
               task = lib.mkDefault "anthropic/claude-sonnet-5:high";
             };
-            # Hindsight is omp's native memory backend, reached over HTTP by a
-            # hand-rolled client (src/hindsight/backend.ts) with no MCP server in
-            # the path. Only backend and apiUrl change behaviour; the remaining six
-            # restate the schema defaults omp carries at 17.3.5, declared so an
-            # upstream default change surfaces as a diff here rather than as a
-            # silent shift in what the fleet retains.
+            # Mnemopi is omp's local memory backend: a SQLite store the agent
+            # opens in-process (src/mnemopi/state.ts hands the Mnemopi library a
+            # dbPath and a bank), with no service, no token and no network hop
+            # on either the retain or the recall path. Only backend and scoping
+            # change behaviour; the rest restate the schema defaults omp carries
+            # at 18.0.3 (the mnemopi.* block of src/config/settings-schema.ts),
+            # declared so an upstream default change surfaces as a diff here
+            # rather than as a silent shift in what the fleet retains.
             #
-            # bankId is deliberately left unset. Under per-project-tagged scoping
-            # that resolves to the base bank `omp` (src/hindsight/bank.ts), one
-            # shared bank whose entries are tagged with the project name, which is
-            # what recall across the fleet's repositories wants.
-            memory.backend = lib.mkDefault "hindsight";
-            hindsight = {
-              apiUrl = lib.mkDefault "https://api.hindsight.vectorize.io";
-              scoping = lib.mkDefault "per-project-tagged";
-              retainMode = lib.mkDefault "full-session";
+            # dbPath and bank are omitted rather than restated, because both
+            # default to undefined and what matters is what they resolve to:
+            # dbPath becomes ~/.omp/agent/memories/mnemopi/mnemopi.db
+            # (src/mnemopi/config.ts), and under the scoping chosen below bank
+            # resolves to the single shared bank `default`.
+            memory.backend = lib.mkDefault "mnemopi";
+            mnemopi = {
+              # The one deviation from upstream, which defaults to per-project.
+              #
+              # Two facts rule per-project out. Its bank name embeds
+              # Bun.hash(path.resolve(cwd)) (src/mnemopi/config.ts
+              # projectBankSegment), so every disposable worktree of a
+              # repository is a bank of its own whose memories die with the
+              # checkout, and this fleet works out of pooled worktrees.
+              # per-project-tagged does not rescue it: despite sharing a name
+              # with the hindsight key this replaces it is not one bank with
+              # project tags, it writes the per-project bank and reads the shared
+              # one alongside it, and nothing writes that shared bank, so it
+              # stays empty. `global` is the only mode that accumulates one
+              # corpus across repositories, which is what the hindsight setup
+              # bought by leaving bankId unset. Provenance survives the move:
+              # retained rows carry metadata.cwd (src/mnemopi/state.ts), though
+              # recall does not filter on it, so recall is fleet-wide and
+              # noisier than a per-project bank would be.
+              scoping = lib.mkDefault "global";
+
+              # Recall injects before the first model turn; retain fires once
+              # every fourth user turn, counted in src/mnemopi/state.ts against
+              # retainEveryNTurns, and again when the session is disposed.
               autoRecall = lib.mkDefault true;
               autoRetain = lib.mkDefault true;
-              mentalModelsEnabled = lib.mkDefault true;
-              mentalModelAutoSeed = lib.mkDefault true;
+              retainEveryNTurns = lib.mkDefault 4;
+              recallLimit = lib.mkDefault 8;
+              recallContextTurns = lib.mkDefault 3;
+              recallMaxQueryChars = lib.mkDefault 4000;
+              injectionTokenLimit = lib.mkDefault 5000;
+              debug = lib.mkDefault false;
+
+              # Off upstream and left off. Polyphonic recall is a four-voice
+              # fusion, enhanced recall a tiered result cache, proactive linking
+              # an episodic-graph write on retain; none of the three calls a
+              # model, so what they cost is latency and recall noise rather than
+              # tokens. Declared false so enabling one is a deliberate diff.
+              polyphonicRecall = lib.mkDefault false;
+              enhancedRecall = lib.mkDefault false;
+              proactiveLinking = lib.mkDefault false;
+
+              # The model question, settled here rather than inherited.
+              #
+              # Fact extraction is the only mnemopi operation that reaches a
+              # model at 18.0.3: consolidation is deterministic and says so
+              # (beam/consolidate.ts returns llm_used: 0), and recall, linking
+              # and entity extraction are index and regex work. `smol` mode
+              # resolves the first role that has a model out of the ordered pair
+              # ["tiny", "smol"] (src/mnemopi/backend.ts
+              # resolveMnemopiProviderOptions), so on this host it lands on
+              # tiny, gpt-5.6-luna above, and the backend keeps only the model
+              # and drops the :medium thinking suffix. That is one small
+              # completion per four user turns against the openai-codex
+              # subscription, and it fails open: with no role resolved or no
+              # credential, extraction degrades to a heuristic and the
+              # transcript is retained regardless.
+              llmMode = lib.mkDefault "smol";
+
+              # Embedding is local ONNX inference rather than a provider call:
+              # the `en` variant selects BAAI/bge-base-en-v1.5 run through
+              # fastembed in a subprocess (src/mnemopi/embed-worker.ts), so
+              # recall costs no tokens and needs no key. Neither the runtime nor
+              # the weights are in omp's closure; first use bun-installs
+              # fastembed and downloads the model into ~/.omp/cache, once per
+              # host, and failure there degrades recall to FTS rather than
+              # disabling memory. noEmbeddings makes that FTS-only outright.
+              embeddingVariant = lib.mkDefault "en";
+              noEmbeddings = lib.mkDefault false;
             };
           };
 
@@ -176,29 +239,6 @@
         };
 
         home.packages = lib.mkIf cfg.enable [ cfg.package ];
-
-        # The Hindsight token reaches omp through the environment and never
-        # through settings above. omp parses config.yml as plain YAML and expands
-        # nothing, so a `${HINDSIGHT_API_TOKEN}` written into hindsight.apiToken is
-        # sent verbatim as the bearer token; docs/memory.md shows that form anyway,
-        # and it fails as a literal string whenever the variable is unset and is
-        # dead configuration whenever it is set, because the environment outranks
-        # the settings file (src/hindsight/config.ts). A real token written there
-        # would be worse still: cfg.settings renders into a world-readable store
-        # path, and merge-config.sh leaves the target at 0644.
-        #
-        # ~/.omp/.env is the fourth of the five sources omp's loader consults --
-        # process environment, project .env, ${configDir}/.env, ~/.omp/.env,
-        # ~/.env -- each filling only keys still unset, so every launch path picks
-        # the token up with no wrapper. Rendering it as a sops template keeps the
-        # plaintext out of the nix store entirely.
-        sops.templates = lib.mkIf cfg.enable {
-          omp-env = {
-            mode = "0400";
-            path = "${config.home.homeDirectory}/.omp/.env";
-            content = "HINDSIGHT_API_TOKEN=${config.sops.placeholder."hindsight-api-token"}\n";
-          };
-        };
 
         home.activation.ompMergeConfig = lib.mkIf cfg.enable (
           let

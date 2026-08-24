@@ -148,8 +148,9 @@ let
           linear-workspace-personal = { };
           linear-workspace-work = { };
           context7-api-key = { };
-          # Hindsight cloud token for omp's memory backend, rendered to
-          # ~/.omp/.env by the sops template in modules/home/ai/omp.
+          # Hindsight cloud token for the standalone hindsight CLI, rendered to
+          # ~/.hindsight/config by the template below. omp no longer reads it:
+          # its memory backend is mnemopi, which is local and unauthenticated.
           hindsight-api-token = { };
           # Per-host scoped cognee X-Api-Key for the always-on cognee-memory
           # plugin and the cognee-cli wrapper. Declared here; its ciphertext is
@@ -218,14 +219,14 @@ let
         # hindsight CLI credentials, rendered immutably from sops so the CLI
         # works without a `hindsight configure` step.
         #
-        # This cannot reuse the ~/.omp/.env file the omp module renders, for two
-        # independent reasons: that file is read by omp's own loader rather than
-        # exported to the shell, and the two tools spell the credential
-        # differently. The CLI reads HINDSIGHT_API_KEY and HINDSIGHT_API_URL
-        # (src/config.rs) and never HINDSIGHT_API_TOKEN, which is the name omp
-        # uses. Its resolution order is environment, then named profile, then
-        # this file, then a localhost default, so writing it here leaves the
-        # environment free to override per invocation.
+        # This is now the only consumer of hindsight-api-token: omp's memory
+        # backend moved to the local mnemopi store, and with it went the
+        # ~/.omp/.env template that carried the same secret under omp's own
+        # spelling. The CLI reads HINDSIGHT_API_KEY and HINDSIGHT_API_URL
+        # (src/config.rs), never HINDSIGHT_API_TOKEN. Its resolution order is
+        # environment, then named profile, then this file, then a localhost
+        # default, so writing it here leaves the environment free to override
+        # per invocation.
         #
         # Read-only (0400): change the URL with --api-url or the environment,
         # never via `hindsight configure`, which would clobber this file.
