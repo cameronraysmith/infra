@@ -168,7 +168,7 @@ It is not needed for the schema change at all.
 ### Where the satisfaction projection lives
 
 Not `openspec/satisfaction.md`, which has no mechanism.
-It lives at `docs/development/traceability/satisfaction.md`, regenerated wholesale at archive time through `operations.archive.guidance`.
+It lives at `packages/docs/src/content/docs/development/traceability/satisfaction.md`, regenerated wholesale at archive time through `operations.archive.guidance`.
 
 Four reasons this is the right home rather than a concession.
 The traceability directory already exists and is populated, and it is the prescribed AMDiRE traceability stratum whose maintenance model was always the unresolved problem — this gives it one.

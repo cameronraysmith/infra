@@ -27,7 +27,7 @@ Interface deltas mention only shared phenomena and state their trust boundary.
 A non-blocking section 8 in the `verify` artifact: designation lint, discharge coherence, and an alphabet check, each warn-and-record in the same spirit as the existing section 7.
 These are agent-executed. `openspec validate` checks markdown structure and delta well-formedness only, and checks no vocabulary grounding, alphabet discipline, or entailment — section 8 is not validation and must not be reported as such.
 
-Satisfaction-projection regeneration in the apply phase's archive step, writing `docs/development/traceability/satisfaction.md` from the post-sync corpus.
+Satisfaction-projection regeneration in the apply phase's archive step, writing `packages/docs/src/content/docs/development/traceability/satisfaction.md` from the post-sync corpus.
 It is rebuilt wholesale rather than patched, because a patched discharge table accumulates exactly the staleness the artifact exists to prevent.
 It deliberately does not live under `openspec/`: artifact outputs are confined to the change directory by path assertion, and the only sanctioned corpus writers are the archive merge and the sync skill, both delta-mediated and scoped to `openspec/specs/`.
 

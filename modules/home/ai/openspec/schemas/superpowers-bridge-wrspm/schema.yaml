@@ -657,22 +657,28 @@ apply:
          (`<planningHome.changesDir>/archive/YYYY-MM-DD-<name>/`)
 
        Then regenerate the satisfaction projection from the
-       post-sync corpus, BEFORE the folder moves, so the PR diff
-       carries it as part of this cycle's state.
+       post-sync corpus. `openspec archive` performs the spec sync
+       and the folder move as one operation, so this runs after
+       both rather than between them; what matters is that the
+       projection lands in the same commit range as the cycle it
+       summarizes, not that it precedes the move.
 
-       Write `docs/development/traceability/satisfaction.md` (create
-       the directory if absent). It is a projection over the corpus,
-       not a delta: REBUILD it wholesale from the synced main specs
-       and never patch it. A rebuilt discharge table is trustworthy;
-       a patched one accumulates exactly the staleness the artifact
-       exists to prevent.
+       Write `packages/docs/src/content/docs/development/traceability/satisfaction.md` (create
+       the directory if absent). Name that path, not the
+       `docs/development/` symlink that also resolves to it: writes
+       through the symlink succeed, but git cannot address the path
+       and reports "beyond a symbolic link". It is a projection over
+       the corpus, not a delta: REBUILD it wholesale from the synced
+       main specs and never patch it. A rebuilt discharge table is
+       trustworthy; a patched one accumulates exactly the staleness
+       the artifact exists to prevent.
 
        It does NOT live under `openspec/`. Artifact outputs are
        confined to the change directory by path assertion, and the
        only sanctioned corpus writers are the archive merge and the
        sync skill, both delta-mediated and both scoped to
        `openspec/specs/`. A corpus-level projection has no lifecycle
-       there; `docs/development/traceability/` is its home and is
+       there; `packages/docs/src/content/docs/development/traceability/` is its home and is
        already the traceability stratum.
 
        One row per behavioral requirement in the corpus:

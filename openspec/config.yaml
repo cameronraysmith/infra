@@ -64,6 +64,6 @@ rules:
 operations:
   archive:
     guidance:
-      - Regenerate docs/development/traceability/satisfaction.md from the post-sync corpus before the change folder moves, so the PR diff carries it as part of this cycle's state.
+      - Regenerate packages/docs/src/content/docs/development/traceability/satisfaction.md from the post-sync corpus before the change folder moves, so the PR diff carries it as part of this cycle's state.
       - Rebuild that projection wholesale; never patch it. A patched discharge table accumulates exactly the staleness the artifact exists to prevent.
       - Record undischarged requirements as rows with a follow-up reference. Never omit them and never silently accept them.
