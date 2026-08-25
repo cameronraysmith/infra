@@ -56,6 +56,10 @@ The relationship between specification and implementation forms a partial order.
 Implementation *P* refines specification *S* if every observable behavior of *P* is allowed by *S*.
 The specification's looseness — the set of behaviors it permits but does not require — represents the intended degrees of freedom for implementors.
 
+This refinement obligation is one leg of a two-obligation pair: refinement here is *P* ⇒ *S*, the program meeting the specification at their shared alphabet.
+Its companion, *W* ∧ *S* ⇒ *R* — the satisfaction argument that the specification discharges the requirement in the presence of the world's actual behavior — is owned by `preferences-requirements-engineering`, which also introduces the world *W* and the requirement *R* this section does not otherwise name.
+Stating either obligation is a different act from grading the evidence that discharges it; this skill owns only the latter, and the severity and confidence machinery in the rest of this document is that grading.
+
 Tests should constrain exactly what the specification requires, no more and no less.
 Property-based tests preserve more freedom than example-based tests because properties express "what must hold for all inputs" without specifying "what the output looks like for this specific input."
 Algebraic laws from `preferences-algebraic-laws` are the ideal test form: they express structural properties that any correct implementation must satisfy while permitting arbitrary implementation strategies.
@@ -83,6 +87,8 @@ The claim determines the rung, not the project's maturity.
 ## Evidence quality dimensions
 
 Five orthogonal dimensions for assessing evidence quality, adopted from assurance case literature (Goal Structuring Notation — Kelly & Weaver, 2004):
+
+In Goal Structuring Notation terms, the satisfaction argument *W* ∧ *S* ⇒ *R* (owned by `preferences-requirements-engineering`) is the natural top-level goal node of such a case, with the world assumptions *W* appearing as context nodes and as away-goals the case is conditional on.
 
 Directness measures whether the evidence tests the actual claim or a proxy.
 Direct evidence tests the thing itself; indirect evidence tests something correlated.

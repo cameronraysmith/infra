@@ -56,6 +56,8 @@ The precise ideal is an on-the-nose mechanical proof that the lifted model refin
 When a mechanical proof is intractable, differential testing or LLM comparison still discharges the check at a weaker but honest tier, and the methodology remains sound.
 This honesty principle is developed in `references/mathematics.md` (the adjunction framing and its three honesty notes) and operationalized in `references/check-translation-validation.md` (the three tiers and the ideal-not-requirement stance).
 
+This skill's obligation is *P* ⇒ *S*, the refinement leg; its companion, *W* ∧ *S* ⇒ *R* — the satisfaction argument that the specification discharges the requirement in the presence of the world — is owned by `preferences-requirements-engineering`.
+
 ## References
 
 | Reference | Open it for |
@@ -75,6 +77,7 @@ This honesty principle is developed in `references/mathematics.md` (the adjuncti
 
 - `preferences-domain-modeling` — DDD aggregate design, smart constructors, and making illegal states unrepresentable, the source discipline for the Lean spec leg.
 - `preferences-theoretical-foundations` — category and type theory and the home of the adjunction framing this skill leans on; it owns the general "keep a type-checkable Lean spec beside the implementation" stance, including the Lean-spec-beside-a-non-Rust-implementation (for example Python) case, while this skill owns the verified Lean-to-Rust round trip the two share.
+- `preferences-requirements-engineering` — owns the WRSPM pentad and its companion obligation `W ∧ S ⇒ R`, the satisfaction argument the specification discharges against the requirement in the presence of the world, while this skill owns `P ⇒ S`, the refinement leg the two share.
 - `preferences-algebraic-laws` — functor/monad laws and property-based testing, the backbone of the differential-testing check tier.
 - `preferences-validation-assurance` — severity, evidence quality, and the confidence promotion chain that calibrates which check tier suffices.
 - `preferences-architecture-diagramming` — format selection and diagram compendium conventions that the type-system diagramming leg specializes.

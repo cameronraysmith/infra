@@ -25,6 +25,9 @@ A *regulator* is an automated process whose job is to sample the artifact's actu
 A *closure operator* is the single composed evaluation of every regulator over the whole repository graph against pinned inputs — `nix flake check` in the canonical realization — whose deterministic pass-or-fail outcome is what "the system is approximately correct" reduces to.
 *Approximate* is precise rather than vague: Rice's theorem and Ashby's Law of Requisite Variety jointly make perfect coverage structurally impossible, so the discipline targets a state where the gap between intended and exercised behavior is visible, bounded, and decreasing rather than nominally closed.
 
+In assume-guarantee contract terms (Benveniste et al.), the operating envelope is precisely the assumption half of a contract, and the regulator demonstrates that the artifact stays inside it; the closure operator composing every regulator over the system graph is parallel composition of those per-artifact contracts.
+`preferences-theoretical-foundations/references/assume-guarantee-contracts.md` owns that algebra — the refinement order, parallel composition, and conjunction — and is not restated here; this skill states only the system-level realization.
+
 The operational headline below restates the same commitment in five clauses suitable for quotation by downstream skills.
 
 ## Operational headline
@@ -91,6 +94,8 @@ The abbreviation is ambiguous in the current literature and collapsing it loses 
 The Boehm verification/validation distinction is upstream of both: verification asks whether the artifact matches its specification, validation asks whether the specification matches the need.
 CCV is primarily a verification discipline that acknowledges validation as the upstream feedback channel — production observation updates the coverage model when real usage surfaces bins that were never declared — and the narrow Continuous Validation sense lives inside that feedback channel as the runtime, adversarial corner of CCV's broader scope.
 
+Whether the specification matches the need is exactly the satisfaction argument *W* ∧ *S* ⇒ *R*; `preferences-requirements-engineering` owns that obligation and the world/requirements/specification stratification behind it, and is where this feedback channel's own discipline lives rather than remaining unexamined here.
+
 ## What this means for an agent session
 
 CCV is the structural commitment behind the agent's local-validation-then-PR workflow.
@@ -146,6 +151,8 @@ See `preferences-nix-checks-architecture` §"Choosing among integration regulato
 - `preferences-nix-checks-architecture` — flake-side check taxonomy and meta-check derivation patterns
 - `preferences-nix-ci-cd-integration` — buildbot-nix as the closure-operator executor in CI
 - `preferences-validation-assurance` — Mayo's severity criterion and mutation-based integrity evidence as the assurance side of CCV's integrity property
+- `preferences-requirements-engineering` — owns the satisfaction argument `W ∧ S ⇒ R` and the world/requirements/specification stratification behind the validation leg this skill treats as an upstream channel
+- `preferences-theoretical-foundations` — owns the assume-guarantee contract algebra (refinement, ⊗, ∧) that the operating-envelope-plus-regulator pair realizes at the system level
 - `preferences-observability-engineering` — observability checks as first-class CCV regulators
 - `preferences-production-readiness` — narrow Continuous Validation (Rosenthal–Jones) under CCV's broader discipline
 - `preferences-scientific-inquiry-methodology` — Peircean pragmatism grounding for the four-property hierarchy
