@@ -9,14 +9,28 @@
     { config, lib, ... }:
     let
       # Base path for skills (without @ prefix)
-      # The @ prefix must be added when referencing to enable auto-loading
+      # The @ prefix triggers Claude Code auto-loading; applied deliberately
+      # and selectively to the few skills that must always be resident, not
+      # to every entry in the index below
       # All tools share the same text; @ auto-loading is Claude Code-specific
       skillsPath = "${config.home.homeDirectory}/.claude/skills";
     in
     {
       # https://github.com/mirkolenz/nixos/blob/0911e2e/home/options/agents-md.nix#L22-L31
       #
-      # Auto-loading requires @ prefix on full paths in generated CLAUDE.md
+      # The @ prefix on a full path triggers auto-loading in generated
+      # CLAUDE.md; applied selectively to the few skills that must always
+      # be resident, not to every index entry
+      #
+      # Two harness hazards worth recording here rather than fixing: omp
+      # resolves exactly one user-level context file by provider priority,
+      # and ~/.omp/agent/AGENTS.md at priority 100 would outrank
+      # ~/.claude/CLAUDE.md at priority 80, so adding an ~/.omp/agent/
+      # destination would silently shadow this file rather than add a
+      # fourth surface. Omp's containment de-duplication also drops the
+      # user-level file entirely when a project file's full paragraph
+      # sequence contains it, so a project-level context file must never
+      # be a superset of this one.
       programs.agents-md = {
         enable = lib.mkDefault true;
         settings.body = ''
@@ -90,6 +104,8 @@
           - computational system taxonomy (closed vs open systems from automata theory and process calculi; batch/stream/services terminology mapping; heterogeneous composition patterns): ${skillsPath}/preferences-computational-system-taxonomy/SKILL.md
           - algebraic laws (functor/monad laws, property-based testing): ${skillsPath}/preferences-algebraic-laws/SKILL.md
           - refinement-driven development (dependently-typed Lean 4 spec, refine/lower to a Charon/Aeneas-safe Rust subset, lift via Aeneas.Charon, check by translation validation; mechanical proof the ideal not a requirement): ${skillsPath}/refinement-driven-development/SKILL.md
+          - requirements engineering (WRSPM pentad; the two obligations W∧S⇒R, the satisfaction argument, and P⇒S; the four dark corners; the designation table; indicative/optative separation; KAOS goal-obstacle analysis; Parnas four-variable model; the WRSPM-versus-AMDiRE shear): ${skillsPath}/preferences-requirements-engineering/SKILL.md
+          - satisfaction argument audit (three-gate chain across proof institutions; blind informalization for specification-versus-intent; the trust-surface inventory; the claims status table with satisfiability, non-vacuity, co-vacuity; safe external wording; the never-claim-end-to-end prohibition): ${skillsPath}/satisfaction-argument-audit/SKILL.md
           - nucleus platform (thin router for the spec-anchored approximately-verifiable data-modeling monorepo; Lean 4 structural source of truth; instantiate-then-reconstruct round trip driving structural drift toward zero): ${skillsPath}/nucleus-platform/SKILL.md
           - adaptive planning (control theory, buffer sizing, planning horizons, VSM mapping): ${skillsPath}/preferences-adaptive-planning/SKILL.md
           - workflow orchestration algebra (Dagster/Flyte read through Build Systems à la Carte; free-term vs store-interpreter split, lawful IO managers; data-pipeline orchestration, not agent DAGs): ${skillsPath}/preferences-workflow-orchestration-algebra/SKILL.md
@@ -113,7 +129,7 @@
           - web application deployment: ${skillsPath}/preferences-web-application-deployment/SKILL.md
           - cloudflare wrangler configuration: ${skillsPath}/preferences-cloudflare-wrangler-reference/SKILL.md
           - secrets management: ${skillsPath}/preferences-secrets/SKILL.md
-          - nix development: ${skillsPath}/preferences-nix-development/SKILL.md
+          - nix development (flakes, derivations, modules, code style; new files need tracking before a flake build can see them, since flake sources are git-tracked only; verify with targeted `nix eval`/`nix build` probes and `just check-fast` rather than a bare `nix flake check` sweep — see nix flake PR cycle): ${skillsPath}/preferences-nix-development/SKILL.md
           - nix flake checks architecture (check taxonomy, derivation patterns, VM tests): ${skillsPath}/preferences-nix-checks-architecture/SKILL.md
           - nix CI/CD integration (nix-fast-build, buildbot-nix, effects, migration): ${skillsPath}/preferences-nix-ci-cd-integration/SKILL.md
           - nix flake PR cycle (enumerate checks, probe via nix eval/build, just check-fast, draft PR, buildbot monitor, ready, Mergify): ${skillsPath}/nix-flake-pr-cycle/SKILL.md
@@ -153,11 +169,17 @@
           commit, state the tradeoff taken and what would change your mind.
           Scale care to blast radius: what binds others (specs, APIs, published
           prose) gets strong care; what a spec already constrains gets fast
-          decisions. These principles govern artifact-level choices within
-          confirmed intent; the session protocol above governs task-level
-          ambiguity — ask there, commit here. When sections or skills conflict,
-          the more specific scope wins; when in doubt, minimize consumer
-          processing cost — reader or maintainer.
+          decisions. Every requirement names the world assumptions and
+          specification properties that discharge it, and an undischarged
+          requirement is recorded as such rather than left implicit. These
+          principles govern artifact-level choices within confirmed intent;
+          the session protocol above governs task-level ambiguity — ask
+          there, commit here. When sections or skills conflict, the more
+          specific scope wins; when in doubt, minimize consumer processing
+          cost — reader or maintainer. Offer no flattery, praise, or
+          agreement without a reason: state the reason when you agree, and
+          when an assumption is wrong, say so directly and explain why
+          rather than building on it.
           Applied per medium:
           - prose, any writing or editing: ${skillsPath}/preferences-prose-clarity/SKILL.md
           - code, specs, and proofs: ${skillsPath}/preferences-essential-complexity/SKILL.md
@@ -186,6 +208,14 @@
           a type-checkable Lean specification beside the implementation and
           closing the spec-to-code gap through refinement and translation
           validation.
+          Closing that gap leaves open whether the specification was the
+          right one in the first place — a separate obligation, owned by
+          `preferences-requirements-engineering` and audited by
+          `satisfaction-argument-audit` — and it is never discharged by the
+          same evidence that discharges refinement. Never claim a guarantee
+          end to end: a trust-surface bypass, an unverified backend, or a
+          gap between specification and intent anywhere in the chain breaks
+          such a claim regardless of how solid the rest of it is.
           That ideal governs direction of travel; the operating principles above
           govern what ships today — nothing lands that does not pay rent in
           enforced invariants or delivered value.
@@ -210,6 +240,20 @@
           operational arm: an uncomment-driven workflow for auditing and
           removing noise comments while preserving load-bearing markers.
 
+          ## Scope discipline
+
+          Implement exactly what was asked. Do not infer adjacent scope —
+          extra retries, added validation, new telemetry, or an abstraction
+          "while you're at it" — and do not solve a symptom in place of the
+          problem actually named.
+
+          Do: told to fix a failing null check in one function, add that
+          null check, run the one test that covers it, and stop.
+          Do not: told to fix a failing null check in one function, also
+          add retry logic, extra logging, and a validation layer on three
+          nearby functions because they looked related — none of that was
+          asked for, and the requested fix is now buried inside it.
+
           # Orchestration and delegation
 
           ## Orchestrator mode
@@ -225,6 +269,12 @@
           information gathering?" Dispatch information gathering to subagent
           Tasks; only execute inline if trivially small AND immediately required
           for coordination.
+
+          ## Long-running commands
+
+          A command that will run for a long time, stream output, or need
+          input later belongs in a managed background process, not a
+          blocking foreground call that ties up the turn waiting on it.
 
           ## Subagent dispatch contract
 
