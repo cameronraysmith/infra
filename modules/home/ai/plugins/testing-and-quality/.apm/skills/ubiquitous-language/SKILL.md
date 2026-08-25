@@ -136,6 +136,18 @@ For each term, record:
 - **References**: Where it appears (files, with line numbers
   for definitions; just filenames for usage)
 - **Aliases**: Any synonyms or variations found
+- **World phenomenon**: The world-level phenomenon this term
+  denotes, independent of the system
+- **Stratum**: Whether that phenomenon is world-only or
+  shared with the machine
+
+These two columns turn a definition into a designation: they
+force each term to name the phenomenon in the world it stands
+for, not just how the codebase spells it.
+A term with two candidate phenomena is a term the project is
+using in two senses — exactly the inconsistency this skill
+exists to surface, so the added columns make its existing job
+more sensitive rather than adding a new one.
 
 ### 2. Identify Issues
 
@@ -234,6 +246,8 @@ Definition in one sentence.
 - **Used in**: `features/foo.feature`, `docs/bar.md`
 - **Related to**: Other Term, Another Term
 - **Aliases**: (list any synonyms — flag if problematic)
+- **World phenomenon**: (the phenomenon in the world this term denotes)
+- **Stratum**: (world-only or shared with the machine)
 
 ## Verbs
 
@@ -303,3 +317,17 @@ A healthy ubiquitous language has these properties:
   (cucumber.io/docs/bdd/better-gherkin/) — the litmus
   test: "will this wording need to change if the
   implementation does?"
+
+## See also
+
+`preferences-requirements-engineering` owns the designation
+discipline the glossary's world-phenomenon and stratum
+columns encode; a term with two candidate phenomena in that
+table is the same problem this skill's Synonym and Homonym
+checks already look for.
+
+`bdd-gherkin-formulation` owns the declarative-over-imperative
+discipline for Gherkin steps.
+The "would this wording need to change if the implementation
+changed" litmus this skill applies when judging feature file
+quality is that discipline's implementation-change litmus.

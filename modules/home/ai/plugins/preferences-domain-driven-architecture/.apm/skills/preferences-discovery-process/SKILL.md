@@ -91,12 +91,23 @@ Tools include Business Model Canvas for understanding value propositions, custom
 Wardley Mapping reveals the evolutionary stage of different capabilities and identifies where to invest in custom development versus commodity solutions.
 Impact Mapping connects business goals to user impacts to system features, preventing solutionizing before understanding objectives.
 User Story Mapping organizes functionality by user journey and value delivery sequence rather than technical architecture.
+KAOS obstacle analysis, from van Lamsweerde, negates each goal
+systematically to find the world behaviors under which the
+satisfaction argument fails, recording each obstacle found as
+the violation condition of an indicative world assumption.
 
 Participants should include business leadership to articulate strategic goals, product management to represent customer needs, domain experts to explain current practices, and technical leadership to surface constraints.
 Developers benefit from attending even if primarily listening, as business context shapes architectural decisions that arise later.
 
 Outputs include a completed Business Model Canvas documenting the business model, Wardley Maps identifying capability maturity levels, Impact Maps linking goals to potential system features, and User Story Maps showing user journey structure.
 These artifacts establish shared vocabulary and frame subsequent discovery work.
+
+This step's outputs converge on a designation table: one row
+per term naming the world phenomenon it denotes and whether
+that phenomenon is world-only or shared with the machine.
+`preferences-requirements-engineering` owns the designation
+table as a grounding discipline; `ubiquitous-language` owns
+the per-term record it extends.
 
 Algebraic interpretation treats the business context as defining the universe of discourse for the type system.
 Business rules and constraints discovered here become type-level invariants enforced throughout the implementation.
@@ -458,6 +469,14 @@ Team Topologies map to dependency directions in the type system: stream-aligned 
 
 Purpose is to produce implementation-ready specifications with field-level schemas, behavioral scenarios, and bounded context assignments.
 Two primary approaches apply depending on team context and prior work.
+
+Formalizing produces more than field-level schemas and
+scenarios: the specification's adequacy is the claim that it
+discharges the requirement under the world's actual behavior,
+not merely that it typechecks.
+`preferences-requirements-engineering` owns that obligation,
+the satisfaction argument, and the designation table this
+process begins in step 1.
 
 Event Modeling produces complete specifications through Adam Dymitruk's 7-step methodology.
 The process includes brainstorming (discovering events through AI-assisted generation or collaborative input), organizing temporal flow, designing UI mockups via command fields, identifying commands and read models, assigning bounded contexts, and elaborating Given-When-Then scenarios.

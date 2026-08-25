@@ -38,6 +38,7 @@ It does not fire for the general technique behind any of those steps; delegate t
 - ODCS/ODPS as Published-Language boundary theory → preferences-bounded-context-design
 - per-claim severity and confidence → preferences-validation-assurance
 - CI execution and niks3-on-R2 → preferences-nix-ci-cd-integration
+- the requirements stratum above the Lean structural source of truth → preferences-requirements-engineering
 
 This skill must not fire as a generic build-a-data-platform skill, nor as agent or subagent orchestration.
 
