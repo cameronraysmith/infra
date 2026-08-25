@@ -101,15 +101,32 @@
           '';
         };
 
-        schemaDir = lib.mkOption {
-          type = lib.types.nullOr lib.types.path;
-          default = assetsDir + "/schemas/superpowers-bridge";
-          defaultText = lib.literalExpression ''inputs.self + "/modules/home/ai/openspec/assets/schemas/superpowers-bridge"'';
+        schemaDirs = lib.mkOption {
+          type = lib.types.attrsOf lib.types.path;
+          default = {
+            superpowers-bridge = assetsDir + "/schemas/superpowers-bridge";
+            superpowers-bridge-wrspm =
+              flake.inputs.self + "/modules/home/ai/openspec/schemas/superpowers-bridge-wrspm";
+          };
+          defaultText = lib.literalExpression ''
+            {
+              superpowers-bridge = inputs.self + "/modules/home/ai/openspec/assets/schemas/superpowers-bridge";
+              superpowers-bridge-wrspm = inputs.self + "/modules/home/ai/openspec/schemas/superpowers-bridge-wrspm";
+            }
+          '';
           description = ''
-            Schema bundle delivered as a single directory symlink at
-            {file}`~/.local/share/openspec/schemas/superpowers-bridge` so that
-            `openspec new --schema superpowers-bridge` resolves. Set to null to
-            deliver no schema bundle.
+            Schema bundles delivered as directory symlinks at
+            {file}`~/.local/share/openspec/schemas/<name>`, keyed by the name the
+            OpenSpec CLI resolves, so `openspec new --schema <name>` and any change
+            pinned to `<name>` both resolve.
+
+            Both bundles are delivered deliberately. A change records its schema in
+            its own {file}`.openspec.yaml` at creation time and is never repinned,
+            so withdrawing a bundle strands every change already pinned to it with
+            an unresolvable schema and no diagnostic beyond the `schema=` attribute
+            of `openspec instructions` output.
+
+            Set to `{ }` to deliver no schema bundle.
           '';
         };
 
@@ -165,9 +182,9 @@
         # the canonicalized schema directory (resolver.js getSchemaCandidateDir ->
         # FileSystemUtils.assertPathWithin), so per-file symlinks into the store are
         # unresolvable: `recursive = true` here breaks schema resolution.
-        home.file.".local/share/openspec/schemas/superpowers-bridge" = lib.mkIf (cfg.schemaDir != null) {
-          source = cfg.schemaDir;
-        };
+        home.file = lib.mapAttrs' (
+          name: src: lib.nameValuePair ".local/share/openspec/schemas/${name}" { source = src; }
+        ) cfg.schemaDirs;
 
         # Deliver the global config.json via the json format generator (RFC-42
         # settings), not builtins.toJSON, so it is overridable and extensible.
