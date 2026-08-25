@@ -1,6 +1,6 @@
 ---
 name: preferences-documentation
-description: Documentation conventions including structure, formatting, and maintenance practices. Load when writing or reviewing documentation.
+description: Documentation conventions including structure, formatting, and maintenance practices, including how the AMDiRE-shaped docs/development/ tree relates to an openspec/ corpus and where a satisfaction argument belongs. Load when writing or reviewing documentation, or when deciding whether content belongs in docs/ or in the openspec/ corpus.
 ---
 
 # Documentation
@@ -50,17 +50,30 @@ docs/
 │   ├── architecture/    # System Specification (solution space)
 │   │   ├── index.md     # Architecture overview and table of contents
 │   │   └── architecture.md  # System design and component structure
-│   ├── traceability/    # Requirements traceability
-│   │   ├── index.md     # Traceability overview
-│   │   └── testing.md   # Test framework and validation approach
-│   └── work-items/      # Work packages and implementation tracking
-│       ├── index.md     # Work items overview and status dashboard
-│       ├── active/      # In-progress work items
-│       ├── completed/   # Finished items with PR/ADR/RFC/RFD references
-│       └── backlog/     # Planned but not yet started items
+│   └── traceability/    # Requirements traceability
+│       ├── index.md     # Traceability overview
+│       ├── testing.md   # Test framework and validation approach
+│       └── satisfaction.md  # Satisfaction argument, regenerated at archive time
 └── notes/               # EPHEMERAL: Working notes excluded from rendering
     └── [category]/      # Temporary staging (see "Working notes" section)
 ```
+
+### The WRSPM shear
+
+AMDiRE's own strata do not coincide with the world/machine boundary that `preferences-requirements-engineering` states its two verification obligations against.
+Its Context Specification is approximately the world together with goals.
+Its Requirements Specification is approximately the requirements-to-specification interface zone rather than requirements proper: a usage or use-case model describes interaction at the machine interface, which is specification-side vocabulary.
+Its System Specification sits below the specification stratum, already in refinement-toward-implementation territory.
+
+Two consequences follow, and they are the reason the shear matters rather than being a taxonomy curiosity.
+Genuinely environment-referent requirements — statements about world phenomena the machine never touches — have no home in the tree's `requirements/` directory, above, because that directory is already specification-side; they get exiled upward into `context/` goals, informally.
+And a document titled "System Specification" — this tree's `architecture.md` — typically carries both specification-stratum content and sub-specification content in one file, with no marked seam between them.
+
+`preferences-requirements-engineering` owns the pentad and the two obligations this shear is stated against; load it before deciding which stratum a passage in this tree belongs in.
+
+The repair is cheap precisely because the AMDiRE content model this skill follows already requires a glossary.
+Promoting it to a stratified designation table — one row per term naming the world phenomenon it denotes and whether that phenomenon is world-only or shared with the machine — turns a list of definitions into the artifact the grounding condition needs.
+`ubiquitous-language` owns the per-term glossary record and the columns that extend it into a designation table; this skill does not restate them.
 
 ### Document evolution
 
@@ -131,10 +144,8 @@ Working notes should not persist indefinitely. Regularly audit `docs/notes/` for
 stale content and progress notes through their lifecycle. The goal is to keep
 this directory empty or minimal in stable projects.
 
-**Relationship to work items**: Unlike `docs/development/work-items/` which
-maintains a permanent record of development efforts with traceability to issues
-and PRs, working notes in `docs/notes/` are ephemeral drafts that get cleaned
-up after their content is either formalized or determined to be no longer needed.
+**Relationship to implementation tracking**: The permanent record of development efforts, with traceability to issues and PRs, lives in `openspec/changes/` while a change is active and in `openspec/changes/archive/` once it is complete — see "Relationship to the OpenSpec corpus" below.
+Working notes in `docs/notes/` are a separate, ephemeral thing: drafts that get cleaned up after their content is either formalized into `docs/` or determined to be no longer needed.
 
 ### Markdown formatting conventions
 
@@ -163,23 +174,38 @@ Use `- **Term**: description` bullet format for 2+ definitions.
 - User docs focus on helping users learn, accomplish tasks, understand concepts,
   and find reference information
 - Development docs provide traceability: context (why) → requirements (what) →
-  architecture (how) → work items (implementation)
-- Work items bridge planning to execution with workflow state tracking (backlog
-  → active → completed)
+  architecture (how); implementation tracking is not a docs/ artifact — see
+  "Relationship to the OpenSpec corpus" below.
 - Maintain bidirectional traceability between requirements, architecture
-  decisions, and implementation artifacts
-- Reference GitHub issues, pull requests, ADRs, RFCs, or RFDs in completed work
-  items for full audit trail
-- Name files in the work-items directory using the pattern
-  `<issue-id>-<very-short-description>.md` with zero-padded issue IDs to support
-  up to four digits (e.g. GitHub issue #12 becomes `0012-description.md` in
-  `work-items`).
+  decisions, and the openspec/changes/ corpus that implements them.
+- Reference GitHub issues, pull requests, ADRs, RFCs, or RFDs from archived
+  OpenSpec changes for full audit trail.
 
 ### Architecture decision records
 
 ADRs live in `docs/development/architecture/adrs/` following the AMDiRE structure above.
 Authoring conventions covering section structure, status lifecycle, commanding voice, business justification requirements, and antipatterns are in `references/adr-conventions.md`.
 Load that companion file when writing, reviewing, or evaluating ADRs.
+
+## Relationship to the OpenSpec corpus
+
+In repositories that use OpenSpec, normative behavioral requirements live in an `openspec/specs/` corpus with a delta-and-archive lifecycle: a change proposes deltas under `openspec/changes/<id>/`, and archiving folds them into `openspec/specs/` and moves the change to `openspec/changes/archive/`.
+The AMDiRE-shaped tree above and that corpus are not two places to keep the same information.
+
+The governing rule is that the repository never contains two committed copies of the same information.
+Everything normative, transactional, or delta-derived lives under `openspec/`.
+The documentation tree above is a lens over that corpus, not a destination for it: most of what it would otherwise hold is a rendered view, generated at build time and never committed.
+The only projection that earns persistence is one with semantic content of its own, beyond what the corpus already states.
+
+Exactly one projection meets that bar: the satisfaction argument at `docs/development/traceability/satisfaction.md`.
+It is regenerated wholesale at archive time and never patched — a patched discharge table accumulates exactly the staleness the artifact exists to prevent.
+It lives in the documentation tree rather than in the corpus because the corpus has no lifecycle to host it: the OpenSpec CLI confines a change's generated artifacts to that change's own directory, and the only writers that touch `openspec/specs/` outside a change directory are the archive merge and the sync-specs mechanism, both delta-mediated and both scoped to the corpus.
+A file with no change directory and no delta behind it has nothing in OpenSpec that would ever write or validate it.
+
+Everything else this skill's tree prescribes is honestly what remains once the normative content is subtracted out: narrative context (`context/`), architecture narrative and its decision records (`architecture/`, `adrs/`), and pre-transaction backlog intent in working notes (`notes/`) before it becomes a change.
+All of it is human-authored, none of it normative, and none of it should be read as an alternate record of what the corpus already states.
+
+Where a repository does not use OpenSpec, none of this section applies, and the tree above stands as originally prescribed.
 
 ## Temporal provenance
 
@@ -260,7 +286,7 @@ And a search that does not follow symlinks reports nothing at all for a symlinke
   - `docs/development/requirements/` if functional/non-functional requirements change
   - `docs/development/architecture/` if design decisions, components, or technology change
   - `docs/development/traceability/` if test strategy or validation approach changes
-  - `docs/development/work-items/` for implementation status tracking
+  - Implementation status tracking is not a `docs/` artifact — see "Relationship to the OpenSpec corpus"
   - Repository README.md and user-facing docs/ if behavior changes
 - Update affected documentation immediately in the same session, not at an undetermined
   future point.
