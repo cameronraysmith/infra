@@ -52,6 +52,11 @@ The EST routes in this table — the property, design-by-contract, and symbolic/
 A property or contract test for an EST-routed proposition is written RED-first and driven to GREEN as one lane within that same red-green cycle, per-proposition, while an optional symbolic or SMT sweep runs as a non-blocking pass after GREEN at P8.
 Because these routes fire only when a proposition matches an EST row, a change carrying none of them adds no EST activity and the inner loop runs exactly as it does for a purely behavioral or internal change.
 
+Routing correctly is necessary but not sufficient: a proposition can land on the right modality and still be under-specified, and a passing check against a weak specification is evidence about the implementation, not about the specification itself.
+The vericoding benchmark found that, conditioned on successful synthesis, roughly nine percent of specifications were too weak and a further fifteen percent were poor translations — manual inspection of roughly one hundred and twenty-five items with no stated aggregate sample size, so treat this as suggestive rather than strong evidence.
+The paper establishes only that specification defects survive the program-satisfies-specification gate; that the requirements-to-specification bridge is therefore the binding constraint is our inference, not the paper's claim, since it declines to study that direction at all.
+The check this consideration flags — specification-versus-intent by blind informalization — is owned by `satisfaction-argument-audit`; this gate names that the consideration exists and defers the procedure there.
+
 The `safeadt` behavioral-acceptance specification is the canonical exemplar of this boundary drawn cleanly.
 Its behavioral-surface-boundary requirement scopes into BDD only the ledger Decider lifecycle and invariant rejections, the service and projection observable behavior, the observable effect and coeffect grading of a concrete operation, the geometry runtime behavior, and the shim-import acceptance criterion, and it scopes out static exhaustiveness, the Lean proofs, CrossHair symbolic checking, and the pure algebraic monoid, semiring, and homomorphism laws — each left on its existing gate of basedpyright strict, `lake build`, the CrossHair backend, or a Hypothesis property test respectively (behavioral-acceptance `spec.md`, the "Behavioral surface boundary" requirement and its "stay on their existing gates" scenario).
 The spec also records the witnessing spectrum a scenario sits in: a Lean proof witnesses more than a Hypothesis property, which witnesses more than a Gherkin scenario, so a scenario is a high-legibility, low-rigor example certificate that complements but never substitutes for a property or proof.
@@ -74,6 +79,8 @@ P8 verifies and optionally fires the mutation firewall, deferring severity and a
 ## Phase 3 in depth — independent spec-leakage audit
 
 Specs describe external observables in domain language; the audit removes anything that names the machine.
+This is WRSPM's shared-phenomena restriction enforced at the acceptance layer: a specification may mention only phenomena shared between world and machine, and the four buckets below enumerate what falls outside that shared alphabet.
+See `preferences-requirements-engineering` for the pentad this restriction belongs to.
 It runs as a fresh subagent whose identity differs from the author's, so the review is not the author re-reading their own intent.
 The taxonomy has four buckets: code references (class, function, method, variable, module, file-path names), infrastructure references (tables, columns, queries, endpoints, HTTP verbs and status codes, queue and cache keys), framework references (controller, service, repository, middleware, reducer, resolver, hook, store), and technical-implementation references (data structures, algorithms, wire protocols, internal events).
 The audit is read-only: it proposes domain-language rewrites and lets the human decide, and a term that genuinely is the domain — "balance" in a ledger, "table" in a database tool — is not leakage.
@@ -140,3 +147,5 @@ The two-axis split, the discovery-to-artifact gradient, the per-runner triad, th
 - `preferences-algebraic-laws` — the law-test route for named algebraic-law propositions.
 - `executable-specification-testing` — the property/contract/symbolic route for general, metamorphic, or model-based properties, design-by-contract obligations, and symbolic/SMT edge exploration.
 - `preferences-domain-modeling` — the ubiquitous language and the algebraic-data-type literals the observable oracle asserts against.
+- `preferences-requirements-engineering` — the WRSPM pentad and the shared-phenomena alphabet restriction the spec-leakage audit enforces at the acceptance layer.
+- `satisfaction-argument-audit` — the specification-versus-intent check by blind informalization that Gate 1's specification-strength consideration defers to.
