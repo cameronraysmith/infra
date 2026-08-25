@@ -1,20 +1,69 @@
-schema: superpowers-bridge
+schema: superpowers-bridge-wrspm
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  vanixiets manages nix-darwin laptops and cloud servers using clan with a
+  deferred module composition architecture (flake-parts + import-tree). The
+  fleet is documented in AGENTS.md. Nix is the implementation language for
+  nearly everything here; agent skills, agent context files, and OpenSpec
+  schemas are all nix-managed outputs.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Two boundaries are load-bearing and are the most common source of wrong
+  edits in this repo:
+
+  Vendored versus first-party. Anything under a path containing
+  `assets/` in the openspec module, and the twelve `openspec-*` skills
+  carrying `generatedBy` frontmatter, are vendored or generated and have
+  refresh paths that silently destroy local edits. Never edit them. The
+  first-party counterparts are `modules/home/ai/openspec/schemas/` and the
+  four hand-authored skills in the planning-and-development package.
+
+  Source versus delivered. Agent skills are authored at
+  `modules/home/ai/plugins/<group>/.apm/skills/<skill>/SKILL.md` and
+  delivered to `~/.claude/skills/` as read-only nix-store symlinks. Always
+  edit the source. The same applies to agent context files, whose single
+  source is `modules/home/tools/agents-md.nix`.
+
+  This repository is jj-colocated with a multi-parent development join. The
+  working copy pointer never moves, edits land in the shared integrated
+  surface, and completed content is routed down into the owning chain. See
+  CLAUDE.md for the full discipline.
+
+  The OpenSpec schema this project selects is resolved from the repository's
+  own tree through a project-tier symlink, so a schema edit is immediately
+  effective and needs no activation cycle.
+
+  When writing tasks: nix-managed outputs are not verified by reading the
+  source. Verify by evaluating (nix eval), building (nix build), or by
+  inspecting the delivered path after activation, and state which. This
+  guidance lives here rather than under `rules.tasks` because OpenSpec
+  1.10.0 silently drops rules keyed to the `tasks` artifact — the payload
+  from `openspec instructions tasks --json` carries no `rules` key at all,
+  with no warning, while sibling artifacts carry theirs. `tasks` is the
+  artifact the apply phase tracks, which is the likely cause. Do not add
+  `rules.tasks` back until that is fixed upstream; it would look live and
+  be inert.
+
+rules:
+  proposal:
+    - Tag every capability with its stratum (world | interface | behavioral). Tag honestly; an all-behavioral change is a legitimate outcome, not a gap to pad.
+    - State the trust boundary for any interface capability. Never claim a guarantee end to end.
+
+  specs:
+    - Behavioral requirements use world vocabulary only. Every content noun must resolve against the designation table in specs/world-assumptions. If a requirement can only be stated by naming a machine-side artifact, it belongs in machine-interface.
+    - World requirements are indicative, never optative. Their scenarios are violation or monitoring conditions, in the form WHEN the assumption drifts THEN it is void and the requirements relying on it lose their discharge.
+    - Interface requirements mention only shared phenomena and never reference world state the machine cannot observe.
+    - This repo's designations are nix-flavored and frequently ambiguous between world and machine. A host, a machine, a module, an interface, and a profile all have both a fleet-world sense and a nix-implementation sense. Disambiguate explicitly rather than relying on context.
+
+  design:
+    - Name which boundary each decision sits on when it touches vendored-versus-first-party or source-versus-delivered. Those two boundaries produce most of the rework in this repo.
+
+  verify:
+    - Section 8 is agent-executed and non-blocking. openspec validate checks markdown structure and delta well-formedness only, and checks no vocabulary grounding, alphabet discipline, or entailment. Never report section 8 as validation.
+    - If specs/world-assumptions does not exist, record that as the designation-lint finding rather than reporting the lint clean. A clean lint with no designation table is vacuous.
+
+operations:
+  archive:
+    guidance:
+      - Regenerate docs/development/traceability/satisfaction.md from the post-sync corpus before the change folder moves, so the PR diff carries it as part of this cycle's state.
+      - Rebuild that projection wholesale; never patch it. A patched discharge table accumulates exactly the staleness the artifact exists to prevent.
+      - Record undischarged requirements as rows with a follow-up reference. Never omit them and never silently accept them.
