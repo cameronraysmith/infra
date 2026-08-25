@@ -1,7 +1,7 @@
 ---
 name: preferences-theoretical-foundations
 description: >
-  Category-theory and type-theory foundations for compositional, correct-by-construction software architecture. Load when designing, refactoring, reviewing, or maintaining an architecture; when reasoning about abstractions, functors, optics, or type-level constructs; when choosing or justifying an effect system, or weighing a monad-transformer stack against a capability interface discharged by handlers; when drawing event-sourcing or CQRS boundaries, or making a read model a verifiable projection; when modeling a domain's effects and coeffects; when making a component's decide/evolve (Decider) structure explicit; and when retaining a type-checkable Lean architecture spec beside a non-Rust (for example Python) implementation. Pairs with refinement-driven-development, which owns the verified Lean-to-Rust round trip.
+  Category-theory and type-theory foundations for compositional, correct-by-construction software architecture. Load when designing, refactoring, reviewing, or maintaining an architecture; when reasoning about abstractions, functors, optics, or type-level constructs; when choosing or justifying an effect system, or weighing a monad-transformer stack against a capability interface discharged by handlers; when drawing event-sourcing or CQRS boundaries, or making a read model a verifiable projection; when modeling a domain's effects and coeffects; when making a component's decide/evolve (Decider) structure explicit; when retaining a type-checkable Lean architecture spec beside a non-Rust (for example Python) implementation; when composing verified and unverified components via assume-guarantee contracts; or when stating a specification's obligations independent of the proving logic via institution theory. Pairs with refinement-driven-development, which owns the verified Lean-to-Rust round trip.
 ---
 
 # Theoretical foundations
@@ -26,11 +26,18 @@ The primary framing throughout this skill is a *capability interface discharged 
 We approach the ideal asymptotically and partially realize it today, even when the runtime is untyped, by keeping a type-checkable Lean specification beside the implementation.
 The Lean file is where illegal states are made unrepresentable, where the projection homomorphism is proved rather than merely tested, and where resource grades are pinned or shown existential; the implementation is then a mirror of that spec, and verification closes the gap between them.
 
+That mirroring claim is a logic-independence claim, and institutions (Goguen and Burstall) are where it is stated precisely: a specification is a theory over a signature in some institution, satisfaction `M ⊨_Σ φ` is invariant under signature morphisms, and refinement between specifications is theory interpretation rather than a bespoke per-tool notion.
+Rule 7's "regardless of runtime language" is institutions stated without the name — Lean's dependent types, Dafny's Hoare logic, Verus's linear ghost state, and a row-typed language's record calculus are each a different institution, so an obligation stated at the institution level is parameterized over which one discharges it rather than tied to any single tool (see institution-theory.md).
+
+Composing several such mirrored components into one system is a separate claim, and the assume-guarantee contract algebra (Benveniste et al.) is where that composition is stated.
+A contract `C = (A, G)` pairs the assumptions a component makes about its environment with the guarantees it owes in return, defined semantically over any component model rather than any one proof tool; refinement `⪰` lets a component that assumes less and guarantees more stand in wherever a looser contract was assumed, parallel composition `⊗` derives the contract of two interacting components from their own, and conjunction `∧` merges several viewpoints stated on one component into one.
+This is the capability-interface move — state the obligation at the boundary, treat any discharge mechanism as an interchangeable interpreter — promoted from one component to the seam between components, which is what lets a Dafny-verified kernel, an Aeneas-verified Rust component, and an unverified UI compose into one statable theorem about their product (see assume-guarantee-contracts.md; the system-level realization as regulator pairs composing into a closure operator belongs to preferences-compositional-continuous-verification, which this file does not restate).
+
 ## When to use, when not
 
 Reach for this skill when you are designing, refactoring, reviewing, or maintaining an architecture and want the design decisions grounded in the structure that makes them compose rather than in taste alone.
 Reach for it when reasoning about abstractions, functors, optics, or type-level constructs, and when you need the universal property a pattern is an instance of.
-Reach for it when choosing or justifying an effect system, when weighing a transformer stack against a capability interface, when drawing event-sourcing or CQRS boundaries, when making a read model a verifiable projection, when modeling a domain's effects and coeffects, when making a component's decide/evolve structure explicit, or when deciding to keep a Lean spec beside a non-Rust implementation.
+Reach for it when choosing or justifying an effect system, when weighing a transformer stack against a capability interface, when drawing event-sourcing or CQRS boundaries, when making a read model a verifiable projection, when modeling a domain's effects and coeffects, when making a component's decide/evolve structure explicit, when deciding to keep a Lean spec beside a non-Rust implementation, when composing verified and unverified components into one product-level theorem, or when stating a specification's obligations independent of the proving logic.
 
 Do not reach for it for the operational mechanics a sibling owns: aggregate boundary sizing and smart constructors belong to preferences-domain-modeling, the laws-as-property-tests machinery to preferences-algebraic-laws, the snapshot/replay/upcasting details to preferences-event-sourcing, and the Lean-to-Rust verification round trip to refinement-driven-development.
 Do not reach for it to settle a question that is purely about style, tooling, or a single language's idioms; the language-specific preference skills own those.
@@ -51,7 +58,7 @@ Rule 5 — track two distinct grades and never call them adjoint: an ordered-mon
 
 Rule 6 — grade in the type when control flow is statically bounded; hand back an existential grade, deliberately, when it is not, because static pinning under unbounded data-dependent recursion is a conjectural synthesis, not a theorem (internal-language.md).
 
-Rule 7 — keep a type-checkable Lean architecture spec the implementation mirrors, regardless of runtime language; this is how the typed ideal is partially realized today (practitioner-rules.md; defer the Rust round trip to refinement-driven-development and the check-tier calibration for non-Rust implementations to preferences-validation-assurance).
+Rule 7 — keep a type-checkable Lean architecture spec the implementation mirrors, regardless of runtime language; this is how the typed ideal is partially realized today (practitioner-rules.md; institution-theory.md formalizes the logic-independence this rule assumes; defer the Rust round trip to refinement-driven-development and the check-tier calibration for non-Rust implementations to preferences-validation-assurance).
 
 ## References
 
@@ -65,6 +72,8 @@ The worked example is the Lean-to-Python proof that the theory pays rent.
 | [`references/effects-handlers.md`](references/effects-handlers.md) | foundations | Capability interfaces as the same pattern as finally-tagless, the transformer stack as one interpreter, the initial/final duality, and why the defect list is engineering experience |
 | [`references/graded-effects-coeffects.md`](references/graded-effects-coeffects.md) | foundations | The effect grade (ordered monoid, graded monad), the coeffect grade (ordered semiring, graded comonad), and the distributive law that coordinates them without an adjunction |
 | [`references/internal-language.md`](references/internal-language.md) | foundations | The conjectural unifying calculus, initiality (not a limit point), the initial/final universal-property duality, and the existential-grade frontier |
+| [`references/assume-guarantee-contracts.md`](references/assume-guarantee-contracts.md) | foundations | The contract `(A, G)`, refinement `⪰`, parallel composition `⊗`, and conjunction `∧` as the composition algebra across component models, and its relation to the capability-interface move |
+| [`references/institution-theory.md`](references/institution-theory.md) | foundations | Signatures, sentences, models, and the satisfaction condition that makes truth invariant under signature morphism; refinement as theory interpretation; and why Rule 7 is institutions stated without the name |
 | [`references/decide-evolve-lens.md`](references/decide-evolve-lens.md) | practitioner | The Decider, `evolve` as F-algebra, state reconstruction as catamorphism, and the Moore-machine/lens reading kept as a labelled gloss |
 | [`references/observability-as-theorem.md`](references/observability-as-theorem.md) | practitioner | The read-model projection as a strict monoid homomorphism, the CQRS algebra/coalgebra split, and the exact-monoid (no IEEE float) caveat |
 | [`references/practitioner-rules.md`](references/practitioner-rules.md) | practitioner | The seven design rules in full, each with its concrete check, its grounding reference, and how the rules compose |
@@ -81,6 +90,7 @@ Reach for preferences-event-sourcing for the operational event-sourcing patterns
 Reach for preferences-functional-reactive-programming for the reactive-stream and FRP foundations on the read side.
 Reach for preferences-validation-assurance for the check-tier and confidence-promotion calibration that governs how strongly any of these claims may be asserted, and how much assurance a non-mechanical correspondence warrants.
 Reach for preferences-architecture-diagramming for diagram format selection when these structures need to be drawn.
+Reach for preferences-compositional-continuous-verification for the system-level realization of the assume-guarantee contract algebra as operating-envelope-plus-regulator pairs composing into a single closure operator; this skill states the contract theory, that skill states the realization.
 
 ## How the foundations map to practical patterns
 
@@ -109,4 +119,6 @@ For type theory, see Pierce, *Types and Programming Languages*, and Pierce (ed.)
 For functional-programming theory, see Okasaki, *Purely Functional Data Structures*, and Chiusano and Bjarnason, *Functional Programming in Scala* (the Red Book).
 For effect systems, see the algebraic-effects-and-handlers literature (Plotkin and Pretnar; Wu, Schrijvers, and Hinze; Bach Poulsen and van der Rest) and the call-by-push-value treatment (Levy).
 For applied category theory, see Fong and Spivak, *Seven Sketches in Compositionality*, and Riehl, *Category Theory in Context*.
+For system-level contract composition, see Benveniste, Caillaud, Delahaye, Passerone, Raclet, Reinkemeier, Sangiovanni-Vincentelli, Damm, Henzinger, and Larsen, *Contracts for System Design*.
+For logic-independent specification, see Goguen and Burstall, *Institutions: Abstract Model Theory for Specification and Programming*, and Sannella and Tarlecki, *Foundations of Algebraic Specification and Formal Software Development*.
 The reading-map.md reference is the tiered bibliography with the per-citation scope notes; consult it before attaching any of these to a load-bearing claim.

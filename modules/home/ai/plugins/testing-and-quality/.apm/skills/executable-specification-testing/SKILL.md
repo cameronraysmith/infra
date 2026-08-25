@@ -43,13 +43,14 @@ Design by contract in Meyer's sense is a named verification modality: a routine 
 The distinguishing property is that these are *executable predicates checked at runtime on concrete calls* — assertions with a specification's intent, not a separate proof artifact.
 icontract is the Python bearer (`@require`/`@ensure`/`@invariant`); the Rust `contracts` crate is the direct analog lowering to runtime `assert!`; both are cross-referenced in `references/cross-language-verification.md`.
 
-The word "contract" is overloaded across the anchor skills, and this rung is none of the other five senses.
+The word "contract" is overloaded across the anchor skills, and this rung is none of the other six senses.
 It is not the algebraic-law sense in which `preferences-algebraic-laws` says "laws are contracts that abstractions must satisfy" — those are ∀-quantified equational laws verified by property tests, not per-call runtime pre/post-conditions.
 It is not the "contract tests" of `preferences-validation-assurance`, which are a place on the validation ladder concerned with consumer-provider compatibility.
 It is not the "data contracts" of `preferences-bounded-context-design`, which govern the schema and semantics crossing a context boundary.
 It is not the "capability interface" of `preferences-theoretical-foundations`, which is the effect-handler adjunction through which a side effect is discharged.
-And it is not the "operating envelope" of `preferences-compositional-continuous-verification`, which is the precondition half of a regulator pair at the system level.
-Design by contract here is specifically the Meyer runtime `require`/`ensure`/`invariant` on a routine, and holding those five senses apart is part of what this rung owns.
+It is not the "operating envelope" of `preferences-compositional-continuous-verification`, which is the precondition half of a regulator pair at the system level.
+And it is not the assume-guarantee contract of `preferences-theoretical-foundations`, which is the Benveniste `(A, G)` composition algebra for heterogeneous verification across component models.
+Design by contract here is specifically the Meyer runtime `require`/`ensure`/`invariant` on a routine, and holding those six senses apart is part of what this rung owns.
 
 A contract is a proof obligation, and its runtime check is only the lowest rung that can discharge it; the DbC-along-the-ladder discipline is to discharge each contract as high on the verification ladder as the language allows, keeping the runtime assertion enabled exactly when nothing higher subsumes it.
 In a dynamically or weakly typed language the runtime check stays enabled as the load-bearing safety net: Python's type system cannot discharge the `@require`/`@ensure` predicate statically, so the icontract runtime check is the enforcement of last resort — the same reason beartype's runtime type enforcement is enabled beside a static checker rather than trusted to it.

@@ -30,6 +30,7 @@ Where a connection the skill draws is folklore or the author's own synthesis rat
 For the algebraic laws these sources underwrite as property tests, see preferences-algebraic-laws.
 For the domain-modeling patterns (aggregates, smart constructors, illegal states unrepresentable) that these foundations justify, see preferences-domain-modeling.
 For the Lean-to-Rust verification round trip that turns the worked example's proofs into a development process, see refinement-driven-development; this map is the bibliography, not the method.
+For the system-level realization of the contract algebra as operating-envelope-plus-regulator pairs composing into a closure operator, see preferences-compositional-continuous-verification; this map cites the contract theory only.
 
 ## Tier 1: spine
 
@@ -62,6 +63,14 @@ Lawvere, *Functorial Semantics of Algebraic Theories*, PhD thesis / PNAS, 1963.
 Grounds the free-forgetful and initiality content: syntax is the initial (free) object, the model functor is forgetful, and the classifying category is the initial object presenting the doctrine.
 Scope: this grounds free-forgetful and initiality only.
 It does *not* ground the "a DSL is the free-forgetful adjunction" slogan as a theorem (DSLs with equations, binding, or effects need monads, PROPs, or sketches beyond plain F ⊣ U), it does *not* license an arbitrary-DSL identity, and it does *not* license a "limit point" decoding — an initial object is an empty colimit, not a limit.
+
+Benveniste, Caillaud, Delahaye, Passerone, Raclet, Reinkemeier, Sangiovanni-Vincentelli, Damm, Henzinger, and Larsen, *Contracts for System Design*, Foundations and Trends in Electronic Design Automation 12(2-3), 2018.
+Grounds the assume-guarantee contract meta-theory: a contract `(A, G)` of assumptions and guarantees, defined over a deliberately abstract notion of component and compatibility; the refinement order (a refining contract assumes no more and guarantees no less); parallel composition `⊗`; and conjunction `∧` as the greatest lower bound of refinement.
+Scope: the exact set-theoretic formulas (the refinement inclusions; the `⊗` residual-assumption formula) are corroborated through citing secondary literature rather than page-checked against the monograph directly in this authoring; see assume-guarantee-contracts.md for the full development and its own scope note.
+
+Goguen and Burstall, *Institutions: Abstract Model Theory for Specification and Programming*, Journal of the ACM 39(1), 1992.
+Grounds institution theory: a category of signatures, a sentence functor `Sen`, a model functor `Mod`, and a satisfaction relation per signature obeying the satisfaction condition — satisfaction is invariant under translation along a signature morphism.
+Scope: this grounds the abstract framework and the satisfaction condition; it does not certify that any specific pairing among this repository's verification backends has been mechanically exhibited as an institution comorphism; see institution-theory.md for the full development.
 
 ## Tier 2: supporting
 
@@ -116,6 +125,10 @@ Scope: background only for the Decider, and it does *not* support the cofree-com
 Pickering, Gibbons, and Wu, *Profunctor Optics: Modular Data Accessors*, Programming Journal 1(2), 2017.
 Supports optics as modular accessors as background.
 Scope: background only for the Decider; it does not ground a Decider-is-a-lens identity.
+
+Sannella and Tarlecki, *Foundations of Algebraic Specification and Formal Software Development*, Springer, 2012.
+Supports refinement as theory interpretation: the structured-specification program that builds and refines specifications compositionally over an institution, generalizing a bespoke per-tool refinement notion into one theory-interpretation move.
+Scope: corroborated through citing literature and the structured-specification program rather than page-checked against the monograph in this authoring; cite for the theory-interpretation framing of refinement, not for a specific structured-specification operator this skill does not use.
 
 ## Tier 3: practitioner anchor
 
