@@ -488,8 +488,10 @@ Current bundle release: **`1.0.0`** (git tag `v1.0.0`; see [VERSION](./VERSION))
 > as read-only; this governance slice is repo-local only). The `(fail) FAIL` decision-checkbox
 > vocabulary is unchanged.
 
-> **1.10.0 migration note**: the `actionContext.mode == "workspace-planning"` scope guards added
-> at 1.4.1 were removed from the apply / verify / retrospective entry points. On 1.10.0
+> **1.10.0 migration note**: the `actionContext.mode == "workspace-planning"` scope guards were
+> removed from the apply / verify / retrospective entry points. Those guards were local to this
+> bundle's lineage rather than upstream content — they were added to the parent fork at its 1.4.1
+> migration, alongside its CLI-resolved artifact paths. On 1.10.0
 > `ActionContext.mode` is the single literal `"repo-local"`, so the guard was unreachable and
 > degraded to always-proceed; it was dead rather than wrong. The CLI-resolved path contract it
 > accompanied is intact and unchanged (`actionContext.mode`, `actionContext.allowedEditRoots`,

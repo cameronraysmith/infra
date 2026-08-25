@@ -1,17 +1,19 @@
-# First-party OpenSpec schema bundles
+# Active OpenSpec schema bundles
 
-This directory holds schema bundles **we own and edit**.
-It is deliberately a sibling of `../assets/schemas/`, which holds vendored third-party bundles that must stay pristine because they have a refresh path that would silently destroy local edits.
+This directory holds the schema bundle that new work targets.
+Its sibling `../assets/schemas/` holds the earlier bundle, now frozen as a reference; see that directory's README for what it is and why it stays delivered.
 
-The distinction is load-bearing: anything under `../assets/` is refreshed from upstream and is not ours to modify; anything here is ours to modify and is never refreshed.
+Both directories are ours to edit. The `assets` name and an earlier description of that tree as vendored third-party content were both inaccurate — it is a fork under our maintenance that has diverged substantially from upstream. The distinction between the two directories is lifecycle, not ownership: this one is where changes land, that one is frozen and touched only to unblock a change already pinned to it.
 
 ## superpowers-bridge-wrspm
 
-A first-party fork of the vendored `superpowers-bridge` bundle, adding a WRSPM stratum layer.
+A fork of `superpowers-bridge` adding a WRSPM stratum layer.
 
-Derived from `../assets/schemas/superpowers-bridge` at vendored pin `0366ed5` (upstream `github.com/JiangWay/openspec-schemas`).
-The vendored copy remains in place as the upstream reference and continues to track upstream through its own refresh path.
-This fork does not, and will not, auto-track upstream: re-deriving it after an upstream refresh is a deliberate act that must re-apply the delta below.
+Derived from `../assets/schemas/superpowers-bridge`, which is itself our fork of `github.com/JiangWay/openspec-schemas` and had already diverged from upstream by +79 / −29 lines in `schema.yaml` before this fork was taken. So this bundle's ancestry is two forks deep, and upstream is a reference rather than a merge base.
+
+Neither bundle auto-tracks upstream. Re-deriving either is a deliberate three-way merge against `~/ghq/github.com/JiangWay/openspec-schemas`, not a copy.
+
+The reason to fork rather than edit the parent in place is the schema pin, discovered after the fact. A change records its schema in its own `.openspec.yaml` at creation time and is never repinned, so editing the parent would have retroactively changed the governing schema under every change already pinned to it. Forking leaves those changes on the bundle they were authored against.
 
 ### What the fork adds
 
@@ -31,11 +33,11 @@ It deliberately does not live under `openspec/`: artifact outputs are confined t
 
 ### What the fork changes for maintenance reasons
 
-The `actionContext.mode == "workspace-planning"` guards were removed from the apply, verify, and retrospective entry points.
+The `actionContext.mode == "workspace-planning"` guards were removed from the apply, verify, and retrospective entry points. These guards were ours rather than upstream's, added to the parent fork alongside its CLI-resolved artifact paths.
 On OpenSpec 1.10.0 `ActionContext.mode` is the single literal `"repo-local"`, so the guard was unreachable and degraded to always-proceed.
 It was dead rather than wrong, and the CLI-resolved path contract it accompanied is intact and verified against 1.10.0 status JSON.
 
-The per-task `— verify:` convention and the closing `## Integration Verification` group were adopted from upstream OpenSpec 1.10.0's own tasks template, which the vendored bundle's template had not tracked.
+The per-task `— verify:` convention and the closing `## Integration Verification` group were adopted from upstream OpenSpec 1.10.0's own tasks template, which the parent bundle's template had not tracked.
 
 The declared OpenSpec baseline moved from 1.4.1 to 1.10.0.
 
@@ -44,8 +46,7 @@ The declared OpenSpec baseline moved from 1.4.1 to 1.10.0.
 The bundle is currently made live in this repository through a project-tier symlink at `openspec/schemas/superpowers-bridge-wrspm`, which `openspec schema which` reports as `Source: project`.
 Resolving from the repository's own tree means an edit here is immediately effective with no activation cycle, and it is impossible for this repository to test a stale copy of an artifact for which it is the source of truth.
 
-User-global delivery through `~/.local/share/openspec/schemas/` is a separate concern owned by `../default.nix`, whose `schemaDir` option still points at the vendored bundle.
-Repointing it, or delivering both bundles, is outstanding work.
+Both bundles are delivered user-global by the `programs.openspec.schemaDirs` option in `../default.nix`, so a change pinned to either resolves.
 
 ### Known upstream defects at this baseline
 
