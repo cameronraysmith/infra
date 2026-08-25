@@ -15,6 +15,15 @@ projects:
     name: "Pi agent environment"
     teams: ["CAM"]
     archive_documents: {}
+  "requirements-engineering":
+    # slugId, not the project UUID (ceb6017b-2e49-482f-af46-c213f07e039e), for the
+    # reason recorded on the sibling entries: `linear document list --project`
+    # silently returns zero nodes with exit 0 for a UUID, so the archive-time
+    # UPSERT's title scan misses and duplicates every document.
+    id: "5058c82e2876"
+    name: "Ground requirements in a maintained satisfaction argument"
+    teams: ["CAM"]
+    archive_documents: {}
   "cognee-memory-layer":
     # slugId, not the project UUID (40537fb1-dadc-4405-ad3c-e5ed5dd7b66d): `linear
     # document list --project` silently returns zero nodes with exit 0 for a UUID,
