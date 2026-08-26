@@ -10,15 +10,17 @@ Any requirement whose discharge depends on this fact SHALL name it explicitly ra
 - **WHEN** a Pi release ships a built-in mechanism to gate, approve, or defer a tool call pending human interactive confirmation
 - **THEN** this assumption is void, and the `pi-agent-environment` requirements `Permission-gate reuse`, `Non-Bash edit and write policy`, and `Fail-open policy` lose the discharge argument that currently rests on enforcing policy entirely through first-party and third-party extensions rather than a native mechanism
 
-### Requirement: A2 — Unanswerable dialog stalls an autonomous session
+### Requirement: A2 — Unanswerable dialog stalls a session with UI but no human present
 
-It is true of an autonomous Pi session, independent of what this fleet builds, that a dialog left unanswered because no human is present to answer it stalls that session indefinitely rather than resolving on its own.
+It is true of a Pi session that has a UI channel, independent of what this fleet builds, that a dialog left unanswered because no human is present to answer it stalls that session indefinitely, unless some other responder on the event bus answers in the human's place.
+A session with no UI channel at all is not covered by this claim: no dialog is ever shown to a session without a UI, so the stall this assumption describes cannot arise there.
+The reachable condition is therefore the inverse of headlessness — a UI channel present, a human absent — not the mere absence of a UI.
 Any requirement whose discharge depends on this fact SHALL name it explicitly, and SHALL be treated as losing its discharge once this assumption's violation condition below is observed.
 
-#### Scenario: An unanswerable dialog stops stalling an autonomous session
+#### Scenario: An unanswerable dialog stops stalling a session with UI but no human present
 
-- **WHEN** Pi or its host harness gains a way to hold an unresolved interactive prompt open across an autonomous session without blocking that session's progress, such as a default-on-timeout or an asynchronous approval queue
-- **THEN** this assumption is void, and the `pi-agent-environment` requirements `Additional shell policy`'s prompted decision class, `Non-Bash edit and write policy`'s notify-and-allow class, and `Fail-open policy`'s prohibition on requiring an interactive answer lose the discharge argument that currently rests on prompting being unsafe for an autonomous session
+- **WHEN** Pi or its host harness gains a way to hold an unresolved interactive prompt open on a session that has a UI channel but no human present, without blocking that session's progress, such as a default-on-timeout or a standing event-bus responder that answers in the human's place
+- **THEN** this assumption is void, and the `pi-agent-environment` requirements `Additional shell policy`'s prompted decision class, `Non-Bash edit and write policy`'s notify-and-allow class, and `Fail-open policy`'s prohibition on requiring an interactive answer lose the discharge argument that currently rests on prompting being unsafe for a session with UI but no human present
 
 ### Requirement: A3 — Policy failure carries no safety evidence
 
@@ -112,6 +114,7 @@ Ten terms carry two senses in this repository today and are disambiguated below 
 | interface | nix/code | a module option interface, or a TypeScript interface type in extension source | machine-only |
 | permission system | — | a native mechanism that gates a tool call pending human interactive approval | world-only |
 | dialog | — | an interactive prompt awaiting a human's answer | world-only |
+| UI channel | — | the means by which a Pi session can present a dialog to a human at all, independent of whether one is actually present to answer it | world-only |
 | repository | — | a version-controlled tree whose history can potentially recover a prior state of a file within it | shared |
 | history | — | the sequence of recorded prior states a repository's version-control system retains | shared |
 | target | — | the file or path a proposed mutation would act on | shared |

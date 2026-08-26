@@ -13,8 +13,8 @@ This choice rests on the `world-assumptions` capability's assumption that Pi shi
 ### Requirement: Additional shell policy
 
 Nix-owned permission-gate rules MUST classify dangerous commands, semantic mutating HTTP requests, direct `rm`, worktree creation, and Pi package mutation, with direct `rm` and package mutation blocked and interactive mutating HTTP and worktree requests prompted.
-The prompted decision class for mutating HTTP and worktree requests names the same autonomous-session assumption as `Fail-open policy` below (`world-assumptions` A2), and the two requirements' discharge under that assumption is not yet reconciled; see this change's `design.md` open question on the prompt-class contradiction.
-This requirement's discharge is recorded undischarged pending that arbitration, per `verify.md` §8b.
+The prompted decision class for mutating HTTP and worktree requests names the same UI-present-no-human assumption as `Fail-open policy` below (`world-assumptions` A2); the two requirements are reconciled, not in tension, because a session without a UI channel never reaches an interactive prompt at all — the pinned permission-gate engine blocks a prompt-class match immediately when no UI is present, before ever presenting a dialog — so this requirement's Bash prompt class and `Fail-open policy`'s no-interactive-answer clause, scoped to the first-party non-Bash decision core, govern disjoint reachable conditions.
+This requirement's discharge under A2 is reconciled with `Fail-open policy`'s per this change's `design.md` D5, which records the resolution and its evidence.
 
 #### Scenario: Shell mutation reaches custom rules
 
@@ -28,7 +28,7 @@ It MUST refuse only a mutation version control could not recover, and MUST annou
 The exported adapter factory or handler seam MUST be directly executable as policy evidence.
 The extension is scoped to Pi, and the system MUST declare that scope to atomic rather than relying on either agent's default discovery, under the `world-assumptions` capability's assumption that atomic inherits Pi's configuration root and loads Pi's extension directory unconditionally (`world-assumptions` A6).
 The policy MUST normalize a tool path exactly as Pi resolves it, covering the `@` prefix, a leading `~`, a `file://` URL, and Unicode space variants, so the path the policy judges is the path the tool opens, under the assumption that this enumeration is exhaustive of Pi's own path resolution (`world-assumptions` A7).
-This requirement's announce-rather-than-refuse discharge additionally rests on the assumptions that Pi has no native permission system (A1), that an unanswerable dialog stalls an autonomous session (A2), that policy failure carries no safety evidence (A3), that refusing on ambiguity has a real cost and prevents nothing (A4), and that a target inside a repository is recoverable from its history (A5) — the last of which has a known sharp edge for untracked, gitignored targets recorded in this change's `design.md`.
+This requirement's announce-rather-than-refuse discharge additionally rests on the assumptions that Pi has no native permission system (A1), that an unanswerable dialog stalls a session with UI but no human present (A2), that policy failure carries no safety evidence (A3), that refusing on ambiguity has a real cost and prevents nothing (A4), and that a target inside a repository is recoverable from its history (A5) — the last of which has a known sharp edge for untracked, gitignored targets recorded in this change's `design.md`.
 
 #### Scenario: Non-Bash mutation reaches policy
 
@@ -85,9 +85,10 @@ This requirement's announce-rather-than-refuse discharge additionally rests on t
 ### Requirement: Fail-open policy
 
 Parser errors, core or adapter exceptions, ambiguous repository state, and missing or throwing capabilities MUST permit the affected tool call rather than refuse it, under the `world-assumptions` capability's assumptions that policy failure carries no safety evidence and that refusing on ambiguity has a real cost and prevents nothing (`world-assumptions` A3, A4).
+This requirement, in both clauses, is scoped to the first-party pure decision core and its Pi adapter that `Non-Bash edit and write policy` names, and does not extend to the pinned rytswd permission-gate engine `Permission-gate reuse` names as the Bash enforcement engine: that upstream engine's own rule-evaluation exception handling fails closed rather than open, turning a throwing rule into a block rather than a permit, and its prompt-class behavior is governed by `Additional shell policy`, not this requirement.
 Malformed tool input remains the one refusal drawn from an unreadable request rather than an unrecoverable target.
-The policy MUST NOT require an interactive answer to permit a mutation, under the assumptions that Pi has no native permission system and that an unanswerable dialog on an autonomous session stalls it indefinitely (`world-assumptions` A1, A2).
-This clause and `Additional shell policy`'s prompted decision class for mutating HTTP and worktree requests are not yet reconciled; the arbitration is recorded as an open question in this change's `design.md` and is not resolved here.
+The policy MUST NOT require an interactive answer to permit a mutation, under the assumptions that Pi has no native permission system and that an unanswerable dialog stalls a session with UI but no human present (`world-assumptions` A1, A2).
+This clause and `Additional shell policy`'s prompted decision class for mutating HTTP and worktree requests are reconciled: scoped as above, this clause governs only the first-party non-Bash decision core, which never prompts by construction, while `Additional shell policy`'s prompt class governs the separate Bash engine; see this change's `design.md` D5 for the resolution and its evidence.
 
 #### Scenario: Policy cannot decide safely
 

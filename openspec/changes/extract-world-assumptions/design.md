@@ -15,14 +15,13 @@ This is a source-versus-delivered and vendored-boundary-free change: it touches 
 - Extract the eight indicative assumptions `pi-agent-environment` currently embeds into a new `world-assumptions` capability, each with a violation-condition scenario in the `WHEN <drift> THEN <void, discharge lost>` grammar.
 - Restate the six `pi-agent-environment` requirements that rest on those assumptions so each names its dependency explicitly, without changing any MUST/SHALL clause's normative content.
 - Build the designation table, disambiguating the ten double-sensed terms (`session`, `package`, `policy`, `@`, `mutation`, `activation`, `probe`, `machine`, `host`, `interface`) explicitly.
-- Record the prompt-class contradiction between `Additional shell policy` and `Fail-open policy` as an open question for human arbitration.
+- Resolve the prompt-class contradiction between `Additional shell policy` and `Fail-open policy`; originally recorded as an open question for human arbitration, resolved once a source lookup against the pinned `permission-gate` engine settled what its headless behavior actually does (see D5).
 - Decide, and justify, whether this change also relocates the interface-flavored requirements the same dogfood run found.
 
 **Non-Goals:**
 
 - Changing any `pi-agent-environment` requirement's behavior. This is a restatement, not a behavioral change.
-- Resolving the prompt-class contradiction. That arbitration belongs to Cameron; see Open Questions.
-- Relocating interface-stratum requirements into a separate capability. See D4 below; deferred with a named follow-up.
+- Relocating interface-stratum requirements into a separate capability. See D4 below; declined, deferred indefinitely rather than scheduled to a named follow-up.
 - Correcting the `A5` sharp edge (untracked, gitignored targets) in the shipped policy. See D6 below; flagged, not fixed, because fixing it would change behavioral content.
 - Touching any Nix module, package, or generated context file.
 
@@ -35,7 +34,7 @@ Each assumption's falsification condition and the requirements that lose their d
 | # | Assumption | Falsification condition | `pi-agent-environment` requirements losing discharge |
 |---|---|---|---|
 | A1 | Pi has no native permission system | A Pi release ships a built-in gate/approve/defer mechanism for tool calls | `Permission-gate reuse`, `Non-Bash edit and write policy`, `Fail-open policy` |
-| A2 | An unanswerable dialog stalls an autonomous session | Pi or its harness gains a way to hold an unresolved prompt open without blocking session progress | `Additional shell policy` (prompt class), `Non-Bash edit and write policy` (notify-and-allow class), `Fail-open policy` (no-interactive-answer clause) |
+| A2 | An unanswerable dialog stalls a session with UI but no human present | Pi or its harness gains a way to hold an unresolved prompt open on such a session without blocking session progress | `Additional shell policy` (prompt class), `Non-Bash edit and write policy` (notify-and-allow class), `Fail-open policy` (no-interactive-answer clause) |
 | A3 | Policy failure carries no safety evidence | A specific failure mode is shown to correlate with an actually unsafe mutation | `Non-Bash edit and write policy`, `Git default-branch boundary`, `Jj diamond boundary`, `Fail-open policy` |
 | A4 | Refusing on ambiguity has a real cost and prevents nothing | An audit finds a refusal on ambiguity that actually prevented an unsafe mutation | `Non-Bash edit and write policy`, `Fail-open policy` |
 | A5 | A tracked target is recoverable from repository history | A target is inside a repository but untracked and gitignored, so no history entry covers it (already known to fire; see D6) | `Non-Bash edit and write policy`, `Git default-branch boundary`, `Jj diamond boundary` |
@@ -66,24 +65,35 @@ The consequence is accepted deliberately: the designation lint (verify.md §8a) 
 This also clarifies a point worth stating explicitly: "world" is relative to what this repository is building.
 Atomic, jj, and Pi itself are all environment from this repository's own build's perspective, even though they are software; a fact about how they behave (A6, A7, A8) is legitimate content for a `world`-stratum assumption, because it is true regardless of what this repository builds, exactly like a fact about physical hardware would be.
 
-### D4: Defer interface-stratum relocation to a named follow-up
+### D4: Decline interface-stratum relocation; deferred indefinitely, not scheduled
 
-**Recommendation: defer.**
-Relocating the interface-flavored content of `Permission-gate reuse`, `Additional shell policy`, `Non-Bash edit and write policy`, `Git default-branch boundary`, and `Jj diamond boundary` into a separate `machine-interface` capability (naming the first-party policy extension, injected repository capabilities, and probe exit codes at the shared alphabet, with an explicit trust-boundary statement) is real, identified scope — but doing it in this change roughly doubles the delta's size and folds two distinct extraction concerns (naming world assumptions; separating interface vocabulary) into one review.
-It also raises the risk that relocating five requirements' worth of dense, interlocking probe and argv detail introduces an incidental behavioral drift, which directly conflicts with this change's "no behavioral change" mandate.
+**Recommendation, reconsidered: decline rather than merely defer.**
+This change originally recommended deferring the interface-flavored content of `Permission-gate reuse`, `Additional shell policy`, `Non-Bash edit and write policy`, `Git default-branch boundary`, and `Jj diamond boundary` to a named follow-up change (`stratify-pi-agent-environment-interface`), scoped to relocate that content into a separate `machine-interface` capability.
+On reconsideration, no such follow-up is being filed.
+The one concretely demonstrated defect motivating relocation was the `Fail-open policy` scope ambiguity — its fail-open and no-interactive-answer guarantees read as though they governed the upstream Bash engine as well as the first-party non-Bash core they actually cover — and D8/D5 above already correct that defect in place, with a scope-marking sentence, at the cost of two added sentences rather than a capability restructuring.
+Restructuring 25 requirements that archived changes already reference, to relocate machine-side vocabulary whose only demonstrated cost was that one now-corrected ambiguity, does not pay for itself against that alternative.
 
-**Trade-off accepted by deferring:** `pi-agent-environment` remains a capability whose stratum tag (`behavioral`) and actual vocabulary do not fully agree for one more cycle, and the designation lint will keep reporting the same unresolved-noun finding until the follow-up lands.
-That is a known, recorded incompleteness, not a silent one — verify.md §8a and §8c both surface it explicitly on every run until the follow-up closes it.
+**Trade-off accepted by declining:** `pi-agent-environment` remains a capability whose stratum tag (`behavioral`) and actual vocabulary do not fully agree, indefinitely rather than for one bounded cycle, and the designation lint (§8a) will keep reporting the same unresolved-noun finding with no scheduled change to close it.
+That is a known, accepted incompleteness, not a silent one — `verify.md` §8a and §8c both surface it explicitly on every run.
 
-**Follow-up:** a change named `stratify-pi-agent-environment-interface` (or equivalent), scoped narrowly to the same five requirements this dependency map already identifies as carrying machine-side vocabulary — `Permission-gate reuse`, `Additional shell policy`, `Non-Bash edit and write policy`, `Git default-branch boundary`, `Jj diamond boundary` — plus a trust-boundary statement for the new `interface`-tagged capability.
-It should not also absorb the packaging and regulator requirements (`Nix-owned Pi resources`, `Source-only extension package`, `Selected extensions`, `Nix-owned runtime executables`, `Excluded extension resources`, `Consolidated custom regulators`, `Offline aggregate smoke`, and similar): those name Nix artifacts as a direct statement of what the system must deliver, which is a legitimate behavioral requirement at intermediate grain, not a specification-alphabet guarantee statement; whether any of them also warrants interface-stratum treatment is a decision for that follow-up's own proposal phase, not this document.
+**Revival condition, stated so a future reader can test it, not as intent:** this decision is reopened only if a second defect traceable to `pi-agent-environment`'s mixed behavioral/interface vocabulary is demonstrated — a concrete instance where the mixed stratum produced a wrong reading of a requirement, an incorrect discharge argument, or a defect of the same kind the `Fail-open policy` scope ambiguity was — not by the designation lint's unresolved-noun finding recurring on its own, since that finding is expected and non-vacuous by design (D3) and recurs on every run regardless of whether a further real defect exists.
+A change that finds such a second defect should relocate the specific requirements it implicates, scoped to that defect, rather than reviving the original five-requirement `machine-interface` capability wholesale.
 
-### D5: Record, not resolve, the prompt-class contradiction
+### D5: Resolve the prompt-class contradiction — the pinned engine's headless behavior dissolves it
 
 `Additional shell policy` requires mutating HTTP and worktree requests to reach a `prompt` decision class.
 `Fail-open policy` forbids requiring an interactive answer to permit a mutation, under A1 and A2.
-`Permission-gate reuse` names permission-gate's "headless behavior" as the enforcement surface but this spec never specifies what that behavior actually does when no human is present to answer a prompt — that is the unstated bridge between the two requirements, and it is a human decision (what "prompt" degrades to under headless execution: deny, allow-with-notice, or something else) rather than something this change can infer from the text.
-See Open Questions below; `verify.md` §8b records `Additional shell policy` and the no-interactive-answer clause of `Fail-open policy` as undischarged pending that arbitration.
+Read without a scope distinction for `Fail-open policy`, these appeared to conflict: how can Bash's mutating-HTTP/worktree requests be prompted if nothing may ever require an interactive answer to permit a mutation?
+
+D8's source lookup against the pinned `permission-gate` engine (`permission-gate/index.ts` lines 105-106, rev `c700f300707db5345727052682c88e3064030aa2`) settles this directly: the `tool_call` handler's `if (!ctx.hasUI) { return { block: true, reason: ... }; }` guard returns a block before `showReviewPrompt` is ever called, so a session without a UI channel never reaches an interactive prompt at all — no dialog is shown, so none is left unanswered, so no mutation there is ever made to wait on an interactive answer.
+The contradiction dissolves once `Fail-open policy` is read at the scope D8 already assigns it: both of its clauses are a guarantee this repository makes about the first-party non-Bash decision core (`Non-Bash edit and write policy`), which by its own spec only ever returns allow, notify-and-allow, or block and structurally never prompts — not a guarantee about the upstream `permission-gate` engine `Additional shell policy` governs.
+Scoped that way, the two requirements govern disjoint reachable conditions rather than conflicting ones: `Additional shell policy`'s prompt class is satisfied by permission-gate's actual behavior (prompt when a UI channel is present, block when it is not), and `Fail-open policy`'s no-interactive-answer clause is satisfied by the first-party core, which has no interactive answer to require in the first place.
+
+This does not eliminate the stall risk A2 records: a session with a UI channel but no human present still reaches `showReviewPrompt` and can still stall waiting for an answer nobody will give.
+That risk is real, and is exactly the reachable condition A2's sharpened text (D8) now states.
+It is a fact about the environment this repository's Bash tooling runs in, not a violation of anything this repository requires of itself: `Additional shell policy` requires Bash mutating-HTTP/worktree requests to be prompted, and permission-gate does prompt them whenever a UI channel is present; `Fail-open policy`, correctly scoped, never claimed to police that engine's behavior.
+
+**Resolution, not a re-affirmed deferral:** `Additional shell policy` and `Fail-open policy` are simultaneously satisfiable as written, given `Fail-open policy`'s scope from D8; `specs/pi-agent-environment/spec.md` records this reconciliation in both requirements' text, and `verify.md` §8b drops the "undischarged pending arbitration" status for both rows.
 
 ### D6: A5's sharp edge — the requirement is wrong as written, not merely under-specified
 
@@ -102,25 +112,46 @@ The monitored quantity (NAT) is the path Pi's own resolver actually opens when i
 A7 is the assumption that the enumerated forms (`@` prefix, leading `~`, `file://` URL, Unicode space variants) are the complete correspondence between the two — that normalizing through this enumeration always reproduces the path Pi actually opens.
 Framing it this way makes explicit what the requirement's own text already implies but does not name: the policy never directly observes the path Pi opens, only a register standing in for it, and the fidelity of that correspondence is exactly what A7 asserts and what its violation condition (a path form outside the enumeration) would break.
 
+### D8: Post-planning finding — pinned permission-gate source clarifies A2's reach and Fail-open policy's scope
+
+A source lookup against the pinned rytswd permission-gate engine (`pkgs/by-name/pi-agent-extensions/package.nix` rev `c700f300707db5345727052682c88e3064030aa2`, `permission-gate/index.ts`, local clone `~/ghq/github.com/rytswd/pi-agent-extensions`) arrived after the artifacts above were first drafted and settles two points the original scan left open.
+
+First, in the `tool_call` handler's prompt-class branch, `if (!ctx.hasUI) { return { block: true, reason: ... "no UI" }; }` sits before the call to `showReviewPrompt` (lines 105-113 of `permission-gate/index.ts`), so a session without a UI never reaches the dialog at all.
+A2's original phrasing — "an autonomous Pi session" — read as though the stall condition covers any session run without a human, including a headless one; the source shows a headless session never shows a dialog and therefore never stalls on one.
+The reachable condition is the inverse: a session that has a UI channel but no human present.
+A2 is restated to say this precisely; see `specs/world-assumptions/spec.md`.
+
+Second, the same handler's `matchRules` exception path (lines 84-91 of `permission-gate/index.ts`) returns `{ block: true, reason: "Blocked: permission-gate rule evaluation failed..." }` on a throwing rule — the Bash engine fails closed on its own parser and rule-evaluation exceptions.
+`Fail-open policy`'s first MUST clause, read without qualification, claims the opposite for "parser errors, core or adapter exceptions" generally.
+That claim can only be a guarantee this repository makes about the first-party non-Bash decision core it builds; it cannot be a guarantee about the upstream permission-gate engine, whose exception handling this repository does not control and which is now known to behave the opposite way.
+`Fail-open policy` is restated to mark that scope explicitly; see `specs/pi-agent-environment/spec.md`.
+No MUST/SHALL sentence changes in either edit: both add a scoping or naming sentence and reword non-normative justification prose, per D2's established pattern.
+
+This finding resolves the prompt-class contradiction (D5): it establishes that a session without a UI channel never reaches an interactive prompt, which is what makes `Fail-open policy`, correctly scoped to the first-party non-Bash core, and `Additional shell policy`'s Bash prompt class simultaneously satisfiable.
+It does not eliminate the UI-present-no-human stall risk A2 now states explicitly — that risk is real and is exactly what A2 records — but D5 explains why that risk is not a requirement violation.
+
 ## Risks / Trade-offs
 
 [Risk] Restating six requirements with added naming prose could accidentally reword a MUST clause → Mitigation: every original normative sentence is preserved verbatim in the delta; `tasks.md` 1.3 requires a manual sentence-by-sentence comparison against the archived main spec before this change is considered ready, and that comparison is recorded in `verify.md` §4.
 
-[Risk] Deferring the interface relocation leaves the designation lint permanently reporting unresolved machine nouns in a `behavioral`-tagged capability until the follow-up lands → Mitigation: `verify.md` §8a records this explicitly as the expected, non-vacuous first-run finding rather than a defect, per D3 and D4 above.
+[Risk] Declining the interface relocation leaves the designation lint permanently reporting unresolved machine nouns in a `behavioral`-tagged capability with no scheduled change to close it → Mitigation: `verify.md` §8a records this explicitly as the expected, non-vacuous finding rather than a defect, per D3 and D4 above; D4 also states a falsifiable revival condition rather than leaving the decision unbounded.
 
-[Trade-off] Doing the interface relocation now would close the vocabulary gap immediately, at the cost of roughly doubling this change's diff and mixing two extraction concerns in one review → accepted deferral per D4; the follow-up is named rather than left implicit.
+[Trade-off] Doing the interface relocation now would close the vocabulary gap immediately, at the cost of roughly doubling this change's diff and mixing two extraction concerns in one review → declined per D4's reconsidered decision; the vocabulary gap remains open indefinitely rather than closed by a scheduled follow-up.
 
-[Risk] The prompt-class contradiction remains genuinely unresolved after this change lands → Mitigation: `tasks.md` 3.1 routes it to Cameron before archive; `verify.md` §8b names the specific undischarged rows so the gap is visible rather than absorbed.
+[Risk] Resolving the prompt-class contradiction via D5's scope-based reading could be taken on faith rather than checked → Mitigation: D5 cites the exact guard location and line numbers the resolution rests on, and states plainly what it does and does not eliminate (the UI-present-no-human stall risk A2 records remains real); a future reader can check the citation rather than accept the conclusion unverified.
 
 [Risk] A5's sharp edge ships unfixed in the deployed policy for another cycle → Mitigation: recorded as a named follow-up in D6 and as an undischarged-edge row in `verify.md` §8b, rather than silently accepted as a clean discharge.
+
+[Risk] Declining the interface-stratum relocation (D4) after having recommended it could look like an unexamined reversal → Mitigation: D4 records the specific reasoning (the one demonstrated defect is now corrected in place at low cost) and states a falsifiable revival condition a future reader can test, rather than silently dropping the earlier recommendation.
+
+[Risk] The pin for `pi-agent-extensions` could move to a rev where `permission-gate`'s headless and exception-handling behavior differs from what D8 records → Mitigation: D8 cites the exact rev and file lines it read; re-verifying D8's two claims is required work for whichever change next bumps that pin, not assumed evergreen here.
 
 ## Migration Plan
 
 N/A — this change touches only `openspec/changes/extract-world-assumptions/specs/`; it involves no Nix module, package, activation, or rollback.
-At archive time, `operations.archive.guidance` in `openspec/config.yaml` regenerates `packages/docs/src/content/docs/development/traceability/satisfaction.md` wholesale from the post-sync corpus, which will then carry this change's new discharge rows, including the two undischarged ones (`Additional shell policy`'s prompt-class row and A5's sharp edge).
+At archive time, `operations.archive.guidance` in `openspec/config.yaml` regenerates `packages/docs/src/content/docs/development/traceability/satisfaction.md` wholesale from the post-sync corpus, which will then carry this change's new discharge rows, including the one undischarged row this change leaves open (A5's sharp edge); the prompt-class contradiction that previously left `Additional shell policy` undischarged is resolved per D5, and no interface-relocation follow-up is scheduled per D4's reconsidered decision.
 
 ## Open Questions
 
-1. **The prompt-class contradiction (unresolved, requires human arbitration).** `Additional shell policy` requires a `prompt` decision class for mutating HTTP requests and worktree creation. `Fail-open policy` forbids requiring an interactive answer to permit a mutation, because Pi has no permission system (A1) and an unanswerable dialog on an autonomous session stalls it indefinitely (A2). `Permission-gate reuse` names permission-gate's "headless behavior" as the bridge between the two but this capability never specifies what that behavior does. This is explicitly not resolved by this change; it is Cameron's call what "prompt" degrades to when no human is present, and `verify.md` §8b records the affected requirements as undischarged until that call is made.
-2. Whether A3 ("policy failure carries no safety evidence") should eventually be split into one assumption per specific failure mode rather than stated as one blanket claim, now that D0's dependency map shows it underwrites four requirements at once. Not resolved here; noted as a possible refinement for a future change if evidence ever narrows the claim for one failure mode without the others (see A3's own violation-condition scenario, which is already written per-failure-mode for exactly this reason).
-3. Whether the interface-relocation follow-up (D4) should also absorb the packaging and regulator requirements this document explicitly recommends against including. Not resolved here; left to that follow-up's own proposal phase, which should weigh whether declaring a Nix artifact by name is itself an interface-alphabet statement or simply intermediate-grain behavioral content, as D4 currently assumes.
+1. Whether A3 ("policy failure carries no safety evidence") should eventually be split into one assumption per specific failure mode rather than stated as one blanket claim, now that D0's dependency map shows it underwrites four requirements at once. Not resolved here; noted as a possible refinement for a future change if evidence ever narrows the claim for one failure mode without the others (see A3's own violation-condition scenario, which is already written per-failure-mode for exactly this reason).
+2. Whether a future interface-relocation change, should D4's revival condition ever trigger one, should also absorb the packaging and regulator requirements this document explicitly recommends against including. Not resolved here, and no longer scheduled to be resolved by a named follow-up per D4; left to whichever future change's own proposal phase D4's revival condition triggers, which should weigh whether declaring a Nix artifact by name is itself an interface-alphabet statement or simply intermediate-grain behavioral content.
