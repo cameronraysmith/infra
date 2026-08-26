@@ -20,6 +20,9 @@ Five states are active and two are inert terminals.
 Backlog, Todo, In Progress, In Review, and Done are the five active states a unit of work passes through in order.
 Canceled and Duplicate are inert terminals carrying no active work, reachable from any non-terminal active state (every active state except Done) exactly like Backlog.
 
+A unit arrives in Backlog with its Linear issue already created by a human, not by any agent flow, which is why no forward transition governs entry into Backlog.
+What that issue carries at creation is specified in ../../linear-project-management/references/linear-conventions.md, in the Issue body and Assignee and labels at creation sections.
+
 ## The four forward transitions
 
 Each forward transition is named by its transition rather than by an ordinal and fires on exactly one file-anchored condition.
