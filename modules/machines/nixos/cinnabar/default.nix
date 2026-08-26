@@ -27,7 +27,6 @@ in
         base
         hm-sops-bridge
         ssh-known-hosts
-        dolt-sql-server
       ]);
 
       # Make flake available to all modules (required by ssh-known-hosts)

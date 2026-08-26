@@ -2,7 +2,7 @@
 #
 # Packages using nix-update-script do not need flake apps;
 # invoke nix-update directly, e.g.:
-#   nix-update --flake beads --version=branch=main
+#   nix-update --flake <package> --version=branch=main
 #
 # nix run .#update-claude-code
 { ... }:
@@ -23,11 +23,6 @@
       apps.update-xsra = {
         type = "app";
         program = "${config.packages.xsra.updateScript}";
-      };
-
-      apps.update-beads-ui = {
-        type = "app";
-        program = "${config.packages.beads-ui.updateScript}";
       };
 
       apps.update-git-xet = {

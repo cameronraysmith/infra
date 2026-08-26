@@ -35,12 +35,10 @@ in
         ssh-ca-trust
         sshd-server
         ssh-known-hosts
-        beads-ui
         colima
         dnscrypt-proxy
         zt-dns
         zt-services-trust
-        dolt-sql-server
         magnetite-builder
         # Not importing users module (defines testuser at UID 550)
         # stibnite defines its own user (crs58)
@@ -289,18 +287,6 @@ in
           echo "$CERT_NAME already installed in System keychain"
         fi
       '';
-
-      # Dolt SQL server for beads issue tracking
-      services.dolt-sql-server = {
-        enable = false;
-        environmentVariables.SSH_AUTH_SOCK = inputs.self.lib.bitwardenSocketPath {
-          homeDirectory = "/Users/${config.system.primaryUser}";
-          isDarwin = true;
-        };
-      };
-
-      # Beads UI web interface (localhost-only)
-      services.beads-ui.enable = false;
 
       services.zt-services-trust.enable = true;
 

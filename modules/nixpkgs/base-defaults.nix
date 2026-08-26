@@ -9,7 +9,7 @@
 #     (copilot-language-server, NVIDIA drivers, casks, etc.)
 #   - nixpkgs.overlays: wires the composed flake.overlays.default into nixpkgs
 #     construction so machines see the overlay-provided attributes (e.g.
-#     openclaw-gateway, beads, mactop, channels).
+#     openclaw-gateway, mactop, channels).
 #
 # Out of scope: allowUnfree writes in modules/nixpkgs/per-system.nix,
 # modules/nixpkgs/overlays/channels.nix, modules/home/configurations.nix,

@@ -1,7 +1,7 @@
 # DNS server for .zt zone on cinnabar's zerotier interface
 #
 # dnsmasq serves authoritative A and AAAA records for .zt hostnames,
-# resolving service names (kanban, beads, etc.) to cinnabar and machine
+# resolving service names (kanban, etc.) to cinnabar and machine
 # hostnames (stibnite, blackphos, etc.) to their zerotier addresses.
 # Non-.zt queries are forwarded to quad9 for clients that use
 # zerotier-pushed DNS globally.
@@ -28,8 +28,6 @@
           address = [
             "/kanban.zt/fddb:4344:343b:14b9:399:93db:4344:343b"
             "/kanban.zt/10.147.17.1"
-            "/beads.zt/fddb:4344:343b:14b9:399:93db:4344:343b"
-            "/beads.zt/10.147.17.1"
             "/matrix.zt/fddb:4344:343b:14b9:399:93db:4344:343b"
             "/matrix.zt/10.147.17.1"
             "/hermes.zt/fddb:4344:343b:14b9:399:93db:4344:343b"
