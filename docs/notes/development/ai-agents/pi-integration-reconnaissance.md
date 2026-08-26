@@ -228,7 +228,6 @@ The jiti transpile cache is no longer an open hazard.
 pi's extension loader calls `createJiti` with `moduleCache: false` and does not pass `fsCache: false`, but the on-disk cache directory derives from pi's own `import.meta.url` rather than from the path of the loaded extension.
 Vendoring `node_modules` anywhere inside an extension therefore has no effect on caching, and the earlier concern recorded here — that vendoring beside the entry point would silently disable the cache — was wrong.
 
-Two stale references in the vanixiets tree will mislead a follow-up implementer: `modules/home/packages/development-packages.nix:104` points at `modules/nixpkgs/overlays/beads.nix`, deleted in commit `2ee85e653`, and `docs/notes/development/claude-code-protocol-integration.md` lines 34 and 206 still assert hooks resolve beads via the llm-agents input.
 Relatedly, the CLAUDE.md sentence describing beads as "overriding the llm-agents version" is mechanically imprecise: llm-agents is never overlaid into `pkgs`, and the override is positional precedence against nixpkgs from the right-biased merge in `modules/nixpkgs/compose.nix`.
 CLAUDE.md's counts are also stale — it says 17 apm packages and roughly 115 skills where the tree holds 18 package directories and 128 first-party `SKILL.md` files.
 
