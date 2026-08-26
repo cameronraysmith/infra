@@ -6,7 +6,10 @@ Adding a bundle means creating a directory here and adding its name to that opti
 
 Both bundles originated upstream and have since diverged substantially under our maintenance.
 They are ours to edit.
-The directory is named `assets` for historical reasons and an earlier revision of this file described its contents as vendored third-party bundles pinned to an upstream commit; that was inaccurate, and the refresh script `modules/apps/openspec-refresh-vendored-artifacts.sh` does not touch this tree.
+This repository is a dendritic flake-parts configuration composed with `import-tree`: every `.nix` file under `modules/` must be a valid flake-parts module, and each is discovered and activated by virtue of existing.
+A directory of non-nix payload files that those modules read and deliver is therefore an asset directory relative to that architecture, not a leftover from the bundle's vendored origin.
+An earlier revision of this file described its contents as vendored third-party bundles pinned to an upstream commit; that was inaccurate.
+The refresh script `modules/apps/openspec-refresh-vendored-artifacts.sh` does not touch this tree.
 
 There is deliberately no project-tier override anywhere in this repository.
 An earlier arrangement symlinked a bundle into `openspec/schemas/` so edits took effect without activation, which had the effect of making this repository resolve a schema state no other repository had.
