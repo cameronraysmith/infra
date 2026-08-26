@@ -5,11 +5,7 @@
 
 set -euo pipefail
 
-# Guard: only run if in a git repo with .beads/
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
-if [ -z "$REPO_ROOT" ] || [ ! -d "$REPO_ROOT/.beads" ]; then
-  exit 0
-fi
 
 INPUT=$(cat)
 
