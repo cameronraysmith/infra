@@ -1,3 +1,18 @@
+---
+linear_story_id: "d5376668-ffd7-4d84-b838-b30cd642d7f8"
+linear_story_identifier: "CAM-37"
+linear_story_title: "Extract world assumptions embedded in the Pi agent environment spec"
+linear_story_url: "https://linear.app/cameronraysmith/issue/CAM-37/extract-world-assumptions-embedded-in-the-pi-agent-environment-spec"
+linear_story_state: "Backlog"
+linear_team: "CAM"
+linear_project: "requirements-engineering"
+last_synced_state: "Backlog"
+last_synced_at: "2026-08-26T18:45:03Z"
+review_round: 0
+attempt_log:
+  - { at: "2026-08-26T18:45:03Z", transition: "Backlog->Backlog", outcome: "posted", note: "retroactive bind; planning and implementation artifacts complete before binding; archiving in this pass" }
+---
+
 ## Why
 
 Eight indicative world assumptions are embedded inside six `pi-agent-environment` requirements, most visibly "Pi has no permission system" inside `Fail-open policy`'s justification prose.

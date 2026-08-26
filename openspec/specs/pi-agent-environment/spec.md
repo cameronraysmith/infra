@@ -108,6 +108,7 @@ The system MUST select `catppuccin-mocha` from the immutable first-party file `m
 ### Requirement: Permission-gate reuse
 
 The system MUST use the pinned rytswd permission-gate shell parser, built-in rules, project-trust boundary, and headless behavior as the Bash enforcement engine.
+This choice rests on the `world-assumptions` capability's assumption that Pi ships no native permission system (`world-assumptions` A1); should that assumption be falsified, this requirement's discharge argument for building Bash enforcement into an external parser rather than a native mechanism no longer holds.
 
 #### Scenario: Shell command enters policy
 
@@ -117,6 +118,7 @@ The system MUST use the pinned rytswd permission-gate shell parser, built-in rul
 ### Requirement: Additional shell policy
 
 Nix-owned permission-gate rules MUST classify dangerous commands, semantic mutating HTTP requests, direct `rm`, worktree creation, and Pi package mutation, with direct `rm` and package mutation blocked and interactive mutating HTTP and worktree requests prompted.
+The prompted decision class for mutating HTTP and worktree requests names the same UI-present-no-human assumption as `Fail-open policy` below (`world-assumptions` A2); the two requirements are reconciled, not in tension, because a session without a UI channel never reaches an interactive prompt at all — the pinned permission-gate engine blocks a prompt-class match immediately when no UI is present, before ever presenting a dialog — so this requirement's Bash prompt class and `Fail-open policy`'s no-interactive-answer clause, scoped to the first-party non-Bash decision core, govern disjoint reachable conditions.
 
 #### Scenario: Shell mutation reaches custom rules
 
@@ -128,8 +130,9 @@ Nix-owned permission-gate rules MUST classify dangerous commands, semantic mutat
 A compact first-party pure decision core with a thin Pi adapter MUST evaluate non-Bash `edit` and `write` tool calls and classify each outcome as allow, notify-and-allow, or block.
 It MUST refuse only a mutation version control could not recover, and MUST announce rather than refuse every condition whose target is inside a repository.
 The exported adapter factory or handler seam MUST be directly executable as policy evidence.
-The extension is scoped to Pi, and the system MUST declare that scope to atomic rather than relying on either agent's default discovery, because atomic inherits Pi's configuration root and loads Pi's extension directory unconditionally.
-The policy MUST normalize a tool path exactly as Pi resolves it, covering the `@` prefix, a leading `~`, a `file://` URL, and Unicode space variants, so the path the policy judges is the path the tool opens.
+The extension is scoped to Pi, and the system MUST declare that scope to atomic rather than relying on either agent's default discovery, under the `world-assumptions` capability's assumption that atomic inherits Pi's configuration root and loads Pi's extension directory unconditionally (`world-assumptions` A6).
+The policy MUST normalize a tool path exactly as Pi resolves it, covering the `@` prefix, a leading `~`, a `file://` URL, and Unicode space variants, so the path the policy judges is the path the tool opens, under the assumption that this enumeration is exhaustive of Pi's own path resolution (`world-assumptions` A7).
+This requirement's announce-rather-than-refuse discharge additionally rests on the assumptions that Pi has no native permission system (A1), that an unanswerable dialog stalls a session with UI but no human present (A2), that policy failure carries no safety evidence (A3), that refusing on ambiguity has a real cost and prevents nothing (A4), and that a target inside a repository is recoverable from its history (A5) — the last of which has a known sharp edge for untracked, gitignored targets, per `world-assumptions` A5's own scenario.
 
 #### Scenario: Non-Bash mutation reaches policy
 
@@ -151,6 +154,8 @@ The policy MUST normalize a tool path exactly as Pi resolves it, covering the `@
 The first-party policy extension MUST announce, and allow, a non-Bash edit or write while the target Git repository is on `main` or `master`.
 It MUST block a target the identified Git repository does not contain.
 The Git branch of repository inspection MUST remain reachable when the jj probe reports an outside-repository diagnostic followed by additional advisory lines.
+This requirement's announce-rather-than-refuse discharge for the default-branch case rests on the same failure-carries-no-safety-evidence and recoverable-history assumptions as `Non-Bash edit and write policy` (`world-assumptions` A3, A5), scoped here to Git default-branch history specifically.
+Its fallback to Git branch inspection additionally rests on the assumption that a target's identified containment is measured through Pi's own exhaustively enumerated path forms (A7) and that jj emits a stable outside-repository diagnostic with trailing `Hint:` lines (A8).
 
 #### Scenario: Edit is proposed on a Git branch
 
@@ -165,7 +170,7 @@ The Git branch of repository inspection MUST remain reachable when the jj probe 
 ### Requirement: Jj diamond boundary
 
 The first-party policy extension MUST consume typed, discriminated repository state and admit both healthy ordinary and healthy diamond-managed jj repositories before non-Bash edits and writes.
-Every unhealthy jj condition other than target containment MUST be announced and allowed rather than refused, because its target is inside a repository whose history can recover it.
+Every unhealthy jj condition other than target containment MUST be announced and allowed rather than refused, under the `world-assumptions` capability's assumption that its target is inside a repository whose history can recover it (`world-assumptions` A5).
 Common jj health MUST require canonical repository identity and target containment; unambiguous, conflict-free `@`; a non-divergent current `@` change identity; neither `main` nor `master` pointing directly to `@`; and successful, unambiguous parsing of every read-only probe, each invoked with `jj --ignore-working-copy`.
 A separate bookmark-listing classification probe MUST report the `wip` convention, including a divergent `wip` indicator, before the repository is classified as diamond-managed.
 Only a repository already classified as diamond-managed MUST run the unique `wip`-resolution probe and admit absent, moved, or divergent `wip` failure outcomes.
@@ -174,6 +179,7 @@ Diamond health MUST additionally require `@` to be the nonconflicted, nondiverge
 It MUST probe `@-` separately as the `[merge]` join, require that join to be nonconflicted with at least two parents, and probe `parents(@-)` separately to require conflict-free immediate parents whose count matches the join report.
 Neither `@` nor `@-` MUST be required to be empty, and diamond health MUST impose no working-copy-cleanliness requirement.
 Ordinary jj health MUST impose no `wip`, diamond-topology, emptiness, or working-copy-cleanliness requirement.
+This requirement's announce-rather-than-refuse discharge additionally rests on the assumption that policy failure carries no safety evidence (A3), and its repository-identity and containment probes rest on the assumptions that Pi's path forms are exhaustively enumerated (A7) and that jj emits a stable outside-repository diagnostic with trailing `Hint:` lines (A8), the latter shared with `Git default-branch boundary`.
 
 #### Scenario: Edit is proposed in a jj repository
 
@@ -182,10 +188,11 @@ Ordinary jj health MUST impose no `wip`, diamond-topology, emptiness, or working
 
 ### Requirement: Fail-open policy
 
-Parser errors, core or adapter exceptions, ambiguous repository state, and missing or throwing capabilities MUST permit the affected tool call rather than refuse it.
-None of these establishes that a mutation is unsafe, and refusing on them has cost every edit and write in an affected repository while preventing no unsafe mutation.
+Parser errors, core or adapter exceptions, ambiguous repository state, and missing or throwing capabilities MUST permit the affected tool call rather than refuse it, under the `world-assumptions` capability's assumptions that policy failure carries no safety evidence and that refusing on ambiguity has a real cost and prevents nothing (`world-assumptions` A3, A4).
+This requirement, in both clauses, is scoped to the first-party pure decision core and its Pi adapter that `Non-Bash edit and write policy` names, and does not extend to the pinned rytswd permission-gate engine `Permission-gate reuse` names as the Bash enforcement engine: that upstream engine's own rule-evaluation exception handling fails closed rather than open, turning a throwing rule into a block rather than a permit, and its prompt-class behavior is governed by `Additional shell policy`, not this requirement.
 Malformed tool input remains the one refusal drawn from an unreadable request rather than an unrecoverable target.
-The policy MUST NOT require an interactive answer to permit a mutation, because Pi has no permission system and an unanswerable dialog on an autonomous session stalls it indefinitely.
+The policy MUST NOT require an interactive answer to permit a mutation, under the assumptions that Pi has no native permission system and that an unanswerable dialog stalls a session with UI but no human present (`world-assumptions` A1, A2).
+This clause and `Additional shell policy`'s prompted decision class for mutating HTTP and worktree requests are reconciled: scoped as above, this clause governs only the first-party non-Bash decision core, which never prompts by construction, while `Additional shell policy`'s prompt class governs the separate Bash engine.
 
 #### Scenario: Policy cannot decide safely
 
