@@ -17,6 +17,12 @@ This keeps the body a stable description of the work rather than a mutable log, 
 
 Use the SYNC/NOSYNC section markers (see linear-overview.md) so only the team-facing `[SYNC]` portion crosses to Linear and richer local detail stays in the OpenSpec requirements document, beads, or the repo.
 
+## Assignee and labels at creation
+
+A created issue is assigned to the workspace owner: both `linear issue create` and `linear issue update` accept `-a self` (or `--assignee self`), which linear-cli resolves against the confirmed workspace identity, and this flag is set at creation time rather than backfilled afterward.
+A created issue's labels are drawn from the pre-existing workspace label taxonomy rather than invented per issue: `repo:<name>` names the target repository, `type:development` marks implementation work, and the three assessment families `cynefin:*`, `confidence:*`, and `guard:*` record the Cynefin domain, the confidence level, and the regression-guard status.
+This taxonomy is newly adopted rather than long-standing: the pre-existing issue CAM-33 carries no labels.
+
 ## One-way status rollup
 
 Status rolls up one way: local is authoritative, and Linear receives a coarse projection pushed up from below.
