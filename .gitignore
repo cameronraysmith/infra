@@ -6,7 +6,6 @@ result*
 external-references
 .obsidian
 .pre-commit-config.yaml
-.*rules*
 node_modules/
 # Anchored: an unanchored `archive/` also matches openspec/changes/archive/,
 # whose archived change artifacts must stay tracked.
