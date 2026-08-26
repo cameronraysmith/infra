@@ -122,7 +122,7 @@ A blackholed-network, no-token install resolved in sub-second with a Cache HIT, 
 ### D13: supersession — the original Phase 4 (bridge fork + apm packaging signal)
 
 - **Choice**: the originally-planned Phase 4 — `fetchFromGitHub`-fork the `openspec-schemas-superpowers-bridge` and add a packaging signal so the bridge becomes apm-installable (the D6 "Bridge fork" bullet) — is SUPERSEDED.
-- **Rationale**: the `superpowers-bridge` stays an OpenSpec *schema* delivered via its own home-manager module (`schemaDir` → `~/.local/share/openspec/schemas/`); it is not forked and not given an apm packaging signal, because it is a schema (consumed by the OpenSpec CLI), not a skill, and forcing it through the apm skills marketplace is an impedance mismatch.
+- **Rationale**: the `superpowers-bridge` stays an OpenSpec *schema* delivered via its own home-manager module (`schemaDirs` → `~/.local/share/openspec/schemas/`); it is not forked for apm packaging purposes and not given an apm packaging signal, because it is a schema (consumed by the OpenSpec CLI), not a skill, and forcing it through the apm skills marketplace is an impedance mismatch.
 
 ## Risks / Trade-offs
 
