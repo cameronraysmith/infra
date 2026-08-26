@@ -1,0 +1,39 @@
+## 1. Pre-deletion safety check for the archived-change task rows
+
+- [x] 1.1 Confirm the archived change carries `Stale Pi version cleanup` verbatim before deleting the corpus copy — verify: `read openspec/changes/archive/2026-08-15-configure-pi-agent-environment/specs/pi-agent-environment/spec.md:205-212` shows the identical requirement and scenario text. Confirmed identical.
+- [x] 1.2 Confirm the archived change carries a design row, task mapping, and verify coverage naming standing check locations for that requirement — verify: `grep` in the archived change's `design.md`, `tasks.md`, `verify.md` for the requirement name. Found at `design.md:183`, `tasks.md:54-55`, `verify.md:122` (the last naming `modules/checks/pi-agent-environment.nix:2382-2383,2427-2429`).
+
+## 2. pi-agent-environment delta: delete the one-time task, replace the episode-bound policy pair, rephrase rollback
+
+- [x] 2.1 Write `Stale Pi version cleanup`, `Human-only activation`, `Confirmation-gated live verification` as `REMOVED Requirements` with Reason and Migration — verify: `specs/pi-agent-environment/spec.md` contains all three under `## REMOVED Requirements`, each with a `**Reason**` and `**Migration**` line. Confirmed present at lines 42/44, 48/50, 54/56.
+- [x] 2.2 Write `Activation requires explicit permission` and `Post-activation confirmation gate` as `ADDED Requirements`, using the user's verbatim policy wording with "you" rendered as "the human operator," every modality preserved, and the permission carve-out intact — verify: `grep` for "unless given explicit permission to do so" and for the two MUST NOT clauses in the delta spec. Confirmed both present at lines 5 and 16; each requirement carries one `#### Scenario:` with a checkable violation condition.
+- [x] 2.3 Write `Rollback preservation` as a `MODIFIED Requirement` stating the property as a post-activation link comparison, with no "recorded before activation" phrasing and no named human in the scenario trigger — verify: `grep` for "recorded before activation" and "Cameron" in the delta spec's `Rollback preservation` block. Zero hits for both.
+
+## 3. graphical-desktop-session delta: strip change-fencing, keep the durable boundary
+
+- [x] 3.1 Rewrite the requirement body to drop "MUST NOT be assembled into this change" and the "deferred to a separate, reversible follow-up change" planning clause, keeping only "niri and its Wayland shell assembly are NOT part of this capability" — verify: `grep -c 'MUST NOT be assembled\|follow-up change\|added by this'` on the delta spec returns 0; `grep` for "NOT part of this capability" returns 1 hit. Confirmed: 0 and 1 respectively.
+- [x] 3.2 Rewrite the "no home-manager desktop configuration is required" scenario's closing bullet to state the durable fact ("home-manager carries no desktop toggle") instead of "added by this change" — verify: `grep` for "no desktop toggle" in the delta spec. Confirmed present at line 19, with no remaining "this change" anywhere in the file (`grep -c "this change"` returns 0).
+
+## 4. Outward-reference cleanup in the remaining four capabilities
+
+- [x] 4.1 `apple-laptop-hardware-support`: state the substance inline for the one `this change` reference, replacing it with the two credential states already named in the surrounding sentences — verify: `grep` for "pre-enrollment and post-enrollment credential states" in the delta spec, and `grep -c "this change"` returns 0. Both confirmed.
+- [x] 4.2 `bare-metal-install-path`: resolve the four outward references at (former) lines 16, 31, 70, 166 — drop the redundant clause at 16, substitute "this LUKS install" at 31 and 70, substitute "the pyrite configuration" at 166 — while leaving the (former) line-25 date-anchored narration verbatim — verify: `grep -c "this change"` on the delta spec returns exactly 1, and that one remaining hit's text matches the original line 25 verbatim ("...both observed on the console of the run this change performed"). Confirmed: count is 1, text matches.
+- [x] 4.3 `encrypted-zfs-root`: resolve the one outward reference at (former) line 179 — substitute "pyrite's configuration" for "this change" — while leaving the (former) line-148 date-anchored narration verbatim — verify: `grep -c "this change"` on the delta spec returns exactly 1, matching original line 148 verbatim ("...this is an acceptance criterion of this change rather than only a property of the layout..."). Confirmed: count is 1, text matches.
+- [x] 4.4 `stratified-change-authoring`: normalize the generic archive-role reference at (former) line 80 from "this change's" to "the change's," for consistency with the same sentence's existing "the change folder" — verify: `grep` for "the change's delta specs" in the delta spec returns 1 hit; `grep -c "this change"` returns 0. Both confirmed.
+
+## 5. Schema and skill: state the outward-reference constraint at its two points of ingress (session-scope addition)
+
+- [x] 5.1 Add one sentence to the `specs` artifact instruction in `modules/home/ai/openspec/assets/schemas/superpowers-bridge-wrspm/schema.yaml`, stating that a corpus requirement may reference another corpus requirement but never a change — verify: `openspec schema validate superpowers-bridge-wrspm` reports the schema valid after the edit. Confirmed: "✓ Schema 'superpowers-bridge-wrspm' is valid".
+- [x] 5.2 Add the matching procedural sentence to the archive-step instruction in the same schema file, at the point where synced text crosses into the corpus — verify: same schema-validate command as 5.1, re-run after both edits landed. Confirmed valid.
+- [x] 5.3 Add the underlying principle, once, to `modules/home/ai/plugins/formal-specification-and-refinement/.apm/skills/preferences-requirements-engineering/SKILL.md`, adjacent to the designation-table section — verify: `read` of the file shows the new sentence immediately after the "A term with two rows..." paragraph and before "## Obstacle analysis". Confirmed.
+- [x] 5.4 Record the rejected-mechanical-check decision and its portability rationale in this change's `design.md` (D7) — verify: `design.md` contains a decision named "Reject a mechanical outward-reference check" with the source-versus-delivered boundary named. Confirmed present.
+
+## 6. Corpus-wide and schema validation
+
+- [x] 6.1 Run `openspec validate repair-episode-bound-requirements --type change --strict` — verify: command reports the change valid. Confirmed: "Change 'repair-episode-bound-requirements' is valid".
+- [x] 6.2 Run `openspec validate --all` and confirm zero failures across every change and spec — verify: command output shows `N passed, 0 failed`. Confirmed: "Totals: 17 passed, 0 failed (17 items)".
+- [x] 6.3 Run `openspec schema validate superpowers-bridge-wrspm` a final time after all schema edits — verify: command reports the schema valid. Confirmed: "✓ Schema 'superpowers-bridge-wrspm' is valid".
+
+## Integration Verification
+
+- [x] I.1 Verify the complete outward-reference table in `design.md` (D5) accounts for all eleven `this change` instances the original audit found across the five named capabilities, each with a stated file, line, disposition, and reason, and that the two deliberately-unchanged narration lines are separately named with rationale (D6) — verify: cross-check `design.md`'s D5 table row count (11) and D6's two named lines against `grep -n "this change" openspec/specs/{apple-laptop-hardware-support,bare-metal-install-path,encrypted-zfs-root,graphical-desktop-session,stratified-change-authoring}/spec.md` run against the still-unmodified living specs (delta specs have not been archived). Confirmed: 11 hits at exactly the 11 lines named in D5 (apple-laptop:82; bare-metal:16,25,31,70,166; encrypted-zfs:148,179; graphical-desktop:16,28; stratified:80), with D6's two lines (bare-metal:25, encrypted-zfs:148) matching the two the table marks "Left unchanged."
