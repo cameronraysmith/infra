@@ -50,17 +50,6 @@
         text = builtins.readFile ./memory-capture.sh;
       };
 
-      nudge-claude-md-update = pkgs.writeShellApplication {
-        name = "nudge-claude-md-update";
-        runtimeInputs = with pkgs; [
-          git
-          gnused
-          gnugrep
-          coreutils
-        ];
-        text = builtins.readFile ./nudge-claude-md-update.sh;
-      };
-
       enforce-branch-before-edit = pkgs.writeShellApplication {
         name = "enforce-branch-before-edit";
         runtimeInputs = with pkgs; [
@@ -202,7 +191,6 @@
     {
       home.packages = [
         memory-capture
-        nudge-claude-md-update
         enforce-branch-before-edit
         session-start
         clarify-vague-request

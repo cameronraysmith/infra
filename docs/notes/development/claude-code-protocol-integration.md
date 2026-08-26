@@ -59,10 +59,6 @@ Includes auto-tagging and rotation (archive after 1000 lines).
 Source: `templates/hooks/memory-capture.sh`.
 Dependencies: `jq`, standard coreutils.
 
-**nudge-claude-md-update** (PreCompact): Reminds to update "Current State" section in CLAUDE.md before context compaction.
-Source: `templates/hooks/nudge-claude-md-update.sh`.
-Dependencies: `git`, `sed`.
-
 ### Hooks to adapt
 
 These capture valuable enforcement concepts but need rework for generalized Task dispatch (not supervisor-typed agents).
@@ -217,7 +213,6 @@ Resolves beads via `flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.
 - `validate-epic-close.sh`
 - `log-dispatch-prompt.sh`
 - `memory-capture.sh`
-- `nudge-claude-md-update.sh`
 - `enforce-branch-before-edit.sh`
 - `enforce-sequential-dispatch.sh`
 - `session-start.sh`

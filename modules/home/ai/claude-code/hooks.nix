@@ -106,17 +106,6 @@
             }
           ];
 
-          PreCompact = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "nudge-claude-md-update";
-                }
-              ];
-            }
-          ];
-
           SessionStart = [
             {
               hooks = [
