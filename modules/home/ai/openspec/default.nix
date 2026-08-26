@@ -103,16 +103,13 @@
 
         schemaDirs = lib.mkOption {
           type = lib.types.attrsOf lib.types.path;
-          default = {
-            superpowers-bridge = assetsDir + "/schemas/superpowers-bridge";
-            superpowers-bridge-wrspm =
-              flake.inputs.self + "/modules/home/ai/openspec/schemas/superpowers-bridge-wrspm";
-          };
+          default = lib.genAttrs [ "superpowers-bridge" "superpowers-bridge-wrspm" ] (
+            name: assetsDir + "/schemas/${name}"
+          );
           defaultText = lib.literalExpression ''
-            {
-              superpowers-bridge = inputs.self + "/modules/home/ai/openspec/assets/schemas/superpowers-bridge";
-              superpowers-bridge-wrspm = inputs.self + "/modules/home/ai/openspec/schemas/superpowers-bridge-wrspm";
-            }
+            lib.genAttrs [ "superpowers-bridge" "superpowers-bridge-wrspm" ] (
+              name: inputs.self + "/modules/home/ai/openspec/assets/schemas/''${name}"
+            )
           '';
           description = ''
             Schema bundles delivered as directory symlinks at
