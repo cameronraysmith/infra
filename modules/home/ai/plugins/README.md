@@ -5,7 +5,7 @@ created: 2026-08-25
 
 ## First-party agent skill corpus
 
-135 skills across 18 apm packages, published as a marketplace any project can install independently of the Nix configurations.
+127 skills across 18 apm packages, published as a marketplace any project can install independently of the Nix configurations.
 Each group directory carries an `apm.yml` and a `plugin.json`; the marketplace manifest is `../../../../.github/plugin/marketplace.json`.
 
 A group's skills are discovered by reading its `.apm/skills/` directory, so neither manifest enumerates them.
@@ -25,7 +25,7 @@ Composition and delivery are two stages with a filter between them, which is why
 flowchart LR
   A["18 apm packages<br/>.apm/skills/*"] --> B["apm-skills-compose<br/>+ remote apm deps"]
   B --> C{"delivery<br/>exclusion list"}
-  C -->|withheld| D["tdd, harborize,<br/>issues-beads*"]
+  C -->|withheld| D["tdd, harborize"]
   C -->|delivered| E["~/.claude/skills<br/>~/.factory/skills<br/>codex, opencode"]
 ```
 
@@ -66,9 +66,11 @@ The clusters below are drawn directly from the removed index's existing bullet o
 
 Three separate, independently-operated mechanisms currently suppress or withhold a skill, and nothing before this section collected them in one place.
 
-1. **`disable-model-invocation: true` frontmatter**, set per skill, prevents that skill from auto-triggering on a description match; the skill is still delivered and still invocable by explicit name or slash command. 27 of the 135 skills in this corpus carry the flag set to `true`, and 2 carry it explicitly set to `false`. Factually, all 27 are operational or command-style skills — meta-tooling commands, beads workflow steps, event-modeling workflow steps, document-conversion utilities, and git/jj/nix operational commands — and none of them are `preferences-*` conceptual-foundation skills; no `preferences-*` skill in this corpus carries the flag.
-2. **The delivery exclusion list** (`excludedSkills` in `../skills/default.nix`) removes a skill from every delivered harness target (`~/.claude/skills`, `~/.factory/skills`, codex, opencode) even though the skill still exists in the composed tree. It currently withholds `tdd`, `harborize`, and eight `issues-beads-*` skills, each for a documented reason in that file.
+1. **`disable-model-invocation: true` frontmatter**, set per skill, prevents that skill from auto-triggering on a description match; the skill is still delivered and still invocable by explicit name or slash command. 20 of the 127 skills in this corpus carry the flag set to `true`, and 2 carry it explicitly set to `false`. Factually, all 20 are operational or command-style skills — meta-tooling commands, event-modeling workflow steps, document-conversion utilities, and git/jj/nix operational commands — and none of them are `preferences-*` conceptual-foundation skills; no `preferences-*` skill in this corpus carries the flag.
+2. **The delivery exclusion list** (`excludedSkills` in `../skills/default.nix`) removes a skill from every delivered harness target (`~/.claude/skills`, `~/.factory/skills`, codex, opencode) even though the skill still exists in the composed tree. It currently withholds `tdd` and `harborize`, each for a documented reason in that file.
 3. **The `@` force-load prefix** in `../../tools/agents-md.nix` (this file's sibling) inlines a skill's full body into the generated context file itself, bypassing both delivery and description-based discovery. Only one skill carries it after this change; see "Archived skill index" below for the one that no longer does.
+
+The `issues-beads-*` family (`issues-beads`, `issues-beads-audit`, `issues-beads-checkpoint`, `issues-beads-evolve`, `issues-beads-init`, `issues-beads-orient`, `issues-beads-prime`, `issues-beads-seed`) previously sat behind mechanisms 1 and 2 above; both are now moot for that family because the eight directories were deleted outright on 2026-08-26, since beads no longer owns the work — Linear and OpenSpec now do. Recover any of them from history, once this deletion is committed, with `git log --diff-filter=D -- modules/home/ai/plugins/beads-issue-tracking-and-session-workflow/.apm/skills/`, which finds the deleting commit by path prefix rather than by a hash that does not exist yet.
 
 ### Archived skill index
 
