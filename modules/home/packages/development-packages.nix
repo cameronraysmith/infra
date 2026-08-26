@@ -99,7 +99,7 @@
           jjui
           just
           mkcert
-          # from llm-agents via modules/nixpkgs/overlays/beads.nix
+          # from llm-agents
           apm
           cursor-agent
           droid
