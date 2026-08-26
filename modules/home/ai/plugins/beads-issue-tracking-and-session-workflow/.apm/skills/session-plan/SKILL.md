@@ -11,7 +11,7 @@ Session planning protocol that transforms tactical-level understanding into an o
 This skill operates at the tactical-to-operational planning horizon, decomposing scope into an implementation buffer at high resolution.
 
 This is the default planning command for repositories with the full stigmergic workflow installed.
-For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), use `/issues-beads-seed` and `/issues-beads-evolve` directly.
+For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), this skill named direct `issues-beads-seed` and `issues-beads-evolve` fallbacks; those skills have been retired and the fallback awaits re-basing onto Linear/OpenSpec.
 
 ## Theoretical grounding
 
@@ -39,13 +39,11 @@ For the full theoretical derivation including the R_plan(d) formulation, buffer 
 This skill orchestrates a higher-level protocol that uses the following skills as components.
 Do not duplicate their functionality; delegate to them.
 
-- `/issues-beads-seed` creates an issue graph from architecture and specification documents.
-  Delegate to this skill for new issue creation from `docs/development/` artifacts.
-- `/issues-beads-evolve` refines issue graph structure.
-  Delegate to this skill for restructuring existing graph topology (splitting, merging, re-parenting, dependency rewiring).
+- `issues-beads-seed` (retired, pending re-base onto Linear/OpenSpec) created an issue graph from architecture and specification documents; new issue creation from `docs/development/` artifacts awaits re-implementation via that re-base.
+- `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) refined issue graph structure; restructuring existing graph topology (splitting, merging, re-parenting, dependency rewiring) awaits re-implementation via that re-base.
 - `/stigmergic-convention` provides the signal table schema, field definitions, and read-modify-write protocol for writing signal tables on new and updated issues.
 
-Load `/issues-beads-prime` for core beads conventions and command quick reference before running planning commands.
+`issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running planning commands.
 
 ## Protocol
 
@@ -118,7 +116,7 @@ When absent, issues receive acceptance criteria without verification commands an
 #### Blocking versus warning classification
 
 The gate classifies deficiencies using expected rework cost as the decision criterion.
-A blocking deficiency produces an issue graph requiring fundamental restructuring; a warning deficiency produces a valid but degraded graph that can be incrementally refined via `/issues-beads-evolve`.
+A blocking deficiency produces an issue graph requiring fundamental restructuring; a warning deficiency produces a valid but degraded graph that could be incrementally refined via `issues-beads-evolve`, now retired and pending re-base onto Linear/OpenSpec.
 
 *Blocking deficiencies* (halt planning):
 - `docs/development/context/` does not exist or contains only `index.md`.
@@ -152,7 +150,7 @@ For chaotic-domain components: no issues generated; the gate emits a warning tha
 *Planning depth* derives from Cynefin classification.
 Clear-domain components decompose to fine granularity (epics, stories, tasks).
 Complicated-domain components decompose to medium granularity (epics and stories, no tasks).
-Complex-domain components decompose to coarse granularity (epics with probe stories only; further decomposition after probe completion via `/issues-beads-evolve`).
+Complex-domain components decompose to coarse granularity (epics with probe stories only; further decomposition after probe completion previously ran via `issues-beads-evolve`, now retired and pending re-base onto Linear/OpenSpec).
 
 #### Diagnostic output template
 
@@ -242,7 +240,7 @@ Conversely, identify open issues whose descriptions reference docs that no longe
 
 #### Audit remediation intake
 
-Check active epic notes for `<!-- audit-findings -->` blocks produced by `/issues-beads-audit`.
+Check active epic notes for `<!-- audit-findings -->` blocks previously produced by `issues-beads-audit`, now retired and pending re-base onto Linear/OpenSpec.
 When present, the audit has already applied mechanical fixes (signal table backfill, structural repairs) and produced a list of content remediation items that require planning judgment.
 
 ```bash
@@ -251,8 +249,8 @@ bd show <epic-id> --json | jq -r '.[0].notes // ""' | grep -q 'audit-findings'
 ```
 
 Treat each item in the "Content remediation needed" section as planning scope alongside new work from docs.
-Acceptance criteria rewrites and scope updates go through `/issues-beads-evolve` in step 4.
-Missing regression-protection issues become new issues created via `/issues-beads-seed` in step 4.
+Acceptance criteria rewrites and scope updates went through `issues-beads-evolve` in step 4; that skill is retired and pending re-base onto Linear/OpenSpec.
+Missing regression-protection issues became new issues created via `issues-beads-seed` in step 4; that skill is retired and pending re-base onto Linear/OpenSpec.
 Confidence gaps on closed work are routed to `/session-review` rather than handled during planning.
 
 After consuming the audit findings, clear the `<!-- audit-findings -->` block from the epic notes to prevent re-processing in future planning sessions.
@@ -340,8 +338,8 @@ Each issue must have:
 - A Cynefin classification based on the knowability of cause-effect relationships for that specific work item.
 - A confidence target indicating what evidence level the issue should achieve: `finding-recorded` for probes, `locally-verified` for implementation issues, `integration-verified` for convergence issues, `validated` for milestone issues, `regression-protected` for operational issues. The target is derived from the issue's role in the DAG, not assigned independently.
 
-Delegate issue creation to `/issues-beads-seed` for new issues derived from `docs/development/` artifacts.
-When restructuring existing issues (splitting, re-scoping, re-parenting), delegate to `/issues-beads-evolve`.
+Issue creation for new issues derived from `docs/development/` artifacts previously delegated to `issues-beads-seed`, now retired and pending re-base onto Linear/OpenSpec.
+When restructuring existing issues (splitting, re-scoping, re-parenting), delegation previously went to `issues-beads-evolve`, now retired and pending re-base onto Linear/OpenSpec.
 
 Cynefin modulates decomposition granularity:
 - *Clear* domain: light decomposition; issues are already obvious from the specification.
@@ -359,9 +357,9 @@ Apply it when the gap between "code exists" and "we have confidence" is large en
 Use parent-child relationships for containment (epic contains tasks) and blocks relationships for sequencing (task A must complete before task B can begin).
 The dependency graph must be acyclic.
 
-Delegate dependency wiring to `/issues-beads-seed` during initial creation (via `--parent` and `--deps` flags) and to `/issues-beads-evolve` for restructuring existing dependencies.
+Dependency wiring previously delegated to `issues-beads-seed` during initial creation (via `--parent` and `--deps` flags) and to `issues-beads-evolve` for restructuring existing dependencies; both skills are retired and pending re-base onto Linear/OpenSpec.
 
-Refer to the containment-versus-sequencing discipline documented in `/issues-beads-seed` and the "Dependency type discipline" convention in `/issues-beads-prime` to avoid the common structural error of expressing containment as sequencing.
+The containment-versus-sequencing discipline and the "Dependency type discipline" convention were documented in `issues-beads-seed` and `issues-beads-prime` respectively, both retired and pending re-base onto Linear/OpenSpec; until then, avoid the common structural error of expressing containment as sequencing by convention alone.
 
 ### Step 6: set signal tables on new issues
 
@@ -416,7 +414,7 @@ bd dep tree <epic-id> --direction both
 
 If cycles are detected, resolve them before proceeding.
 If lint warnings appear, address structural issues.
-These checks are performed inline rather than delegating to `/issues-beads-audit` because they are a single step within the planning protocol rather than a standalone maintenance activity.
+These checks are performed inline rather than delegating to `issues-beads-audit` (retired, pending re-base onto Linear/OpenSpec) because they are a single step within the planning protocol rather than a standalone maintenance activity.
 
 ### Step 8: produce dependency-ordered execution plan
 
@@ -483,15 +481,15 @@ After planning completes, the worker proceeds to one of:
 ---
 
 *Composed skills (delegate, do not duplicate):*
-- `/issues-beads-seed` -- issue graph creation from `docs/development/` artifacts
-- `/issues-beads-evolve` -- graph structure refinement (splitting, merging, re-parenting, rewiring)
+- `issues-beads-seed` (retired, pending re-base onto Linear/OpenSpec) -- issue graph creation from `docs/development/` artifacts
+- `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) -- graph structure refinement (splitting, merging, re-parenting, rewiring)
 - `/stigmergic-convention` -- signal table schema and write protocol
 
 *Related skills:*
 - `/session-orient` -- strategic horizon session start, provides discovery findings as input
 - `/session-checkpoint` -- all-horizon state capture, detects replanning triggers
 - `/session-review` -- convergence-point validation, may trigger replanning
-- `/issues-beads-prime` -- core beads conventions and command quick reference
+- `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 
 *Theoretical foundations:*
 - `preferences-adaptive-planning` for the R_plan(d) derivation, buffer sizing theory, and planning depth optimization that this skill operationalizes

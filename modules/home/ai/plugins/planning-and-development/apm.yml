@@ -19,6 +19,8 @@ dependencies:
       ref: 81455051ccca654c57ad6088838c85e7248ac159
       skills: [hickey, lowy, fact-check]
 # Soft coupling (agentic planning Manual execution mode): this package pairs with
-# beads-issue-tracking-and-session-workflow@vanixiets. It is
-# deliberately a comment, not a hard dependency — Manual mode must not force beads
-# co-presence on consumers that do not want the beads issue tracker.
+# beads-issue-tracking-and-session-workflow@vanixiets, whose beads issue-tracking
+# skills (issues-beads-*) have been retired pending re-base onto Linear/OpenSpec;
+# the plugin retains the surviving session-layer skills. It is deliberately a
+# comment, not a hard dependency — Manual mode must not force this plugin's
+# co-presence on consumers that do not want it.

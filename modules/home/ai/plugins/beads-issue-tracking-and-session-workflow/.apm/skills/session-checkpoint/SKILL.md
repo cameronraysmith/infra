@@ -11,7 +11,7 @@ Session wind-down protocol that captures state across all planning horizons, eva
 This skill operates across all horizons simultaneously: it updates operational state (signal tables, checkpoint context), evaluates tactical feedback (surprise accumulation, replanning thresholds), and captures strategic observations (documentation impact, Cynefin reclassification).
 
 This is the default session wind-down command for repositories with the full stigmergic workflow installed.
-For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), use `/issues-beads-checkpoint` directly.
+For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), this skill named a direct `issues-beads-checkpoint` fallback; that skill has been retired and the fallback awaits re-basing onto Linear/OpenSpec.
 
 ## Theoretical grounding
 
@@ -38,19 +38,17 @@ For the full theoretical derivation including the R_plan(d) formulation, buffer 
 This skill orchestrates a higher-level protocol that uses the following skills as components.
 Do not duplicate their functionality; delegate to them.
 
-- `/issues-beads-checkpoint` provides the per-issue signal table update, checkpoint-context write, escalation handling, proactive pheromone propagation, buffer depletion checks, graph health verification, and beads commit.
-  Delegate all per-issue checkpoint mechanics to this skill.
-- `/issues-beads-evolve` provides graph restructuring when checkpoint reveals structural issues (splitting, merging, re-parenting, dependency rewiring).
-  Delegate graph restructuring to this skill when step 2 or step 5 reveals the need.
+- `issues-beads-checkpoint` (retired, pending re-base onto Linear/OpenSpec) provided the per-issue signal table update, checkpoint-context write, escalation handling, proactive pheromone propagation, buffer depletion checks, graph health verification, and beads commit; per-issue checkpoint mechanics await re-implementation via that re-base.
+- `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) provided graph restructuring when checkpoint reveals structural issues (splitting, merging, re-parenting, dependency rewiring); graph restructuring when step 2 or step 5 reveals the need awaits re-implementation via that re-base.
 - `/stigmergic-convention` provides the signal table schema, field definitions, read-modify-write protocol, and checkpoint-context format.
   Reference this skill for signal table semantics; do not redefine them here.
 
-Load `/issues-beads-prime` for core beads conventions and command quick reference before running checkpoint commands.
+`issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running checkpoint commands.
 
 ## Protocol
 
 Execute the following nine steps in order.
-Steps 1 through 4 operate per-issue via delegation to `/issues-beads-checkpoint`.
+Steps 1 through 4 operate per-issue; they previously delegated to `issues-beads-checkpoint`, now retired and pending re-base onto Linear/OpenSpec, and describe the mechanics directly until then.
 Steps 5 through 9 operate at session level, synthesizing across all touched issues.
 
 ### Step 1: enumerate all issues touched during the session
@@ -73,12 +71,12 @@ Every issue in this set receives a signal table update and checkpoint-context wr
 
 ### Step 2: update signal tables on all touched issues
 
-For each touched issue, delegate the signal table update to `/issues-beads-checkpoint` steps 1-2.
+For each touched issue, the signal table update previously delegated to `issues-beads-checkpoint` steps 1-2, now retired and pending re-base onto Linear/OpenSpec; apply the assessments below directly.
 
 For each issue, assess and update:
 
 *Surprise* based on plan-versus-reality divergence.
-Use the calibration scale from `/issues-beads-checkpoint`: 0.0 for no deviation, 0.1-0.3 for minor deviations, 0.4-0.6 for moderate divergence, 0.7-0.9 for major divergence, 1.0 for complete divergence.
+Use this calibration scale, previously documented in the retired `issues-beads-checkpoint` skill (pending re-base onto Linear/OpenSpec): 0.0 for no deviation, 0.1-0.3 for minor deviations, 0.4-0.6 for moderate divergence, 0.7-0.9 for major divergence, 1.0 for complete divergence.
 Be honest in this assessment; it is the primary metric for downstream calibration and replanning triggers.
 
 *Progress* to reflect current state: exploring, implementing, verifying, or blocked.
@@ -86,7 +84,7 @@ Do not leave progress at not-started for any issue that received work.
 
 *Cynefin reclassification* if the implementation experience revealed a different domain than originally assessed.
 When cynefin changes, re-derive planning-depth using the default mapping (clear to shallow, complicated to standard, complex to deep, chaotic to probe).
-Upward complexity shifts trigger the notification protocol defined in `/issues-beads-checkpoint`.
+Upward complexity shifts trigger the notification protocol previously defined in `issues-beads-checkpoint`, now retired and pending re-base onto Linear/OpenSpec.
 
 *Planning-depth* update when cynefin changes or when manual override is warranted based on implementation experience.
 
@@ -105,7 +103,7 @@ Set to `automated` when CI-enforced tests were added, `manual` when a verificati
 
 ### Step 3: write checkpoint context to each touched issue
 
-Delegate to `/issues-beads-checkpoint` step 3.
+This step previously delegated to `issues-beads-checkpoint` step 3, now retired and pending re-base onto Linear/OpenSpec; apply the format below directly.
 Each checkpoint context uses replacement semantics: the current state is the sufficient statistic for future planning.
 Prior checkpoint contexts are replaced, not appended.
 
@@ -156,7 +154,7 @@ Per-issue theta heuristics (consistent with `/session-review`):
 Compute the effective threshold as the sum of per-issue thetas, where each issue contributes its domain-specific theta value.
 If accumulated surprise exceeds this effective threshold, flag for replanning in the handoff narrative (step 8).
 
-The replanning threshold check is also performed within `/issues-beads-checkpoint` at the per-epic level (using a cumulative threshold of 2.0 by default).
+The replanning threshold check was also performed within `issues-beads-checkpoint` at the per-epic level (using a cumulative threshold of 2.0 by default); that check is retired and pending re-base onto Linear/OpenSpec.
 The session-level check here provides a complementary perspective: it evaluates surprise across all work performed in the session regardless of epic boundaries, catching cross-epic plan divergence that per-epic checks miss.
 
 ### Step 5: assess documentation impact
@@ -269,7 +267,7 @@ This feeds the staleness scan in the next `/session-orient` step 3.
 For each finding that changes assumptions for downstream work, update those issues' descriptions or notes to reflect the new understanding.
 This is proactive pheromone propagation: correcting the trail rather than waiting for the next worker to discover the discrepancy.
 
-Delegate per-issue propagation mechanics to `/issues-beads-checkpoint` step 5.
+Per-issue propagation mechanics previously delegated to `issues-beads-checkpoint` step 5, now retired and pending re-base onto Linear/OpenSpec; apply the steps below directly.
 
 ```bash
 # Check what depends on each touched issue
@@ -319,7 +317,7 @@ Cross-repo propagation also applies to closure-reason signaling: when closing an
 ### Step 7: verify graph health
 
 Run structural integrity checks to ensure no corruption was introduced during the session.
-Delegate to `/issues-beads-checkpoint` step 7 for the mechanics.
+This step previously delegated to `issues-beads-checkpoint` step 7 for the mechanics, now retired and pending re-base onto Linear/OpenSpec; the commands below implement it directly.
 
 ```bash
 # Cycle detection — must be zero
@@ -334,7 +332,7 @@ bd ready | head -5
 
 If cycles are detected, resolve them before proceeding.
 If lint warnings appear, address structural issues.
-These checks are performed inline rather than delegating to `/issues-beads-audit` because they are a single step within the checkpoint protocol rather than a standalone maintenance activity.
+These checks are performed inline rather than delegating to `issues-beads-audit` (retired, pending re-base onto Linear/OpenSpec) because they are a single step within the checkpoint protocol rather than a standalone maintenance activity.
 
 ### Step 8: produce handoff narrative
 
@@ -362,7 +360,7 @@ Include alerts when accumulated surprise exceeds theta (from step 4), when docum
 Call out where implementation is ahead of evidence (code exists but confidence is `undemonstrated` or `prototype`), where evidence is stale (evidence-freshness is older than the most recent implementation changes), and where regression protection is absent on validated work.
 For each epic, summarize the overall confidence posture: what fraction of child issues have reached their confidence target, and where are the gaps?
 
-*Buffer depletion alerts*: report buffer status from the per-epic check delegated to `/issues-beads-checkpoint` step 6.
+*Buffer depletion alerts*: report buffer status from the per-epic check previously delegated to `issues-beads-checkpoint` step 6, now retired and pending re-base onto Linear/OpenSpec.
 If any epic has unclosed children but zero ready issues, flag it prominently so the next session prioritizes unblocking.
 
 *Cross-repo propagation status*: report on cross-repo pheromone propagation from step 6.
@@ -413,7 +411,7 @@ Next session:
 
 ### Step 9: push beads state
 
-Delegate to `/issues-beads-checkpoint` step 8.
+This step previously delegated to `issues-beads-checkpoint` step 8, now retired and pending re-base onto Linear/OpenSpec.
 
 Push beads state to the dolt remote for backup:
 
@@ -451,15 +449,15 @@ When replanning was triggered (surprise exceeded theta or documentation was demo
 ---
 
 *Composed skills (delegate, do not duplicate):*
-- `/issues-beads-checkpoint` -- per-issue signal table update, checkpoint-context write, escalation handling, pheromone propagation, buffer depletion check, graph health verification, beads commit
-- `/issues-beads-evolve` -- graph restructuring when checkpoint reveals structural issues
+- `issues-beads-checkpoint` (retired, pending re-base onto Linear/OpenSpec) -- per-issue signal table update, checkpoint-context write, escalation handling, pheromone propagation, buffer depletion check, graph health verification, beads commit
+- `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) -- graph restructuring when checkpoint reveals structural issues
 - `/stigmergic-convention` -- signal table schema, field definitions, read-modify-write protocol
 
 *Related skills:*
 - `/session-orient` -- strategic horizon session start, consumes the handoff narrative produced here
 - `/session-plan` -- tactical-to-operational decomposition, invoked when replanning is triggered
 - `/session-review` -- convergence-point validation, uses compatible theta heuristics
-- `/issues-beads-prime` -- core beads conventions and command quick reference
+- `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 
 *Theoretical foundations:*
 - `preferences-adaptive-planning` for the surprise threshold derivation, replanning decision rule, documentation impact theory, and the fan-in normalization refinement

@@ -46,9 +46,9 @@ This skill orchestrates a higher-level protocol that uses the following skills a
 Do not duplicate their functionality; delegate to them.
 
 - `/stigmergic-convention` provides the self-verification gate protocol, signal table schema, field definitions, and the read-modify-write protocol for reading surprise scores from closed dependencies and writing updated signals on the convergence node.
-- `/issues-beads-evolve` creates rework issues when integration verification fails or accumulated surprise exceeds the replanning threshold.
+- `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) created rework issues when integration verification fails or accumulated surprise exceeds the replanning threshold.
 
-Load `/issues-beads-prime` for core beads conventions and command quick reference before running review commands.
+`issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running review commands.
 
 ## Validation gate frequency
 
@@ -199,7 +199,7 @@ Update the convergence node's confidence signals:
 
 When integration verification fails or accumulated surprise exceeds theta, the existing plan has diverged from reality and corrective action is needed.
 
-Create rework issues via `/issues-beads-evolve` to address integration failures.
+Rework issues previously went through `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) to address integration failures.
 Each rework issue should describe the specific failure, reference the convergence node and the relevant closed dependencies, and include acceptance criteria that would resolve the failure.
 
 Update signal tables on affected issues via the read-modify-write protocol from `/stigmergic-convention`:
@@ -261,13 +261,13 @@ After review completes, the worker proceeds to one of:
 
 *Composed skills (delegate, do not duplicate):*
 - `/stigmergic-convention` -- signal table schema, self-verification gate, read-modify-write protocol
-- `/issues-beads-evolve` -- rework issue creation when integration verification fails
+- `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) -- rework issue creation when integration verification fails
 
 *Related skills:*
 - `/session-orient` -- strategic horizon session start, provides initial context for work selection
 - `/session-plan` -- tactical-to-operational decomposition, invoked when replanning is triggered
 - `/session-checkpoint` -- all-horizon state capture and handoff
-- `/issues-beads-prime` -- core beads conventions and command quick reference
+- `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 
 *Theoretical foundations:*
 - `preferences-adaptive-planning` for the Viable System Model mapping (System 3* audit context), validation gate placement theory, and surprise threshold derivation

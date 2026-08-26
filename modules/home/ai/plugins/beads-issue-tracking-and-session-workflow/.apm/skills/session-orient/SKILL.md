@@ -11,7 +11,7 @@ Session start protocol that assembles context from all available sources, calibr
 This skill operates at the strategic planning horizon, reading the full remaining scope at low resolution.
 
 This is the default session start command for repositories with the full stigmergic workflow installed.
-For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), use `/issues-beads-orient` directly.
+For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), this skill named a direct `issues-beads-orient` fallback; that skill has been retired and the fallback awaits re-basing onto Linear/OpenSpec.
 
 ## Theoretical grounding
 
@@ -38,10 +38,10 @@ For the full theoretical derivation including the R_plan(d) formulation, buffer 
 This skill orchestrates a higher-level protocol that uses the following skills as components.
 Do not duplicate their functionality; delegate to them.
 
-- `/issues-beads-orient` provides DAG diagnostics and work selection (phase 1 graph-wide scan, phase 2 signal-table-driven briefing).
+- `issues-beads-orient` (retired, pending re-base onto Linear/OpenSpec) provided DAG diagnostics and work selection (phase 1 graph-wide scan, phase 2 signal-table-driven briefing).
 - `/stigmergic-convention` provides the signal table schema, field definitions, and read-modify-write protocol for parsing and interpreting signal tables on candidate issues.
 
-Load `/issues-beads-prime` for core beads conventions and command quick reference before running orientation commands.
+`issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running orientation commands.
 
 ## Protocol
 
@@ -49,7 +49,7 @@ Execute the following steps in order.
 
 ### Step 1: load beads-orient diagnostics
 
-Delegate the graph-wide scan to `/issues-beads-orient` phase 1.
+This step previously delegated the graph-wide scan to `issues-beads-orient` (retired, pending re-base onto Linear/OpenSpec) phase 1; the commands below implement it directly.
 Run `bd status`, `bd epic status`, `bd ready`, and `bd blocked` to establish the current state of the issue graph.
 
 ```bash
@@ -65,7 +65,7 @@ bd ready
 bd blocked
 ```
 
-Extract the three prioritization perspectives described in `/issues-beads-orient`: parallel entry points, critical path, and high-impact items.
+Extract the three prioritization perspectives previously described in the retired `issues-beads-orient` skill (pending re-base onto Linear/OpenSpec): parallel entry points, critical path, and high-impact items.
 Use the structural integrity checks from that skill (empty epic detection, orphan issue detection) to verify graph health before proceeding.
 
 ### Step 2: read AMDiRE documentation relevant to the selected work area
@@ -347,12 +347,12 @@ After orientation completes, the worker proceeds to one of:
 ---
 
 *Composed skills (delegate, do not duplicate):*
-- `/issues-beads-orient` -- DAG diagnostics, graph-wide scan, signal-table-driven briefing
+- `issues-beads-orient` (retired, pending re-base onto Linear/OpenSpec) -- DAG diagnostics, graph-wide scan, signal-table-driven briefing
 - `/stigmergic-convention` -- signal table schema and parsing protocol
 
 *Related skills:*
 - `/session-plan` -- tactical-to-operational decomposition
 - `/session-checkpoint` -- all-horizon state capture and handoff
-- `/issues-beads-prime` -- core beads conventions and command quick reference
+- `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 - `preferences-validation-assurance` for the confidence promotion chain and evidence quality dimensions used to interpret candidate issue readiness
 - `preferences-compositional-continuous-verification` for the theoretical anchor behind the standing traceability-audit habit on `.#checks` and the structural commitment behind the validate-to-merge workflow
