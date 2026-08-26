@@ -322,3 +322,4 @@ See `preferences-scalable-probabilistic-modeling-workflow` for the operational B
 - `preferences-scalable-probabilistic-modeling-workflow` for the principled Bayesian workflow for simulator-based models, the statistical instantiation of the same iterative self-correcting structure
 - `preferences-architectural-patterns` for software-specific domain knowledge that informs Cynefin classification of engineering work items
 - `preferences-validation-assurance` for evidence-based confidence, the severity criterion applied to engineering V&V, and the reflexive severity framework for double-loop learning
+- `stigmergic-convention` for the operational signal-table mechanics that implement the stigmergy and Viable System Model theory above
