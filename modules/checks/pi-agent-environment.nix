@@ -2169,7 +2169,6 @@
             piModulePi083References = pi083References piModuleText;
             inherit piReconnaissancePresent;
             piReconnaissancePi083References = pi083References piReconnaissanceText;
-            piPackageVersion = lib.getVersion piConfig.package;
             deployedPiCandidateCount = builtins.length deployedPiCandidates;
             inherit deployedPiIsOuterWrapper;
             canonicalSkillImmutable = homeFileImmutable ".factory/skills/using-superpowers";
@@ -2265,7 +2264,6 @@
             piModulePi083References = [ ];
             piReconnaissancePresent = true;
             piReconnaissancePi083References = [ ];
-            piPackageVersion = "0.84.2";
             deployedPiCandidateCount = 1;
             deployedPiIsOuterWrapper = true;
             canonicalSkillImmutable = true;
@@ -2576,8 +2574,6 @@
                 echo "modules/home/ai/pi/default.nix so the Pi wrapper is the only main" >&2
                 echo "program named pi. With a count of 1, the outer wrapper collapsed onto" >&2
                 echo "programs.pi-coding-agent.package and the module no longer wraps it." >&2
-                echo "After an llm-agents bump also update the piPackageVersion literal in the" >&2
-                echo "expected attrset of modules/checks/pi-agent-environment.nix." >&2
                 exit 1
               fi
               if [ -z "$CANONICAL_SKILL_SOURCE" ]; then
