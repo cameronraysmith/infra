@@ -65,3 +65,10 @@ secrets/home-manager.backup-pre-2.4/
 .dolt/
 *.db
 .beads-credential-key
+
+# Agent context files: generated per-machine or symlinked from elsewhere, never committed here
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+SOUL.md
+CRUSH.md
