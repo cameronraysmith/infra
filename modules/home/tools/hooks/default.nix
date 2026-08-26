@@ -38,18 +38,6 @@
       # composed script. writeShellApplication fails the build on any finding.
       repoContextShellChecks = [ "SC2329" ];
 
-      memory-capture = pkgs.writeShellApplication {
-        name = "memory-capture";
-        runtimeInputs = with pkgs; [
-          jq
-          coreutils
-          git
-          gnused
-          gnugrep
-        ];
-        text = builtins.readFile ./memory-capture.sh;
-      };
-
       enforce-branch-before-edit = pkgs.writeShellApplication {
         name = "enforce-branch-before-edit";
         runtimeInputs = with pkgs; [
@@ -190,7 +178,6 @@
     in
     {
       home.packages = [
-        memory-capture
         enforce-branch-before-edit
         session-start
         clarify-vague-request

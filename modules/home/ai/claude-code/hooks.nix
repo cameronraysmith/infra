@@ -93,19 +93,6 @@
             }
           ];
 
-          PostToolUse = [
-            {
-              matcher = "Bash";
-              hooks = [
-                {
-                  type = "command";
-                  command = "memory-capture";
-                  async = true;
-                }
-              ];
-            }
-          ];
-
           SessionStart = [
             {
               hooks = [

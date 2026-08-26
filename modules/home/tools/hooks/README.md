@@ -7,7 +7,7 @@ created: 2026-08-26
 
 A hook only takes effect through two files, and the two must be kept in sync by hand because nothing checks that they agree.
 `default.nix` in this directory packages each script as a `pkgs.writeShellApplication` derivation inside `flake.modules.homeManager.tools`, gives it a `name`, declares its `runtimeInputs`, and appends it to `home.packages` so the built executable lands on the global PATH.
-Because that script is on PATH by its bare `name` after home-manager activation, a hook can be exercised by hand without triggering its event, by piping the same JSON shape the harness would send: `echo '{}' | memory-capture`.
+Because that script is on PATH by its bare `name` after home-manager activation, a hook can be exercised by hand without triggering its event, by piping the same JSON shape the harness would send: `echo '{}' | redirect-rm-to-rip`.
 `../ai/claude-code/hooks.nix` wires events inside `flake.modules.homeManager.ai`, setting `programs.claude-code.settings.hooks.<Event>` to a list of `{ matcher; hooks = [ { type = "command"; command = "<bare-name>"; } ]; }` entries, where `<bare-name>` is a plain string.
 The two files connect only by that string matching the derivation's `name`; there is no nix-level reference between them.
 A derivation added to `default.nix` without a corresponding `command` entry in `hooks.nix` sits on PATH and never fires.

@@ -23,7 +23,7 @@ fi
 # path allowance covers editing such a tree from a session whose own cwd is the
 # primary. The harness places its own worktrees under `.claude/worktrees/`,
 # already covered by `/.claude/`.
-ALLOWED_PATHS='(/\.claude/|/\.worktrees/|CLAUDE\.md$|CLAUDE\.local\.md$|/plans/|/\.beads/)'
+ALLOWED_PATHS='(/\.claude/|/\.worktrees/|CLAUDE\.md$|CLAUDE\.local\.md$|/plans/)'
 if [[ "$FILE_PATH" =~ $ALLOWED_PATHS ]]; then
   exit 0
 fi
