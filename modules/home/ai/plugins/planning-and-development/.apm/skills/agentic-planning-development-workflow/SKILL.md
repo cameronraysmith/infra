@@ -23,7 +23,7 @@ For the collaborator map naming who owns what, see references/collaborators.md.
 Run the workspace safety gate first, before any Linear call.
 Assert both `LINEAR_API_KEY` and `LINEAR_WORKSPACE` are unset, then `linear auth whoami --workspace <slug>` to confirm the reported workspace is the intended personal-versus-work one, and pass an explicit `--workspace <slug>` on every later call including reads; the gate mechanics live in linear-project-management/references/linear-workspace-safety-gate.md.
 As a one-time act, create or extend the openspec/linear.yaml registry with the teams and projects entries for the chosen team and project; then, per change at the Backlog-to-Todo bind, write `linear_story_*` plus `linear_team` and `linear_project` and initialize the D10 sync ledger into that change's proposal.md frontmatter only, and seed the Linear issue description from the change's proposal.md business-facing content, referencing the registry's teams and projects entries rather than writing the binding into the registry; the config schema, the one-question setup, and the write-before-read frontmatter binding live in openspec-linear-sync/references/config-and-frontmatter.md.
-Orient beads for the Manual-mode drill-down via /session-orient (session-advisor reads the graph metrics and signal table), with the comprehensive command reference in the issues-beads skill.
+Orient beads for the Manual-mode drill-down via /session-orient, with the comprehensive command reference in the issues-beads skill.
 
 ### Quick flow (HIL)
 
@@ -98,7 +98,7 @@ It dispatches each mode to its execution surface and presents the mode-agnostic 
 | HIL | the openspec-* skills plus superpowers via the superpowers-bridge |
 | Manual | /session-orient then /session-plan then /session-review then /session-checkpoint |
 
-session-advisor is referenced as the Manual-path diagnostic engine, not duplicated; the session-advisor-to-router routing overlap is a deferred follow-up.
+Manual-mode entry is directly via /session-orient, with no separate routing advisor between the fork and the session-* loop.
 roborev and documenter are mode-agnostic human-steered abstract gates, not built agents.
 The compose-by-delegation contract, the AFK handoff act and its bounded open dispatch point, the abstract gates, and the explicit statement that the router re-implements none of the session-* logic are in references/delegation.md.
 
@@ -130,6 +130,6 @@ Defer the full canon to jj-version-control/SKILL.md invariant (iii-b)/(vi).
 
 ## Boundary assertions
 
-The router does not read beads graph metrics or the stigmergic signal table; in Manual mode it passes through to /session-orient, which is where that reading happens via session-advisor.
+The router does not read beads graph metrics or the stigmergic signal table; in Manual mode it passes through to /session-orient, where that reading happens directly.
 This boundary preserves the no-parallel-surface discipline: the router selects among existing surfaces and never builds a second routing or task-ledger surface alongside them.
 Mode selection is a per-issue human decision and is never mechanized via a Linear label.

@@ -19,13 +19,6 @@ The router does not drive the spec-first lifecycle itself; it dispatches to the 
 Manual is a pass-through to the session-* loop: /session-orient then /session-plan then /session-review then /session-checkpoint.
 The router invokes /session-orient and steps aside; the session-* skills are an in-place Viable System Model state machine the router selects among, not one it duplicates.
 
-## session-advisor is the Manual-path diagnostic engine, referenced not duplicated
-
-In Manual mode the diagnostic that decides which session-* skill to enter is session-advisor.
-session-advisor reads beads graph metrics and the stigmergic signal table and recommends a session or beads skill; the router references it as the Manual-path diagnostic engine and does not absorb its heuristics.
-The router itself does not read beads graph metrics or the stigmergic signal table, which preserves the no-parallel-surface boundary: there is one routing surface for graph-metric routing (session-advisor) and the router defers to it rather than building a second.
-The session-advisor-to-router routing overlap is a deferred follow-up, not resolved here.
-
 ## The AFK dispatch target is a bounded open point
 
 The router's AFK behavior is to hand off to the Claude Code Workflows feature and track via its plan checkboxes.

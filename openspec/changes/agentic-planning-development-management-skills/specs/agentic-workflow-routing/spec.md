@@ -95,15 +95,11 @@ Each mode SHALL declare its entry criteria and its per-mode authoritative task l
 
 The router SHALL be a thin mode-selector that dispatches and never re-implements orient, plan, review, or checkpoint.
 AFK SHALL hand off to the Claude Code Workflows feature and track via its plan checkboxes; HIL SHALL delegate to the opsx and superpowers skills via the bridge; Manual SHALL be a pass-through to /session-orient, /session-plan, /session-review, and /session-checkpoint.
-The router SHALL reference session-advisor as the Manual-path diagnostic engine without duplicating it, and the router itself SHALL NOT read beads graph metrics or the stigmergic signal table.
+The router itself SHALL NOT read beads graph metrics or the stigmergic signal table.
 
 #### Scenario: Manual mode passes through to session-orient
 - **WHEN** Manual mode is selected
-- **THEN** the router passes through to /session-orient, which routes via session-advisor and the stigmergic signal table, and the router does not read beads metrics or the signal table itself
-
-#### Scenario: router references session-advisor without absorbing it
-- **WHEN** the router needs the Manual-path diagnostic
-- **THEN** it references the standalone session-advisor skill, and the session-advisor-to-router routing overlap remains a deferred follow-up not resolved here
+- **THEN** the router passes through to /session-orient, which routes via the stigmergic signal table, and the router does not read beads metrics or the signal table itself
 
 #### Scenario: router does not re-implement the session skills
 - **WHEN** any mode reaches a delegated phase (orient, plan, review, checkpoint)

@@ -54,7 +54,6 @@ Soft guide; defer to task shape.
 
 | Skill | Owner | When |
 |---|---|---|
-| `/session-advisor` | AC | At spawn, before strategic framing |
 | `/session-orient` | Both (dual-use) | AC reorients on master directive; AC produces addendum for WO; WO runs with AC addendum |
 | `/session-plan` | Situational | If beads-graph-seeding applies; may not apply to all tasks |
 | `/session-review` | AC | Convergence audit (System 3-star posture) |

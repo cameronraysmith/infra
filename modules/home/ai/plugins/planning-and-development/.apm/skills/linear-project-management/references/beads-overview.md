@@ -14,7 +14,7 @@ When beads is used as a drill-down, at most map the beads issue id to the OpenSp
 ## Load-bearing in Manual mode
 
 In Manual mode beads is load-bearing as the authoritative task ledger.
-Manual mode has no OpenSpec change and no proposal.md, so the beads issue graph is the work-item ledger, driven through the session loop: /session-orient at the start, work, then /session-checkpoint, with session-advisor reading the beads graph metrics to route between the session skills.
+Manual mode has no OpenSpec change and no proposal.md, so the beads issue graph is the work-item ledger, driven through the session loop: /session-orient at the start, work, then /session-checkpoint, with /session-orient reading the beads graph metrics to route between the session skills.
 This is the one mode where beads owns the ledger rather than acting as an optional drill-down; the agentic-planning-development-workflow router selects this mode and passes through to /session-orient.
 
 ## beads-epic to Linear-parent mapping

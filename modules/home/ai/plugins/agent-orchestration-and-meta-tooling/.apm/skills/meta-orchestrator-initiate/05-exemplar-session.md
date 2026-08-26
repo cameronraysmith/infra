@@ -56,7 +56,7 @@ For each stream, master spawns the AC↔WO pair using Agent tool with `team_name
 Stream-α (high-novelty path):
 
 1. Master spawns `repo-A-α-ac` via Agent tool
-2. AC bootstraps: `/session-advisor` then `/session-orient` with master-supplied addendum; produces three-audience push-back-likelihood note
+2. AC bootstraps: `/session-orient` with master-supplied addendum; produces three-audience push-back-likelihood note
 3. AC drafts structural template for WO spawn prompt
 4. Master inlines content into AC's template and spawns `repo-A-α-wo` via Agent tool
 5. WO bootstraps: `/session-orient` with AC-supplied addendum; audits target repo state; claims its jj chain

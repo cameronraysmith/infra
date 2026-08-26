@@ -40,7 +40,7 @@ Entry criteria: the unit of work warrants a documented spec-first change, the hu
 ## Manual
 
 Pass through to the session-* loop for a human-driven series of coding-agent sessions.
-The router relinquishes to /session-orient and does not itself read beads graph metrics or the stigmergic signal table; that reading happens inside the session-* skills via session-advisor.
+The router relinquishes to /session-orient and does not itself read beads graph metrics or the stigmergic signal table; that reading happens inside the session-* skills, starting at /session-orient.
 
 Authoritative ledger: the beads /session-orient to /session-checkpoint loop.
 beads is the task tracker in Manual mode, and the orient-to-checkpoint cycle over the beads issue DAG is the single source of truth for task completion.
