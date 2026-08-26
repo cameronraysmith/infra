@@ -55,8 +55,9 @@
           If any answer is "yes" or "uncertain," pause and ask rather than
           proceeding with assumptions.
 
-          Before working in a directory, read the nearest enclosing
-          `README.md`. It carries that directory's contract and hazards, and a
+          Before working in a directory, or before asserting how a directory or
+          its subtree behaves, read the nearest enclosing `README.md`. It
+          carries that directory's contract and hazards, and a
           branch-level one indexes its children. We keep no separate
           agent-facing documentation: there is user-facing documentation,
           development documentation, and this local tier, and everything an
