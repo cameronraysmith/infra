@@ -23,6 +23,10 @@ A created issue is assigned to the workspace owner: both `linear issue create` a
 A created issue's labels are drawn from the pre-existing workspace label taxonomy rather than invented per issue: `repo:<name>` names the target repository, `type:development` marks implementation work, and the three assessment families `cynefin:*`, `confidence:*`, and `guard:*` record the Cynefin domain, the confidence level, and the regression-guard status.
 This taxonomy is newly adopted rather than long-standing: the pre-existing issue CAM-33 carries no labels.
 
+## Issue, parent-issue, and Project closure
+
+An agent may close an individual issue but must never close a parent issue or a Project: closing either is a human act, reserved for the judgment that the whole grouped body of work is actually complete rather than merely that its last child issue closed.
+
 ## One-way status rollup
 
 Status rolls up one way: local is authoritative, and Linear receives a coarse projection pushed up from below.
