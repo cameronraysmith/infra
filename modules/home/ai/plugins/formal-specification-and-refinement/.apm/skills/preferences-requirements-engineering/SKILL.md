@@ -79,6 +79,8 @@ Nothing else here is that cheap to check, which is why a project adopting one pi
 A designation table is also where domain ambiguity becomes visible instead of latent.
 A term with two rows is a term the project is using in two senses, and that is worth knowing before it reaches a specification.
 
+A corpus of maintained requirements has the same stability concern for a requirement's own cross-references: a requirement may reference another requirement already grounded in the corpus, since that identity persists, but never the change that introduced it, because a change's own record is transient by design and the reference dangles the moment it moves on.
+
 ## Obstacle analysis
 
 Above *R* sits the goal layer, and the discipline for it is van Lamsweerde's KAOS: goals refine through AND/OR graphs down to requirements assignable to agents.

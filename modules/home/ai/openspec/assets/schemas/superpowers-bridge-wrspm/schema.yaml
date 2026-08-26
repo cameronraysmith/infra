@@ -150,6 +150,11 @@ artifacts:
       - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`). Using 3 hashtags or bullets will fail silently.
       - Every requirement MUST have at least one scenario.
 
+      A requirement in the living corpus must be self-contained: it may
+      reference another corpus requirement, but never a change, since a
+      change's directory moves under `archive/` and any reference into it
+      dangles from the corpus reader's position.
+
       Stratum-conditional rules. Each capability carries a stratum tag
       from the proposal — `world`, `interface`, or `behavioral`. The
       tag decides which vocabulary the delta may use. Project-specific
@@ -655,6 +660,12 @@ apply:
        - moves the change folder (`changeRoot`) under the archive
          directory derived from `planningHome.changesDir`
          (`<planningHome.changesDir>/archive/YYYY-MM-DD-<name>/`)
+
+       Text crossing into the corpus at this sync must already be
+       self-contained: a synced requirement may reference another corpus
+       requirement, but never the change now moving under `archive/`, since
+       that reference would dangle from the corpus the moment this step
+       completes.
 
        Then regenerate the satisfaction projection from the
        post-sync corpus. `openspec archive` performs the spec sync
