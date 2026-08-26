@@ -74,6 +74,8 @@ Subcommand:
                                   clean-dry, clean-real, conflict-dry,
                                   precond-violations, single-chain,
                                   subset-keep-remaining, subset-conflict,
+                                  diverged-remaining,
+                                  dry-run-restore-on-failure,
                                   join-add-candidates, join-remove-candidates,
                                   join-inflight-content, join-deep-stack,
                                   join-conflict-add, join-conflict-remove,
@@ -241,7 +243,7 @@ short_change_id() {
 # Print parents-of-@- bookmark sets, one parent per line, bookmarks comma-joined.
 parents_of_at_minus_bookmarks() {
   jj --ignore-working-copy log -r 'parents(@-)' --no-graph \
-    -T 'bookmarks.join(",") ++ "\n"' 2>/dev/null
+    -T 'bookmarks.map(|b| b.name()).join(",") ++ "\n"' 2>/dev/null
 }
 
 # Count parents of @-.
@@ -612,6 +614,49 @@ scenario_setup_diamond() {
   jj new -m "wip" >/dev/null
 }
 
+# Build a 4-chain disjoint diamond like scenario_setup_diamond, but c3's
+# bookmark is unsynced with its remote-tracking counterpart: it was pushed
+# once at a throwaway commit, then moved locally to the real chain tip
+# without re-pushing. jj's bare `bookmarks` template keyword then renders
+# this bookmark as "c3*" (see CommitRef's Template impl in
+# cli/src/commit_templater.rs: `is_local() && !self.synced` appends "*").
+# Regression fixture for the --keep-remaining auto-derivation bug where that
+# sigil leaked into a `jj rebase -r` revision argument.
+scenario_setup_diamond_diverged_remaining() {
+  enter_scratch_dir
+  local tmp remote
+  tmp=$(pwd)
+  remote="${tmp}.remote"
+  mkdir -p "${remote}"
+
+  jj git init >/dev/null 2>&1
+  echo "base" > base.txt
+  jj describe -m "init" >/dev/null
+  jj bookmark create main -r @ >/dev/null
+  jj new -m "wip-base" >/dev/null
+
+  git init --bare -q "${remote}/remote.git"
+  jj git remote add origin "${remote}/remote.git" >/dev/null 2>&1
+
+  local i
+  for i in 1 2 4; do
+    jj new main -m "chain ${i} commit" >/dev/null
+    echo "content-${i}" > "file-${i}.txt"
+    jj bookmark create "c${i}" -r @ >/dev/null
+  done
+
+  jj new main -m "c3 stale" >/dev/null
+  echo "stale" > file-c3-stale.txt
+  jj bookmark create c3 -r @ >/dev/null
+  jj git push --bookmark c3 >/dev/null
+  jj new main -m "c3 commit" >/dev/null
+  echo "content-3" > file-3.txt
+  jj bookmark set c3 -r @ --allow-backwards >/dev/null
+
+  jj new c1 c2 c3 c4 -m "join 1: test diamond (diverged c3)" >/dev/null
+  jj new -m "wip" >/dev/null
+}
+
 # Build a "single-chain" diamond: [merge] has parents (main, c1). --order = "c1".
 scenario_setup_single_chain_diamond() {
   enter_scratch_dir
@@ -956,6 +1001,74 @@ run_scenario_subset_keep_remaining() {
   echo "${result}"
 }
 
+# Regression for the --keep-remaining auto-derivation bug: with a diverged
+# ("c3*") bookmark among the auto-derived remaining set, the fix must strip
+# the sigil so the plain bookmark name reaches `linearize`'s `jj rebase -r`
+# argument. Before the fix, this failed with "Revision `c3*` doesn't exist".
+run_scenario_diverged_remaining() {
+  local result
+  result=$(
+    set +e
+    tmp=$(scenario_setup_diamond_diverged_remaining)
+    trap 'rm -rf "${tmp}" "${tmp}.remote"' EXIT
+    cd "${tmp}" || { echo "FAIL diverged-remaining: cd to tmpdir failed"; exit 0; }
+    order_csv="c1,c2"
+    aggregate="agg"
+    base="main"
+    dry_run=false
+    chains=()
+    keep_remaining_mode="auto"
+    remaining_csv=""
+    remaining=()
+    precondition_checks
+    local ok=true
+
+    # Sanity check: the fixture actually produced a diverged "c3*" bookmark.
+    local raw
+    raw=$(jj --ignore-working-copy log -r c3 --no-graph -T 'bookmarks.join(",")' 2>/dev/null)
+    if [[ "${raw}" != "c3*" ]]; then
+      ok=false
+      echo "FAIL diverged-remaining: fixture did not produce a diverged 'c3*' bookmark (got '${raw}')"
+    fi
+
+    # remaining must contain the plain name "c3", never a decorated variant.
+    if $ok; then
+      local found=false r
+      for r in "${remaining[@]}"; do
+        [[ "${r}" == "c3" ]] && found=true
+        if [[ "${r}" == *'*'* || "${r}" == *'?'* ]]; then
+          ok=false
+          echo "FAIL diverged-remaining: remaining contains a decorated name '${r}'"
+        fi
+      done
+      if ! $found; then
+        ok=false
+        echo "FAIL diverged-remaining: remaining=(${remaining[*]}) does not contain plain 'c3'"
+      fi
+    fi
+
+    # linearize must succeed: before the fix this failed with "Revision
+    # `c3*` doesn't exist" when rebasing the remaining chain onto agg.
+    if $ok; then
+      linearize >/dev/null 2>&1
+      local status=$?
+      if [[ ${status} -ne 0 ]]; then
+        ok=false
+        echo "FAIL diverged-remaining: linearize exited ${status}"
+      fi
+    fi
+
+    if $ok; then
+      if bookmark_exists c3 && bookmark_exists agg; then
+        echo "PASS diverged-remaining"
+      else
+        echo "FAIL diverged-remaining: c3 or agg bookmark missing after linearize"
+      fi
+    fi
+  )
+  echo "${result}"
+}
+
 run_scenario_subset_conflict() {
   # Resolve to absolute path before subshell cd's away from cwd.
   local script_path
@@ -997,6 +1110,100 @@ run_scenario_subset_conflict() {
     fi
     if $ok; then
       echo "PASS subset-conflict"
+    fi
+  )
+  echo "${result}"
+}
+
+# Regression for the dry-run op-log restore bug: a dry run must restore the
+# operation log on EVERY exit path, including a genuine error partway
+# through `linearize`, not only the clean-completion and conflict paths.
+# "bad name" (a space is invalid in a jj bookmark name) is syntactically
+# unparseable, so precondition 13's `bookmark_exists` reports "not found"
+# (jj's own `bookmark list` errors on the pattern, and the error is
+# discarded) and the script proceeds into `linearize`, which has already
+# abandoned the join and rebased both chains for real by the time `jj
+# bookmark create "bad name" ...` fails. This forces the same
+# already-mutated-then-failed shape as the reported bug, independent of the
+# --keep-remaining divergence defect exercised by diverged-remaining.
+run_scenario_dry_run_restore_on_failure() {
+  local script_path
+  if [[ "${BASH_SOURCE[0]}" = /* ]]; then
+    script_path="${BASH_SOURCE[0]}"
+  else
+    script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+  fi
+  local result
+  result=$(
+    set +e
+    tmp=$(scenario_setup_diamond 2 disjoint)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL dry-run-restore-on-failure: cd to tmpdir failed"; exit 0; }
+    local pre_wip pre_merge pre_c1 pre_c2
+    pre_wip=$(jj --ignore-working-copy log -r @ --no-graph -T 'change_id' --limit 1 2>/dev/null)
+    pre_merge=$(jj --ignore-working-copy log -r @- --no-graph -T 'change_id' --limit 1 2>/dev/null)
+    pre_c1=$(jj --ignore-working-copy log -r c1 --no-graph -T 'change_id' --limit 1 2>/dev/null)
+    pre_c2=$(jj --ignore-working-copy log -r c2 --no-graph -T 'change_id' --limit 1 2>/dev/null)
+    local out exit_code
+    out=$(bash "${script_path}" --order c1,c2 --aggregate-bookmark "bad name" --dry-run 2>&1)
+    exit_code=$?
+    local ok=true
+
+    if [[ ${exit_code} -eq 0 ]]; then
+      ok=false
+      echo "FAIL dry-run-restore-on-failure: expected a failing exit code, got 0"
+      echo "--- output ---"
+      echo "${out}" | head -40
+      echo "--- end ---"
+    fi
+    if $ok && ! grep -q "Failed to parse bookmark name" <<<"${out}"; then
+      ok=false
+      echo "FAIL dry-run-restore-on-failure: expected fixture's forced jj error is missing from output"
+      echo "--- output ---"
+      echo "${out}" | head -40
+      echo "--- end ---"
+    fi
+    if $ok && grep -qE "dry-run (clean|would produce conflicts)" <<<"${out}"; then
+      ok=false
+      echo "FAIL dry-run-restore-on-failure: reached a normal dry-run outcome instead of an error"
+    fi
+
+    # `jj op restore` always appends a new operation-log entry, so comparing
+    # operation ids before/after would spuriously fail even on a correct
+    # restore. Compare the restored STATE instead: the abandoned wip/merge
+    # change ids and the pre-rebase positions of c1 and c2 must all still be
+    # exactly what they were before the (failed) dry run touched them.
+    if $ok; then
+      local post_wip post_merge post_c1 post_c2
+      post_wip=$(jj --ignore-working-copy log -r @ --no-graph -T 'change_id' --limit 1 2>/dev/null)
+      post_merge=$(jj --ignore-working-copy log -r @- --no-graph -T 'change_id' --limit 1 2>/dev/null)
+      post_c1=$(jj --ignore-working-copy log -r c1 --no-graph -T 'change_id' --limit 1 2>/dev/null)
+      post_c2=$(jj --ignore-working-copy log -r c2 --no-graph -T 'change_id' --limit 1 2>/dev/null)
+      if [[ "${post_wip}" != "${pre_wip}" || "${post_merge}" != "${pre_merge}" \
+            || "${post_c1}" != "${pre_c1}" || "${post_c2}" != "${pre_c2}" ]]; then
+        ok=false
+        echo "FAIL dry-run-restore-on-failure: op log not restored"
+        echo "  wip:   ${pre_wip} -> ${post_wip}"
+        echo "  merge: ${pre_merge} -> ${post_merge}"
+        echo "  c1:    ${pre_c1} -> ${post_c1}"
+        echo "  c2:    ${pre_c2} -> ${post_c2}"
+      fi
+    fi
+    if $ok && ! working_copy_empty; then
+      ok=false
+      echo "FAIL dry-run-restore-on-failure: @ is not empty after failed dry-run"
+    fi
+    if $ok; then
+      local pcount
+      pcount=$(parents_of_at_minus_count)
+      if [[ "${pcount}" -ne 2 ]]; then
+        ok=false
+        echo "FAIL dry-run-restore-on-failure: @- has ${pcount} parents; development join was not restored"
+      fi
+    fi
+
+    if $ok; then
+      echo "PASS dry-run-restore-on-failure"
     fi
   )
   echo "${result}"
@@ -2105,6 +2312,8 @@ run_tests() {
       out+=$(run_scenario_single_chain); out+=$'\n'
       out+=$(run_scenario_subset_keep_remaining); out+=$'\n'
       out+=$(run_scenario_subset_conflict); out+=$'\n'
+      out+=$(run_scenario_diverged_remaining); out+=$'\n'
+      out+=$(run_scenario_dry_run_restore_on_failure); out+=$'\n'
       out+=$(run_scenario_join_add_candidates); out+=$'\n'
       out+=$(run_scenario_join_remove_candidates); out+=$'\n'
       out+=$(run_scenario_join_inflight_content); out+=$'\n'
@@ -2127,6 +2336,8 @@ run_tests() {
     single-chain) out=$(run_scenario_single_chain) ;;
     subset-keep-remaining) out=$(run_scenario_subset_keep_remaining) ;;
     subset-conflict) out=$(run_scenario_subset_conflict) ;;
+    diverged-remaining) out=$(run_scenario_diverged_remaining) ;;
+    dry-run-restore-on-failure) out=$(run_scenario_dry_run_restore_on_failure) ;;
     join-add-candidates) out=$(run_scenario_join_add_candidates) ;;
     join-remove-candidates) out=$(run_scenario_join_remove_candidates) ;;
     join-inflight-content) out=$(run_scenario_join_inflight_content) ;;
@@ -2143,7 +2354,7 @@ run_tests() {
     join-desc-vs-stored) out=$(run_scenario_join_desc_vs_stored) ;;
     *)
       echo "Error: unknown test scenario '${scenario}'." >&2
-      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile, join-stored-order, join-desc-vs-stored" >&2
+      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, diverged-remaining, dry-run-restore-on-failure, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile, join-stored-order, join-desc-vs-stored" >&2
       return 1
       ;;
   esac
@@ -2178,9 +2389,15 @@ if "${dry_run}"; then
     exit 1
   fi
   echo "dry-run starting (pre-op=${pre_op})..."
+  # Restore the operation log on every exit from this point forward: clean
+  # completion, a conflict exit, an unexpected `set -e` failure inside
+  # linearize (e.g. a bad revision argument), or an interrupt/terminate
+  # signal. Bash runs the EXIT trap on all of these paths, so a single trap
+  # is sufficient; a dry run that mutates the repository on any exit path
+  # is worse than no dry run at all.
+  trap 'jj --ignore-working-copy op restore "${pre_op}" >/dev/null 2>&1 || true' EXIT
   linearize
   conflicts=$(list_conflicts)
-  jj --ignore-working-copy op restore "${pre_op}" >/dev/null
   if [[ -z "${conflicts}" ]]; then
     # shellcheck disable=SC2031
     echo "dry-run clean: would linearize ${#chains[@]} chains onto ${base} without conflict"
