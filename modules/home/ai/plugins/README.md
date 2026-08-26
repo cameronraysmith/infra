@@ -5,7 +5,8 @@ created: 2026-08-25
 
 ## First-party agent skill corpus
 
-127 skills across 18 apm packages, published as a marketplace any project can install independently of the Nix configurations.
+126 skills across 18 apm packages, published as a marketplace any project can install independently of the Nix configurations.
+These counts are computed rather than maintained here: `testing-and-quality/.apm/skills/harborize/scripts/census.py --root modules/home/ai/plugins` regenerates `census.json`, whose `provenance` block carries the authoritative totals and the revision they were taken at.
 Each group directory carries an `apm.yml` and a `plugin.json`; the marketplace manifest is `../../../../.github/plugin/marketplace.json`.
 
 A group's skills are discovered by reading its `.apm/skills/` directory, so neither manifest enumerates them.
@@ -66,7 +67,7 @@ The clusters below are drawn directly from the removed index's existing bullet o
 
 Three separate, independently-operated mechanisms currently suppress or withhold a skill, and nothing before this section collected them in one place.
 
-1. **`disable-model-invocation: true` frontmatter**, set per skill, prevents that skill from auto-triggering on a description match; the skill is still delivered and still invocable by explicit name or slash command. 20 of the 127 skills in this corpus carry the flag set to `true`, and 2 carry it explicitly set to `false`. Factually, all 20 are operational or command-style skills — meta-tooling commands, event-modeling workflow steps, document-conversion utilities, and git/jj/nix operational commands — and none of them are `preferences-*` conceptual-foundation skills; no `preferences-*` skill in this corpus carries the flag.
+1. **`disable-model-invocation: true` frontmatter**, set per skill, prevents that skill from auto-triggering on a description match; the skill is still delivered and still invocable by explicit name or slash command. 21 of the 126 skills in this corpus carry the flag set to `true`, and 2 carry it explicitly set to `false`. Factually, all 21 are operational or command-style skills — meta-tooling commands, event-modeling workflow steps, document-conversion utilities, and git/jj/nix operational commands — and none of them are `preferences-*` conceptual-foundation skills; no `preferences-*` skill in this corpus carries the flag.
 2. **The delivery exclusion list** (`excludedSkills` in `../skills/default.nix`) removes a skill from every delivered harness target (`~/.claude/skills`, `~/.factory/skills`, codex, opencode) even though the skill still exists in the composed tree. It currently withholds `tdd` and `harborize`, each for a documented reason in that file.
 3. **The `@` force-load prefix** in `../../tools/agents-md.nix` (this file's sibling) inlines a skill's full body into the generated context file itself, bypassing both delivery and description-based discovery. Only one skill carries it after this change; see "Archived skill index" below for the one that no longer does.
 
