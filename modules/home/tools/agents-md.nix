@@ -55,6 +55,15 @@
           If any answer is "yes" or "uncertain," pause and ask rather than
           proceeding with assumptions.
 
+          Before working in a directory, read the nearest enclosing
+          `README.md`. It carries that directory's contract and hazards, and a
+          branch-level one indexes its children. We keep no separate
+          agent-facing documentation: there is user-facing documentation,
+          development documentation, and this local tier, and everything an
+          agent needs is therefore something a human reads. Do not create
+          per-directory agent instruction files; a stub existing only for
+          agents is the thing that arrangement avoids.
+
           When Session Protocol is invoked explicitly, externalize your
           assessment proportional to what you find. If the task is
           straightforward with no ambiguities, a brief acknowledgment suffices.
@@ -77,7 +86,7 @@
           - jj version control: ${skillsPath}/jj-summary/SKILL.md
           - jj workflow (full): ${skillsPath}/jj-workflow/SKILL.md
           - jj history cleanup (atomic reorder/squash/split, conventional-commit narrative; jj analog of git history cleanup; see also jj-git-interactive-rebase-to-jj): ${skillsPath}/jj-history-cleanup/SKILL.md
-          - documentation: ${skillsPath}/preferences-documentation/SKILL.md
+          - documentation (three tiers — user-facing Diataxis, development AMDiRE, and the local README hierarchy with its index/leaf roles and earns-its-place bar; prose defers to prose-clarity, diagrams to architecture-diagramming): ${skillsPath}/preferences-documentation/SKILL.md
           - change management: ${skillsPath}/preferences-change-management/SKILL.md
           - agentic planning and development (state-machine router across the Linear-canonical board Backlog -> Todo -> In Progress -> In Review -> Done; AFK/HIL/Manual execution-mode fork; four file-anchored OpenSpec-artifact forward gates): ${skillsPath}/agentic-planning-development-workflow/SKILL.md
           - linear project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work): ${skillsPath}/linear-project-management/SKILL.md

@@ -27,6 +27,67 @@ description: Documentation conventions including structure, formatting, and main
   content with relevant links to the docs website unless they do not yet have
   docs.
 
+## The README hierarchy
+
+`README.md` files form a third documentation tier alongside the user-facing and development trees below.
+They are the local tier: what someone must know to work in a particular directory.
+
+This tier exists because we do not split documentation by audience.
+There is no separate agent-facing corpus; there is user-facing documentation, development documentation, and this local tier, and agents read whichever of the three serves the task.
+Everything an agent needs is therefore something a human can read, which is the property that makes the arrangement worth maintaining.
+
+Two consequences follow directly.
+Documentation systems generally do not render repository `README.md` files — an Astro content loader scoped to its own content directory will not see them — so this tier is read by whoever opens the tree, on a forge or at a keyboard, rather than by a site visitor.
+And a per-directory agent instruction file, such as an `AGENTS.md` containing only a pointer to the adjacent `README.md`, is prohibited: it is an artifact that exists solely for agents and that no human would ever open, which is exactly what this arrangement avoids. State a convention once in a skill rather than materialising a stub beside every file it applies to.
+
+### Index and leaf roles
+
+A README at a branch of the tree has two jobs: state its own directory's contract, and index its children so a reader can navigate downward.
+A README at a leaf states only the contract.
+
+This is the same shard-and-index discipline described under "Document evolution" below, applied to the source tree rather than to `docs/`.
+A branch index is a table of contents and carries the same maintenance obligation as `index.md` does after sharding: when a child is added or removed, the index is wrong until updated.
+
+### What earns a README
+
+A README earns its place the way an inline comment does, and the test is the same: would someone editing files in this directory get it wrong without it?
+Navigational seams and non-obvious contracts qualify.
+A directory whose contents are self-describing does not; a tree of skill definitions, each carrying its own frontmatter and prose, needs no README restating that it contains skills.
+
+Expect tens of these across a repository, not hundreds.
+A README that paraphrases its own directory listing is the same failure as a comment that restates the line beneath it, one tier up, and should be deleted on sight.
+
+### What belongs here rather than in a comment
+
+Rationale that is true of a whole directory belongs in that directory's README rather than repeated in the comments of the files inside it.
+A constraint such as "this tree is generated and regenerating it discards local edits" is one README sentence, not five comments.
+
+Three classes cannot move, and attempting it destroys them.
+File-level load-bearing markers — licence and SPDX headers, shebangs, encoding declarations, linter and formatter pragmas — are positional, because tooling parses them where they sit.
+Docstrings and language-canonical doc comments are API contract and feed generated reference documentation, so they stay with their symbol.
+Block-local correctness and safety notes are load-bearing precisely because of where they are; a safety note moved two directories up no longer guards anything.
+
+One asymmetry to account for when deciding what to move.
+A comment sits in the editor's viewport when the code beside it changes, so its staleness is visible at the moment it is introduced.
+A README two directories up does not, so it rots less visibly than the comment it replaced.
+Move only what is true of the whole directory and changes rarely — the contract, not the implementation — and treat anything volatile as belonging next to the code.
+
+### Maintenance trigger
+
+Update a README when the directory's contract changed, not when a file inside it changed.
+That distinction is what keeps this tier from generating edits that record no information.
+
+### Prose and diagrams
+
+This tier is prose, and `preferences-prose-clarity` governs it as it governs any other prose we write; this skill does not restate that discipline.
+
+Prefer a diagram over prose where the structure is not recoverable from the tree itself — dependency direction, layering, a lifecycle, a state machine, a data flow.
+Do not diagram an inventory.
+A graph of a directory's children duplicates the filesystem, and the filesystem cannot drift from itself while the diagram can, so such a diagram is a second copy of the one self-maintaining thing in the repository.
+A branch index is an inventory and stays a list.
+
+`preferences-architecture-diagramming` owns format selection and the C4 zoom hierarchy; reach for Mermaid in Markdown when a forge or documentation site should render the diagram without a build step.
+
 ## Structure
 
 Generally assume we intend to follow this standard structure for repository
@@ -180,6 +241,17 @@ Use `- **Term**: description` bullet format for 2+ definitions.
   decisions, and the openspec/changes/ corpus that implements them.
 - Reference GitHub issues, pull requests, ADRs, RFCs, or RFDs from archived
   OpenSpec changes for full audit trail.
+- Everything in all three tiers is prose we write, so `preferences-prose-clarity`
+  governs it — reader-expectation structure, calibrated claims, and the smallest
+  safe repair when editing someone else's text. This skill does not restate that
+  discipline and defers to it on any sentence-level question.
+- Prefer a diagram wherever the structure is not recoverable from the surrounding
+  prose or from the tree: dependency direction, layering, a lifecycle, a state
+  machine, a data flow. A reader should be able to take the shape in at a glance
+  rather than reconstruct it from paragraphs. Do not diagram an inventory, and do
+  not diagram something a short list states exactly. `preferences-architecture-diagramming`
+  owns format selection and the C4 zoom hierarchy; Mermaid in Markdown is the
+  default where a forge or documentation site should render it without a build step.
 
 ### Architecture decision records
 
