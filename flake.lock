@@ -1005,6 +1005,29 @@
         "type": "github"
       }
     },
+    "nixbot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787797215,
+        "narHash": "sha256-XKC7Iw09l4QFNhg7yKy6rVhaS/X8v/txPVOMP40Rpic=",
+        "owner": "Mic92",
+        "repo": "nixbot",
+        "rev": "dfc08bf8c37820c5a56cb2e50adba14c6f3b4fa4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "nixbot",
+        "type": "github"
+      }
+    },
     "nixhelm": {
       "inputs": {
         "flake-utils": "flake-utils_3",
@@ -1456,6 +1479,7 @@
         "nix-rosetta-builder": "nix-rosetta-builder",
         "nix-unit": "nix-unit",
         "nix2container": "nix2container",
+        "nixbot": "nixbot",
         "nixhelm": "nixhelm",
         "nixidy": "nixidy",
         "nixos-hardware": "nixos-hardware",
