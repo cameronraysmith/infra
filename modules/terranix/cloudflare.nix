@@ -68,6 +68,16 @@ in
         proxied = false;
       };
 
+      # DNS CNAME record for nixbot CI endpoint (resolves to magnetite)
+      resource.cloudflare_dns_record.nixbot = {
+        zone_id = config.data.cloudflare_zone.scientistexperience "id";
+        name = "nixbot";
+        type = "CNAME";
+        content = "magnetite.scientistexperience.net";
+        ttl = 1; # automatic
+        proxied = false;
+      };
+
       # DNS CNAME record for Gitea forge endpoint (resolves to magnetite)
       resource.cloudflare_dns_record.git = {
         zone_id = config.data.cloudflare_zone.scientistexperience "id";
