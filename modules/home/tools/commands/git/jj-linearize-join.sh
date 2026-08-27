@@ -74,6 +74,7 @@ Subcommand:
                                   clean-dry, clean-real, conflict-dry,
                                   precond-violations, single-chain,
                                   subset-keep-remaining, subset-conflict,
+                                  wip-restore,
                                   diverged-remaining,
                                   dry-run-restore-on-failure,
                                   join-add-candidates, join-remove-candidates,
@@ -240,10 +241,17 @@ short_change_id() {
   jj --ignore-working-copy log -r "${rev}" --no-graph -T 'change_id.short()' --limit 1 2>/dev/null
 }
 
+# Print bookmark names of the parents of REV, one PARENT per line (bookmarks
+# on that parent comma-joined; a parent may carry zero, one, or several).
+bookmarks_of_parents() {
+  local rev="$1"
+  jj --ignore-working-copy log -r "parents(${rev})" --no-graph \
+    -T 'bookmarks.map(|b| b.name()).join(",") ++ "\n"' 2>/dev/null
+}
+
 # Print parents-of-@- bookmark sets, one parent per line, bookmarks comma-joined.
 parents_of_at_minus_bookmarks() {
-  jj --ignore-working-copy log -r 'parents(@-)' --no-graph \
-    -T 'bookmarks.map(|b| b.name()).join(",") ++ "\n"' 2>/dev/null
+  bookmarks_of_parents "@-"
 }
 
 # Count parents of @-.
@@ -459,22 +467,30 @@ linearize() {
       jj_run bookmark set "${r}" -r "${r}"
     done
 
-    # Build the new [merge] parent list: aggregate + remaining (insertion
-    # order is used to invoke `jj new`; alphabetical order produces the
-    # description).
+    # Build the new [merge] over aggregate + remaining, in insertion order.
+    # jj drops a parent that is reachable from another parent as redundant,
+    # and every remaining chain was just rebased onto the aggregate, so the
+    # aggregate itself is always dropped from the resulting parent set. The
+    # description is therefore built from a read of @'s actual parents taken
+    # after the merge is created, never from the list passed to `jj new`, so
+    # the count and the names it reports cannot diverge from what the
+    # commit really has.
     local new_parents=("${aggregate}" "${remaining[@]}")
-    local sorted_parents=()
-    local sp
-    while IFS= read -r sp; do
-      [[ -z "${sp}" ]] && continue
-      sorted_parents+=("${sp}")
-    done < <(printf '%s\n' "${new_parents[@]}" | sort)
-    local new_n=${#sorted_parents[@]}
+    echo "reconstructing development join over: ${new_parents[*]}..."
+    jj_run new "${new_parents[@]}"
+
+    local actual_parents=()
+    local ap
+    while IFS= read -r ap; do
+      [[ -z "${ap}" ]] && continue
+      actual_parents+=("${ap}")
+    done < <(bookmarks_of_parents "@" | sort)
+    local new_n=${#actual_parents[@]}
     # Comma+space separated description list. (IFS only uses its first char
     # as separator, so build the string by hand.)
     local joined=""
     local jp first=true
-    for jp in "${sorted_parents[@]}"; do
+    for jp in "${actual_parents[@]}"; do
       if $first; then
         joined="${jp}"; first=false
       else
@@ -482,10 +498,19 @@ linearize() {
       fi
     done
     local new_desc="join N=${new_n}: ${joined}"
+    echo "  ${new_desc}"
+    jj_run describe -r @ -m "${new_desc}"
 
-    echo "reconstructing development join: ${new_desc}"
-    jj_run new "${new_parents[@]}" -m "${new_desc}"
     jj_run new -m "wip"
+    # `abandon` above deleted the original [wip] bookmark along with the
+    # dissolved join (jj auto-deletes bookmarks pointing at abandoned
+    # commits). Restore it on the freshly reconstructed [wip] so the smaller
+    # diamond this branch rebuilds matches the shape the run dissolved.
+    if bookmark_exists wip; then
+      jj_run bookmark set wip -r @ --allow-backwards
+    else
+      jj_run bookmark create wip -r @
+    fi
   fi
 }
 
@@ -512,23 +537,13 @@ print_summary() {
       short=$(short_change_id "${r}")
       printf '  %-30s -> %s\n' "${r}" "${short}"
     done
-    # Reconstructed-join description: aggregate + remaining sorted.
-    local new_parents=("${aggregate}" "${remaining[@]}")
-    local sorted_parents=()
-    local sp
-    while IFS= read -r sp; do
-      [[ -z "${sp}" ]] && continue
-      sorted_parents+=("${sp}")
-    done < <(printf '%s\n' "${new_parents[@]}" | sort)
-    local joined="" jp first=true
-    for jp in "${sorted_parents[@]}"; do
-      if $first; then
-        joined="${jp}"; first=false
-      else
-        joined+=", ${jp}"
-      fi
-    done
-    echo "reconstructed join: join N=${#sorted_parents[@]}: ${joined}"
+    # @- is the reconstructed join once linearize() has returned (@ is the
+    # fresh [wip] on top of it). Read its committed description rather than
+    # recomputing it here, so the summary can never diverge from what the
+    # commit actually carries.
+    local join_desc
+    join_desc=$(jj --ignore-working-copy log -r @- --no-graph -T 'description' --limit 1 2>/dev/null)
+    echo "reconstructed join: ${join_desc}"
   fi
 
   echo ""
@@ -975,11 +990,13 @@ run_scenario_subset_keep_remaining() {
       fi
     fi
 
-    # Verify description of @- contains expected alphabetical bookmarks
+    # Verify description of @- reflects its actual parents. "agg" always
+    # coincides with the last --order chain's commit (the aggregate bookmark
+    # is created at that same tip), so that parent's line carries both names.
     if $ok; then
       local merge_desc
       merge_desc=$(jj --ignore-working-copy log -r @- --no-graph -T 'description.first_line()' --limit 1 2>/dev/null)
-      local expected="join N=3: agg, c3, c4"
+      local expected="join N=3: agg,c2, c3, c4"
       if [[ "${merge_desc}" != "${expected}" ]]; then
         ok=false
         echo "FAIL subset-keep-remaining: merge description '${merge_desc}' != '${expected}'"
@@ -999,6 +1016,93 @@ run_scenario_subset_keep_remaining() {
     fi
   )
   echo "${result}"
+}
+
+# Regression for the [wip] bookmark: `abandon` (at the top of `linearize`)
+# deletes any bookmark pointing at the dissolved [wip], including one named
+# "wip" itself, and nothing restored it after `--keep-remaining` rebuilt the
+# smaller diamond's [merge]. The fix must recreate "wip" on the fresh [wip]
+# commit exactly when a join is reconstructed, and never when a run fully
+# linearizes (no remaining chains, hence no diamond to restore).
+run_scenario_wip_restore() {
+  local all_pass=true
+  local result=""
+
+  # Positive: --keep-remaining reconstructs a join, so "wip" must come back.
+  result+=$(
+    set +e
+    tmp=$(scenario_setup_diamond 4 disjoint)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL wip-restore-present: cd to tmpdir failed"; exit 0; }
+    jj bookmark create wip -r @ >/dev/null 2>&1
+    order_csv="c1,c2"
+    aggregate="agg"
+    base="main"
+    dry_run=false
+    chains=()
+    keep_remaining_mode="auto"
+    remaining_csv=""
+    remaining=()
+    precondition_checks
+    linearize >/dev/null 2>&1
+    local ok=true
+    if ! bookmark_exists wip; then
+      ok=false
+      echo "FAIL wip-restore-present: wip bookmark missing after --keep-remaining reconstruction"
+    fi
+    if $ok; then
+      local wip_id at_id
+      wip_id=$(short_change_id wip)
+      at_id=$(short_change_id "@")
+      if [[ "${wip_id}" != "${at_id}" ]]; then
+        ok=false
+        echo "FAIL wip-restore-present: wip bookmark (${wip_id}) does not point at @ (${at_id})"
+      fi
+    fi
+    if $ok && ! working_copy_empty; then
+      ok=false
+      echo "FAIL wip-restore-present: @ is not empty after reconstruction"
+    fi
+    if $ok; then
+      echo "PASS wip-restore-present"
+    fi
+  )
+  result+=$'\n'
+
+  # Negative: full linearization (no remaining chains) has no diamond to
+  # restore, so "wip" must stay gone.
+  result+=$(
+    set +e
+    tmp=$(scenario_setup_diamond 2 disjoint)
+    trap 'rm -rf "${tmp}"' EXIT
+    cd "${tmp}" || { echo "FAIL wip-restore-absent: cd to tmpdir failed"; exit 0; }
+    jj bookmark create wip -r @ >/dev/null 2>&1
+    order_csv="c1,c2"
+    aggregate="agg"
+    base="main"
+    dry_run=false
+    chains=()
+    keep_remaining_mode=""
+    remaining_csv=""
+    remaining=()
+    precondition_checks
+    linearize >/dev/null 2>&1
+    if bookmark_exists wip; then
+      echo "FAIL wip-restore-absent: wip bookmark was recreated on a full linearization with no remaining chains"
+    else
+      echo "PASS wip-restore-absent"
+    fi
+  )
+
+  if grep -q '^FAIL' <<<"${result}"; then
+    all_pass=false
+  fi
+  echo "${result}"
+  if $all_pass; then
+    echo "PASS wip-restore (all 2)"
+  else
+    echo "FAIL wip-restore"
+  fi
 }
 
 # Regression for the --keep-remaining auto-derivation bug: with a diverged
@@ -2247,9 +2351,14 @@ run_scenario_join_stored_order() {
 # its bookmarks in ALPHABETICAL order, while `jj new` is invoked in insertion
 # order and `jj describe` does not touch stored order. So a join's description
 # does not report its stored parent order, and this script already demonstrates
-# the divergence whenever the aggregate bookmark does not sort first. If the
-# convention is ever changed to describe in stored order, this test should fail
-# and be updated deliberately.
+# the divergence whenever the aggregate bookmark does not sort first. The
+# aggregate always shares its commit with the last --order chain (the
+# aggregate bookmark is created at that chain's tip), so the description's
+# entry for that parent carries both names, comma-joined with no space,
+# because the description is read back from the commit's actual parents
+# rather than the intended argument list. If the convention is ever changed
+# to describe in stored order, this test should fail and be updated
+# deliberately.
 run_scenario_join_desc_vs_stored() {
   local script_path
   if [[ "${BASH_SOURCE[0]}" = /* ]]; then
@@ -2260,8 +2369,8 @@ run_scenario_join_desc_vs_stored() {
   local agg result=""
   # "aggregate name|expected description|expected stored order"
   local specs=(
-    "agg|join N=3: agg, c3, c4|agg"
-    "zebra|join N=3: c3, c4, zebra|zebra"
+    "agg|join N=3: agg,c2, c3, c4|agg"
+    "zebra|join N=3: c2,zebra, c3, c4|zebra"
   )
   local spec
   for spec in "${specs[@]}"; do
@@ -2311,6 +2420,7 @@ run_tests() {
       out+=$(run_scenario_precond_violations); out+=$'\n'
       out+=$(run_scenario_single_chain); out+=$'\n'
       out+=$(run_scenario_subset_keep_remaining); out+=$'\n'
+      out+=$(run_scenario_wip_restore); out+=$'\n'
       out+=$(run_scenario_subset_conflict); out+=$'\n'
       out+=$(run_scenario_diverged_remaining); out+=$'\n'
       out+=$(run_scenario_dry_run_restore_on_failure); out+=$'\n'
@@ -2335,6 +2445,7 @@ run_tests() {
     precond-violations) out=$(run_scenario_precond_violations) ;;
     single-chain) out=$(run_scenario_single_chain) ;;
     subset-keep-remaining) out=$(run_scenario_subset_keep_remaining) ;;
+    wip-restore) out=$(run_scenario_wip_restore) ;;
     subset-conflict) out=$(run_scenario_subset_conflict) ;;
     diverged-remaining) out=$(run_scenario_diverged_remaining) ;;
     dry-run-restore-on-failure) out=$(run_scenario_dry_run_restore_on_failure) ;;
@@ -2354,7 +2465,7 @@ run_tests() {
     join-desc-vs-stored) out=$(run_scenario_join_desc_vs_stored) ;;
     *)
       echo "Error: unknown test scenario '${scenario}'." >&2
-      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, diverged-remaining, dry-run-restore-on-failure, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile, join-stored-order, join-desc-vs-stored" >&2
+      echo "Valid scenarios: clean-dry, clean-real, conflict-dry, precond-violations, single-chain, subset-keep-remaining, subset-conflict, wip-restore, diverged-remaining, dry-run-restore-on-failure, join-add-candidates, join-remove-candidates, join-inflight-content, join-deep-stack, join-conflict-add, join-conflict-remove, join-conflict-nway, join-conflict-preexisting, join-conflict-resolve, join-side-order, join-nsided-refusal, join-conflict-multifile, join-stored-order, join-desc-vs-stored" >&2
       return 1
       ;;
   esac
