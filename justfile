@@ -87,6 +87,7 @@ activate *FLAGS:
 [group('activation')]
 activate-darwin hostname *FLAGS:
     @echo "Activating darwin configuration for {{hostname}}..."
+    @if [ -x /opt/homebrew/bin/brew ]; then /opt/homebrew/bin/brew update; fi
     {{nix_cmd}} run .#darwin -- {{hostname}} . {{FLAGS}}
 
 # Activate NixOS configuration

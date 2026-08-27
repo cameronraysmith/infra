@@ -124,7 +124,9 @@
             };
 
             onActivation = {
-              autoUpdate = true;
+              # brew bundle self-updating in-process races its own long install run;
+              # `just activate-darwin` runs `brew update` as a separate step first
+              autoUpdate = false;
               upgrade = true;
               # https://nix-darwin.github.io/nix-darwin/manual/#opt-homebrew.onActivation.cleanup
               cleanup = "uninstall";
