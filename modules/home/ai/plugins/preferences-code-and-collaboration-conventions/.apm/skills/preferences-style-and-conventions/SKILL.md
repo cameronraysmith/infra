@@ -120,6 +120,12 @@ See `preferences-validation-assurance` for the severity criterion and confidence
 - Local test execution is the primary feedback loop during development.
   Run tests iteratively as you work, fixing issues before committing.
   CI workflow verification is a distinct stage that occurs when validating a branch for merge/pull request, not during routine local development.
+- Choose the narrowest verification that could actually falsify the change at hand.
+  An evaluation-only change — documentation, skill text, prose, a module option description, anything that alters no derivation — is verified by `nix eval` on the affected attribute, and a build adds nothing.
+  A change affecting one check is verified by `nix build .#checks.<name>` for that check.
+  The full parallel run over every check belongs to pre-pull-request validation, or to a change whose blast radius is genuinely repository-wide, and is not a routine iteration step.
+  The reason is cost against information: a full run takes minutes to hours and, for a one-file change, tells you almost nothing the targeted check does not, and spending it wantonly trains the habit of not knowing which check actually covers your change.
+  This is about scope for the moment rather than building individual tests instead of the check set — the parallel runner exists so that coverage never has to be traded for speed.
 
 ### CI workflow log verification
 
