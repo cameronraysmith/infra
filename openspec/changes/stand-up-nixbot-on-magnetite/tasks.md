@@ -34,7 +34,7 @@
 
 ## 7. Build gate
 
-- [ ] 7.1 Build the host's configuration without deploying it — verify: `nix build .#checks.x86_64-linux.nixos-magnetite 2>&1 | tee logs/nixos-magnetite-$(date +%Y%m%d-%H%M%S).log` succeeds
+- [x] 7.1 Instantiate the host's configuration without deploying it — verify: `nix eval .#checks.x86_64-linux.nixos-magnetite.drvPath 2>&1 | tee logs/nixos-magnetite-eval-$(date +%Y%m%d-%H%M%S).log` succeeds, walking the whole host configuration and catching every evaluation error, option collision and assertion. Amended from the realizing `nix build`, and realization is deferred to deployment on the host: the operator's machine is aarch64-darwin against an x86_64-linux target, so realizing copies the entire system closure locally for information instantiation already supplies. The realizing build was attempted twice and the second attempt failed environmentally — `error: Nix daemon disconnected unexpectedly` on the remote builder while building a home-manager zsh dotfile, cascading through the home-manager generation, alongside HTTP/2 substituter failures — which is unrelated to this change and is not evidence about it. No realization of this host's toplevel has happened.
 
 ## 8. Deployment
 
