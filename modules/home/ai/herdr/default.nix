@@ -66,11 +66,15 @@
             focus_pane_right = "prefix+l";
             zoom = "prefix+z";
             close_pane = "prefix+c";
-            swap_pane_down = "prefix+x";
-            # Unbind herdr's default prefix+shift+{h,l} swaps; reused for tab nav below.
-            swap_pane_up = "";
-            swap_pane_left = "";
-            swap_pane_right = "";
+            # herdr's default swap family; prefix+x is tmux's `bind x swap-pane -D`
+            # kept as an alias for the down direction.
+            swap_pane_left = "prefix+shift+h";
+            swap_pane_down = [
+              "prefix+shift+j"
+              "prefix+x"
+            ];
+            swap_pane_up = "prefix+shift+k";
+            swap_pane_right = "prefix+shift+l";
             resize_mode = "prefix+r";
             copy_mode = "prefix+[";
             reload_config = "prefix+shift+r";
@@ -79,14 +83,11 @@
               "prefix+q"
             ];
             new_tab = "prefix+ctrl+c";
-            previous_tab = [
-              "prefix+shift+h"
-              "prefix+p"
-            ];
-            next_tab = [
-              "prefix+shift+l"
-              "prefix+n"
-            ];
+            # tmux's `bind H`/`bind L` window nav is deliberately not ported here:
+            # binding prefix+shift+{h,l} to tab nav wins conflict resolution and
+            # silently disables swap_pane_{left,right} above.
+            previous_tab = "prefix+p";
+            next_tab = "prefix+n";
             switch_tab = "prefix+1..9";
             rename_tab = "prefix+shift+t";
             close_tab = "prefix+shift+x";
