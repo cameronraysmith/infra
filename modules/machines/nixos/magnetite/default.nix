@@ -34,6 +34,7 @@ in
         inputs.niks3.nixosModules.niks3
         inputs.buildbot-nix.nixosModules.buildbot-master
         inputs.buildbot-nix.nixosModules.buildbot-worker
+        inputs.nixbot.nixosModules.nixbot
       ]
       ++ (with flakeModules; [
         base
@@ -41,6 +42,7 @@ in
         niks3
         ssh-known-hosts
         buildbot
+        nixbot
         gitea
         sso-gateway
         gitea-actions-runner
