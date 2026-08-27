@@ -244,38 +244,35 @@ Structural declarations, policy behavior, activation, credentials, resource owne
 - **WHEN** the hermetic fixture starts the evaluated wrapper with explicit `--model smoke-local/smoke-model`, requests `get_state` and `get_commands`, and closes stdin
 - **THEN** Pi reports the selected synthetic model without a session file, exposes the required extension and canonical-skill commands without `extension_error`, and exits zero within the bound
 
-### Requirement: Stale Pi version cleanup
-
-The implementation MUST remove active Pi 0.83 references from `modules/home/ai/pi/default.nix` and `docs/notes/development/ai-agents/pi-integration-reconnaissance.md` while preserving Pi 0.84.1.
-
-#### Scenario: Active Pi provenance is scanned
-
-- **WHEN** assertion-level scans of both files run before and after the update
-- **THEN** the initial RED names each stale file and the final scan finds Pi 0.84.1 with no Pi 0.83 reference
-
-### Requirement: Human-only activation
-
-Implementation MUST stop after pre-activation verification, record both the current `/nix/var/nix/profiles/system` link and its resolved nix-darwin system store path, and ask Cameron to run `just activate --ask` manually.
-
-#### Scenario: Pre-activation verification passes
-
-- **WHEN** all declared pre-activation verification exits successfully
-- **THEN** the implementation agent records the complete, nonempty single-line outputs of `readlink /nix/var/nix/profiles/system` and `readlink -f /nix/var/nix/profiles/system`, requests the human command, and does not run activation
-
-### Requirement: Confirmation-gated live verification
-
-Post-activation verification MUST remain blocked until Cameron explicitly confirms that `just activate --ask` completed successfully.
-
-#### Scenario: Activation is unconfirmed
-
-- **WHEN** no explicit activation-success confirmation exists
-- **THEN** no live-state probe runs and no post-activation task is marked complete
-
 ### Requirement: Rollback preservation
 
-Post-activation verification MUST confirm that `/nix/var/nix/profiles/system` points to a new active `system-N-link` and that the `system-(N-1)-link` recorded before activation remains immediately previous, present, and resolvable for rollback.
+After activation, `/nix/var/nix/profiles/system` MUST point to the new active `system-N-link`, and the immediately previous generation `system-(N-1)-link` MUST remain present and resolvable for rollback.
 
 #### Scenario: Activated system profile is inspected
 
-- **WHEN** Cameron confirms activation and the nix-darwin system profile links are queried
-- **THEN** the recorded `system-(N-1)-link` remains directly behind the new active `system-N-link` and available for rollback
+- **WHEN** the nix-darwin system profile links are queried after activation
+- **THEN** the active link resolves to a `system-N-link`, and the immediately previous `system-(N-1)-link` remains present and resolvable for rollback
+
+---
+
+### Requirement: Activation requires explicit permission
+
+An agent MUST NOT run system activation unless given explicit permission to do so.
+Before asking the human operator to run activation, the agent MUST record the current `/nix/var/nix/profiles/system` link and its resolved store path.
+This requirement and `Post-activation confirmation gate` below claim nothing broader than activation and post-activation probing.
+
+#### Scenario: Activation is proposed without explicit permission
+
+- **WHEN** an agent has not been given explicit permission to run system activation
+- **THEN** the agent does not run activation, and instead records the complete, nonempty single-line outputs of `readlink /nix/var/nix/profiles/system` and `readlink -f /nix/var/nix/profiles/system` before asking the human operator to run it
+
+### Requirement: Post-activation confirmation gate
+
+An agent MUST NOT begin any post-activation live-state probe until the human operator explicitly confirms that the activation succeeded.
+
+#### Scenario: Activation success is unconfirmed
+
+- **WHEN** the human operator has not explicitly confirmed that activation succeeded
+- **THEN** the agent runs no live-state probe, and no post-activation task is marked complete
+
+---

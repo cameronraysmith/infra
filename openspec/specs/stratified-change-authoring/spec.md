@@ -77,7 +77,7 @@ and SHALL record any undischarged requirement it finds rather than omitting it.
 
 #### Scenario: archive completes
 
-- **WHEN** `openspec archive` finishes syncing this change's delta specs into the main capability
+- **WHEN** `openspec archive` finishes syncing the change's delta specs into the main capability
   specs and before the change folder moves under the archive directory
 - **THEN** the archive step regenerates the satisfaction projection from the synced main specs as a
   full rebuild, so the PR diff for this cycle carries the projection's post-sync state

@@ -9,6 +9,7 @@ Hardware facts reach the configuration through a committed facter report rather 
 The requirements are written against the model, so they hold for any fleet machine importing that profile; pyrite is the only one at present.
 
 ## Requirements
+
 ### Requirement: The pyrite host module imports the upstream model profile with its unwanted firmware pulls disabled
 
 The pyrite host module SHALL import `nixos-hardware.nixosModules.apple-macbook-pro-14-1`, which requires adding `nixos-hardware` as a flake input declaring `inputs.nixpkgs.follows = "nixpkgs"`.
@@ -79,7 +80,7 @@ Every scenario below is decidable by `nix eval` against the built configuration;
 
 The initrd SHALL force-load `applespi`, `spi_pxa2xx_platform`, `intel_lpss_pci`, and `applesmc` via `boot.initrd.kernelModules`, which the imported profile supplies at `apple/macbook-pro/14-1/default.nix:19-24`.
 The facter report MUST NOT be relied upon for these, and the fleet's `base` module MUST NOT be relied upon for these.
-The dependency is at least as strong under a LUKS container as it was under a typed ZFS passphrase, in both of the states this change passes through.
+The dependency is at least as strong under a LUKS container as it was under a typed ZFS passphrase, across the pre-enrollment and post-enrollment credential states.
 Between the install and the enrollment of a token (D30), every boot is the committed clan-vars passphrase typed on this keyboard and there is no other credential.
 After both tokens are enrolled, every boot is a FIDO2 client PIN typed on this keyboard followed by a touch, because both tokens carry a client PIN and `systemd-cryptenroll` defaults to `--fido2-with-client-pin=yes`, with the passphrase as the fallback typed on the same keyboard.
 The fallback is reached by pressing Enter on an empty PIN at the token prompt, which is itself a keypress on this keyboard, so no credential path on this machine avoids it.
@@ -95,8 +96,6 @@ The requirement is decidable by `nix eval` of `.#nixosConfigurations.pyrite.conf
 
 - **WHEN** the committed facter report is evaluated
 - **THEN** it contributes no `applespi` or `intel_lpss` initrd modules, because `nixos/modules/hardware/facter/keyboard.nix` sources initrd keyboard modules from the USB controller report only and the keyboard on this machine is SPI-attached
-
----
 
 ### Requirement: boot.initrd.kernelModules is never overridden with mkForce
 
@@ -262,4 +261,3 @@ The operator procedure for reading a captured record back belongs in the runbook
 - **WHEN** automatic reboot on panic is enabled
 - **THEN** it is recorded that the machine does not return to service unattended, because the reboot lands at the stage-1 LUKS unlock, which needs a seated token and a typed client PIN, or the passphrase
 - **AND** this is accepted rather than mitigated, because the machine already cannot be rebooted remotely under any encryption scheme — `boot.initrd.network.enable` is forced false and there is no initrd SSH — so auto-reboot converts an indefinite hang into a machine waiting at a prompt, which is strictly better and claims nothing more
-

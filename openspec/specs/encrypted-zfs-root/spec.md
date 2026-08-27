@@ -11,6 +11,7 @@ The header backup and the record of which credential occupies which slot are mai
 The requirements are general to encrypted-root hosts; pyrite is the only machine in the fleet on this layout at present, the others rooting on unencrypted ZFS.
 
 ## Requirements
+
 ### Requirement: The root is a ZFS pool created with an explicit ashift matching the disk's 4096-byte sectors
 
 The disko layout SHALL declare a `zroot` pool with `options.ashift = "12"` and the fleet's dataset layout (`root`, `root/nixos` at `/`, `root/home` at `/home`, `root/nix` at `/nix`).
@@ -176,9 +177,7 @@ ZFS native encryption MUST NOT be used: no dataset carries `encryption`, `keyfor
 
 - **WHEN** `base` supplies `boot.zfs.forceImportRoot = true`
 - **THEN** pyrite keeps it, because the install path touches the pool from the installer environment and, per Mic92's `nixosModules/zfs.nix:16-18`, importing without force after such a touch lands the next boot in an emergency shell
-- **AND** its known cost, that the nixpkgs assertion `unsafeAllowHibernation -> !forceImportRoot` forecloses ZFS hibernation at evaluation time, is accepted because hibernation is a non-goal of this change
-
----
+- **AND** its known cost, that the nixpkgs assertion `unsafeAllowHibernation -> !forceImportRoot` forecloses ZFS hibernation at evaluation time, is accepted because hibernation is not a goal of pyrite's configuration
 
 ### Requirement: The costs and the gains of the LUKS layer are both recorded rather than discovered later
 
@@ -237,4 +236,3 @@ Revoking a credential SHALL wipe its slot and re-take the header backup.
 - **WHEN** a token is lost or a credential is to be retired
 - **THEN** the procedure is to list slots with `systemd-cryptenroll <device>`, wipe the identified one with `systemd-cryptenroll --wipe-slot=<n> <device>`, enroll the replacement with only that token seated, and re-take the header backup
 - **AND** the passphrase slot is not wiped as part of this, because it is the credential that makes the sequence survivable if the replacement enrollment fails partway
-
