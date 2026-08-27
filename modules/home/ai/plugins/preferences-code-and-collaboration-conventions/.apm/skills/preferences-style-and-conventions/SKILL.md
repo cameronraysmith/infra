@@ -87,6 +87,22 @@ Create subdirectories when extractions form natural hierarchies or exceed 4-5 re
 
 Avoid splitting when it would fragment a genuinely cohesive unit or create excessive coupling through circular references.
 
+### Log capture and scratch output
+
+Log files captured with `tee` during long-running commands live in a repository's `logs/` directory, named with a lower-kebab-case identifier and a timestamp suffix, matching the command form given for long-running commands:
+
+```bash
+<command> 2>&1 | tee logs/<lower-kebab-identifier>-$(date +%Y%m%d-%H%M%S).log
+```
+
+Before writing there, verify that `logs/` is actually ignored by that repository.
+If it is not ignored, write to `$XDG_STATE_HOME/agent-logs/<repo>/` instead and report the missing ignore entry rather than adding it silently.
+Never leave an untracked, unignored file inside a jj working copy; see `~/.claude/skills/jj-version-control/hazards.md` for why a tracked log file is harmful once jj has begun snapshotting it.
+Never delete logs within a session.
+Pruning anything older than fourteen days is an explicit maintenance action only, never a side effect of other work.
+When writing code, follow the XDG Base Directory specification for config, cache, and data paths.
+Keep a scratch directory for agent working output rather than scattering it across the working tree.
+
 ## Development workflow and tooling
 
 ### Pre-implementation checkpoint
