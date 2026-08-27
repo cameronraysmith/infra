@@ -52,6 +52,14 @@ Run `shellcheck <file>` directly on shell scripts before committing.
 This is faster than a full `nix build` and catches the same class of errors that `checkPhase` would surface.
 A full `nix build` (without `--dry-run`) of the relevant derivation remains the definitive verification, as it executes `checkPhase` with the exact shellcheck configuration the derivation specifies.
 
+## Command-line diagnostics
+
+- Inspect a failed build's log with `nix log /nix/store/<drv-or-out>`, filtered for the relevant text, rather than re-running the build to see its output
+- Find which package provides a given path with `nix-locate`, for example `nix-locate bin/ip`
+- Look up flake attributes with `nix eval` rather than `nix flake show`
+- For cross-architecture builds, use `nix-build --eval-system <system>`; in flakes, address the system attribute directly, for example `.#packages.x86_64-linux.hello`
+- Generate or update a package patch by cloning the source, optionally applying the existing patch, making the edits, then producing the new patch with `git format-patch`
+
 ## Nix code style
 - Format with `nix fmt`
 - Use explicit function arguments, not `with` statements
