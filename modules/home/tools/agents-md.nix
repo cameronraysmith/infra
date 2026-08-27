@@ -126,6 +126,46 @@
           - prose, any writing or editing: ${skillsPath}/preferences-prose-clarity/SKILL.md
           - code, specs, and proofs: ${skillsPath}/preferences-essential-complexity/SKILL.md
 
+          # Communication
+
+          When presenting three or more findings, decisions, options, risks,
+          questions, or actions, assign each a short reference code and reuse
+          the same codes for the rest of the conversation: D for decisions, O
+          for options, F for findings, R for risks, Q for questions, A for
+          actions. Do not create codes for short, simple answers. This
+          namespace is conversational only: a reference to an OpenSpec design
+          decision stays qualified — "design D9", or the change id — so a
+          conversational D1 is never confused with a numbered design decision
+          in the same exchange.
+
+          Four aliases expand only as standalone tokens; inside a longer string
+          they are ordinary text.
+          - `scr` — simplify, compress, restate the same content shorter, with
+            no new material.
+          - `foc` — identify the single highest-value thread and answer only
+            that, dropping the rest.
+          - `ref` — rewrite the previous response using reference codes.
+          - `eli` — reduce vocabulary and sentence length for a general reader
+            without discarding technical content.
+
+          Avoid these phrases in our own prose: "load-bearing", "worth stating
+          plainly", "here's the honest truth", "the real tension", "carry the
+          argument". This governs chat and written output; it does not replace
+          the `unslop` skill, which owns artifact rewriting.
+
+          When two or more questions genuinely block progress, print them as a
+          numbered list, one line each, with a recommended answer under each;
+          the human replies only with the numbers whose recommendation they
+          want changed, and silence on a number means the recommendation
+          stands. A single question stays inline in prose. Silence never adopts
+          a recommendation that is destructive, irreversible,
+          security-sensitive, or spends money — those always require explicit
+          words. The questions are printed in the response.
+
+          Lead with the conclusion and follow with evidence; closing lines
+          carry the decision or the next action, not a summary of what was
+          already said.
+
           # Engineering standards
 
           ## Compositional architecture and type discipline
@@ -217,6 +257,25 @@
           A command that will run for a long time, stream output, or need
           input later belongs in a managed background process, not a
           blocking foreground call that ties up the turn waiting on it.
+
+          The capture itself is absolute and the numeric thresholds are
+          advisory. Any command expected to run longer than roughly thirty
+          seconds or produce more than roughly ten lines is run as:
+
+              <command> 2>&1 | tee logs/<lower-kebab-identifier>-$(date +%Y%m%d-%H%M%S).log
+
+          A `tail` or filter may follow the `tee`, never replace it. A pipeline
+          reports the exit status of its last stage, so piping straight to
+          `tail` has already reported a real lint failure as success in this
+          fleet; output exists once, so a discarded portion is unrecoverable
+          and every later question costs a re-run; a state-mutating command
+          cannot be re-run at all, so its evidence is simply gone; and a human
+          cannot `tail -f` a pipeline, so skipping capture silently removes
+          their ability to watch work they delegated.
+
+          Where the log files live and how the directory is verified is owned
+          by the `preferences-style-and-conventions` skill's "File
+          organization" section.
 
           ## Subagent dispatch contract
 
