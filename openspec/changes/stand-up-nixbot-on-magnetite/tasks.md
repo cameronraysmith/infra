@@ -6,30 +6,30 @@
 
 ## 2. Flake input
 
-- [ ] 2.1 Add the `nixbot` flake input to `flake.nix`, following this repository's `nixpkgs`, and lock it — verify: `nix flake metadata --json` reports a `nixbot` node pinned to a specific revision, and `nix eval .#modules.nixos --apply builtins.attrNames` still evaluates
-- [ ] 2.2 Confirm the existing `buildbot-nix` input is untouched — verify: `git diff flake.nix` shows only the added `nixbot` input, and `nix flake metadata --json` reports the `buildbot-nix` node at its previous revision
+- [x] 2.1 Add the `nixbot` flake input to `flake.nix`, following this repository's `nixpkgs`, and lock it — verify: `nix flake metadata --json` reports a `nixbot` node pinned to a specific revision, and `nix eval .#modules.nixos --apply builtins.attrNames` still evaluates
+- [x] 2.2 Confirm the existing `buildbot-nix` input is untouched — verify: `git diff flake.nix` shows only the added `nixbot` input, and `nix flake metadata --json` reports the `buildbot-nix` node at its previous revision
 
 ## 3. Credentials
 
-- [ ] 3.1 Declare three `clan.core.vars` generators in the new aspect — an operator-populated application private key, a generated webhook secret, and an operator-populated interface-login secret — each owned by the service user with the service named in its restart list — verify: `nix eval .#nixosConfigurations.magnetite.config.clan.core.vars.generators --apply builtins.attrNames` lists the three new generators alongside the incumbent's six
+- [x] 3.1 Declare three `clan.core.vars` generators in the new aspect — an operator-populated application private key, a generated webhook secret, and an operator-populated interface-login secret — each owned by the service user with the service named in its restart list — verify: `nix eval .#nixosConfigurations.magnetite.config.clan.core.vars.generators --apply builtins.attrNames` lists the three new generators alongside the incumbent's six
 - [ ] 3.2 Generate the webhook secret and populate the two operator slots with the values from task 1.1 — verify: `clan vars list magnetite` reports all three as set, and `vars/per-machine/magnetite/` carries one encrypted entry per generator file
 - [ ] 3.3 Confirm no credential value entered the repository — verify: `just lint` passes, including its secret scan, and reading each new `vars/` entry shows an encrypted blob rather than a value
 
 ## 4. First-party aspect
 
-- [ ] 4.1 Write `modules/nixos/nixbot.nix` defining `flake.modules.nixos.nixbot`, configuring the service with its own hostname, its GitHub integration referencing the three credential paths, the topic-based repository adoption disabled, an explicit repository allowlist, provider-qualified administrators, the host's own platform as the only build system, explicitly chosen evaluation worker count and per-worker memory, the local database path, and the module's proxy integration left enabled with certificate issuance requested — verify: `nix eval .#nixosConfigurations.magnetite.config.services.nixbot` sub-attributes return those values, specifically `domain`, `github.topic` as null, `github.repoAllowlist`, `buildSystems`, `evalWorkerCount`, `database.createLocally`, `nginx.enable`, and `nginx.enableACME`
-- [ ] 4.2 Confirm the verdict namespace is left at the module's default rather than set to the incumbent's — verify: `nix eval .#nixosConfigurations.magnetite.config.services.nixbot.statusContextPrefix` returns the module default and not the incumbent's prefix
-- [ ] 4.3 Give the aspect file a header documenting its generators and its coexistence constraints, following the incumbent aspect's header form — verify: the file's header names each generator and its consumer, and `just lint` passes
+- [x] 4.1 Write `modules/nixos/nixbot.nix` defining `flake.modules.nixos.nixbot`, configuring the service with its own hostname, its GitHub integration referencing the three credential paths, the topic-based repository adoption disabled, an explicit repository allowlist, provider-qualified administrators, the host's own platform as the only build system, explicitly chosen evaluation worker count and per-worker memory, the local database path, and the module's proxy integration left enabled with certificate issuance requested — verify: `nix eval .#nixosConfigurations.magnetite.config.services.nixbot` sub-attributes return those values, specifically `domain`, `github.topic` as null, `github.repoAllowlist`, `buildSystems`, `evalWorkerCount`, `database.createLocally`, `nginx.enable`, and `nginx.enableACME`
+- [x] 4.2 Confirm the verdict namespace is left at the module's default rather than set to the incumbent's — verify: `nix eval .#nixosConfigurations.magnetite.config.services.nixbot.statusContextPrefix` returns the module default and not the incumbent's prefix
+- [x] 4.3 Give the aspect file a header documenting its generators and its coexistence constraints, following the incumbent aspect's header form — verify: the file's header names each generator and its consumer, and `just lint` passes
 
 ## 5. Host composition
 
-- [ ] 5.1 Import the upstream `inputs.nixbot.nixosModules.nixbot` module in `modules/machines/nixos/magnetite/default.nix` alongside the existing upstream imports, and name `nixbot` in that host's aspect list — verify: `nix eval .#nixosConfigurations.magnetite.config.services.nixbot.enable` returns true
-- [ ] 5.2 Confirm the incumbent's composition is unchanged — verify: `git diff --stat` reports no change under `modules/nixos/buildbot.nix` or the repository-root `buildbot-nix.toml`, and `nix eval .#nixosConfigurations.magnetite.config.services.buildbot-nix.master.domain` still returns the incumbent's hostname
-- [ ] 5.3 Confirm the two services claim disjoint host resources in the evaluated configuration — verify: `nix eval` of the magnetite configuration shows distinct unit names, distinct users and groups, distinct state directories, and distinct root-retention directories for the two services, and that no TCP port is bound on the new service's behalf
+- [x] 5.1 Import the upstream `inputs.nixbot.nixosModules.nixbot` module in `modules/machines/nixos/magnetite/default.nix` alongside the existing upstream imports, and name `nixbot` in that host's aspect list — verify: `nix eval .#nixosConfigurations.magnetite.config.services.nixbot.enable` returns true
+- [x] 5.2 Confirm the incumbent's composition is unchanged — verify: `git diff --stat` reports no change under `modules/nixos/buildbot.nix` or the repository-root `buildbot-nix.toml`, and `nix eval .#nixosConfigurations.magnetite.config.services.buildbot-nix.master.domain` still returns the incumbent's hostname
+- [x] 5.3 Confirm the two services claim disjoint host resources in the evaluated configuration — verify: `nix eval` of the magnetite configuration shows distinct unit names, distinct users and groups, distinct state directories, and distinct root-retention directories for the two services, and that no TCP port is bound on the new service's behalf
 
 ## 6. Hostname
 
-- [ ] 6.1 Add an unproxied `nixbot` CNAME to `modules/terranix/cloudflare.nix` following the existing incumbent record — verify: the repository's terraform plan recipe reports exactly one record to add and none to change or destroy
+- [x] 6.1 Add an unproxied `nixbot` CNAME to `modules/terranix/cloudflare.nix` following the existing incumbent record — verify: the repository's terraform plan recipe reports exactly one record to add and none to change or destroy
 - [ ] 6.2 Apply the plan and confirm public resolution — verify: `dig +short nixbot.scientistexperience.net` resolves through to the host's address, and the record is not intercepted by the provider's proxy
 
 ## 7. Build gate
@@ -42,7 +42,7 @@
 
 ## 9. Documentation
 
-- [ ] 9.1 Record the two-service topology, the dedicated forge application, and the boundaries that keep the new service from building anything, in the repository's documentation tree — verify: `just docs-build` succeeds and the documentation link check passes
+- [x] 9.1 Record the two-service topology, the dedicated forge application, and the boundaries that keep the new service from building anything, in the repository's documentation tree — verify: `just docs-build` succeeds and the documentation link check passes
 
 ## 10. Integration Verification
 

@@ -134,6 +134,46 @@ The database and role, the state directory, and the credential entries persist a
 
 Acceptance is the integration verification in tasks.md: the new hostname serves over TLS, the incumbent's hostname still serves, the service's unit is running with an empty project list, a webhook delivery is accepted and authenticated, and both databases exist on the one instance.
 
+## Gate 1 modality verdicts
+
+This table is the pre-apply spec-and-feature alignment record required by `openspec-bdd-bridge`.
+It carries one row per requirement in this change's three delta specs, with the capability's stratum tag from the proposal and the modality that actually witnesses the requirement.
+
+No row routes to a Gherkin scenario, so this change lays out no `.feature` file.
+Two independent facts produce that outcome.
+The repository has no BDD runner at all — no pytest-bdd, cucumber, or behave dependency, and no `.feature` file anywhere in the tree — so a laid-out scenario would be an unbound acceptance surface that nothing executes, which is the drift the bridge skill exists to prevent.
+And every observable this change asserts is either a property of the evaluated NixOS configuration, which `nix eval` and `nix build` witness directly, or an observation against a deployed host, which the integration verification in tasks.md group 10 witnesses as a deployment smoke test; a Gherkin step wrapping either one would add a binding layer without adding a witness.
+
+Stratum also constrains the routing before proposition class does.
+A `world`-stratum requirement never routes to a scenario: its witness is the violation condition already stated in its own spec.
+An `interface`-stratum requirement is witnessed at the machine boundary rather than through domain-language mediation, which here means an evaluation gate or a host observation.
+
+| Requirement | Capability | Stratum | Modality | Witness |
+|---|---|---|---|---|
+| A second build service is reachable at its own hostname | `nixbot-build-service` | behavioral | smoke (deployment) | tasks 10.1 |
+| The incumbent build service continues to serve | `nixbot-build-service` | behavioral | smoke (deployment) | tasks 10.2, 5.2 |
+| Repositories are built only once opted in | `nixbot-build-service` | behavioral | build gate (`nix eval`) and smoke (deployment) | tasks 4.1, 10.3 |
+| Deliveries a build service acts on are authenticated | `nixbot-build-service` | behavioral | smoke (deployment) | tasks 10.4 |
+| A second build service's verdicts do not gate merges | `nixbot-build-service` | behavioral | build gate (`nix eval`) and smoke (deployment) | tasks 4.2, 10.6 |
+| Forge credentials are operator-supplied and never legible in the repository | `nixbot-build-service` | behavioral | secret scan and build gate (`nix eval`) | tasks 3.3, 4.1 |
+| One activation establishes the second build service | `nixbot-build-service` | behavioral | smoke (deployment) | tasks 8.1, 10.1 |
+| A second build service is sized against the capacity the incumbent uses | `nixbot-build-service` | behavioral | recorded design argument and capacity baseline | design D9, tasks 10.7 |
+| A distinct hostname is served with its own certificate | `build-service-interface` | interface | build gate (`nix eval`) and smoke (deployment) | tasks 5.3, 10.1 |
+| The two build services hold disjoint host resources | `build-service-interface` | interface | build gate (`nix eval`) and smoke (deployment) | tasks 5.3, 10.5 |
+| Repository visibility is bounded outside the machine and narrowed within it | `build-service-interface` | interface | build gate (`nix eval`); outermost boundary not machine-assertable | tasks 4.1, 1.2 |
+| Deliveries are accepted only at an authenticated endpoint | `build-service-interface` | interface | smoke (deployment) | tasks 10.4 |
+| Verdict namespaces are distinct | `build-service-interface` | interface | build gate (`nix eval`) | tasks 4.2 |
+| Credentials exist only as activation-resolved paths | `build-service-interface` | interface | build gate (`nix eval`) and secret scan | tasks 3.1, 3.3 |
+| The service is a consequence of the host's declared configuration | `build-service-interface` | interface | build gate (`nix build`) | tasks 7.1 |
+| This capability states its own trust boundary | `build-service-interface` | interface | capability text and documentation | specs text, tasks 9.1 |
+| A9 — forge installation selection and delivery authentication | `world-assumptions` | world | violation-condition witness | its own scenario |
+| A10 — hostname resolution and certificate issuance | `world-assumptions` | world | violation-condition witness | its own scenario |
+| A11 — finiteness of one host's build capacity | `world-assumptions` | world | violation-condition witness | its own scenario |
+| A12 — the forge decides which verdict gates a merge | `world-assumptions` | world | violation-condition witness | its own scenario |
+| Grounded vocabulary for behavioral requirements | `world-assumptions` | world | designation table and its lint | the table itself |
+
+No row carries an `est-property`, `est-contract`, or `est-symbolic` modality, so this change also carries no executable-specification-testing obligation and lays out no EST artifact.
+
 ## Open Questions
 
 Whether the forge application can be installed with no repositories selected at all, or whether the provider requires at least one selection, which would make the allowlist and the disabled auto-import the operative boundaries on day one.

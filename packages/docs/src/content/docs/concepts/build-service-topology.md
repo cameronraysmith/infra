@@ -13,9 +13,10 @@ nixbot exists so that migrating a repository becomes a small reviewable opt-in r
 It builds no repository, and the sections below say what enforces that and what it does not enforce.
 
 :::note[Rollout status]
-nixbot's configuration is declared and the host builds with it, but the service is not yet deployed.
-Its GitHub App registration and the two operator-populated credential slots are outstanding, so `services.nixbot.github.enable` is still false and the forge integration described below is declared rather than running.
-The section on what keeps nixbot from building anything is in force from the moment the integration is enabled, not after it.
+nixbot's configuration is complete and the host builds with it, but the service is not yet deployed.
+Its two operator-populated credential slots are unpopulated, so the application private key and the OAuth client secret resolve to no path until they are set.
+One thing deployment must not miss: the application was registered through GitHub's App manifest flow, which generated a webhook secret of its own, while the `nixbot-github-webhook-secret` generator independently generates a different one.
+The generator is authoritative, so the application's webhook secret has to be replaced with its value, or every delivery fails signature validation.
 :::
 
 ## How each service is composed

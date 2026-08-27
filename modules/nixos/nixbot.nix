@@ -21,13 +21,12 @@
 #     buildbot-nix does not, so sharing would edit a running service's
 #     registration.
 #
-# github.enable is false until the dedicated GitHub App exists. Its numeric
-# app id and OAuth client id are public identifiers produced by registering
-# that application, and github.appId has no default, so the integration
-# cannot evaluate before they are known. Enabling it is a four-line edit:
-# github.enable = true, github.appId, github.oauthId, and the oauthSecretFile
-# reference to the third generator below (oauthId and oauthSecretFile are
-# asserted together upstream, so neither can land alone).
+# The webhook secret has two sources and they must agree. The application was
+# registered through GitHub's App manifest flow, which generated a webhook
+# secret of its own; the nixbot-github-webhook-secret generator below
+# independently generates a different one. This generator is authoritative, so
+# the application's webhook secret must be replaced with its value at
+# deployment, or every delivery fails signature validation.
 {
   flake.modules.nixos.nixbot =
     {
@@ -86,12 +85,17 @@
         evalMaxMemorySize = 2048;
 
         github = {
-          enable = false;
+          enable = true;
+
+          # Public identifiers of the dedicated application github.com/apps/sciexp-nixbot.
+          appId = 4743700;
+          oauthId = "Iv23lie8GaDpY0cPXGg4";
 
           appSecretKeyFile =
             config.clan.core.vars.generators.nixbot-github-app-secret-key.files."key.pem".path;
           webhookSecretFile =
             config.clan.core.vars.generators.nixbot-github-webhook-secret.files."secret".path;
+          oauthSecretFile = config.clan.core.vars.generators.nixbot-github-oauth-secret.files."secret".path;
 
           # Default is "build-with-buildbot", the topic the incumbent's
           # repositories carry, and it one-shot-imports against an empty DB.
