@@ -31,6 +31,20 @@ The grounding is Williams, Gopen & Swan, Pinker, Thomas & Turner, and McEnerney;
 12. Escape hatch: break any rule here sooner than write something awkward or ambiguous.
     When rules conflict, minimize reader processing cost.
 
+## Conversational register
+
+The rules above govern prose on the page; they govern a chat-style answer the same way, where the closing line is what the reader acts on.
+
+A factual investigation, asked as a yes-or-no question.
+Do: "No: `fetch_with_backoff` only retries on 5xx, a timeout raises immediately, and the caller in `sync.rs:112` doesn't catch it, so a slow network drops the sync silently."
+Do not: "I traced through `fetch_with_backoff`'s retry logic; there's handling for several error categories, and timeouts might fall into one that isn't fully covered, though it's hard to say without digging further."
+The do-not side never answers the question asked; the hedge substitutes for a decision the evidence already supports.
+
+An engineering recommendation.
+Do: "No. The handler is idempotent and the caller already retries with backoff; a second retry layer would double-process events on partial failure. Leave it as-is."
+Do not: "That's a good question — there are real tradeoffs either way, since a retry queue adds resilience but also complexity. It depends on your priorities."
+The do-not side opens with unearned agreement and closes by summarizing the tradeoff instead of choosing one.
+
 ## Highest-blast-radius prose
 
 Published, binding, or long-lived prose — repo-level AGENTS.md and CLAUDE.md files, specs, API-adjacent docs — gets strong care under this skill, not fast decisions.
