@@ -51,3 +51,12 @@ projects:
         id: "ba0ffa20-a82b-40db-b292-d04f6a83eed2"
       "graphical-desktop-session":
         id: "8cf07dd5-2a48-4f45-bcd4-1add748aee46"
+  "nixbot-herculesci-cicd":
+    # slugId, not the project UUID (6fce4cfd-4c9b-4ca4-b797-9d91ccb4b669), for the
+    # reason recorded on the sibling entries: `linear document list --project`
+    # silently returns zero nodes with exit 0 for a UUID, so the archive-time
+    # UPSERT's title scan misses and duplicates every document.
+    id: "82a27ad740f7"
+    name: "Migrate to nixbot and herculesCI CI/CD"
+    teams: ["CAM"]
+    archive_documents: {}
