@@ -80,7 +80,9 @@ Scenarios of `specs/*.md`:
 
 ## 6. Front-Door Routing Leak Detector (warning, non-blocking)
 
-Design output should not land in `docs/superpowers/specs/`.
+Design output should not land in `docs/superpowers/specs/` (the brainstorm artifact's
+output redirection routes it to the change's resolved brainstorm.md — the `brainstorm`
+entry in `artifactPaths` from `openspec status --change "sso-gateway" --json`).
 
 Detect:
 
@@ -96,25 +98,75 @@ ls docs/superpowers/specs/*.md 2>/dev/null
 |---|---|---|
 | — | — | — |
 
+> Does not block archive. Leaks produced by a new schema-installed cycle should be moved into
+> the change's brainstorm.md (resolved via `artifactPaths.brainstorm`) or `design.md`, then the
+> original file deleted.
+
 ---
 
 ## 7. Deferred Manual Dogfood vs Automated Test Equivalence
 
 For each manual dogfood / smoke task in plan.md marked `[~]` deferred, list the
-equivalent automated test coverage item by item.
+equivalent automated test coverage item by item. If there is no equivalent automated test, that item should be treated as a **real gap**
+rather than a legitimate deferral, and recorded in the retrospective Misses.
 
 | Deferred dogfood (plan §) | Equivalent automated test | Coverage assessment | Real gap? |
 |---|---|---|---|
+| e.g. §11.3 `compose up + curl /actuator/health` | `LinebcIntegrationApplicationTests` (Testcontainers, 24s) | Spring context boot + Flyway run complete + main beans injected | no (equivalently covered) |
 | — | — | — | — |
 
-> When plan.md has no rows marked `[~]`, this section may be left blank (blank means PASS).
+> **Interpretation rules**:
+> - "Equivalent" = the automated test's assertion set is a superset of the manual dogfood's expected assertions
+> - "Coverage assessment" = list the layers actually exercised (context / DB schema / wiring / HTTP path / etc.)
+> - For any row where Real gap = yes, the Overall Decision can still PASS, but a follow-up item must be left in the retrospective
+
+> **When this whole section may be left blank**: when plan.md has no rows marked `[~]` at all, this section does not need to be filled in (blank means PASS).
+> As soon as any `[~]` appears in plan.md, this section must be filled in item by item, otherwise the Overall Decision should be downgraded to FAIL.
+
+---
+
+## 8. Designation Lint and Discharge Coherence (warning, non-blocking)
+
+`openspec validate` (section 1 above) checks markdown structure and delta well-formedness only.
+It performs no vocabulary grounding, no alphabet discipline, and no entailment check.
+Nothing below is validation; it is the agent-executed, warn-and-record analysis this schema's `verify` artifact defines as section 8.
+
+### 8a. Designation lint
+
+For each delta spec tagged `behavioral` in `proposal.md`'s Capabilities section, extract the content nouns from its requirement statements and resolve each against the designation table in `openspec/specs/world-assumptions/spec.md`.
+This is a lexer pass, not a semantic one.
+If `world-assumptions` does not yet exist, record that as the finding rather than reporting the lint clean; a clean report with no designation table is vacuous.
+
+| Requirement | Resolved against the table | Unresolved — machine noun | Unresolved — world-flavored gap |
+|---|---|---|---|
+| — | — | — | — |
+
+### 8b. Discharge coherence
+
+For every ADDED or MODIFIED requirement in this change, record which interface properties and which world assumptions discharge it:
+
+| Requirement | Discharged by (S) | Under (W) | Status |
+|---|---|---|---|
+| — | — | — | — |
+
+A requirement with no named discharging property is recorded `undischarged` with a follow-up, never omitted and never silently accepted.
+
+### 8c. Alphabet check
+
+Behavioral requirements must not name interface phenomena, and interface requirements must not reference world state the machine cannot observe.
+
+**Violations found** (if any):
+
+- <if any, list them; if none, write "none">
+
+> Non-blocking on its own. Blocks only if this section is left empty AND the proposal tagged any capability `world` or `interface` — that means the stratum analysis was skipped, not that it was clean.
 
 ---
 
 ## Overall Decision
 
 - [ ] (pass) PASS — may proceed to finishing-a-development-branch and archive
-- [ ] (warn) PASS WITH WARNINGS — may proceed but note: `<explanation>`
+- [ ] (warn) PASS WITH WARNINGS — may proceed to subsequent steps but note: `<explanation>`
 - [ ] (fail) FAIL — return to the failed artifact, correct it, then re-run verify
 
 **Next step**:
