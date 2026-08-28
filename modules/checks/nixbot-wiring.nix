@@ -1,4 +1,4 @@
-# Structural check for nixbot's vanixiets wiring.
+# Structural check for nixbot's per-repository wiring.
 #
 # It guards the secret name transform, a failure mode indistinguishable from
 # success by inspection. nixbot derives the systemd credential name it looks a
@@ -7,12 +7,13 @@
 # secrets, delivers an empty set, and every effect stops at its own
 # missing-secret guard — exactly what an unwired service does. The check reads
 # the name off the evaluated unit, so it exercises nixbot's own module code
-# rather than a transcription of it, and also pins the allowlist, the cache
-# step, the shared secrets file, and the deliberately empty sandbox options.
+# rather than a transcription of it, and also pins the allowlists, the cache
+# step, the shared secrets files, and the deliberately empty sandbox options.
 #
-# There is deliberately no nixbot.toml: nixbot falls back to buildbot-nix.toml,
-# whose dispatch keys both services need to agree on anyway, and a second file
-# holding identical values could only drift.
+# The repository-root config file is nixbot.toml. nixbot prefers that name over
+# the legacy buildbot-nix.toml it also still reads
+# (nixbot/nixbot/repo_config.py:17), and buildbot no longer serves either
+# GitHub repository, so nothing reads the legacy name here.
 {
   self,
   lib,
@@ -29,7 +30,10 @@
       nixbot = magnetite.services.nixbot;
       buildbot = magnetite.services.buildbot-nix.master;
 
-      repoKey = "github:cameronraysmith/vanixiets";
+      repoKeys = [
+        "github:cameronraysmith/vanixiets"
+        "github:sciexp/ironstar"
+      ];
 
       # LoadCredential entries are "<name>:<source path>". The name never
       # contains a colon, because the transform that builds it replaces every
@@ -46,8 +50,6 @@
       # the two selections can be asserted rather than described. Both take
       # the topic first and then the allowlists; only the allowlist stage is
       # modelled here, because a forge topic is not visible to evaluation.
-      # Both repositories below carry the topic, so the allowlist stage is
-      # what each service's selection reduces to.
       owner = fullName: builtins.head (lib.splitString "/" fullName);
 
       # buildbot_nix/buildbot_nix/common.py:138-148, with full_name as the
@@ -73,37 +75,41 @@
     in
     {
       checks = lib.optionalAttrs (system == "x86_64-linux") {
-        nixbot-vanixiets-wiring = mkCheck {
-          name = "nixbot-vanixiets-wiring";
+        nixbot-wiring = mkCheck {
+          name = "nixbot-wiring";
           actual = {
             effectsCredentialNames = effectsCredentialNames;
             nixbotSecretKeys = sortedNames nixbot.effects.perRepoSecretFiles;
             buildbotSecretKeys = sortedNames buildbot.effects.perRepoSecretFiles;
 
-            # A boolean rather than the path itself: the assertion is that the
-            # two services read one file, and the path is activation-time state
-            # that would churn the oracle without adding evidence.
-            oneSecretsFileForBothServices =
-              nixbot.effects.perRepoSecretFiles.${repoKey} == buildbot.effects.perRepoSecretFiles.${repoKey};
+            # Booleans rather than the paths themselves: the assertion is that
+            # each repository's two entries read one file, and the paths are
+            # activation-time state that would churn the oracle without adding
+            # evidence. Keyed by repository so a failure names which one
+            # diverged. buildbot admits neither repository, so its copies are
+            # inert; asserting them keeps a later re-admission from silently
+            # reading a different file.
+            oneSecretsFileForBothServices = lib.genAttrs repoKeys (
+              key: nixbot.effects.perRepoSecretFiles.${key} == buildbot.effects.perRepoSecretFiles.${key}
+            );
 
-            # The cut itself. buildbot stays authoritative for ironstar while
-            # nixbot also admits it, so the two selections overlap there and
-            # differ on vanixiets.
+            # The cut itself. nixbot serves both repositories and buildbot
+            # serves neither on GitHub, so the two selections are disjoint.
             buildbotAdmitsVanixiets = buildbotAdmits "cameronraysmith/vanixiets";
             buildbotAdmitsIronstar = buildbotAdmits "sciexp/ironstar";
             nixbotAdmitsVanixiets = nixbotAdmits "cameronraysmith/vanixiets";
             nixbotAdmitsIronstar = nixbotAdmits "sciexp/ironstar";
 
-            # An owner allowlist would readmit vanixiets regardless of the
-            # repository list, because the two are OR'd.
+            # An owner allowlist would readmit both repositories regardless of
+            # the repository list, because the two are OR'd.
             buildbotUserAllowlist = buildbot.github.userAllowlist;
             buildbotRepoAllowlist = buildbot.github.repoAllowlist;
             nixbotRepoAllowlist = nixbot.github.repoAllowlist;
             postBuildStepNames = map (step: step.name) nixbot.postBuildSteps;
             niks3ServerUrl = nixbot.niks3.serverUrl;
 
-            # Effects run in the sandbox the service configures. Nothing
-            # vanixiets' effects do needs widening it, and recording the empty
+            # Effects run in the sandbox the service configures. Nothing either
+            # repository's effects do needs widening it, and recording the empty
             # state makes a later widening a reviewable diff rather than a
             # silent grant.
             extraSandboxPaths = nixbot.effects.extraSandboxPaths;
@@ -111,24 +117,31 @@
             extraNixOptions = sortedNames nixbot.effects.extraNixOptions;
           };
           expected = {
-            # ironstar's secrets file is wired only to buildbot's convention,
-            # so nixbot loads no credential for it: admitted for evaluation,
-            # building and caching, with its effects failing closed.
+            # Both repositories' secrets files are wired to nixbot's
+            # convention, so nixbot loads a credential for each and their
+            # effects run rather than stopping at a missing-secret guard.
             effectsCredentialNames = [
               "effects-secret__github_colon_cameronraysmith_slash_vanixiets"
+              "effects-secret__github_colon_sciexp_slash_ironstar"
             ];
-            nixbotSecretKeys = [ "github:cameronraysmith/vanixiets" ];
+            nixbotSecretKeys = [
+              "github:cameronraysmith/vanixiets"
+              "github:sciexp/ironstar"
+            ];
             buildbotSecretKeys = [
               "github:cameronraysmith/vanixiets"
               "github:sciexp/ironstar"
             ];
-            oneSecretsFileForBothServices = true;
+            oneSecretsFileForBothServices = {
+              "github:cameronraysmith/vanixiets" = true;
+              "github:sciexp/ironstar" = true;
+            };
             buildbotAdmitsVanixiets = false;
-            buildbotAdmitsIronstar = true;
+            buildbotAdmitsIronstar = false;
             nixbotAdmitsVanixiets = true;
             nixbotAdmitsIronstar = true;
             buildbotUserAllowlist = null;
-            buildbotRepoAllowlist = [ "sciexp/ironstar" ];
+            buildbotRepoAllowlist = [ ];
             nixbotRepoAllowlist = [
               "cameronraysmith/vanixiets"
               "sciexp/ironstar"

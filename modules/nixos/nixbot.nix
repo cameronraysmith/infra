@@ -8,9 +8,9 @@
 # credentials at start, so a rotation without a restart leaves the running
 # service holding the superseded value.
 #
-# Coexistence constraints (buildbot stays authoritative for every repository):
+# Coexistence constraints (buildbot still runs, serving Gitea repositories):
 #   - statusContextPrefix is left at its default "nixbot"; buildbot's contexts
-#     are "buildbot/..." and the forge's required checks name those.
+#     are "buildbot/...", so the two verdict namespaces stay distinct.
 #   - github.topic is null; its default "build-with-buildbot" is the topic
 #     buildbot's repositories carry, and it one-shot-imports on an empty DB.
 #   - nginx.enable stays true, so the service listens only on
@@ -105,13 +105,11 @@
           # repositories carry, and it one-shot-imports against an empty DB.
           topic = null;
 
-          # nixbot serves only the repositories named here. ironstar is
-          # admitted for evaluation, building and caching only: its effects
-          # secrets stay wired to buildbot's convention (see
-          # modules/effects/ironstar/secrets.nix), so nixbot loads no
-          # credential for it and every ironstar effect stops at its own
-          # missing-secret guard. Entries are forge-local names, without the
-          # "github:" prefix that perRepoSecretFiles keys carry.
+          # nixbot serves only the repositories named here, and it serves both
+          # of the fleet's GitHub repositories: buildbot's own GitHub
+          # repoAllowlist is empty (buildbot.nix:149). Entries are forge-local
+          # names, without the "github:" prefix that perRepoSecretFiles keys
+          # carry.
           repoAllowlist = [
             "cameronraysmith/vanixiets"
             "sciexp/ironstar"
