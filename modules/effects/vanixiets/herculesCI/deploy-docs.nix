@@ -15,7 +15,7 @@
       shortRev = herculesCI.config.repo.shortRev;
       rev = herculesCI.config.repo.rev;
 
-      isMain = branch == "main";
+      runContext = config.flake.lib.effectRunContext;
     in
     {
       onPush.default.outputs.effects.deploy-docs = withSystem "x86_64-linux" (
@@ -25,12 +25,28 @@
 
           deployDocsProgram = config.apps.deploy-docs.program;
 
-          actionBanner = if isMain then "promote" else "preview-upload";
-
-          previewBranchArg = if branch != null && branch != "" then branch else shortRev;
+          # The branch a preview is named after is resolved at runtime, since
+          # only then is a pull request distinguishable from a push to its
+          # base branch.
+          fallbackPreviewBranch = shortRev;
         in
         hci-effects.mkEffect {
           name = "deploy-docs";
+
+          # Declaring an audience is what makes nixbot expose its identity
+          # endpoint to this effect; the token's claims are the only way the
+          # script can tell a pull request from a push to the base branch.
+          # Must be a JSON-array string: a bare nix list serialises
+          # space-separated and nixbot rejects it before the sandbox starts.
+          # buildbot-nix has no such endpoint and ignores this attribute.
+          idTokenAudiences = builtins.toJSON [ runContext.audience ];
+
+          # Why: mkEffect's defaultInputs cover jq but not curl or coreutils,
+          # which the run-context fragment needs.
+          inputs = [
+            pkgs.curl
+            pkgs.coreutils
+          ];
 
           # nixbot enforces hercules-ci secretsMap semantics: only the
           # destinations named here are written into
@@ -48,13 +64,19 @@
           effectScript = ''
             set -euo pipefail
 
+            ${runContext.mkScript { inherit branch; }}
+
             echo "=== effects.deploy-docs (docs deployment dispatcher) ==="
-            echo "branch:   ${lib.escapeShellArg (toString branch)}"
+            echo "branch:   $CI_BRANCH"
             echo "rev:      ${lib.escapeShellArg (toString rev)}"
             echo "shortRev: ${lib.escapeShellArg (toString shortRev)}"
-            echo "isMain:   ${if isMain then "true" else "false"}"
+            echo "isMain:   $CI_IS_MAIN"
 
-            echo "DEPLOY-DOCS-ACTION: ${actionBanner}"
+            if [ "$CI_IS_MAIN" = true ]; then
+              echo "DEPLOY-DOCS-ACTION: promote"
+            else
+              echo "DEPLOY-DOCS-ACTION: preview-upload"
+            fi
 
             export CLOUDFLARE_API_TOKEN="$(jq -r '.CLOUDFLARE_API_TOKEN.data.value' "$HERCULES_CI_SECRETS_JSON")"
             export CLOUDFLARE_ACCOUNT_ID="$(jq -r '.CLOUDFLARE_ACCOUNT_ID.data.value' "$HERCULES_CI_SECRETS_JSON")"
@@ -62,7 +84,7 @@
             export GIT_REV=${lib.escapeShellArg (toString rev)}
             export GIT_REV_SHORT=${lib.escapeShellArg (toString shortRev)}
             export GIT_REV_SHORT12=${lib.escapeShellArg (builtins.substring 0 12 (toString rev))}
-            export GIT_BRANCH=${lib.escapeShellArg (if branch == null then "" else toString branch)}
+            export GIT_BRANCH="$CI_BRANCH"
             export GIT_COMMIT_MSG=${lib.escapeShellArg "effect deploy from rev ${toString shortRev}"}
             export GIT_WORKTREE_STATUS=clean
 
@@ -82,42 +104,41 @@
             # Why: bwrap sandbox does not bind working tree; .# cannot resolve. Use eval-time /nix/store path.
             DEPLOY_DOCS=${deployDocsProgram}
 
-            ${
-              if isMain then
-                ''
-                  # release.sh's production subcommand re-emits "falling back to direct deploy" on the fresh-deploy fallback; the dispatcher grep below depends on that exact substring.
-                  deploy_log="$(mktemp -t deploy-docs-prod.XXXXXX.log)"
-                  set +e
-                  "$DEPLOY_DOCS" production 2>&1 | tee "$deploy_log"
-                  deploy_rc=''${PIPESTATUS[0]}
-                  set -e
-                  if grep -q "falling back to direct deploy" "$deploy_log"; then
-                    echo "DEPLOY-DOCS-ACTION: fresh-deploy-and-promote"
-                  fi
-                  if [ "$deploy_rc" -ne 0 ]; then
-                    echo "error: deploy-docs production exited $deploy_rc" >&2
-                    exit "$deploy_rc"
-                  fi
-                ''
+            if [ "$CI_IS_MAIN" = true ]; then
+              # release.sh's production subcommand re-emits "falling back to direct deploy" on the fresh-deploy fallback; the dispatcher grep below depends on that exact substring.
+              deploy_log="$(mktemp -t deploy-docs-prod.XXXXXX.log)"
+              set +e
+              "$DEPLOY_DOCS" production 2>&1 | tee "$deploy_log"
+              deploy_rc=''${PIPESTATUS[0]}
+              set -e
+              if grep -q "falling back to direct deploy" "$deploy_log"; then
+                echo "DEPLOY-DOCS-ACTION: fresh-deploy-and-promote"
+              fi
+              if [ "$deploy_rc" -ne 0 ]; then
+                echo "error: deploy-docs production exited $deploy_rc" >&2
+                exit "$deploy_rc"
+              fi
+            else
+              preview_branch="$CI_BRANCH"
+              if [ -z "$preview_branch" ]; then
+                preview_branch=${lib.escapeShellArg fallbackPreviewBranch}
+              fi
+              preview_log="$(mktemp -t deploy-docs-preview.XXXXXX.log)"
+              set +e
+              "$DEPLOY_DOCS" preview "$preview_branch" 2>&1 | tee "$preview_log"
+              upload_rc=''${PIPESTATUS[0]}
+              set -e
+              preview_url="$(grep -oE 'Preview URL: https://[^[:space:]]+' "$preview_log" | head -1 | awk '{print $3}' || true)"
+              if [ -n "$preview_url" ]; then
+                echo "DEPLOY-DOCS-PREVIEW-URL: $preview_url"
               else
-                ''
-                  preview_log="$(mktemp -t deploy-docs-preview.XXXXXX.log)"
-                  set +e
-                  "$DEPLOY_DOCS" preview ${lib.escapeShellArg previewBranchArg} 2>&1 | tee "$preview_log"
-                  upload_rc=''${PIPESTATUS[0]}
-                  set -e
-                  preview_url="$(grep -oE 'Preview URL: https://[^[:space:]]+' "$preview_log" | head -1 | awk '{print $3}' || true)"
-                  if [ -n "$preview_url" ]; then
-                    echo "DEPLOY-DOCS-PREVIEW-URL: $preview_url"
-                  else
-                    echo "warning: could not parse preview URL from deploy.sh output" >&2
-                  fi
-                  if [ "$upload_rc" -ne 0 ]; then
-                    echo "error: deploy-docs preview exited $upload_rc" >&2
-                    exit "$upload_rc"
-                  fi
-                ''
-            }
+                echo "warning: could not parse preview URL from deploy.sh output" >&2
+              fi
+              if [ "$upload_rc" -ne 0 ]; then
+                echo "error: deploy-docs preview exited $upload_rc" >&2
+                exit "$upload_rc"
+              fi
+            fi
 
             echo "=== deploy-docs effect complete (exit 0) ==="
           '';

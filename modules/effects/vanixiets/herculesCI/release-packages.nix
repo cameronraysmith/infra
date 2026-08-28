@@ -15,20 +15,15 @@
       shortRev = herculesCI.config.repo.shortRev;
       rev = herculesCI.config.repo.rev;
 
-      isMain = branch == "main";
-
-      # builtins.match returns null on no-match, list of captures on success; null-guard keeps the eval pure for non-PR pushes.
-      prMergeMatch = if branch == null then null else builtins.match "^refs/pull/([0-9]+)/merge$" branch;
-      isPrMerge = prMergeMatch != null;
-      prNumber = if isPrMerge then builtins.head prMergeMatch else null;
-
-      actionBanner = if isMain then "release" else "dry-run";
+      # Captured under the outer `config` (this file's flake-parts config)
+      # before `withSystem` rebinds `config` to the per-system config below.
+      runContext = config.flake.lib.effectRunContext;
 
       # mkReleasePackagesEffect: shared effect body parameterised on dryRun.
       #
       # dryRun = false (production):
-      #   isMain → call release.sh (publish path).
-      #   non-main → call preview-version.sh (rehearsal path that filters
+      #   $CI_IS_MAIN → call release.sh (publish path).
+      #   otherwise → call preview-version.sh (rehearsal path that filters
       #   @semantic-release/github and replaces it with a local bare clone).
       #
       # dryRun = true (rehearsal attribute):
@@ -51,16 +46,17 @@
 
             effectName = if dryRun then "release-packages-dry-run" else "release-packages";
 
-            actionLabel =
-              if dryRun then "rehearsal (production plugins, semantic-release --dry-run)" else actionBanner;
-
             dispatchLine =
               if dryRun then
                 ''"$RELEASE" "$pkg_path" -- --dry-run''
-              else if isMain then
-                ''"$RELEASE" "$pkg_path"''
               else
-                ''"$PREVIEW" main "$pkg_path"'';
+                ''
+                  if [ "$CI_IS_MAIN" = true ]; then
+                    "$RELEASE" "$pkg_path"
+                  else
+                    "$PREVIEW" main "$pkg_path"
+                  fi
+                '';
 
             # Distinct dispatch marker so rehearsal logs are not mistaken for
             # production runs in CI output. Under dryRun=false the marker is
@@ -90,25 +86,52 @@
           hci-effects.mkEffect {
             name = effectName;
 
+            # nixbot mints a runtime token carrying event/pr_number claims
+            # only for audiences the effect declares; effectRunContext.mkScript
+            # requests this audience to disambiguate pull requests from base
+            # pushes at runtime. Must be a JSON array string: a bare nix list
+            # serialises space-separated into the derivation environment, and
+            # nixbot's parser rejects that before the sandbox starts.
+            idTokenAudiences = builtins.toJSON [ runContext.audience ];
+
             # See deploy-docs.nix for why this map is required under nixbot
             # and inert under buildbot-nix. GITHUB_TOKEN is the only entry
             # this effect reads; the composed file also carries CLOUDFLARE_*
             # and SOPS_AGE_KEY, which this effect has no use for.
             secretsMap.GITHUB_TOKEN = "GITHUB_TOKEN";
 
-            # Why: mkEffect's defaultInputs do not include git; clone preamble below requires it.
-            inputs = [ pkgs.git ];
+            # Why: mkEffect's defaultInputs do not include git; clone preamble
+            # below requires it. curl and coreutils (base64, cut, tr) back
+            # effectRunContext.mkScript's runtime token exchange.
+            inputs = [
+              pkgs.git
+              pkgs.curl
+              pkgs.coreutils
+            ];
 
             effectScript = ''
               set -euo pipefail
 
+              ${runContext.mkScript { inherit branch; }}
+
               echo "=== effects.${effectName} (semantic-release per-package dispatcher) ==="
-              echo "branch:   ${lib.escapeShellArg (toString branch)}"
+              echo "branch:   $CI_BRANCH"
               echo "rev:      ${lib.escapeShellArg (toString rev)}"
               echo "shortRev: ${lib.escapeShellArg (toString shortRev)}"
-              echo "isMain:   ${if isMain then "true" else "false"}"
+              echo "isMain:   $CI_IS_MAIN"
 
-              echo "RELEASE-PACKAGES-ACTION: ${actionLabel}"
+              ${
+                if dryRun then
+                  ''echo "RELEASE-PACKAGES-ACTION: rehearsal (production plugins, semantic-release --dry-run)"''
+                else
+                  ''
+                    if [ "$CI_IS_MAIN" = true ]; then
+                      echo "RELEASE-PACKAGES-ACTION: release"
+                    else
+                      echo "RELEASE-PACKAGES-ACTION: dry-run"
+                    fi
+                  ''
+              }
 
               export GITHUB_TOKEN="$(jq -r '.GITHUB_TOKEN.data.value' "$HERCULES_CI_SECRETS_JSON")"
 
@@ -126,57 +149,53 @@
               trap 'rm -rf "$clone_dir"' EXIT
 
               GIT_REV=${lib.escapeShellArg (toString rev)}
-              GIT_BRANCH=${lib.escapeShellArg (if branch == null then "" else toString branch)}
-              ${
-                if isPrMerge then
-                  ''
-                    # GitHub's refs/pull/<N>/merge is a synthetic test-merge
-                    # ref recomputed on base advance, head update, or
-                    # merge-test scheduler fire; the T0 buildbot-eval SHA
-                    # drifts from T1 runtime content. refs/pull/<N>/head
-                    # is the dev-pushed source-branch tip, stable until
-                    # the next dev push.
-                    git clone "$clone_url" "$clone_dir"
-                    git -C "$clone_dir" fetch --tags origin
+              GIT_BRANCH="$CI_BRANCH"
 
-                    # `git fetch origin refs/pull/<N>/head` alone updates
-                    # FETCH_HEAD but does NOT auto-create the remote-tracking
-                    # ref; the explicit `+ref:remote-tracking-ref` mapping
-                    # closes that gap (idiom from buildbot-nix
-                    # buildbot_nix/buildbot_nix/nix_eval.py:GitLocalPrMerge).
-                    git -C "$clone_dir" fetch origin \
-                      "+refs/pull/${toString prNumber}/head:refs/remotes/origin/pr-${toString prNumber}-head"
-                    head_sha="$(git -C "$clone_dir" rev-parse origin/pr-${toString prNumber}-head)"
+              if [ "$CI_IS_PR" = true ]; then
+                # GitHub's refs/pull/<N>/merge is a synthetic test-merge
+                # ref recomputed on base advance, head update, or
+                # merge-test scheduler fire; the T0 buildbot-eval SHA
+                # drifts from T1 runtime content. refs/pull/<N>/head
+                # is the dev-pushed source-branch tip, stable until
+                # the next dev push.
+                git clone "$clone_url" "$clone_dir"
+                git -C "$clone_dir" fetch --tags origin
 
-                    echo "RELEASE-CLONE-PR-HEAD: ${toString prNumber} $head_sha"
-                    echo "RELEASE-CLONE-PR-DISPATCH: ${toString prNumber} buildbot-rev=$GIT_REV head=$head_sha"
+                # `git fetch origin refs/pull/<N>/head` alone updates
+                # FETCH_HEAD but does NOT auto-create the remote-tracking
+                # ref; the explicit `+ref:remote-tracking-ref` mapping
+                # closes that gap (idiom from buildbot-nix
+                # buildbot_nix/buildbot_nix/nix_eval.py:GitLocalPrMerge).
+                git -C "$clone_dir" fetch origin \
+                  "+refs/pull/$CI_PR_NUMBER/head:refs/remotes/origin/pr-$CI_PR_NUMBER-head"
+                head_sha="$(git -C "$clone_dir" rev-parse origin/pr-$CI_PR_NUMBER-head)"
 
-                    echo "RELEASE-CLONE-START: $clone_url $GIT_REV $GIT_BRANCH"
+                echo "RELEASE-CLONE-PR-HEAD: $CI_PR_NUMBER $head_sha"
+                echo "RELEASE-CLONE-PR-DISPATCH: $CI_PR_NUMBER buildbot-rev=$GIT_REV head=$head_sha"
 
-                    git -C "$clone_dir" checkout -B "pr-${toString prNumber}-head" "$head_sha"
-                    echo "RELEASE-CLONE-CHECKOUT: $head_sha"
+                echo "RELEASE-CLONE-START: $clone_url $GIT_REV $GIT_BRANCH"
 
-                    # Trivially true post-fetch unless force-push race lost the head ref; set -e propagates abort.
-                    git -C "$clone_dir" rev-parse --verify origin/pr-${toString prNumber}-head >/dev/null
-                  ''
+                git -C "$clone_dir" checkout -B "pr-$CI_PR_NUMBER-head" "$head_sha"
+                echo "RELEASE-CLONE-CHECKOUT: $head_sha"
+
+                # Trivially true post-fetch unless force-push race lost the head ref; set -e propagates abort.
+                git -C "$clone_dir" rev-parse --verify origin/pr-$CI_PR_NUMBER-head >/dev/null
+              else
+                echo "RELEASE-CLONE-START: $clone_url $GIT_REV $GIT_BRANCH"
+
+                git clone "$clone_url" "$clone_dir"
+                git -C "$clone_dir" fetch --tags origin
+
+                if [ -n "$GIT_BRANCH" ]; then
+                  checkout_branch="$GIT_BRANCH"
                 else
-                  ''
-                    echo "RELEASE-CLONE-START: $clone_url $GIT_REV $GIT_BRANCH"
+                  checkout_branch="release-packages-detached"
+                fi
+                git -C "$clone_dir" checkout -B "$checkout_branch" "$GIT_REV"
+                echo "RELEASE-CLONE-CHECKOUT: $GIT_REV"
 
-                    git clone "$clone_url" "$clone_dir"
-                    git -C "$clone_dir" fetch --tags origin
-
-                    if [ -n "$GIT_BRANCH" ]; then
-                      checkout_branch="$GIT_BRANCH"
-                    else
-                      checkout_branch="release-packages-detached"
-                    fi
-                    git -C "$clone_dir" checkout -B "$checkout_branch" "$GIT_REV"
-                    echo "RELEASE-CLONE-CHECKOUT: $GIT_REV"
-
-                    ${staleRevGuard}
-                  ''
-              }
+                ${staleRevGuard}
+              fi
 
               echo "RELEASE-CLONE-READY: $clone_dir"
 
