@@ -32,6 +32,19 @@
         hci-effects.mkEffect {
           name = "deploy-docs";
 
+          # nixbot enforces hercules-ci secretsMap semantics: only the
+          # destinations named here are written into
+          # $HERCULES_CI_SECRETS_JSON, and mkEffect declares an empty map when
+          # the caller omits one, which grants nothing at all. buildbot-nix
+          # ignores the map and passes the whole file, so this narrows what
+          # the script can read under nixbot and changes nothing under
+          # buildbot-nix. Left-hand names are what the script reads;
+          # right-hand names are keys in the composed secrets file.
+          secretsMap = {
+            CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
+            CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
+          };
+
           effectScript = ''
             set -euo pipefail
 

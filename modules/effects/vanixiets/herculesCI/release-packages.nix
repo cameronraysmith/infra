@@ -90,6 +90,12 @@
           hci-effects.mkEffect {
             name = effectName;
 
+            # See deploy-docs.nix for why this map is required under nixbot
+            # and inert under buildbot-nix. GITHUB_TOKEN is the only entry
+            # this effect reads; the composed file also carries CLOUDFLARE_*
+            # and SOPS_AGE_KEY, which this effect has no use for.
+            secretsMap.GITHUB_TOKEN = "GITHUB_TOKEN";
+
             # Why: mkEffect's defaultInputs do not include git; clone preamble below requires it.
             inputs = [ pkgs.git ];
 
