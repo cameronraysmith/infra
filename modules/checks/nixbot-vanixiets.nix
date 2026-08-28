@@ -41,6 +41,35 @@
           map credentialName magnetite.systemd.services.nixbot.serviceConfig.LoadCredential
         )
       );
+
+      # Each service's own repository filter, transcribed with its citation so
+      # the two selections can be asserted rather than described. Both take
+      # the topic first and then the allowlists; only the allowlist stage is
+      # modelled here, because a forge topic is not visible to evaluation.
+      # Both repositories below carry the topic, so the allowlist stage is
+      # what decides between them.
+      owner = fullName: builtins.head (lib.splitString "/" fullName);
+
+      # buildbot_nix/buildbot_nix/common.py:138-148, with full_name as the
+      # repo accessor (github_projects.py:225). The two allowlists are OR'd.
+      buildbotAdmits =
+        fullName:
+        let
+          f = buildbot.github;
+        in
+        (f.userAllowlist == null && f.repoAllowlist == null)
+        || (f.userAllowlist != null && builtins.elem (owner fullName) f.userAllowlist)
+        || (f.repoAllowlist != null && builtins.elem fullName f.repoAllowlist);
+
+      # nixbot/nixbot/forge/base.py:128-141, the same shape.
+      nixbotAdmits =
+        fullName:
+        let
+          f = nixbot.github;
+        in
+        (f.userAllowlist == null && f.repoAllowlist == null)
+        || (f.userAllowlist != null && builtins.elem (owner fullName) f.userAllowlist)
+        || (f.repoAllowlist != null && builtins.elem fullName f.repoAllowlist);
     in
     {
       checks = lib.optionalAttrs (system == "x86_64-linux") {
@@ -57,7 +86,18 @@
             oneSecretsFileForBothServices =
               nixbot.effects.perRepoSecretFiles.${repoKey} == buildbot.effects.perRepoSecretFiles.${repoKey};
 
-            repoAllowlist = nixbot.github.repoAllowlist;
+            # The cut itself: each service admits exactly one of the two
+            # repositories carrying the build topic.
+            buildbotAdmitsVanixiets = buildbotAdmits "cameronraysmith/vanixiets";
+            buildbotAdmitsIronstar = buildbotAdmits "sciexp/ironstar";
+            nixbotAdmitsVanixiets = nixbotAdmits "cameronraysmith/vanixiets";
+            nixbotAdmitsIronstar = nixbotAdmits "sciexp/ironstar";
+
+            # An owner allowlist would readmit vanixiets regardless of the
+            # repository list, because the two are OR'd.
+            buildbotUserAllowlist = buildbot.github.userAllowlist;
+            buildbotRepoAllowlist = buildbot.github.repoAllowlist;
+            nixbotRepoAllowlist = nixbot.github.repoAllowlist;
             postBuildStepNames = map (step: step.name) nixbot.postBuildSteps;
             niks3ServerUrl = nixbot.niks3.serverUrl;
 
@@ -81,7 +121,13 @@
               "github:sciexp/ironstar"
             ];
             oneSecretsFileForBothServices = true;
-            repoAllowlist = [ "cameronraysmith/vanixiets" ];
+            buildbotAdmitsVanixiets = false;
+            buildbotAdmitsIronstar = true;
+            nixbotAdmitsVanixiets = true;
+            nixbotAdmitsIronstar = false;
+            buildbotUserAllowlist = null;
+            buildbotRepoAllowlist = [ "sciexp/ironstar" ];
+            nixbotRepoAllowlist = [ "cameronraysmith/vanixiets" ];
             postBuildStepNames = [ "Upload to niks3" ];
             niks3ServerUrl = "https://niks3.scientistexperience.net";
             extraSandboxPaths = [ ];
