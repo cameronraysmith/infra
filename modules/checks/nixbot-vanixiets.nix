@@ -1,22 +1,18 @@
-# Structural checks for nixbot's vanixiets wiring.
+# Structural check for nixbot's vanixiets wiring.
 #
-# Both assertions guard failure modes that are indistinguishable from success
-# by inspection, which is why they are regulators rather than a one-off
-# verification.
+# It guards the secret name transform, a failure mode indistinguishable from
+# success by inspection. nixbot derives the systemd credential name it looks a
+# repository's secrets up under by substituting ":" and "/" in the
+# perRepoSecretFiles key; when that name does not match, the daemon finds no
+# secrets, delivers an empty set, and every effect stops at its own
+# missing-secret guard — exactly what an unwired service does. The check reads
+# the name off the evaluated unit, so it exercises nixbot's own module code
+# rather than a transcription of it, and also pins the allowlist, the cache
+# step, the shared secrets file, and the deliberately empty sandbox options.
 #
-# nixbot-vanixiets-repo-config guards the repository-root nixbot.toml. nixbot
-# swallows a TOML parse error and a schema violation alike, returning all
-# defaults rather than falling back to buildbot-nix.toml, so a typo there
-# silently restores the whole-flake evaluation and pull-request effect dispatch
-# the file exists to prevent. Parsing at eval time turns that into a diff.
-#
-# nixbot-vanixiets-wiring guards the secret name transform. nixbot derives the
-# systemd credential name it looks a repository's secrets up under by
-# substituting ":" and "/" in the perRepoSecretFiles key; when that name does
-# not match, the daemon finds no secrets, delivers an empty set, and every
-# effect stops at its own missing-secret guard — exactly what an unwired
-# service does. The check reads the name off the evaluated unit, so it
-# exercises nixbot's own module code rather than a transcription of it.
+# There is deliberately no nixbot.toml: nixbot falls back to buildbot-nix.toml,
+# whose dispatch keys both services need to agree on anyway, and a second file
+# holding identical values could only drift.
 {
   self,
   lib,
@@ -47,18 +43,7 @@
       );
     in
     {
-      checks = {
-        nixbot-vanixiets-repo-config = mkCheck {
-          name = "nixbot-vanixiets-repo-config";
-          actual = builtins.fromTOML (builtins.readFile ../../nixbot.toml);
-          expected = {
-            attribute = "checks.x86_64-linux";
-            effects_branches = [ ];
-            effects_on_pull_requests = false;
-          };
-        };
-      }
-      // lib.optionalAttrs (system == "x86_64-linux") {
+      checks = lib.optionalAttrs (system == "x86_64-linux") {
         nixbot-vanixiets-wiring = mkCheck {
           name = "nixbot-vanixiets-wiring";
           actual = {
