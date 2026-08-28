@@ -1,4 +1,4 @@
-# Per-repo effects-secrets generator for github:cameronraysmith/ironstar.
+# Per-repo effects-secrets generator for github:sciexp/ironstar.
 {
   config,
   inputs,
@@ -16,11 +16,22 @@
       clan.core.vars.generators.ironstar-effects-secrets = {
         files.secrets = {
           secret = true;
+
+          # buildbot-master runs as this user and opens the path directly.
+          # nixbot's unit runs as "nixbot" and never opens it: systemd loads
+          # the file as a credential, which PID 1 reads as root before
+          # re-exposing a copy to the service user.
           owner = "buildbot";
+
           # clan-vars plumbs restartUnits through to sops-nix's restartUnits,
           # which keys the unit's restartTriggers on the encrypted blob hash
-          # so the next deploy refreshes the credential snapshot.
-          restartUnits = [ "buildbot-master.service" ];
+          # so the next deploy refreshes the credential snapshot. Both services
+          # snapshot the file at unit start, so a rotation that restarts only
+          # one of them leaves the other serving the superseded value.
+          restartUnits = [
+            "buildbot-master.service"
+            "nixbot.service"
+          ];
         };
 
         prompts.cloudflare-api-token = {
@@ -99,7 +110,20 @@
         '';
       };
 
+      # One composed file, two consumers. Both services accept the same
+      # hercules-ci secrets.json shape at a path they load as a systemd
+      # credential, so the generator above remains the single source of truth
+      # and the two services' copies cannot drift apart.
+      #
+      # The key is forge-prefixed, unlike the allowlist entry in
+      # modules/nixos/nixbot.nix. nixbot substitutes ":" and "/" to derive the
+      # systemd credential name it looks the file up under, so a mismatch here
+      # delivers no secrets at all and every effect stops at its own
+      # missing-secret guard — indistinguishable from not wiring it.
       services.buildbot-nix.master.effects.perRepoSecretFiles."github:sciexp/ironstar" =
+        config.clan.core.vars.generators.ironstar-effects-secrets.files.secrets.path;
+
+      services.nixbot.effects.perRepoSecretFiles."github:sciexp/ironstar" =
         config.clan.core.vars.generators.ironstar-effects-secrets.files.secrets.path;
     };
 }
