@@ -11,7 +11,7 @@
 # that LoadCredential alone failed at deploy time, and provides no rotation
 # downside since kanidm holds the TLS chain in process memory and requires restart
 # for rotation either way. Hostname is a literal FQDN; package is pinned to
-# kanidmWithSecretProvisioning_1_10.
+# kanidmWithSecretProvisioning_1_11.
 #
 # Clan-vars secret generators (admin-password, idm-admin-password, oauth2-synapse)
 # declared inline below; admin passwords are wired into
@@ -121,7 +121,7 @@ in
       };
 
       services.kanidm = {
-        package = pkgs.kanidmWithSecretProvisioning_1_10;
+        package = pkgs.kanidmWithSecretProvisioning_1_11;
 
         server.enable = true;
 
@@ -146,12 +146,10 @@ in
           tls_chain = "${certs.directory}/fullchain.pem";
           tls_key = "${certs.directory}/key.pem";
 
-          # nixpkgs already emits path and schedule, but defaults versions to 0,
-          # which the module treats as "backups disabled".
+          # nixpkgs emits path and schedule, but defaults versions to 0, which the
+          # module treats as "backups disabled" (nixos/modules/services/security/
+          # kanidm.nix: enableServerBackup gates on versions != 0).
           online_backup.versions = 7;
-
-          # Temporary until the first backup lands; reverted by the 1.11 bump.
-          online_backup.schedule = "00 * * * *";
         };
 
         provision = {
