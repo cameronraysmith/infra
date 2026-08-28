@@ -184,7 +184,7 @@ No unresolved nouns. The table is present and was consulted, so this report is n
 | Repositories are built only once opted in (`:35-39`) | `build-service-interface` — Repository visibility is bounded outside the machine and narrowed within it | A9 | discharged inside the machine; the outermost boundary is not machine-assertable and the requirement says so |
 | Deliveries a build service acts on are authenticated (`:51-55`) | `build-service-interface` — Deliveries are accepted only at an authenticated endpoint | A9 | **partially discharged.** The accepted-delivery arm is witnessed (§10.4). The rejection arm is not; task 10.4 is unchecked. Recorded, not accepted. |
 | A second build service's verdicts do not gate merges (`:67-71`) | `build-service-interface` — Verdict namespaces are distinct | A9, A12 | discharged; witnessed by tasks 4.2, 10.6, and by the forge-side ruleset in §10.6 |
-| Forge credentials are operator-supplied and never legible in the repository (`:83-87`) | `build-service-interface` — Credentials exist only as activation-resolved paths | — | discharged; witnessed by tasks 3.1, 3.2, 3.3 |
+| Forge credentials are operator-supplied and never legible in the repository (`:83-87`) | `build-service-interface` — Credentials exist only as activation-resolved paths | — | discharged; witnessed by tasks 3.1, 3.2, 3.3. `design.md:158` gives the modality as "secret scan and build gate"; the secret-scan leg is substituted by a positive-controlled content search over working tree, `HEAD` and full history, because the repository's `gitleaks` hook runs `protect --staged` and cannot audit what is already committed (§11) |
 | One activation establishes the second build service (`:99-103`) | `build-service-interface` — The service is a consequence of the host's declared configuration | — | discharged; witnessed by tasks 8.1, 10.1, 7.1 |
 | A second build service is sized against the capacity the incumbent uses (`:115-119`) | world assumption A11 plus the sizing recorded in design D9; **no interface property can discharge this one**, which the spec states | A11 | discharged as designed; the capacity baseline is §10.7 |
 
@@ -725,50 +725,89 @@ locally. Left honest.
 `plan.md:598` calls for `nix build .#checks.x86_64-linux.nixos-magnetite`; what ran is
 `nix eval ... .drvPath`, twice, and both results are in §10.8.
 
-**Task 3.3 — a correction to an upstream claim, not an amendment.** This session was told that
-`just lint` is `prek run --all-files` and that no secret-scanning hook could be located behind it,
-and therefore that the task overclaimed what the lint gate does. That is wrong, and the task text
-stands as written.
+**Task 3.3, amended: the stated secret scan cannot discharge this requirement.**
 
-`.pre-commit-config.yaml` is a symlink into the nix store and cannot be read as JSON, which is the
-likely cause of the earlier miss; parsed as YAML it declares exactly two hooks, the first of which
-is a secret scanner:
+The task's verification names `just lint` "including its secret scan". Two claims about that gate
+were made in sequence during this work and both were wrong; the correction below is the third and
+is the one the tick now rests on.
+
+The first claim was that no secret-scanning hook exists behind `just lint`. It does.
+`.pre-commit-config.yaml` is a symlink into the nix store that fails to parse as JSON, which is the
+likely cause of that miss; read as YAML it declares exactly two hooks and the first is `gitleaks`
+8.30.1.
+
+The second claim, made here, was that its passing therefore verifies the task as written.
+It does not, and this is the substantive correction:
 
 ```text
 $ python3 -c "import yaml; ..." .pre-commit-config.yaml
-hook count: 2
-gitleaks | /nix/store/cd1mdfxh9fkan85xfvfszp09z0pnrw92-gitleaks-8.30.1/bin/gitleaks
-treefmt  | /nix/store/g3winh6q8021smz8dddsxrb6nlp2kfn6-treefmt/bin/treefmt --fail-on-change
+id: gitleaks
+  entry: .../gitleaks-8.30.1/bin/gitleaks protect --staged --verbose --redact
+  args: []
+  pass_filenames: False
+  stages: ['pre-commit']
+
+$ git diff --cached --name-only | wc -l
+0
 ```
 
-And it passes:
+`gitleaks protect --staged` reads the git index. It reads neither the working tree nor history, and
+`pass_filenames: false` means no path is handed to it either. With zero staged files it scans an
+empty index and passes unconditionally: a check that could not have failed, and therefore vacuous as
+evidence that no credential value is *already* in the repository.
+It is a guard against future commits, not an audit of past ones, and that is the only way it is
+cited here.
+
+Substituted verification: a three-layer content search for the credential values themselves,
+with positive controls.
+
+A distinctive fragment of each of the three credentials was obtained by decrypting the stored
+entries locally — an interior body line of the application private key, the whole OAuth client
+secret, the whole deployment-generated webhook secret — and searched for across three layers.
+The working-tree layer includes hidden and gitignored paths; the tracked layer reads `HEAD`; the
+history layer is `git log --all -S`, which walks every commit on every ref, since a value that
+entered the repository and was later removed would still have entered it.
+Patterns were passed on standard input and only filenames and counts were collected, so no value
+was printed, written to disk, or placed in a matched output line.
+
+| Search subject | Working-tree files | Tracked files at HEAD | History commits |
+|---|---|---|---|
+| control — literal `nixbot.scientistexperience.net` | 11 | 9 | 5 |
+| control — literal `repoAllowlist` | 6 | 6 | 7 |
+| application private key fragment | 0 | 0 | 0 |
+| OAuth client secret | 0 | 0 | 0 |
+| webhook secret | 0 | 0 | 0 |
+
+The controls are the point. A zero proves absence only if the method has been shown capable of
+returning non-zero, and each layer returns non-zero for both controls — including, in the
+working-tree layer, matches inside gitignored `logs/`, which demonstrates that layer genuinely
+reaches ignored paths rather than skipping them.
+The three credential rows are zero in every layer.
+
+Re-run without `grep -I`, so binary files are included rather than skipped, the credential
+fragments still match zero files while the hostname control still matches 11.
+
+The stored entries are sops envelopes rather than values:
 
 ```text
-$ nix develop --command just lint
-prek run --all-files
-gitleaks.................................................................Passed
-treefmt..................................................................Passed
-EXIT=0
+path                                                                    bytes  data field       PRIVATE KEY
+vars/per-machine/magnetite/nixbot-github-app-secret-key/key.pem/secret   3749  ENC[AES256_GCM…  0
+vars/per-machine/magnetite/nixbot-github-oauth-secret/secret/secret      1565  ENC[AES256_GCM…  0
+vars/per-machine/magnetite/nixbot-github-webhook-secret/secret/secret    1597  ENC[AES256_GCM…  0
 ```
 
-`just lint` must be run inside the dev shell; `prek` is not on the ambient PATH, and a bare
-`just lint` fails with exit 127 rather than reporting a scan result. That is worth knowing and is
-the one genuine gap in the task's phrasing.
-
-The rest of task 3.3's verification is independently satisfied.
-All three new credential entries are sops ciphertext with no plaintext key header:
-
-```text
-vars/per-machine/magnetite/nixbot-github-app-secret-key/key.pem/secret  3749 bytes  ENC[AES256_GCM...]
-vars/per-machine/magnetite/nixbot-github-oauth-secret/secret/secret     1565 bytes  ENC[AES256_GCM...]
-vars/per-machine/magnetite/nixbot-github-webhook-secret/secret/secret   1597 bytes  ENC[AES256_GCM...]
-```
-
-Re-run against the current tree, which gained files after the earlier check: the only two files in
-the repository containing a `BEGIN ... PRIVATE KEY` line are
+Each is JSON with exactly two top-level keys, `data` and `sops`; `data` is
+`ENC[AES256_GCM,...]`; the `sops` block carries an age-encrypted data key for two recipients, a
+`mac`, a `version` and `lastmodified`. None contains a `PRIVATE KEY` line.
+The only two files anywhere in the tree carrying `BEGIN ... PRIVATE KEY` are
 `packages/docs/src/content/docs/guides/home-manager-onboarding.md:136` and
 `packages/docs/src/content/docs/guides/secrets-management.md:337`, both documentation prose showing
-the header form, neither carrying key material.
+the header form and neither carrying key material.
+
+One operational note worth keeping regardless: `just lint` must run inside the dev shell, because
+`prek` is not on the ambient PATH and a bare `just lint` exits 127 rather than reporting a scan
+result. That is a property of the flake, not of this change.
+
 No secret value is printed anywhere in this report.
 
 **Task 3.2** is genuinely complete and committed, not merely done in a shell.
