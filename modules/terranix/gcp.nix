@@ -10,7 +10,7 @@
     let
       # GCP project configuration
       # Project ID configured here, credentials via clan secrets at runtime
-      gcpProject = "pyro-284215";
+      gcpProject = "sciexp";
       defaultRegion = "us-central1";
       defaultZone = "us-central1-b";
 
