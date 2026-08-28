@@ -3,16 +3,17 @@ linear_story_id: CAM-40
 linear_story_identifier: CAM-40
 linear_story_title: "Stand up nixbot on magnetite alongside buildbot"
 linear_story_url: https://linear.app/cameronraysmith/issue/CAM-40/stand-up-nixbot-on-magnetite-alongside-buildbot
-linear_story_state: In Progress
+linear_story_state: In Review
 linear_team: CAM
 linear_project: nixbot-herculesci-cicd
-last_synced_state: In Progress
-last_synced_at: 2026-08-27T21:45:26Z
+last_synced_state: In Review
+last_synced_at: 2026-08-28T02:26:23Z
 review_round: 0
 max_review_rounds: 3
 attempt_log:
   - { at: "2026-08-27T18:20:00Z", transition: "Backlog->Todo", outcome: "posted", note: "T1 bind; issue created in the existing project and seeded from this proposal" }
   - { at: "2026-08-27T21:45:26Z", transition: "Todo->In Progress", outcome: "posted", note: "T2 apply; first checked tasks.md checkbox, credential-independent portion implemented on fm/vx-nixbot-implement-r1" }
+  - { at: "2026-08-28T02:26:23Z", transition: "In Progress->In Review", outcome: "posted", note: "T3 verify; verify.md created, change ready for roborev and documenter review" }
 ---
 
 ## Why
