@@ -47,7 +47,7 @@
       # the topic first and then the allowlists; only the allowlist stage is
       # modelled here, because a forge topic is not visible to evaluation.
       # Both repositories below carry the topic, so the allowlist stage is
-      # what decides between them.
+      # what each service's selection reduces to.
       owner = fullName: builtins.head (lib.splitString "/" fullName);
 
       # buildbot_nix/buildbot_nix/common.py:138-148, with full_name as the
@@ -86,8 +86,9 @@
             oneSecretsFileForBothServices =
               nixbot.effects.perRepoSecretFiles.${repoKey} == buildbot.effects.perRepoSecretFiles.${repoKey};
 
-            # The cut itself: each service admits exactly one of the two
-            # repositories carrying the build topic.
+            # The cut itself. buildbot stays authoritative for ironstar while
+            # nixbot also admits it, so the two selections overlap there and
+            # differ on vanixiets.
             buildbotAdmitsVanixiets = buildbotAdmits "cameronraysmith/vanixiets";
             buildbotAdmitsIronstar = buildbotAdmits "sciexp/ironstar";
             nixbotAdmitsVanixiets = nixbotAdmits "cameronraysmith/vanixiets";
@@ -110,8 +111,9 @@
             extraNixOptions = sortedNames nixbot.effects.extraNixOptions;
           };
           expected = {
-            # ironstar stays on buildbot-nix, so its secrets file is wired
-            # only there and nixbot never loads a credential for it.
+            # ironstar's secrets file is wired only to buildbot's convention,
+            # so nixbot loads no credential for it: admitted for evaluation,
+            # building and caching, with its effects failing closed.
             effectsCredentialNames = [
               "effects-secret__github_colon_cameronraysmith_slash_vanixiets"
             ];
@@ -124,10 +126,13 @@
             buildbotAdmitsVanixiets = false;
             buildbotAdmitsIronstar = true;
             nixbotAdmitsVanixiets = true;
-            nixbotAdmitsIronstar = false;
+            nixbotAdmitsIronstar = true;
             buildbotUserAllowlist = null;
             buildbotRepoAllowlist = [ "sciexp/ironstar" ];
-            nixbotRepoAllowlist = [ "cameronraysmith/vanixiets" ];
+            nixbotRepoAllowlist = [
+              "cameronraysmith/vanixiets"
+              "sciexp/ironstar"
+            ];
             postBuildStepNames = [ "Upload to niks3" ];
             niks3ServerUrl = "https://niks3.scientistexperience.net";
             extraSandboxPaths = [ ];

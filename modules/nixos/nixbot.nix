@@ -105,10 +105,17 @@
           # repositories carry, and it one-shot-imports against an empty DB.
           topic = null;
 
-          # nixbot serves only the repositories named here; the empty list
-          # this replaces admitted none. The entry is the forge-local name,
-          # without the "github:" prefix that perRepoSecretFiles keys carry.
-          repoAllowlist = [ "cameronraysmith/vanixiets" ];
+          # nixbot serves only the repositories named here. ironstar is
+          # admitted for evaluation, building and caching only: its effects
+          # secrets stay wired to buildbot's convention (see
+          # modules/effects/ironstar/secrets.nix), so nixbot loads no
+          # credential for it and every ironstar effect stops at its own
+          # missing-secret guard. Entries are forge-local names, without the
+          # "github:" prefix that perRepoSecretFiles keys carry.
+          repoAllowlist = [
+            "cameronraysmith/vanixiets"
+            "sciexp/ironstar"
+          ];
         };
 
         # The module creates the vhost proxying to /run/nixbot/web.sock and this
