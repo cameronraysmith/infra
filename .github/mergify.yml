@@ -5,10 +5,32 @@ shared:
     - -conflict
 
   required_checks: &required_checks
-    # Buildbot-nix checks
-    - check-success=buildbot/nix-eval
-    - check-success=buildbot/nix-build
-    - check-success=buildbot/nix-effects
+    # nixbot publishes these as GitHub check runs. The prefix is
+    # services.nixbot.statusContextPrefix, left at its default "nixbot"
+    # (nixbot nixosModules/nixbot.nix:326-336); it is never set to "buildbot",
+    # which would impersonate the other service's context names.
+    #
+    # Both are posted for every build of every commit and always reach a
+    # conclusion, so both are safe to require: nix-eval is posted pending at
+    # build start and resolved at eval finish or cancel (status.py:477, :495,
+    # :520), and nix-build reaches a terminal summary on every terminal path
+    # (status.py:504, :754).
+    - check-success=nixbot/nix-eval
+    - check-success=nixbot/nix-build
+
+    # There is deliberately no effects gate here, and this is a real
+    # reduction in what merge requires.
+    #
+    # buildbot/nix-effects has no nixbot counterpart under any prefix: the
+    # string "nix-effects" appears nowhere in nixbot. Its nearest equivalent
+    # is a differently named nixbot/effects (status.py:377-378), which is
+    # posted only when at least one effect actually runs — requiring a
+    # succeeded build (build_run.py:421-422), passing the effects gate
+    # (effects_run.py:99-106), and discovering a non-empty effect set
+    # (effects_run.py:166-168). A required check that is not always posted
+    # leaves a pull request waiting until checks_timeout, so it is omitted
+    # rather than guessed at. Effect failures are visible on the pull request
+    # but no longer block merge.
 
   human_author_conditions: &human_author_conditions
     - author!=renovate[bot]
