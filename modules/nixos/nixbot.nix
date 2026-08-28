@@ -28,6 +28,10 @@
 # the application's webhook secret must be replaced with its value at
 # deployment, or every delivery fails signature validation.
 {
+  inputs,
+  ...
+}:
+{
   flake.modules.nixos.nixbot =
     {
       config,
@@ -101,10 +105,10 @@
           # repositories carry, and it one-shot-imports against an empty DB.
           topic = null;
 
-          # No repository is built by this service until a later change opts
-          # one in. Empty-list semantics are verified by observing the project
-          # list after deployment, not assumed.
-          repoAllowlist = [ ];
+          # nixbot serves only the repositories named here; the empty list
+          # this replaces admitted none. The entry is the forge-local name,
+          # without the "github:" prefix that perRepoSecretFiles keys carry.
+          repoAllowlist = [ "cameronraysmith/vanixiets" ];
         };
 
         # The module creates the vhost proxying to /run/nixbot/web.sock and this
@@ -113,6 +117,23 @@
         nginx.enableACME = true;
 
         database.createLocally = true;
+
+        # Push successful builds to the fleet's binary cache, mirroring
+        # buildbot.nix:158-163. Without it the service builds correctly and
+        # uploads nothing: postBuildSteps defaults to the empty list, so no
+        # upload is attempted and no signal is emitted anywhere. The public URL
+        # rather than a local socket keeps the endpoint reachable from future
+        # remote builders.
+        #
+        # The upstream integration marks its post-build step warnOnly, so an
+        # upload failure leaves the build green and logs a warning. That is the
+        # same bargain the incumbent already takes.
+        niks3 = {
+          enable = true;
+          serverUrl = "https://niks3.scientistexperience.net";
+          authTokenFile = config.clan.core.vars.generators.niks3-api-token.files."token".path;
+          package = inputs.niks3.packages.${config.nixpkgs.hostPlatform.system}.niks3;
+        };
       };
     };
 }
