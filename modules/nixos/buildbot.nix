@@ -132,10 +132,18 @@
           webhookSecretFile =
             config.clan.core.vars.generators.buildbot-github-webhook-secret.files."secret".path;
           topic = "build-with-buildbot";
-          userAllowlist = [
-            "sciexp"
-            "cameronraysmith"
-          ];
+
+          # vanixiets is served by nixbot now; ironstar is not, and stays here.
+          #
+          # Selection is the topic and then the allowlists, but the two
+          # allowlists are OR'd against each other rather than intersected
+          # (buildbot_nix/buildbot_nix/common.py:138-148), so an owner
+          # allowlist naming cameronraysmith would keep readmitting vanixiets
+          # whatever this list said. Naming repositories explicitly and
+          # leaving userAllowlist at its null default is what actually
+          # narrows the set. Entries are full names because the accessor is
+          # repo.full_name (buildbot_nix/buildbot_nix/github_projects.py:225).
+          repoAllowlist = [ "sciexp/ironstar" ];
         };
 
         gitea = {
