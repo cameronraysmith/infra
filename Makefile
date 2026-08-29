@@ -97,21 +97,49 @@ bootstrap: install-nix install-direnv
 # NixOS/nix-installer removed the 3.x tags (repo renamed from experimental-nix-installer).
 # https://github.com/NixOS/nix-installer/releases
 #
-# The nix-installer 2.34.6 defaults include settings equivalent to:
-#   --extra-conf "experimental-features = nix-command flakes"
-#   --extra-conf "auto-optimise-store = true"
-#   --extra-conf "always-allow-substitutes = true"
-#   --extra-conf "max-jobs = auto"
-#   --extra-conf "extra-nix-path = nixpkgs=flake:nixpkgs"
-#   --extra-conf "bash-prompt-prefix = (nix:\$name)\\040"
+# nix-installer 2.34.6 writes /etc/nix/nix.conf in setup_standard_config
+# (src/action/common/place_nix_configuration.rs:98-154). Its defaults are
+# extra-experimental-features = nix-command, auto-optimise-store = true (Linux
+# only), always-allow-substitutes = true, max-jobs = auto, and
+# bash-prompt-prefix. flakes is not among them: place_nix_configuration.rs:105-112
+# appends flakes, and :126-131 adds extra-nix-path, only when --enable-flakes is
+# passed (src/settings.rs:193-204, present since tag 2.34.4). The only other way
+# to get flakes is an interactive prompt that --no-confirm suppresses
+# (src/cli/subcommand/install/mod.rs:119-137), so a non-interactive install
+# without the flag lands nix-command alone. Releases through 2.33.0 wrote
+# nix-command flakes unconditionally, which is why the flag is needed at this pin
+# and was not needed at the previous one.
 #
-# We add trusted-users to allow flake-specified substituters and public keys:
-#   --extra-conf "trusted-users = root @admin @wheel"
-# This enables accepting flake nixConfig without prompts or warnings.
+# flakes is not optional here: install-direnv resolves nixpkgs#direnv and
+# 'make verify' runs 'nix flake --help'.
 #
-# If using the upstream nix installer (https://nixos.org/download/) which lacks
-# these defaults, add the --extra-conf flags above to the install command.
+# nix-command and flakes is also the set every host declares
+# (modules/system/nix-settings.nix:9-12 for NixOS, modules/darwin/base.nix:17-20
+# for darwin), so bootstrap and the fleet agree. auto-allocate-uids, which
+# modules/darwin/nix-settings.nix:55-59 merges into the darwin set, is
+# deliberately omitted. The experimental feature only makes Nix accept the
+# setting of the same name, and the setting is true nowhere in this repo except
+# magnetite (modules/machines/nixos/magnetite/default.nix:76-83), which pairs it
+# with extra-system-features = uid-range for systemd-nspawn tests. Enabling the
+# feature alone changes no build behaviour, and the daemonless mode below has no
+# daemon to allocate UIDs at all. Bootstrap's nix.conf is transient regardless:
+# the first 'just activate' regenerates it from the host's own modules.
+#
+# trusted-users lets nix accept flake-specified substituters and public keys
+# without prompts or warnings.
 NIX_INSTALLER_VERSION := 2.34.6
+
+# A usable systemd runtime is detected by the single existence test that
+# /run/systemd/system is present if and only if the machine booted under systemd
+# (sd_booted(3)). nix-installer makes the same one test in check_systemd_active
+# (src/planner/linux.rs:244-254) and names --init none in its own failure text.
+# Overridable so both branches of the check can be expanded on a host that does
+# not match.
+#
+# The resulting $$PLANNER_ARGS is expanded unquoted on purpose: it must become
+# either three words or no word at all, and quoting it would pass an empty
+# argument to the installer on every systemd host.
+SYSTEMD_RUNTIME_DIR ?= /run/systemd/system
 install-nix: ## Install Nix using the NixOS community installer
 	@echo "Installing Nix..."
 	@if command -v nix >/dev/null 2>&1; then \
@@ -123,6 +151,23 @@ install-nix: ## Install Nix using the NixOS community installer
 			Darwin-arm64)  PLATFORM="aarch64-darwin" ;; \
 			*) echo "Unsupported platform: $$(uname -s)-$$(uname -m)"; exit 1 ;; \
 		esac; \
+		PLANNER_ARGS=""; \
+		case "$$PLATFORM" in \
+			*-linux) \
+				if [ ! -d "$(SYSTEMD_RUNTIME_DIR)" ]; then \
+					if [ "$$(id -u)" -ne 0 ]; then \
+						echo "Cannot install Nix: no systemd runtime at $(SYSTEMD_RUNTIME_DIR), and this process is uid $$(id -u) rather than root."; \
+						echo ""; \
+						echo "Without systemd the only mode this installer supports is 'install linux --init none', which creates a system-wide /nix and the build users but no daemon, leaving the store writable only by root. Running it as a non-root user does not fail early: nix-installer re-executes itself under sudo, and the Nix it leaves behind is unusable by uid $$(id -u)."; \
+						echo ""; \
+						echo "A true single-user installation - /nix owned by the invoking user, no build users, no daemon - is not implemented by this Makefile. Re-run as root, or install Nix manually:"; \
+						echo "  https://nix.dev/manual/nix/stable/installation/installing-binary"; \
+						exit 1; \
+					fi; \
+					echo "No systemd runtime at $(SYSTEMD_RUNTIME_DIR); installing root-only Nix with no daemon."; \
+					PLANNER_ARGS="linux --init none"; \
+				fi ;; \
+		esac; \
 		INSTALLER_URL="https://github.com/NixOS/nix-installer/releases/download/$(NIX_INSTALLER_VERSION)/nix-installer-$$PLATFORM"; \
 		echo "Platform: $$PLATFORM"; \
 		echo "Downloading from: $$INSTALLER_URL"; \
@@ -132,7 +177,8 @@ install-nix: ## Install Nix using the NixOS community installer
 			echo "Attempt $$attempt of $$max_attempts..."; \
 			if curl --proto '=https' --tlsv1.2 -sSf -L --retry 3 --retry-delay 5 \
 				"$$INSTALLER_URL" -o /tmp/nix-installer && chmod +x /tmp/nix-installer; then \
-				/tmp/nix-installer install --no-confirm \
+				/tmp/nix-installer install $$PLANNER_ARGS --no-confirm \
+					--enable-flakes \
 					--extra-conf "trusted-users = root @admin @wheel" && break; \
 			fi; \
 			attempt=$$((attempt + 1)); \
