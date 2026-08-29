@@ -19,11 +19,13 @@
 # over the shipped npm-shrinkwrap.json (lockfileVersion 3, 359 packages).
 #
 # Two upstream-shrinkwrap repairs live in npm-dist-repairs.patch:
-#  - the prepublishOnly generator emits the 9 @bastani/atomic-natives*
-#    entries without `integrity`, which nix's prefetch-npm-deps parser refuses
-#    outright ("non-git dependencies should have associated integrity"); the
-#    patch adds the registry's published sha512 for exactly those 9 tarballs.
-#  - the published package.json retains 12 devDependencies the generated
+#  - the prepublishOnly generator emits the workspace-internal @bastani/*
+#    entries (the atomic-natives* platform set plus pi-ai) without
+#    `integrity`, which nix's prefetch-npm-deps parser refuses outright
+#    ("non-git dependencies should have associated integrity"); the patch adds
+#    the registry's published sha512 for each. update.sh selects them by the
+#    absence of `integrity` rather than by name, so the set tracks upstream.
+#  - the published package.json retains devDependencies the generated
 #    shrinkwrap does not cover, so `npm ci` tries to resolve them from the
 #    registry and dies ENOTCACHED; dist/ is already built, so they are dead
 #    weight and are removed.
@@ -58,12 +60,12 @@ buildNpmPackage (finalAttrs: {
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@bastani/atomic/-/atomic-${finalAttrs.version}.tgz";
-    hash = "sha256-IUhR/RS0ZniCyKvsZwkGnRh+LCFI1Wq3k2IujX2+PvQ=";
+    hash = "sha256-eAgebHtzXCRvcMvEFzB/yDmf3HL5sksW/39iG/UhQBY=";
   };
   sourceRoot = "package";
 
   nodejs = nodejs_22;
-  npmDepsHash = "sha256-EHtSTNyzz3Ou8WXk+IRMWxg+rPPQ8EmFD8TDJ+jOnu0=";
+  npmDepsHash = "sha256-1UIAt5YDuL86AnAc38fwKsPDeuCIOBbd8oOec+FMLuM=";
 
   postPatch = ''
     patch -p1 < ${./npm-dist-repairs.patch}
@@ -118,7 +120,7 @@ buildNpmPackage (finalAttrs: {
           ${lib.getExe finalAttrs.finalPackage} --help > help.txt
 
           grep -q "AI coding assistant" help.txt
-          grep -q "atomic \[options\] \[@files\.\.\.\] \[messages\.\.\.\]" help.txt
+          grep -q "atomic \[options\] \[--\] \[@files\.\.\.\] \[messages\.\.\.\]" help.txt
           grep -q "Install extension source and add to settings" help.txt
 
           touch "$out"

@@ -49,7 +49,7 @@ digest = "sha512-" + base64.b64encode(
 assert digest == meta["dist"]["integrity"], "tarball does not match registry integrity"
 
 # Repair 1: backfill integrity for entries the shrinkwrap generator left
-# without one (all of them are @bastani/atomic-natives*).
+# without one (the workspace-internal @bastani/* packages).
 shrink_src = open(f"{pkg_dir}/npm-shrinkwrap.json").read()
 shrink = json.loads(shrink_src)
 integ = {}
