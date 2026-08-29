@@ -1,4 +1,6 @@
-# nixbot CI service for magnetite, standing beside the buildbot-nix server.
+# nixbot CI service for magnetite, serving the fleet's GitHub repositories.
+# The buildbot-nix server is still resident on magnetite but no longer serves
+# either of them; it keeps only its Gitea repositories.
 #
 # Credential generator catalog (slots; values populated as marked):
 #   - nixbot-github-app-secret-key: manual `clan vars set` (GitHub App PEM key)
@@ -82,10 +84,30 @@
 
         buildSystems = [ "x86_64-linux" ];
 
-        # Sized beside the incumbent's 4 workers x 2 GiB (buildbot.nix:150-154)
-        # on a 16 vCPU / 32 GiB host: 2 x 2 GiB here keeps the pair inside the
-        # same headroom the incumbent's comment budgets for.
-        evalWorkerCount = 2;
+        # 6 evaluation workers on magnetite, below both nixbot's own 16-core
+        # auto-sizing heuristic of 8 and the 20 used by clan-infra, the upstream
+        # reference deployment, because the memory cap has to stay enforceable.
+        # nixbot evaluates inside a cgroup capped at evalMaxMemorySize x
+        # (workers + 1), and exceeding that cap fails the pull request
+        # permanently with no retry, unlike an attribute build. A cap above the
+        # memory magnetite can supply cannot fire before magnetite itself is
+        # exhausted, so the count is bounded by arithmetic rather than by its 16
+        # cores: at the 2048 MiB per worker chosen just below, 6 caps the
+        # evaluation tree at 14 GiB, where 8 would imply 18 GiB and 20 would
+        # imply 43 GiB. magnetite has 30.6 GiB of RAM, and 17 GiB of it were
+        # free when nixbot was deployed there in August 2026, measured with
+        # kanidm, postgres, nginx and buildbot-nix already resident. To revise
+        # the count, read MemAvailable from /proc/meminfo on magnetite under
+        # that same resident set and keep evalMaxMemorySize x (workers + 1)
+        # below it.
+        #
+        # evalWorkerCount is nix-eval-jobs' --workers, so it shortens a single
+        # evaluation instead of overlapping several. Overlapping would need
+        # nixbot's eval_concurrency setting, which nixbot's NixOS module does
+        # not expose, so evaluations stay serial across pull requests and each
+        # one's latency adds to the total. The measurements behind 6 are in
+        # cameronraysmith/vanixiets PR 2869.
+        evalWorkerCount = 6;
         evalMaxMemorySize = 2048;
 
         github = {
