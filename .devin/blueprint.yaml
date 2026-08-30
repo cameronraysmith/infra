@@ -1,0 +1,49 @@
+# https://docs.devin.ai/onboard-devin/environment/git-backed-blueprints
+# Nix is the only host-level dependency: it is installed through the repo's own
+# pinned bootstrap, and every other tool (just, prek, treefmt, bun, jq) comes
+# from the flake devshell, entered via direnv.
+initialize: |
+  # Pinned NixOS/nix-installer, systemd daemon planner (/run/systemd/system exists here).
+  make install-nix
+
+  # /etc/nix/nix.conf ends in `!include nix.custom.conf`; without a trusted session
+  # user, nix silently ignores the flake's substituters and --accept-flake-config.
+  printf 'trusted-users = root %s\naccept-flake-config = true\n' "$(id -un)" | sudo tee /etc/nix/nix.custom.conf
+  sudo systemctl restart nix-daemon.service
+
+  # Agent commands run in non-interactive shells, which read neither
+  # /etc/bash.bashrc nor /etc/profile.d/nix.sh.
+  echo "BASH_ENV=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" >> $ENVRC
+
+  # checks.x86_64-linux.vm-* need write access to /dev/kvm.
+  sudo usermod -aG kvm "$(id -un)"
+maintenance: |
+  # Realize the devshell; its shellHook writes .pre-commit-config.yaml and installs the prek hooks.
+  nix develop --accept-flake-config --command true
+  # Warm the nix-direnv cache so later `direnv exec .` invocations skip flake evaluation.
+  direnv allow
+  direnv exec . just install
+knowledge:
+  - name: lint
+    contents: |
+      direnv exec . just lint  # prek run --all-files: gitleaks + treefmt
+  - name: test
+    contents: |
+      direnv exec . nix build .#checks.x86_64-linux.<name> # single check; cheapest feedback loop
+      direnv exec . just check-fast        # nix-fast-build over checks.x86_64-linux; cold runs build VM closures
+      direnv exec . just check             # full nix flake check, includes linux VM tests
+      direnv exec . just test-package docs # bun unit + coverage + build + e2e
+      # just test-quick is darwin-pinned (checks.aarch64-darwin.*) and cannot run here
+  - name: build
+    contents: |
+      direnv exec . just docs-build             # typst diagrams + astro site
+      direnv exec . just build-machine cinnabar # nixos hosts: cinnabar, electrum
+  - name: startup
+    contents: |
+      direnv exec . just docs-dev  # astro dev server for packages/docs
+  - name: notes
+    contents: |
+      Run everything through `direnv exec . <cmd>` (or `nix develop -c`): just/prek/bun exist only in the devshell.
+      x86_64-linux only: darwinConfigurations, checks.aarch64-*, and `just activate*` cannot run here.
+      No age/sops keys are provisioned, so sops, clan vars, and secret-decrypting recipes fail by design.
+      The nix store grows quickly on the sandbox disk; reclaim with `direnv exec . just gc`.
