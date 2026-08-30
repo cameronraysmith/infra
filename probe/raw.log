@@ -1,0 +1,1946 @@
+=== PROBE START Sun Aug 30 15:14:08 UTC 2026 ===
+$ echo CLAUDE_CODE_REMOTE / session
+CLAUDE_CODE_REMOTE=true session=https://claude.ai/code/session_01XBQRYguhisLGztAGBFzyf2
+=== TOOLING ===
+
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+[exit=0]
+
+$ sudo -n true && echo SUDO_OK || echo NO_SUDO
+SUDO_OK
+[exit=0]
+
+$ check-tools 2>&1 | head -40
+
+   _____ _                 _        _____           _
+  / ____| |               | |      / ____|         | |
+ | |    | | __ _ _   _  __| | ___  | |     ___   __| | ___
+ | |    | |/ _` | | | |/ _` |/ _ \ | |    / _ \ / _` |/ _ \
+ | |____| | (_| | |_| | (_| |  __/ | |___| (_) | (_| |  __/
+  \_____|_|\__,_|\__,_|\__,_|\___|  \_____\___/ \__,_|\___|
+
+      Development Environment Tool Versions
+      =====================================
+
+=================== Python ===================
+✅ python3: Python 3.11.15
+✅ python: Python 3.11.15
+✅ pip: pip 24.0 from /usr/lib/python3/dist-packages/pip (python 3.11)
+✅ poetry: Poetry (version 2.3.3)
+✅ uv: uv 0.8.17
+✅ black: black, 26.3.1 (compiled: yes)
+✅ mypy: mypy 1.19.1 (compiled: yes)
+✅ pytest: pytest 9.0.2
+✅ ruff: ruff 0.15.8
+
+=================== NodeJS ===================
+✅ node: v22.22.2
+
+[0;32m->       system[0m
+[0;31miojs[0m [0;90m->[0m [0;31mN/A[0m [0;37m(default)[0m
+[0;31mnode[0m [0;90m->[0m [0;31mstable[0m ([0;90m->[0m [0;31mN/A[0m) [0;37m(default)[0m
+[0;31munstable[0m [0;90m->[0m [0;31mN/A[0m [0;37m(default)[0m
+✅ nvm: available
+✅ npm: 10.9.7
+✅ yarn: 1.22.22
+ WARN  The "workspaces" field in package.json is not supported by pnpm. Create a "pnpm-workspace.yaml" file instead.
+ ERROR  This project is configured to use bun
+For help, run: pnpm help
+✅ pnpm: 
+✅ eslint: v10.1.0
+✅ prettier: 3.8.1
+✅ chromedriver: ChromeDriver 147.0.7727.24 (09d377d9438dc95267369f74a073acd81bdde38f-refs/branch-heads/7727@{#1413})
+
+[exit=0]
+
+$ command -v gcc cpuid rdmsr dmidecode lspci qemu-system-x86_64 curl docker nix ethtool
+/usr/bin/gcc
+/usr/bin/curl
+/usr/bin/docker
+[exit=0]
+
+$ apt-get update && apt-get install -y build-essential cpuid msr-tools dmidecode pciutils qemu-system-x86 curl ethtool iproute2 util-linux
+[apt-get update exit=0]
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package libbpf1:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 54237 files and directories currently installed.)
+Preparing to unpack .../000-libbpf1_1%3a1.3.0-2build2_amd64.deb ...
+Unpacking libbpf1:amd64 (1:1.3.0-2build2) ...
+Selecting previously unselected package iproute2.
+Preparing to unpack .../001-iproute2_6.1.0-1ubuntu6.4_amd64.deb ...
+Unpacking iproute2 (6.1.0-1ubuntu6.4) ...
+Selecting previously unselected package libatm1t64:amd64.
+Preparing to unpack .../002-libatm1t64_1%3a2.5.1-5.1build1_amd64.deb ...
+Unpacking libatm1t64:amd64 (1:2.5.1-5.1build1) ...
+Selecting previously unselected package libslang2:amd64.
+Preparing to unpack .../003-libslang2_2.3.3-3build2_amd64.deb ...
+Unpacking libslang2:amd64 (2.3.3-3build2) ...
+Selecting previously unselected package dmidecode.
+Preparing to unpack .../004-dmidecode_3.5-3ubuntu0.1_amd64.deb ...
+Unpacking dmidecode (3.5-3ubuntu0.1) ...
+Selecting previously unselected package ethtool.
+Preparing to unpack .../005-ethtool_1%3a6.7-1build1_amd64.deb ...
+Unpacking ethtool (1:6.7-1build1) ...
+Selecting previously unselected package libnl-3-200:amd64.
+Preparing to unpack .../006-libnl-3-200_3.7.0-0.3build1.1_amd64.deb ...
+Unpacking libnl-3-200:amd64 (3.7.0-0.3build1.1) ...
+Selecting previously unselected package libnl-route-3-200:amd64.
+Preparing to unpack .../007-libnl-route-3-200_3.7.0-0.3build1.1_amd64.deb ...
+Unpacking libnl-route-3-200:amd64 (3.7.0-0.3build1.1) ...
+Selecting previously unselected package libibverbs1:amd64.
+Preparing to unpack .../008-libibverbs1_50.0-2ubuntu0.2_amd64.deb ...
+Unpacking libibverbs1:amd64 (50.0-2ubuntu0.2) ...
+Selecting previously unselected package ibverbs-providers:amd64.
+Preparing to unpack .../009-ibverbs-providers_50.0-2ubuntu0.2_amd64.deb ...
+Unpacking ibverbs-providers:amd64 (50.0-2ubuntu0.2) ...
+Selecting previously unselected package libfuse3-3:amd64.
+Preparing to unpack .../010-libfuse3-3_3.14.0-5build1_amd64.deb ...
+Unpacking libfuse3-3:amd64 (3.14.0-5build1) ...
+Selecting previously unselected package libnuma1:amd64.
+Preparing to unpack .../011-libnuma1_2.0.18-1ubuntu0.24.04.1_amd64.deb ...
+Unpacking libnuma1:amd64 (2.0.18-1ubuntu0.24.04.1) ...
+Selecting previously unselected package pci.ids.
+Preparing to unpack .../012-pci.ids_0.0~2024.03.31-1ubuntu0.1_all.deb ...
+Unpacking pci.ids (0.0~2024.03.31-1ubuntu0.1) ...
+Selecting previously unselected package libpci3:amd64.
+Preparing to unpack .../013-libpci3_1%3a3.10.0-2build1_amd64.deb ...
+Unpacking libpci3:amd64 (1:3.10.0-2build1) ...
+Selecting previously unselected package libusb-1.0-0:amd64.
+Preparing to unpack .../014-libusb-1.0-0_2%3a1.0.27-1_amd64.deb ...
+Unpacking libusb-1.0-0:amd64 (2:1.0.27-1) ...
+Selecting previously unselected package pciutils.
+Preparing to unpack .../015-pciutils_1%3a3.10.0-2build1_amd64.deb ...
+Unpacking pciutils (1:3.10.0-2build1) ...
+Selecting previously unselected package acl.
+Preparing to unpack .../016-acl_2.3.2-1build1.1_amd64.deb ...
+Unpacking acl (2.3.2-1build1.1) ...
+Selecting previously unselected package msr-tools.
+Preparing to unpack .../017-msr-tools_1.3-5build1_amd64.deb ...
+Unpacking msr-tools (1.3-5build1) ...
+Selecting previously unselected package cpu-checker.
+Preparing to unpack .../018-cpu-checker_0.7-1.3build2_amd64.deb ...
+Unpacking cpu-checker (0.7-1.3build2) ...
+Selecting previously unselected package cpuid.
+Preparing to unpack .../019-cpuid_20240330-1ubuntu2_amd64.deb ...
+Unpacking cpuid (20240330-1ubuntu2) ...
+Preparing to unpack .../020-curl_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.13) over (8.5.0-2ubuntu10.8) ...
+Preparing to unpack .../021-libcurl4t64_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.13) over (8.5.0-2ubuntu10.8) ...
+Preparing to unpack .../022-libcurl3t64-gnutls_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) over (8.5.0-2ubuntu10.8) ...
+Selecting previously unselected package libproxy1v5:amd64.
+Preparing to unpack .../023-libproxy1v5_0.5.4-4build1_amd64.deb ...
+Unpacking libproxy1v5:amd64 (0.5.4-4build1) ...
+Selecting previously unselected package glib-networking-common.
+Preparing to unpack .../024-glib-networking-common_2.80.0-1build1_all.deb ...
+Unpacking glib-networking-common (2.80.0-1build1) ...
+Selecting previously unselected package glib-networking-services.
+Preparing to unpack .../025-glib-networking-services_2.80.0-1build1_amd64.deb ...
+Unpacking glib-networking-services (2.80.0-1build1) ...
+Selecting previously unselected package session-migration.
+Preparing to unpack .../026-session-migration_0.3.9build1_amd64.deb ...
+Unpacking session-migration (0.3.9build1) ...
+Selecting previously unselected package gsettings-desktop-schemas.
+Preparing to unpack .../027-gsettings-desktop-schemas_46.1-0ubuntu1_all.deb ...
+Unpacking gsettings-desktop-schemas (46.1-0ubuntu1) ...
+Selecting previously unselected package glib-networking:amd64.
+Preparing to unpack .../028-glib-networking_2.80.0-1build1_amd64.deb ...
+Unpacking glib-networking:amd64 (2.80.0-1build1) ...
+Selecting previously unselected package libcdparanoia0:amd64.
+Preparing to unpack .../029-libcdparanoia0_3.10.2+debian-14build3_amd64.deb ...
+Unpacking libcdparanoia0:amd64 (3.10.2+debian-14build3) ...
+Selecting previously unselected package libogg0:amd64.
+Preparing to unpack .../030-libogg0_1.3.5-3build1_amd64.deb ...
+Unpacking libogg0:amd64 (1.3.5-3build1) ...
+Selecting previously unselected package libopus0:amd64.
+Preparing to unpack .../031-libopus0_1.4-1build1_amd64.deb ...
+Unpacking libopus0:amd64 (1.4-1build1) ...
+Selecting previously unselected package libtheora0:amd64.
+Preparing to unpack .../032-libtheora0_1.1.1+dfsg.1-16.1build3_amd64.deb ...
+Unpacking libtheora0:amd64 (1.1.1+dfsg.1-16.1build3) ...
+Selecting previously unselected package libvisual-0.4-0:amd64.
+Preparing to unpack .../033-libvisual-0.4-0_0.4.2-2build1_amd64.deb ...
+Unpacking libvisual-0.4-0:amd64 (0.4.2-2build1) ...
+Selecting previously unselected package libvorbis0a:amd64.
+Preparing to unpack .../034-libvorbis0a_1.3.7-1build3_amd64.deb ...
+Unpacking libvorbis0a:amd64 (1.3.7-1build3) ...
+Selecting previously unselected package libvorbisenc2:amd64.
+Preparing to unpack .../035-libvorbisenc2_1.3.7-1build3_amd64.deb ...
+Unpacking libvorbisenc2:amd64 (1.3.7-1build3) ...
+Selecting previously unselected package gstreamer1.0-plugins-base:amd64.
+Preparing to unpack .../036-gstreamer1.0-plugins-base_1.24.2-1ubuntu0.4_amd64.deb ...
+Unpacking gstreamer1.0-plugins-base:amd64 (1.24.2-1ubuntu0.4) ...
+Selecting previously unselected package libaa1:amd64.
+Preparing to unpack .../037-libaa1_1.4p5-51.1_amd64.deb ...
+Unpacking libaa1:amd64 (1.4p5-51.1) ...
+Selecting previously unselected package libraw1394-11:amd64.
+Preparing to unpack .../038-libraw1394-11_2.1.2-2build3_amd64.deb ...
+Unpacking libraw1394-11:amd64 (2.1.2-2build3) ...
+Selecting previously unselected package libavc1394-0:amd64.
+Preparing to unpack .../039-libavc1394-0_0.5.4-5build3_amd64.deb ...
+Unpacking libavc1394-0:amd64 (0.5.4-5build3) ...
+Selecting previously unselected package libcaca0:amd64.
+Preparing to unpack .../040-libcaca0_0.99.beta20-4ubuntu0.2_amd64.deb ...
+Unpacking libcaca0:amd64 (0.99.beta20-4ubuntu0.2) ...
+Selecting previously unselected package libdv4t64:amd64.
+Preparing to unpack .../041-libdv4t64_1.0.0-17.1build1_amd64.deb ...
+Unpacking libdv4t64:amd64 (1.0.0-17.1build1) ...
+Selecting previously unselected package libflac12t64:amd64.
+Preparing to unpack .../042-libflac12t64_1.4.3+ds-2.1ubuntu2_amd64.deb ...
+Unpacking libflac12t64:amd64 (1.4.3+ds-2.1ubuntu2) ...
+Selecting previously unselected package libgstreamer-plugins-good1.0-0:amd64.
+Preparing to unpack .../043-libgstreamer-plugins-good1.0-0_1.24.2-1ubuntu1.5_amd64.deb ...
+Unpacking libgstreamer-plugins-good1.0-0:amd64 (1.24.2-1ubuntu1.5) ...
+Selecting previously unselected package libgudev-1.0-0:amd64.
+Preparing to unpack .../044-libgudev-1.0-0_1%3a238-5ubuntu1_amd64.deb ...
+Unpacking libgudev-1.0-0:amd64 (1:238-5ubuntu1) ...
+Selecting previously unselected package libiec61883-0:amd64.
+Preparing to unpack .../045-libiec61883-0_1.2.0-6build1_amd64.deb ...
+Unpacking libiec61883-0:amd64 (1.2.0-6build1) ...
+Selecting previously unselected package libmp3lame0:amd64.
+Preparing to unpack .../046-libmp3lame0_3.100-6build1_amd64.deb ...
+Unpacking libmp3lame0:amd64 (3.100-6build1) ...
+Selecting previously unselected package libmpg123-0t64:amd64.
+Preparing to unpack .../047-libmpg123-0t64_1.32.5-1ubuntu1.1_amd64.deb ...
+Unpacking libmpg123-0t64:amd64 (1.32.5-1ubuntu1.1) ...
+Selecting previously unselected package libasyncns0:amd64.
+Preparing to unpack .../048-libasyncns0_0.8-6build4_amd64.deb ...
+Unpacking libasyncns0:amd64 (0.8-6build4) ...
+Selecting previously unselected package libsndfile1:amd64.
+Preparing to unpack .../049-libsndfile1_1.2.2-1ubuntu5.24.04.1_amd64.deb ...
+Unpacking libsndfile1:amd64 (1.2.2-1ubuntu5.24.04.1) ...
+Selecting previously unselected package libpulse0:amd64.
+Preparing to unpack .../050-libpulse0_1%3a16.1+dfsg1-2ubuntu10.1_amd64.deb ...
+Unpacking libpulse0:amd64 (1:16.1+dfsg1-2ubuntu10.1) ...
+Selecting previously unselected package libspeex1:amd64.
+Preparing to unpack .../051-libspeex1_1.2.1-2ubuntu2.24.04.1_amd64.deb ...
+Unpacking libspeex1:amd64 (1.2.1-2ubuntu2.24.04.1) ...
+Selecting previously unselected package libshout3:amd64.
+Preparing to unpack .../052-libshout3_2.4.6-1build2_amd64.deb ...
+Unpacking libshout3:amd64 (2.4.6-1build2) ...
+Selecting previously unselected package libtag1v5-vanilla:amd64.
+Preparing to unpack .../053-libtag1v5-vanilla_1.13.1-1build1_amd64.deb ...
+Unpacking libtag1v5-vanilla:amd64 (1.13.1-1build1) ...
+Selecting previously unselected package libtag1v5:amd64.
+Preparing to unpack .../054-libtag1v5_1.13.1-1build1_amd64.deb ...
+Unpacking libtag1v5:amd64 (1.13.1-1build1) ...
+Selecting previously unselected package libtwolame0:amd64.
+Preparing to unpack .../055-libtwolame0_0.4.0-2build3_amd64.deb ...
+Unpacking libtwolame0:amd64 (0.4.0-2build3) ...
+Selecting previously unselected package libv4lconvert0t64:amd64.
+Preparing to unpack .../056-libv4lconvert0t64_1.26.1-4build3_amd64.deb ...
+Unpacking libv4lconvert0t64:amd64 (1.26.1-4build3) ...
+Selecting previously unselected package libv4l-0t64:amd64.
+Preparing to unpack .../057-libv4l-0t64_1.26.1-4build3_amd64.deb ...
+Unpacking libv4l-0t64:amd64 (1.26.1-4build3) ...
+Selecting previously unselected package libvpx9:amd64.
+Preparing to unpack .../058-libvpx9_1.14.0-1ubuntu2.3_amd64.deb ...
+Unpacking libvpx9:amd64 (1.14.0-1ubuntu2.3) ...
+Selecting previously unselected package libwavpack1:amd64.
+Preparing to unpack .../059-libwavpack1_5.6.0-1build1_amd64.deb ...
+Unpacking libwavpack1:amd64 (5.6.0-1build1) ...
+Selecting previously unselected package libsoup-3.0-common.
+Preparing to unpack .../060-libsoup-3.0-common_3.4.4-5ubuntu0.7_all.deb ...
+Unpacking libsoup-3.0-common (3.4.4-5ubuntu0.7) ...
+Selecting previously unselected package libsoup-3.0-0:amd64.
+Preparing to unpack .../061-libsoup-3.0-0_3.4.4-5ubuntu0.7_amd64.deb ...
+Unpacking libsoup-3.0-0:amd64 (3.4.4-5ubuntu0.7) ...
+Selecting previously unselected package gstreamer1.0-plugins-good:amd64.
+Preparing to unpack .../062-gstreamer1.0-plugins-good_1.24.2-1ubuntu1.5_amd64.deb ...
+Unpacking gstreamer1.0-plugins-good:amd64 (1.24.2-1ubuntu1.5) ...
+Selecting previously unselected package libxv1:amd64.
+Preparing to unpack .../063-libxv1_2%3a1.0.11-1.1build1_amd64.deb ...
+Unpacking libxv1:amd64 (2:1.0.11-1.1build1) ...
+Selecting previously unselected package gstreamer1.0-x:amd64.
+Preparing to unpack .../064-gstreamer1.0-x_1.24.2-1ubuntu0.4_amd64.deb ...
+Unpacking gstreamer1.0-x:amd64 (1.24.2-1ubuntu0.4) ...
+Selecting previously unselected package ipxe-qemu.
+Preparing to unpack .../065-ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb ...
+Unpacking ipxe-qemu (1.21.1+git-20220113.fbbdc3926-0ubuntu2) ...
+Selecting previously unselected package ipxe-qemu-256k-compat-efi-roms.
+Preparing to unpack .../066-ipxe-qemu-256k-compat-efi-roms_1.0.0+git-20150424.a25a16d-0ubuntu5_all.deb ...
+Unpacking ipxe-qemu-256k-compat-efi-roms (1.0.0+git-20150424.a25a16d-0ubuntu5) ...
+Selecting previously unselected package libaio1t64:amd64.
+Preparing to unpack .../067-libaio1t64_0.3.113-6build1.1_amd64.deb ...
+Unpacking libaio1t64:amd64 (0.3.113-6build1.1) ...
+Selecting previously unselected package libbrlapi0.8:amd64.
+Preparing to unpack .../068-libbrlapi0.8_6.6-4ubuntu5_amd64.deb ...
+Unpacking libbrlapi0.8:amd64 (6.6-4ubuntu5) ...
+Selecting previously unselected package libcacard0:amd64.
+Preparing to unpack .../069-libcacard0_1%3a2.8.0-3build4_amd64.deb ...
+Unpacking libcacard0:amd64 (1:2.8.0-3build4) ...
+Selecting previously unselected package libdaxctl1:amd64.
+Preparing to unpack .../070-libdaxctl1_77-2ubuntu2_amd64.deb ...
+Unpacking libdaxctl1:amd64 (77-2ubuntu2) ...
+Selecting previously unselected package libdecor-0-0:amd64.
+Preparing to unpack .../071-libdecor-0-0_0.2.2-1build2_amd64.deb ...
+Unpacking libdecor-0-0:amd64 (0.2.2-1build2) ...
+Selecting previously unselected package libdecor-0-plugin-1-gtk:amd64.
+Preparing to unpack .../072-libdecor-0-plugin-1-gtk_0.2.2-1build2_amd64.deb ...
+Unpacking libdecor-0-plugin-1-gtk:amd64 (0.2.2-1build2) ...
+Selecting previously unselected package librdmacm1t64:amd64.
+Preparing to unpack .../073-librdmacm1t64_50.0-2ubuntu0.2_amd64.deb ...
+Unpacking librdmacm1t64:amd64 (50.0-2ubuntu0.2) ...
+Selecting previously unselected package libiscsi7:amd64.
+Preparing to unpack .../074-libiscsi7_1.19.0-3build4_amd64.deb ...
+Unpacking libiscsi7:amd64 (1.19.0-3build4) ...
+Selecting previously unselected package libsamplerate0:amd64.
+Preparing to unpack .../075-libsamplerate0_0.2.2-4build1_amd64.deb ...
+Unpacking libsamplerate0:amd64 (0.2.2-4build1) ...
+Selecting previously unselected package libjack-jackd2-0:amd64.
+Preparing to unpack .../076-libjack-jackd2-0_1.9.21~dfsg-3ubuntu3_amd64.deb ...
+Unpacking libjack-jackd2-0:amd64 (1.9.21~dfsg-3ubuntu3) ...
+Selecting previously unselected package libndctl6:amd64.
+Preparing to unpack .../077-libndctl6_77-2ubuntu2_amd64.deb ...
+Unpacking libndctl6:amd64 (77-2ubuntu2) ...
+Selecting previously unselected package libnfs14:amd64.
+Preparing to unpack .../078-libnfs14_5.0.2-1ubuntu0.24.04.1_amd64.deb ...
+Unpacking libnfs14:amd64 (5.0.2-1ubuntu0.24.04.1) ...
+Selecting previously unselected package libwebrtc-audio-processing1:amd64.
+Preparing to unpack .../079-libwebrtc-audio-processing1_0.3.1-0ubuntu6_amd64.deb ...
+Unpacking libwebrtc-audio-processing1:amd64 (0.3.1-0ubuntu6) ...
+Selecting previously unselected package libspa-0.2-modules:amd64.
+Preparing to unpack .../080-libspa-0.2-modules_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking libspa-0.2-modules:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libpipewire-0.3-0t64:amd64.
+Preparing to unpack .../081-libpipewire-0.3-0t64_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking libpipewire-0.3-0t64:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libpipewire-0.3-common.
+Preparing to unpack .../082-libpipewire-0.3-common_1.0.5-1ubuntu3.3_all.deb ...
+Unpacking libpipewire-0.3-common (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libpmem1:amd64.
+Preparing to unpack .../083-libpmem1_1.13.1-1.1ubuntu2_amd64.deb ...
+Unpacking libpmem1:amd64 (1.13.1-1.1ubuntu2) ...
+Selecting previously unselected package libpmemobj1:amd64.
+Preparing to unpack .../084-libpmemobj1_1.13.1-1.1ubuntu2_amd64.deb ...
+Unpacking libpmemobj1:amd64 (1.13.1-1.1ubuntu2) ...
+Selecting previously unselected package librados2.
+Preparing to unpack .../085-librados2_19.2.3-0ubuntu0.24.04.3_amd64.deb ...
+Unpacking librados2 (19.2.3-0ubuntu0.24.04.3) ...
+Selecting previously unselected package librbd1.
+Preparing to unpack .../086-librbd1_19.2.3-0ubuntu0.24.04.3_amd64.deb ...
+Unpacking librbd1 (19.2.3-0ubuntu0.24.04.3) ...
+Selecting previously unselected package libxss1:amd64.
+Preparing to unpack .../087-libxss1_1%3a1.2.3-1build3_amd64.deb ...
+Unpacking libxss1:amd64 (1:1.2.3-1build3) ...
+Selecting previously unselected package libsdl2-2.0-0:amd64.
+Preparing to unpack .../088-libsdl2-2.0-0_2.30.0+dfsg-1ubuntu3.1_amd64.deb ...
+Unpacking libsdl2-2.0-0:amd64 (2.30.0+dfsg-1ubuntu3.1) ...
+Selecting previously unselected package libslirp0:amd64.
+Preparing to unpack .../089-libslirp0_4.7.0-1ubuntu3.1_amd64.deb ...
+Unpacking libslirp0:amd64 (4.7.0-1ubuntu3.1) ...
+Selecting previously unselected package libspice-server1:amd64.
+Preparing to unpack .../090-libspice-server1_0.15.1-1build2_amd64.deb ...
+Unpacking libspice-server1:amd64 (0.15.1-1build2) ...
+Selecting previously unselected package liburing2:amd64.
+Preparing to unpack .../091-liburing2_2.5-1build1_amd64.deb ...
+Unpacking liburing2:amd64 (2.5-1build1) ...
+Selecting previously unselected package libusbredirparser1t64:amd64.
+Preparing to unpack .../092-libusbredirparser1t64_0.13.0-2.1build1_amd64.deb ...
+Unpacking libusbredirparser1t64:amd64 (0.13.0-2.1build1) ...
+Selecting previously unselected package libvirglrenderer1:amd64.
+Preparing to unpack .../093-libvirglrenderer1_1.0.0-1ubuntu2_amd64.deb ...
+Unpacking libvirglrenderer1:amd64 (1.0.0-1ubuntu2) ...
+Selecting previously unselected package libvte-2.91-common.
+Preparing to unpack .../094-libvte-2.91-common_0.76.0-1ubuntu0.1_amd64.deb ...
+Unpacking libvte-2.91-common (0.76.0-1ubuntu0.1) ...
+Selecting previously unselected package libvte-2.91-0:amd64.
+Preparing to unpack .../095-libvte-2.91-0_0.76.0-1ubuntu0.1_amd64.deb ...
+Unpacking libvte-2.91-0:amd64 (0.76.0-1ubuntu0.1) ...
+Selecting previously unselected package libfdt1:amd64.
+Preparing to unpack .../096-libfdt1_1.7.0-2build1_amd64.deb ...
+Unpacking libfdt1:amd64 (1.7.0-2build1) ...
+Selecting previously unselected package qemu-system-common.
+Preparing to unpack .../097-qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-system-common (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package qemu-system-data.
+Preparing to unpack .../098-qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb ...
+Unpacking qemu-system-data (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package seabios.
+Preparing to unpack .../099-seabios_1.16.3-2_all.deb ...
+Unpacking seabios (1.16.3-2) ...
+Selecting previously unselected package qemu-system-x86.
+Preparing to unpack .../100-qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-system-x86 (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package qemu-utils.
+Preparing to unpack .../101-qemu-utils_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-utils (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package qemu-block-extra.
+Preparing to unpack .../102-qemu-block-extra_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-block-extra (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package qemu-system-modules-opengl.
+Preparing to unpack .../103-qemu-system-modules-opengl_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-system-modules-opengl (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package qemu-system-gui.
+Preparing to unpack .../104-qemu-system-gui_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-system-gui (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package qemu-system-modules-spice.
+Preparing to unpack .../105-qemu-system-modules-spice_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb ...
+Unpacking qemu-system-modules-spice (1:8.2.2+ds-0ubuntu1.18) ...
+Selecting previously unselected package ovmf.
+Preparing to unpack .../106-ovmf_2024.02-2ubuntu0.9_all.deb ...
+Unpacking ovmf (2024.02-2ubuntu0.9) ...
+Setting up libpipewire-0.3-common (1.0.5-1ubuntu3.3) ...
+Setting up libcdparanoia0:amd64 (3.10.2+debian-14build3) ...
+Setting up session-migration (0.3.9build1) ...
+Created symlink /etc/systemd/user/graphical-session-pre.target.wants/session-migration.service → /usr/lib/systemd/user/session-migration.service.
+Setting up libraw1394-11:amd64 (2.1.2-2build3) ...
+Setting up pci.ids (0.0~2024.03.31-1ubuntu0.1) ...
+Setting up libtag1v5-vanilla:amd64 (1.13.1-1build1) ...
+Setting up libatm1t64:amd64 (1:2.5.1-5.1build1) ...
+Setting up libogg0:amd64 (1.3.5-3build1) ...
+Setting up libspeex1:amd64 (1.2.1-2ubuntu2.24.04.1) ...
+Setting up libv4lconvert0t64:amd64 (1.26.1-4build3) ...
+Setting up libtwolame0:amd64 (0.4.0-2build3) ...
+Setting up libvte-2.91-common (0.76.0-1ubuntu0.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up libvisual-0.4-0:amd64 (0.4.2-2build1) ...
+Setting up msr-tools (1.3-5build1) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up cpuid (20240330-1ubuntu2) ...
+Setting up libwebrtc-audio-processing1:amd64 (0.3.1-0ubuntu6) ...
+Setting up libsoup-3.0-common (3.4.4-5ubuntu0.7) ...
+Setting up libmpg123-0t64:amd64 (1.32.5-1ubuntu1.1) ...
+Setting up libfdt1:amd64 (1.7.0-2build1) ...
+Setting up libvte-2.91-0:amd64 (0.76.0-1ubuntu0.1) ...
+Setting up libcacard0:amd64 (1:2.8.0-3build4) ...
+Setting up libnfs14:amd64 (5.0.2-1ubuntu0.24.04.1) ...
+Setting up acl (2.3.2-1build1.1) ...
+Setting up ovmf (2024.02-2ubuntu0.9) ...
+Setting up libgstreamer-plugins-good1.0-0:amd64 (1.24.2-1ubuntu1.5) ...
+Setting up libslang2:amd64 (2.3.3-3build2) ...
+Setting up libvirglrenderer1:amd64 (1.0.0-1ubuntu2) ...
+Setting up libspa-0.2-modules:amd64 (1.0.5-1ubuntu3.3) ...
+Setting up libopus0:amd64 (1.4-1build1) ...
+Setting up libxv1:amd64 (2:1.0.11-1.1build1) ...
+Setting up libvorbis0a:amd64 (1.3.7-1build3) ...
+Setting up libdv4t64:amd64 (1.0.0-17.1build1) ...
+Setting up libfuse3-3:amd64 (3.14.0-5build1) ...
+Setting up libdaxctl1:amd64 (77-2ubuntu2) ...
+Setting up qemu-system-data (1:8.2.2+ds-0ubuntu1.18) ...
+Setting up seabios (1.16.3-2) ...
+Setting up libv4l-0t64:amd64 (1.26.1-4build3) ...
+Setting up libpci3:amd64 (1:3.10.0-2build1) ...
+Setting up libnuma1:amd64 (2.0.18-1ubuntu0.24.04.1) ...
+Setting up libvpx9:amd64 (1.14.0-1ubuntu2.3) ...
+Setting up libslirp0:amd64 (4.7.0-1ubuntu3.1) ...
+Setting up libaio1t64:amd64 (0.3.113-6build1.1) ...
+Setting up libtag1v5:amd64 (1.13.1-1build1) ...
+Setting up cpu-checker (0.7-1.3build2) ...
+Setting up libasyncns0:amd64 (0.8-6build4) ...
+Setting up libwavpack1:amd64 (5.6.0-1build1) ...
+Setting up libusbredirparser1t64:amd64 (0.13.0-2.1build1) ...
+Setting up ipxe-qemu (1.21.1+git-20220113.fbbdc3926-0ubuntu2) ...
+Setting up libtheora0:amd64 (1.1.1+dfsg.1-16.1build3) ...
+Setting up libnl-3-200:amd64 (3.7.0-0.3build1.1) ...
+Setting up libdecor-0-0:amd64 (0.2.2-1build2) ...
+Setting up libndctl6:amd64 (77-2ubuntu2) ...
+Setting up ipxe-qemu-256k-compat-efi-roms (1.0.0+git-20150424.a25a16d-0ubuntu5) ...
+Setting up libflac12t64:amd64 (1.4.3+ds-2.1ubuntu2) ...
+Setting up curl (8.5.0-2ubuntu10.13) ...
+Setting up libbrlapi0.8:amd64 (6.6-4ubuntu5) ...
+Setting up libxss1:amd64 (1:1.2.3-1build3) ...
+Setting up libusb-1.0-0:amd64 (2:1.0.27-1) ...
+Setting up dmidecode (3.5-3ubuntu0.1) ...
+Setting up glib-networking-common (2.80.0-1build1) ...
+Setting up liburing2:amd64 (2.5-1build1) ...
+Setting up libsamplerate0:amd64 (0.2.2-4build1) ...
+Setting up libpmem1:amd64 (1.13.1-1.1ubuntu2) ...
+Setting up libpipewire-0.3-0t64:amd64 (1.0.5-1ubuntu3.3) ...
+Setting up libdecor-0-plugin-1-gtk:amd64 (0.2.2-1build2) ...
+Setting up libgudev-1.0-0:amd64 (1:238-5ubuntu1) ...
+Setting up libbpf1:amd64 (1:1.3.0-2build2) ...
+Setting up libmp3lame0:amd64 (3.100-6build1) ...
+Setting up libvorbisenc2:amd64 (1.3.7-1build3) ...
+Setting up ethtool (1:6.7-1build1) ...
+Setting up libaa1:amd64 (1.4p5-51.1) ...
+Setting up libiec61883-0:amd64 (1.2.0-6build1) ...
+Setting up libavc1394-0:amd64 (0.5.4-5build3) ...
+Setting up gsettings-desktop-schemas (46.1-0ubuntu1) ...
+Setting up libproxy1v5:amd64 (0.5.4-4build1) ...
+Setting up gstreamer1.0-x:amd64 (1.24.2-1ubuntu0.4) ...
+Setting up qemu-system-common (1:8.2.2+ds-0ubuntu1.18) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/qemu-kvm.service → /usr/lib/systemd/system/qemu-kvm.service.
+Setting up libcaca0:amd64 (0.99.beta20-4ubuntu0.2) ...
+Setting up iproute2 (6.1.0-1ubuntu6.4) ...
+Setting up libspice-server1:amd64 (0.15.1-1build2) ...
+Setting up libnl-route-3-200:amd64 (3.7.0-0.3build1.1) ...
+Setting up gstreamer1.0-plugins-base:amd64 (1.24.2-1ubuntu0.4) ...
+Setting up libshout3:amd64 (2.4.6-1build2) ...
+Setting up libpmemobj1:amd64 (1.13.1-1.1ubuntu2) ...
+Setting up pciutils (1:3.10.0-2build1) ...
+Setting up libjack-jackd2-0:amd64 (1.9.21~dfsg-3ubuntu3) ...
+Setting up libsndfile1:amd64 (1.2.2-1ubuntu5.24.04.1) ...
+Setting up qemu-utils (1:8.2.2+ds-0ubuntu1.18) ...
+Setting up glib-networking-services (2.80.0-1build1) ...
+Setting up libibverbs1:amd64 (50.0-2ubuntu0.2) ...
+Setting up ibverbs-providers:amd64 (50.0-2ubuntu0.2) ...
+Setting up libpulse0:amd64 (1:16.1+dfsg1-2ubuntu10.1) ...
+Setting up librdmacm1t64:amd64 (50.0-2ubuntu0.2) ...
+Setting up libiscsi7:amd64 (1.19.0-3build4) ...
+Setting up libsdl2-2.0-0:amd64 (2.30.0+dfsg-1ubuntu3.1) ...
+Setting up librados2 (19.2.3-0ubuntu0.24.04.3) ...
+Setting up qemu-system-x86 (1:8.2.2+ds-0ubuntu1.18) ...
+Setting up librbd1 (19.2.3-0ubuntu0.24.04.3) ...
+Setting up qemu-block-extra (1:8.2.2+ds-0ubuntu1.18) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/run-qemu.mount → /usr/lib/systemd/system/run-qemu.mount.
+Setting up qemu-system-modules-opengl (1:8.2.2+ds-0ubuntu1.18) ...
+Setting up qemu-system-gui (1:8.2.2+ds-0ubuntu1.18) ...
+Setting up qemu-system-modules-spice (1:8.2.2+ds-0ubuntu1.18) ...
+Processing triggers for hicolor-icon-theme (0.17-2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
+Processing triggers for libglib2.0-0t64:amd64 (2.80.0-6ubuntu3.8) ...
+Setting up glib-networking:amd64 (2.80.0-1build1) ...
+Setting up libsoup-3.0-0:amd64 (3.4.4-5ubuntu0.7) ...
+Setting up gstreamer1.0-plugins-good:amd64 (1.24.2-1ubuntu1.5) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
+[apt-get install exit=0]
+
+=== PHASE 0: LAYERING ===
+
+$ uname -a
+Linux vm 6.18.44-fc-v22 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux
+[exit=0]
+
+$ cat /proc/version
+Linux version 6.18.44-fc-v22 (builder@sandboxing) (gcc (GCC) 15.2.0, GNU ld (GNU Binutils) 2.46) #1 SMP PREEMPT_DYNAMIC @0
+[exit=0]
+
+$ head -4 /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+[exit=0]
+
+$ systemd-detect-virt
+docker
+[exit=0]
+
+$ systemd-detect-virt -v
+kvm
+[exit=0]
+
+$ systemd-detect-virt -c
+docker
+[exit=0]
+
+$ cat /proc/1/comm
+process_api
+[exit=0]
+
+$ cat /proc/1/cgroup
+9:name=systemd:/
+8:pids:/
+7:blkio:/
+6:freezer:/
+5:devices:/
+4:memory:/
+3:cpuset:/
+2:cpuacct:/
+1:cpu:/
+0::/
+[exit=0]
+
+$ cat /proc/self/cgroup
+9:name=systemd:/
+8:pids:/
+7:blkio:/
+6:freezer:/
+5:devices:/
+4:memory:/process_api/01a0533b-df89-74cd-8a20-f66bdc6ec4f3/claude-code-bash
+3:cpuset:/
+2:cpuacct:/
+1:cpu:/
+0::/
+[exit=0]
+
+$ ls -la /.dockerenv 2>&1
+ls: cannot access '/.dockerenv': No such file or directory
+[exit=2]
+
+$ findmnt -no FSTYPE,SOURCE,OPTIONS /
+ext4   /dev/vda rw,relatime,resv_strict,resuid=65534,resgid=65534
+[exit=0]
+
+$ grep -E ' / ' /proc/mounts
+/dev/vda / ext4 rw,relatime,resv_strict,resuid=65534,resgid=65534 0 0
+[exit=0]
+
+$ grep -E '^(Seccomp|NoNewPrivs|CapEff|CapBnd)' /proc/self/status
+CapEff:	000001fffeffffff
+CapBnd:	000001fffeffffff
+NoNewPrivs:	0
+Seccomp:	0
+Seccomp_filters:	0
+[exit=0]
+
+$ ls -l /dev/kvm /dev/vsock /dev/net/tun 2>&1
+ls: cannot access '/dev/kvm': No such file or directory
+crw------- 1 root root 10, 200 Aug 27 17:44 /dev/net/tun
+crw------- 1 root root 10, 258 Aug 27 17:44 /dev/vsock
+[exit=2]
+
+$ ls /dev | head -60
+autofs
+console
+cpu
+cpu_dma_latency
+fd
+full
+fuse
+hwrng
+kmsg
+loop-control
+loop0
+loop1
+loop2
+loop3
+loop4
+loop5
+loop6
+loop7
+net
+null
+ptmx
+pts
+random
+shm
+stderr
+stdin
+stdout
+tty
+tty0
+tty1
+tty10
+tty11
+tty12
+tty13
+tty14
+tty15
+tty16
+tty17
+tty18
+tty19
+tty2
+tty20
+tty21
+tty22
+tty23
+tty24
+tty25
+tty26
+tty27
+tty28
+tty29
+tty3
+tty30
+tty31
+tty32
+tty33
+tty34
+tty35
+tty36
+tty37
+[exit=0]
+
+$ dmesg 2>&1 | head -5
+[    0.000000] Linux version 6.18.44-fc-v22 (builder@sandboxing) (gcc (GCC) 15.2.0, GNU ld (GNU Binutils) 2.46) #1 SMP PREEMPT_DYNAMIC @0
+[    0.000000] Command line: console=ttyS0 reboot=k panic=1 nomodule random.trust_cpu=1 ipv6.disable=1 swiotlb=noforce rdinit=/process_api -- --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x00000000000fffff] reserved
+[exit=0]
+
+$ nproc
+4
+[exit=0]
+
+$ free -m
+               total        used        free      shared  buff/cache   available
+Mem:           16075         684       14322           5        1338       15390
+Swap:              0           0           0
+[exit=0]
+
+$ df -h / | tail -1
+/dev/vda        252G  7.3G   30G  20% /
+[exit=0]
+
+$ cat /sys/fs/cgroup/cpu.max /sys/fs/cgroup/memory.max 2>&1
+cat: /sys/fs/cgroup/cpu.max: No such file or directory
+cat: /sys/fs/cgroup/memory.max: No such file or directory
+[exit=1]
+
+$ env | cut -d= -f1 | sort | grep -iE 'claude|anthropic|sandbox|proxy|remote'
+ANTHROPIC_BASE_URL
+CCR_AGENT_PROXY_ENABLED
+CCR_TEST_GITPROXY
+CCR_UPSTREAM_PROXY_ENABLED
+CLAUDECODE
+CLAUDE_ADDITIONAL_DIRECTORIES
+CLAUDE_AFTER_LAST_COMPACT
+CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+CLAUDE_AUTO_BACKGROUND_TASKS
+CLAUDE_CODE_ACCOUNT_UUID
+CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD
+CLAUDE_CODE_BASE_REF
+CLAUDE_CODE_CHILD_SESSION
+CLAUDE_CODE_CONTAINER_ID
+CLAUDE_CODE_DEBUG
+CLAUDE_CODE_DIAGNOSTICS_FILE
+CLAUDE_CODE_DISABLE_BUILTIN_ANTMCP
+CLAUDE_CODE_ENTRYPOINT
+CLAUDE_CODE_ENVIRONMENT_RUNNER_VERSION
+CLAUDE_CODE_EXECPATH
+CLAUDE_CODE_GZIP_REQUEST_BODIES
+CLAUDE_CODE_HOLD_UNANSWERED_PARKED_PERMISSION
+CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH
+CLAUDE_CODE_MESSAGING_SOCKET
+CLAUDE_CODE_MESSAGING_TOKEN
+CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR
+CLAUDE_CODE_ORGANIZATION_UUID
+CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2
+CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST
+CLAUDE_CODE_PROXY_RESOLVES_HOSTS
+CLAUDE_CODE_REMOTE
+CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE
+CLAUDE_CODE_REMOTE_HERMETIC_MODE
+CLAUDE_CODE_REMOTE_SEND_KEEPALIVES
+CLAUDE_CODE_REMOTE_SESSION_ID
+CLAUDE_CODE_SESSION_ID
+CLAUDE_CODE_SYNC_SESSION_REFS
+CLAUDE_CODE_SYNC_SKILLS
+CLAUDE_CODE_TEE_SDK_STDOUT
+CLAUDE_CODE_USER_EMAIL
+CLAUDE_CODE_USE_CCR_V2
+CLAUDE_CODE_VERSION
+CLAUDE_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR
+CLAUDE_CODE_WORKER_EPOCH
+CLAUDE_EFFORT
+CLAUDE_ENABLE_STREAM_WATCHDOG
+CLAUDE_PID
+CLAUDE_SESSION_INGRESS_TOKEN_FILE
+CLOUDSDK_PROXY_ADDRESS
+CLOUDSDK_PROXY_PORT
+CLOUDSDK_PROXY_TYPE
+DOCKER_HTTPS_PROXY
+ELECTRON_GET_USE_PROXY
+GLOBAL_AGENT_HTTPS_PROXY
+GLOBAL_AGENT_NO_PROXY
+HTTPS_PROXY
+IS_SANDBOX
+NO_PROXY
+YARN_HTTPS_PROXY
+https_proxy
+no_proxy
+npm_config_https_proxy
+npm_config_noproxy
+[exit=0]
+
+$ docker info 2>&1 | head -12
+Client: Docker Engine - Community
+ Version:    29.3.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.31.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.1.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+[exit=0]
+
+$ pgrep -a dockerd
+[exit=1]
+
+=== PHASE 0b: container-detect discrepancy / PID1 identity ===
+
+$ tr "\0" "\n" < /proc/1/environ | cut -d= -f1 | sort
+HOME
+TERM
+[exit=0]
+
+$ tr "\0" "\n" < /proc/1/environ | grep -iE "^container" || echo "NO container= IN PID1 ENVIRON"
+NO container= IN PID1 ENVIRON
+[exit=0]
+
+$ ls -l /run/systemd/container /run/.containerenv 2>&1
+ls: cannot access '/run/.containerenv': No such file or directory
+-rw-r--r-- 1 root root 7 Feb 17  2026 /run/systemd/container
+[exit=2]
+
+$ cat /run/systemd/container 2>&1
+docker
+[exit=0]
+
+$ readlink -f /proc/1/exe 2>&1
+[exit=1]
+
+$ cat /proc/1/cmdline | tr "\0" " "; echo
+/process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002 
+[exit=0]
+
+$ ps -eo pid,ppid,comm --sort=pid | head -25
+  PID  PPID COMMAND
+    1     0 process_api
+    2     0 kthreadd
+    3     2 pool_workqueue_release
+    4     2 kworker/R-rcu_gp
+    5     2 kworker/R-sync_wq
+    6     2 kworker/R-kvfree_rcu_reclaim
+    7     2 kworker/R-slub_flushwq
+    8     2 kworker/R-netns
+    9     2 kworker/0:0-events
+   10     2 kworker/0:0H-events_highpri
+   11     2 kworker/0:1-events
+   12     2 kworker/u16:0-ext4-rsv-conversion
+   13     2 kworker/R-mm_percpu_wq
+   14     2 ksoftirqd/0
+   15     2 rcu_preempt
+   16     2 rcu_exp_par_gp_kthread_worker/0
+   17     2 rcu_exp_gp_kthread_worker
+   18     2 migration/0
+   19     2 cpuhp/0
+   20     2 cpuhp/1
+   21     2 migration/1
+   22     2 ksoftirqd/1
+   23     2 kworker/1:0-slub_flushwq
+   24     2 kworker/1:0H-events_highpri
+[exit=0]
+
+$ ls -l /proc/self/ns/
+total 0
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 cgroup -> cgroup:[4026531835]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 mnt -> mnt:[4026531832]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 net -> net:[4026531833]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 pid_for_children -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 time -> time:[4026531834]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 time_for_children -> time:[4026531834]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 uts -> uts:[4026531838]
+[exit=0]
+
+$ ls -l /proc/1/ns/
+ls: cannot read symbolic link '/proc/1/ns/net': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/uts': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/ipc': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/pid': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/pid_for_children': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/user': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/mnt': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/cgroup': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/time': Permission denied
+ls: cannot read symbolic link '/proc/1/ns/time_for_children': Permission denied
+total 0
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 cgroup
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 ipc
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 mnt
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 net
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 pid
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 pid_for_children
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 time
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 time_for_children
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 user
+lrwxrwxrwx 1 root root 0 Aug 30 15:15 uts
+[exit=1]
+
+$ capsh --decode=000001fffeffffff 2>&1
+0x000001fffeffffff=cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_linux_immutable,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_boot,cap_sys_nice,cap_sys_time,cap_sys_tty_config,cap_mknod,cap_lease,cap_audit_write,cap_audit_control,cap_setfcap,cap_mac_override,cap_mac_admin,cap_syslog,cap_wake_alarm,cap_block_suspend,cap_audit_read,cap_perfmon,cap_bpf,cap_checkpoint_restore
+[exit=0]
+
+$ mount | head -30
+proc on /proc type proc (rw,relatime)
+sysfs on /sys type sysfs (rw,relatime)
+devtmpfs on /dev type devtmpfs (rw,relatime,size=8225260k,nr_inodes=2056315,mode=755)
+tmpfs on /dev/shm type tmpfs (rw,relatime,size=16461068k)
+devpts on /dev/pts type devpts (rw,relatime,mode=600,ptmxmode=000)
+/dev/vda on / type ext4 (rw,relatime,resv_strict,resuid=65534,resgid=65534)
+/dev/vdb on /opt/rclone type squashfs (ro,relatime,errors=continue)
+/dev/vdc on /mnt/skills/public type squashfs (ro,relatime,errors=continue)
+/dev/vdd on /mnt/skills/examples type squashfs (ro,relatime,errors=continue)
+/dev/vde on /opt/claude-code type ext4 (ro,nosuid,nodev,relatime,norecovery)
+/dev/vdf on /opt/env-runner type ext4 (ro,nosuid,nodev,relatime,norecovery)
+devpts on /dev/pts type devpts (rw,relatime,mode=600,ptmxmode=000)
+tmpfs on /dev/shm type tmpfs (rw,relatime,size=16461068k)
+tmpfs on /sys/fs/cgroup type tmpfs (rw,relatime)
+cgroup on /sys/fs/cgroup/cpu type cgroup (rw,relatime,cpu)
+cgroup on /sys/fs/cgroup/cpuacct type cgroup (rw,relatime,cpuacct)
+cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,relatime,cpuset)
+cgroup on /sys/fs/cgroup/memory type cgroup (rw,relatime,memory)
+cgroup on /sys/fs/cgroup/devices type cgroup (rw,relatime,devices)
+cgroup on /sys/fs/cgroup/freezer type cgroup (rw,relatime,freezer)
+cgroup on /sys/fs/cgroup/blkio type cgroup (rw,relatime,blkio)
+cgroup on /sys/fs/cgroup/pids type cgroup (rw,relatime,pids)
+cgroup on /sys/fs/cgroup/systemd type cgroup (rw,relatime,name=systemd)
+cgroup2 on /sys/fs/cgroup/unified type cgroup2 (rw,relatime)
+[exit=0]
+
+$ cat /proc/cmdline
+console=ttyS0 reboot=k panic=1 nomodule random.trust_cpu=1 ipv6.disable=1 swiotlb=noforce rdinit=/process_api -- --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+[exit=0]
+
+=== PHASE 1: HYPERVISOR FAMILY VIA CPUID ===
+
+$ gcc -O0 -o cpuidprobe cpuidprobe.c && ./cpuidprobe
+cpu_vendor="GenuineIntel"
+leaf1.ecx: hypervisor_bit=1 vmx=0
+leaf80000001.ecx: svm=0
+hv_max_leaf=0x40000001 hv_signature="KVMKVMKVM"
+[exit=0]
+
+$ grep -m1 'model name' /proc/cpuinfo
+model name	: Intel(R) Xeon(R) Processor @ 2.80GHz
+[exit=0]
+
+$ grep -m1 '^flags' /proc/cpuinfo | tr ' ' '\n' | grep -E '^(hypervisor|vmx|svm|ept|vpid)$' || echo 'NONE OF hypervisor/vmx/svm/ept/vpid IN FLAGS'
+hypervisor
+[exit=0]
+
+$ lscpu | grep -iE 'hypervisor|virtualization|model name'
+Model name:                              Intel(R) Xeon(R) Processor @ 2.80GHz
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip avx512_vnni md_clear arch_capabilities
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+[exit=0]
+
+$ grep -m1 '^flags' /proc/cpuinfo
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip avx512_vnni md_clear arch_capabilities
+[exit=0]
+
+=== PHASE 2: FINGERPRINT THE VM BELOW ===
+
+$ for f in sys_vendor product_name product_version bios_vendor bios_version board_vendor chassis_asset_tag; do printf "%s=" "$f"; cat /sys/class/dmi/id/$f 2>/dev/null || echo "<ABSENT>"; done
+sys_vendor=<ABSENT>
+product_name=<ABSENT>
+product_version=<ABSENT>
+bios_vendor=<ABSENT>
+bios_version=<ABSENT>
+board_vendor=<ABSENT>
+chassis_asset_tag=<ABSENT>
+[exit=0]
+
+$ ls /sys/class/dmi/id/ 2>&1 | head -3
+ls: cannot access '/sys/class/dmi/id/': No such file or directory
+[exit=0]
+
+$ ls /sys/firmware/ 2>&1
+acpi
+memmap
+[exit=0]
+
+$ ls /sys/firmware/acpi/tables/ 2>&1
+APIC
+DSDT
+FACP
+MCFG
+data
+dynamic
+[exit=0]
+
+$ for t in /sys/firmware/acpi/tables/*; do [ -f "$t" ] || continue; printf "%-8s " "$(basename "$t")"; dd if="$t" bs=1 skip=10 count=14 2>/dev/null | tr -c "[:print:]" "."; echo; done
+APIC     FIRECKFCVMMADT
+DSDT     FIRECKFCVMDSDT
+FACP     FIRECKFCVMFADT
+MCFG     FIRECKFCMVMCFG
+[exit=0]
+
+$ cat /proc/cmdline
+console=ttyS0 reboot=k panic=1 nomodule random.trust_cpu=1 ipv6.disable=1 swiotlb=noforce rdinit=/process_api -- --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+[exit=0]
+
+$ ls /sys/bus/pci/devices/ 2>&1
+0000:00:00.0
+0000:00:01.0
+0000:00:02.0
+0000:00:03.0
+0000:00:04.0
+0000:00:05.0
+0000:00:06.0
+0000:00:07.0
+0000:00:08.0
+0000:00:09.0
+0000:00:0a.0
+[exit=0]
+
+$ lspci -nn 2>&1
+00:00.0 Host bridge [0600]: Intel Corporation Device [8086:0d57]
+00:01.0 Unassigned class [ffff]: Red Hat, Inc. Virtio 1.0 memory balloon [1af4:1045] (rev 01)
+00:02.0 Mass storage controller [0180]: Red Hat, Inc. Virtio 1.0 block device [1af4:1042] (rev 01)
+00:03.0 Mass storage controller [0180]: Red Hat, Inc. Virtio 1.0 block device [1af4:1042] (rev 01)
+00:04.0 Mass storage controller [0180]: Red Hat, Inc. Virtio 1.0 block device [1af4:1042] (rev 01)
+00:05.0 Mass storage controller [0180]: Red Hat, Inc. Virtio 1.0 block device [1af4:1042] (rev 01)
+00:06.0 Mass storage controller [0180]: Red Hat, Inc. Virtio 1.0 block device [1af4:1042] (rev 01)
+00:07.0 Mass storage controller [0180]: Red Hat, Inc. Virtio 1.0 block device [1af4:1042] (rev 01)
+00:08.0 Ethernet controller [0200]: Red Hat, Inc. Virtio 1.0 network device [1af4:1041] (rev 01)
+00:09.0 Unassigned class [ffff]: Red Hat, Inc. Virtio 1.0 socket [1af4:1053] (rev 01)
+00:0a.0 Unassigned class [ffff]: Red Hat, Inc. Virtio 1.0 RNG [1af4:1044] (rev 01)
+[exit=0]
+
+$ ls /sys/bus/platform/devices/ | grep -i virtio_mmio || echo "NO virtio_mmio PLATFORM DEVICES"
+NO virtio_mmio PLATFORM DEVICES
+[exit=0]
+
+$ ls /sys/bus/platform/devices/
+ACPI0013:00
+AMZNC10C:00
+FCVMGID:00
+pcspkr
+rtc_cmos
+serial8250
+[exit=0]
+
+$ for d in /sys/bus/virtio/devices/*; do [ -e "$d" ] || continue; echo "$(basename $d) device_id=$(cat $d/device) path=$(readlink -f $d)"; done
+virtio0 device_id=0x0005 path=/sys/devices/pci0000:00/0000:00:01.0/virtio0
+virtio1 device_id=0x0002 path=/sys/devices/pci0000:00/0000:00:02.0/virtio1
+virtio2 device_id=0x0002 path=/sys/devices/pci0000:00/0000:00:03.0/virtio2
+virtio3 device_id=0x0002 path=/sys/devices/pci0000:00/0000:00:04.0/virtio3
+virtio4 device_id=0x0002 path=/sys/devices/pci0000:00/0000:00:05.0/virtio4
+virtio5 device_id=0x0002 path=/sys/devices/pci0000:00/0000:00:06.0/virtio5
+virtio6 device_id=0x0002 path=/sys/devices/pci0000:00/0000:00:07.0/virtio6
+virtio7 device_id=0x0001 path=/sys/devices/pci0000:00/0000:00:08.0/virtio7
+virtio8 device_id=0x0013 path=/sys/devices/pci0000:00/0000:00:09.0/virtio8
+virtio9 device_id=0x0004 path=/sys/devices/pci0000:00/0000:00:0a.0/virtio9
+[exit=0]
+
+$ ls -l /dev/ttyS* /dev/hvc* /dev/vda* /dev/nvme* /dev/sda* 2>&1
+ls: cannot access '/dev/hvc*': No such file or directory
+ls: cannot access '/dev/nvme*': No such file or directory
+ls: cannot access '/dev/sda*': No such file or directory
+crw------- 1 root root   4, 64 Aug 27 17:44 /dev/ttyS0
+brw------- 1 root root 254,  0 Aug 27 17:44 /dev/vda
+[exit=2]
+
+$ lsblk -o NAME,SIZE,TYPE,TRAN,MODEL 2>&1
+NAME    SIZE TYPE TRAN   MODEL
+zram0     0B disk        
+vda     256G disk virtio 
+vdb     9.8M disk virtio 
+vdc     676K disk virtio 
+vdd     5.5M disk virtio 
+vde   230.6M disk virtio 
+vdf    46.8M disk virtio 
+[exit=0]
+
+$ cat /sys/block/*/device/model 2>&1
+cat: '/sys/block/*/device/model': No such file or directory
+[exit=1]
+
+$ ethtool -i eth0 2>&1 | head -3
+driver: virtio_net
+version: 1.0.0
+firmware-version: 
+[exit=0]
+
+$ ip -brief addr
+lo               UNKNOWN        127.0.0.1/8 
+ifb0             DOWN           
+ifb1             DOWN           
+eth0             UP             192.0.2.2/24 
+[exit=0]
+
+$ ip route
+default via 192.0.2.1 dev eth0 
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.2 
+[exit=0]
+
+$ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
+tsc kvm-clock 
+[exit=0]
+
+$ dmesg 2>&1 | grep -iE "DMI:|Hypervisor detected|virtio|Firecracker|Cloud Hypervisor|QEMU|Amazon|nitro|Google|gVisor" | head -30
+[    0.000000] Command line: console=ttyS0 reboot=k panic=1 nomodule random.trust_cpu=1 ipv6.disable=1 swiotlb=noforce rdinit=/process_api -- --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+[    0.000000] Hypervisor detected: KVM
+[    0.509009] Kernel command line: console=ttyS0 reboot=k panic=1 nomodule random.trust_cpu=1 ipv6.disable=1 swiotlb=noforce rdinit=/process_api -- --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+[    2.802638] virtio-pci 0000:00:01.0: enabling device (0000 -> 0002)
+[    2.808811] virtio-pci 0000:00:02.0: enabling device (0000 -> 0002)
+[    2.814853] virtio-pci 0000:00:03.0: enabling device (0000 -> 0002)
+[    2.820858] virtio-pci 0000:00:04.0: enabling device (0000 -> 0002)
+[    2.826895] virtio-pci 0000:00:05.0: enabling device (0000 -> 0002)
+[    2.832906] virtio-pci 0000:00:06.0: enabling device (0000 -> 0002)
+[    2.838886] virtio-pci 0000:00:07.0: enabling device (0000 -> 0002)
+[    2.844980] virtio-pci 0000:00:08.0: enabling device (0000 -> 0002)
+[    2.850941] virtio-pci 0000:00:09.0: enabling device (0000 -> 0002)
+[    2.857053] virtio-pci 0000:00:0a.0: enabling device (0000 -> 0002)
+[    2.898347] virtio_blk virtio1: 1/0/0 default/read/poll queues
+[    2.904611] virtio_blk virtio1: [vda] 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    2.912074] virtio_blk virtio2: 1/0/0 default/read/poll queues
+[    2.918040] virtio_blk virtio2: [vdb] 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    2.924599] virtio_blk virtio3: 1/0/0 default/read/poll queues
+[    2.930509] virtio_blk virtio3: [vdc] 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    2.937155] virtio_blk virtio4: 1/0/0 default/read/poll queues
+[    2.945184] virtio_blk virtio4: [vdd] 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    2.952381] virtio_blk virtio5: 1/0/0 default/read/poll queues
+[    2.958341] virtio_blk virtio5: [vde] 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    2.965556] virtio_blk virtio6: 1/0/0 default/read/poll queues
+[    2.971683] virtio_blk virtio6: [vdf] 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    3.175407]     --firecracker-init
+[    4.512036] virtio_blk virtio6: [vdf] new size: 95880 512-byte logical blocks (49.1 MB/46.8 MiB)
+[    4.512038] virtio_blk virtio3: [vdc] new size: 1352 512-byte logical blocks (692 kB/676 KiB)
+[    4.515269] virtio_blk virtio4: [vdd] new size: 11352 512-byte logical blocks (5.81 MB/5.54 MiB)
+[    4.517771] virtio_blk virtio5: [vde] new size: 472312 512-byte logical blocks (242 MB/231 MiB)
+[exit=0]
+
+=== PHASE 2b: ACPI header detail + metadata endpoints ===
+
+$ for t in APIC DSDT FACP MCFG; do printf "%-5s full-header: " $t; dd if=/sys/firmware/acpi/tables/$t bs=1 count=36 2>/dev/null | tr -c "[:print:]" "."; echo; done
+APIC  full-header: APICX....*FIRECKFCVMMADT....FCAT..$ 
+DSDT  full-header: DSDT!....BFIRECKFCVMDSDT....FCAT..$ 
+FACP  full-header: FACP.....>FIRECKFCVMFADT....FCAT..$ 
+MCFG  full-header: MCFG<.....FIRECKFCMVMCFG....FCAT..$ 
+[exit=0]
+
+$ cat /sys/bus/platform/devices/AMZNC10C:00/modalias 2>&1; cat /sys/bus/platform/devices/FCVMGID:00/modalias 2>&1
+acpi:AMZNC10C:VMCLOCK:
+acpi:FCVMGID:VM_GEN_COUNTER:
+[exit=0]
+
+$ cat /sys/devices/system/clocksource/clocksource0/current_clocksource
+tsc
+[exit=0]
+
+$ dmidecode 2>&1 | head -8
+# dmidecode 3.5
+Scanning /dev/mem for entry point.
+Can't read memory from /dev/mem
+[exit=0]
+
+--- metadata endpoints (--noproxy, VM-native network) ---
+
+$ curl -sS -m 3 --noproxy '*' -H 'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/machine-type 2>&1; echo
+Destination IP is in a private/reserved range
+[exit=0]
+
+$ TOKEN=$(curl -sS -m 3 --noproxy '*' -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' 2>&1); echo "aws_token_result=${TOKEN:0:30}"
+aws_token_result=Destination IP is in a private
+[exit=0]
+
+$ TOKEN=$(curl -sS -m 3 --noproxy '*' -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' 2>/dev/null); curl -sS -m 3 --noproxy '*' -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>&1; echo
+Destination IP is in a private/reserved range
+[exit=0]
+
+$ curl -sS -m 3 --noproxy '*' -i http://169.254.169.254/ 2>&1 | head -8
+HTTP/1.1 403 Forbidden
+x-deny-reason: private_dest_ip
+content-length: 45
+content-type: text/plain
+date: Sun, 30 Aug 2026 15:16:29 GMT
+
+Destination IP is in a private/reserved range[exit=0]
+
+$ ip neigh; arp -an 2>/dev/null | head
+192.0.2.1 dev eth0 lladdr 02:fc:00:00:00:05 REACHABLE 
+[exit=0]
+
+=== PHASE 3: KVM AVAILABILITY ===
+
+$ ls -l /dev/kvm 2>&1
+ls: cannot access '/dev/kvm': No such file or directory
+[exit=2]
+
+$ stat /dev/kvm 2>&1 | head -3
+stat: cannot statx '/dev/kvm': No such file or directory
+[exit=0]
+
+$ [ -w /dev/kvm ] && echo KVM_WRITABLE_BY_ME || echo KVM_NOT_WRITABLE_BY_ME
+KVM_NOT_WRITABLE_BY_ME
+[exit=0]
+
+$ lsmod 2>&1 | grep -E '^kvm' || echo 'NO kvm MODULES LOADED'
+NO kvm MODULES LOADED
+[exit=0]
+
+$ lsmod 2>&1 | head -5
+environment: line 26: lsmod: command not found
+[exit=0]
+
+$ ls /sys/module 2>&1 | grep -i kvm || echo "NO kvm IN /sys/module"
+NO kvm IN /sys/module
+[exit=0]
+
+$ modprobe kvm_intel 2>&1; echo "modprobe kvm_intel exit=$?"
+environment: line 26: modprobe: command not found
+modprobe kvm_intel exit=127
+[exit=0]
+
+$ modprobe kvm_amd 2>&1; echo "modprobe kvm_amd exit=$?"
+environment: line 26: modprobe: command not found
+modprobe kvm_amd exit=127
+[exit=0]
+
+$ modprobe kvm 2>&1; echo "modprobe kvm exit=$?"
+environment: line 26: modprobe: command not found
+modprobe kvm exit=127
+[exit=0]
+
+$ cat /sys/module/kvm_intel/parameters/nested /sys/module/kvm_amd/parameters/nested 2>&1
+cat: /sys/module/kvm_intel/parameters/nested: No such file or directory
+cat: /sys/module/kvm_amd/parameters/nested: No such file or directory
+[exit=1]
+
+$ [ -e /dev/kvm ] || { grep -q kvm /proc/misc 2>/dev/null && mknod -m 660 /dev/kvm c 10 232 2>&1; echo "mknod-guarded exit=$?"; }; ls -l /dev/kvm 2>&1
+mknod-guarded exit=1
+ls: cannot access '/dev/kvm': No such file or directory
+[exit=2]
+
+$ grep kvm /proc/misc 2>&1 || echo 'kvm NOT IN /proc/misc'
+kvm NOT IN /proc/misc
+[exit=0]
+
+$ cat /proc/misc
+259 cpu_dma_latency
+258 vsock
+200 tun
+237 loop-control
+229 fuse
+235 autofs
+257 userfaultfd
+183 hw_random
+256 vga_arbiter
+[exit=0]
+
+$ ( [ -r /proc/config.gz ] && zcat /proc/config.gz || cat /boot/config-$(uname -r) 2>/dev/null ) | grep -E '^CONFIG_(KVM|KVM_INTEL|KVM_AMD)=' || echo 'NO KERNEL CONFIG READABLE'
+NO KERNEL CONFIG READABLE
+[exit=0]
+
+$ ls -l /proc/config.gz /boot/ 2>&1 | head -20
+-r--r--r-- 1 root root 22886 Aug 30 15:16 /proc/config.gz
+
+/boot/:
+total 0
+[exit=0]
+
+$ ls /lib/modules/$(uname -r)/kernel/arch/x86/kvm/ 2>&1
+ls: cannot access '/lib/modules/6.18.44-fc-v22/kernel/arch/x86/kvm/': No such file or directory
+[exit=2]
+
+$ ls /lib/modules/ 2>&1
+ls: cannot access '/lib/modules/': No such file or directory
+[exit=2]
+
+$ modprobe msr 2>&1; echo "modprobe msr exit=$?"
+environment: line 26: modprobe: command not found
+modprobe msr exit=127
+[exit=0]
+
+$ rdmsr -f 2:0 0x3a 2>&1
+rdmsr: open: No such file or directory
+[exit=127]
+
+=== PHASE 3b: kernel config + module subsystem (retry with kmod) ===
+
+$ command -v zcat gzip zgrep modprobe lsmod insmod || echo "(some absent)"
+/usr/bin/zcat
+/usr/bin/gzip
+/usr/bin/zgrep
+[exit=0]
+
+$ apt-get install -y -qq kmod 2>&1 | tail -2; command -v modprobe lsmod
+sed: can't read /etc/modules: No such file or directory
+Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
+/usr/sbin/modprobe
+/usr/sbin/lsmod
+[exit=0]
+
+$ zcat /proc/config.gz | grep -E "^CONFIG_(KVM|KVM_INTEL|KVM_AMD|MODULES)" || echo "NO KVM/MODULES CONFIG LINES"
+CONFIG_KVM_GUEST=y
+CONFIG_MODULES_USE_ELF_RELA=y
+[exit=0]
+
+$ zcat /proc/config.gz | grep -E "KVM" || echo "NO KVM STRING IN KERNEL CONFIG AT ALL"
+CONFIG_KVM_GUEST=y
+# CONFIG_PTP_1588_CLOCK_KVM is not set
+[exit=0]
+
+$ zcat /proc/config.gz | grep -E "^# CONFIG_(KVM|MODULES)" || true
+# CONFIG_MODULES is not set
+[exit=0]
+
+$ zcat /proc/config.gz | grep -cE "^CONFIG_"
+1665
+[exit=0]
+
+$ lsmod 2>&1
+libkmod: ERROR ../libkmod/libkmod-module.c:1762 kmod_module_new_from_loaded: could not open /proc/modules: No such file or directory
+Error: could not get list of modules: No such file or directory
+[exit=1]
+
+$ modprobe kvm 2>&1; echo "exit=$?"
+modprobe: FATAL: Module kvm not found in directory /lib/modules/6.18.44-fc-v22
+exit=1
+[exit=0]
+
+$ modprobe kvm_intel 2>&1; echo "exit=$?"
+modprobe: FATAL: Module kvm_intel not found in directory /lib/modules/6.18.44-fc-v22
+exit=1
+[exit=0]
+
+$ modprobe msr 2>&1; echo "exit=$?"
+modprobe: FATAL: Module msr not found in directory /lib/modules/6.18.44-fc-v22
+exit=1
+[exit=0]
+
+$ ls /dev/cpu/ 2>&1; ls /dev/cpu/0/ 2>&1
+0
+1
+2
+3
+cpuid
+[exit=0]
+
+$ rdmsr -f 2:0 0x3a 2>&1; echo "rdmsr exit=$?"
+rdmsr: open: No such file or directory
+rdmsr exit=127
+[exit=0]
+
+$ mknod -m 600 /dev/kvm c 10 232 2>&1; echo "unconditional mknod exit=$?"; ls -l /dev/kvm 2>&1
+unconditional mknod exit=0
+crw------- 1 root root 10, 232 Aug 30 15:17 /dev/kvm
+[exit=0]
+
+=== PHASE 4a: POSITIVE PROOF - EXECUTE GUEST CODE UNDER KVM ===
+
+$ gcc -O0 -o kvmtest kvmtest.c 2>&1; echo "gcc exit=$?"
+gcc exit=0
+[exit=0]
+
+$ (./kvmtest; echo "exit=$?")
+kvmtest: open /dev/kvm: No such device
+exit=1
+[exit=0]
+
+$ strace -f -e trace=openat,ioctl ./kvmtest 2>&1 | tail -12 || echo "(strace unavailable)"
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/dev/kvm", O_RDWR|O_CLOEXEC) = -1 ENODEV (No such device)
+kvmtest: open /dev/kvm: No such device
++++ exited with 1 +++
+[exit=0]
+
+=== PHASE 4b: NESTED GUEST BOOT (gated on 4a; 4a FAILED -> not attempted as a boot)
+    Recording the exact 'qemu -accel kvm' error as corroborating evidence.
+
+$ K=$(ls /boot/vmlinuz-* 2>/dev/null | head -1); echo "kernel=$K"; ls -la /boot/
+kernel=
+total 8
+drwxr-xr-x  2 root root 4096 Apr 22  2024 .
+drwxr-xr-x 22 root root 4096 Aug 30 15:14 ..
+[exit=0]
+
+$ qemu-system-x86_64 --version | head -1
+QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+[exit=0]
+
+$ timeout 30 qemu-system-x86_64 -accel kvm -cpu host -M pc -m 256M -nographic -no-reboot 2>&1 | head -10; echo "qemu-accel-kvm-pipeline-done"
+Could not access KVM kernel module: No such device
+qemu-system-x86_64: -accel kvm: failed to initialize kvm: No such device
+qemu-accel-kvm-pipeline-done
+[exit=0]
+
+$ timeout 30 qemu-system-x86_64 -accel help 2>&1 | head -10
+Accelerators supported in QEMU binary:
+tcg
+kvm
+[exit=0]
+
+$ timeout 30 qemu-system-x86_64 -accel tcg -M pc -m 256M -nographic -no-reboot -bios /dev/null 2>&1 | head -5; echo "(tcg availability check)"
+qemu: could not load PC BIOS '/dev/null'
+(tcg availability check)
+[exit=0]
+
+=== PHASE 4c: DOCKER-IN-VM (namespaces/cgroups only; says nothing about KVM) ===
+
+$ pgrep -a dockerd || echo "NO dockerd PROCESS"
+NO dockerd PROCESS
+[exit=0]
+
+$ docker version --format "client={{.Client.Version}} server={{.Server.Version}}" 2>&1
+client=29.3.1 server=
+failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory
+[exit=1]
+
+$ docker run --rm alpine:3.20 sh -c 'uname -a; cat /proc/1/cgroup' 2>&1 | head -8
+failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory
+[exit=0]
+
+--- 4c retry: start dockerd manually (no systemd; PID1=process_api) ---
+
+$ command -v dockerd containerd runc
+/usr/bin/dockerd
+/usr/bin/containerd
+/usr/bin/runc
+[exit=0]
+
+$ pgrep -a dockerd | head -2 || echo "dockerd NOT RUNNING"
+4426 dockerd
+[exit=0]
+
+$ docker info --format "server={{.ServerVersion}} driver={{.Driver}} cgroup={{.CgroupDriver}}/{{.CgroupVersion}} runtime={{.DefaultRuntime}}" 2>&1
+server=29.3.1 driver=overlayfs cgroup=cgroupfs/1 runtime=runc
+[exit=0]
+
+$ docker run --rm alpine:3.20 sh -c 'uname -a; cat /proc/1/cgroup' 2>&1 | head -8
+Unable to find image 'alpine:3.20' locally
+3.20: Pulling from library/alpine
+25f1d6b1951a: Pulling fs layer
+d4050d56ebf2: Download complete
+3a030ca3f633: Download complete
+25f1d6b1951a: Download complete
+25f1d6b1951a: Pull complete
+Digest: sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[exit=0]
+
+$ tail -6 /tmp/claude-0/-home-user-vanixiets/b8c009dc-c731-585a-94bb-4a114f167ca6/scratchpad/dockerd.log
+time="2026-08-30T15:17:59.936008474Z" level=info msg="Completed buildkit initialization"
+time="2026-08-30T15:17:59.957041331Z" level=info msg="Daemon has completed initialization"
+time="2026-08-30T15:17:59.957201139Z" level=info msg="API listen on /var/run/docker.sock"
+time="2026-08-30T15:18:13.506161477Z" level=info msg="image pulled" digest="sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc" remote="docker.io/library/alpine:3.20"
+time="2026-08-30T15:18:13.687864116Z" level=info msg="connecting to shim 841976c27dbb502640c5b04880ab3f1c89bb72aed4729730c6cce899d528542e" address="unix:///run/containerd/s/7136b437158fb6d0524bb08ecc7e64079b85843771a5dd99880e08e41e41d728" namespace=moby protocol=ttrpc version=3
+time="2026-08-30T15:18:13.881169447Z" level=info msg="sbJoin: gwep4 ''->'e9695904b721', gwep6 ''->''" eid=e9695904b721 ep=nifty_cohen net=bridge nid=6696588d124c
+[exit=0]
+
+$ docker run --rm alpine:3.20 sh -c 'uname -a; echo ---; cat /proc/1/cgroup; echo ---; grep -E "^Cap(Eff|Bnd)|^Seccomp:" /proc/self/status' 2>&1
+Linux 451a23adc2a9 6.18.44-fc-v22 #1 SMP PREEMPT_DYNAMIC @0 x86_64 Linux
+---
+9:name=systemd:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+8:pids:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+7:blkio:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+6:freezer:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+5:devices:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+4:memory:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+3:cpuset:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+2:cpuacct:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+1:cpu:/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+0::/docker/451a23adc2a92a89d1e5f764378ba17e95692789fd42d3b5b079ec8891ef4199
+---
+CapEff:	00000000a80425fb
+CapBnd:	00000000a80425fb
+Seccomp:	2
+[exit=0]
+
+$ docker run --rm alpine:3.20 sh -c 'ls -l /dev/kvm 2>&1' 2>&1
+ls: /dev/kvm: No such file or directory
+[exit=1]
+
+=== PHASE 4d: EGRESS TOPOLOGY AS OBSERVED ===
+
+$ env | grep -iE '^(http_proxy|https_proxy|no_proxy|all_proxy)=' | sed -E 's#(//)[^@/]*@#\1<redacted>@#'
+no_proxy=localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+https_proxy=http://127.0.0.1:45153
+NO_PROXY=localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+HTTPS_PROXY=http://127.0.0.1:45153
+[exit=0]
+
+$ env | grep -iE 'proxy' | sed -E 's#(//)[^@/]*@#\1<redacted>@#' | sed -E 's#^(CLAUDE_CODE_MESSAGING_TOKEN|.*TOKEN)=.*#\1=<redacted>#'
+CCR_AGENT_PROXY_ENABLED=1
+no_proxy=localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+GH_TOKEN=<redacted>
+CCR_UPSTREAM_PROXY_ENABLED=1
+CLOUDSDK_PROXY_TYPE=http
+GITHUB_TOKEN=<redacted>
+CLOUDSDK_AUTH_ACCESS_TOKEN=<redacted>
+CLOUDSDK_PROXY_PORT=45153
+CLAUDE_CODE_PROXY_RESOLVES_HOSTS=true
+CCR_TEST_GITPROXY=1
+AWS_SECRET_ACCESS_KEY=proxy-injected
+https_proxy=http://127.0.0.1:45153
+GLOBAL_AGENT_NO_PROXY=localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+ELECTRON_GET_USE_PROXY=1
+JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStore=/root/.ccr/java-truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit -Djavax.net.ssl.trustStoreType=PKCS12 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=45153 -Dhttp.nonProxyHosts=localhost|127.0.0.1|::1|127.*|0.*|::|169.254.*|api.anthropic.com|api-staging.anthropic.com|api-pr-preview.anthropic.com|mcp-proxy.anthropic.com|mcp-proxy-staging.anthropic.com|registry.npmjs.org|jsr.io|npm.jsr.io|pypi.org|files.pythonhosted.org|index.crates.io|proxy.golang.org|host.docker.internal|10.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*|192.168.*|100.64.0.0/10|*.svc.cluster.local|*.svc.cluster.local -Djdk.http.auth.tunneling.disabledSchemes= -Djdk.http.auth.proxying.disabledSchemes=
+NO_PROXY=localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+AWS_ACCESS_KEY_ID=proxy-injected
+HTTPS_PROXY=http://127.0.0.1:45153
+npm_config_noproxy=localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+YARN_HTTPS_PROXY=http://127.0.0.1:45153
+CLOUDSDK_PROXY_ADDRESS=127.0.0.1
+npm_config_https_proxy=http://127.0.0.1:45153
+DOCKER_HTTPS_PROXY=http://127.0.0.1:45153
+GLOBAL_AGENT_HTTPS_PROXY=http://127.0.0.1:45153
+[exit=0]
+
+$ cat /etc/resolv.conf
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+options timeout:2 attempts:3
+[exit=0]
+
+$ getent hosts github.com cache.nixos.org example.com
+140.82.114.3    github.com
+2a04:4e42:f000::347 dualstack.n.sni.global.fastly.net cache.nixos.org
+2606:4700:10::ac42:93f3 example.com
+2606:4700:10::6814:179a example.com
+[exit=0]
+
+$ cat /root/.ccr/README.md 2>&1 | head -40
+# Claude Code agent proxy
+
+Outbound HTTPS from this session goes through a local proxy at http://127.0.0.1:45153
+(set via HTTPS_PROXY) which tunnels to a policy-enforcing egress proxy. TLS is
+re-terminated there, so every tool must trust the CA bundle at
+/root/.ccr/ca-bundle.crt. The standard CA environment variables, the system trust
+store (where possible), a JVM truststore, the Bazel system bazelrc, the
+browser NSS store, and gsutil's boto config are already set up.
+
+## Quick diagnosis
+
+1. Run: curl -sS http://127.0.0.1:45153/__agentproxy/status
+   It reports proxy state, which trust and git accommodations are active
+   (javaTrustStorePath, toolTrustFailureCodes, gitSshRewrite,
+   gitConfigConflicts), and the most recent proxy-side failures.
+2. Find the failure class below and apply the matching fix; gitConfigConflicts
+   codes map to the git section, toolTrustFailureCodes to the JVM section.
+3. Never disable TLS verification, never unset HTTPS_PROXY, and do not retry
+   organization policy denials (403/407) — report them instead.
+
+## Failure classes and fixes
+
+### "certificate verify failed" / "self-signed certificate in chain" / PKIX errors
+
+The failing tool is not reading the pre-set CA configuration. In order:
+
+- If the tool has a CA flag or env var, point it at /root/.ccr/ca-bundle.crt
+  (examples: --cacert, SSL_CERT_FILE, NODE_EXTRA_CA_CERTS, REQUESTS_CA_BUNDLE,
+  AWS_CA_BUNDLE, DENO_CERT, CARGO_HTTP_CAINFO, PIP_CERT, GIT_SSL_CAINFO,
+  BUNDLE_SSL_CA_CERT, HEX_CACERTS_PATH, NIX_SSL_CERT_FILE).
+- Tool config files override environment variables. If one of these sets its
+  own CA or disables verification, point it at the bundle instead:
+  pip.conf "cert", npm "cafile" (npm config get cafile), ~/.curlrc "cacert",
+  .wgetrc "ca_certificate", conda "ssl_verify", git "http.sslCAInfo",
+  gradle.properties / MAVEN_OPTS "-Djavax.net.ssl.trustStore".
+- JVM tools (Maven, Gradle, plain Java): when a JDK is present, a truststore
+  is built at /root/.ccr/java-truststore.p12 (password "changeit") and
+  injected via JAVA_TOOL_OPTIONS — confirm javaTrustStorePath is set in the
+  status output before pointing a build at it (toolTrustFailureCodes explains
+  why it is missing). If the image or the build sets its own trustStore, that
+[exit=0]
+
+--- 4d: token placeholders (names/placeholder-status only, no values) ---
+
+$ [ "$GH_TOKEN" = proxy-injected ] && echo GH_TOKEN=proxy-injected || echo GH_TOKEN=other-or-unset
+GH_TOKEN=proxy-injected
+[exit=0]
+
+$ [ "$GITHUB_TOKEN" = proxy-injected ] && echo GITHUB_TOKEN=proxy-injected || echo GITHUB_TOKEN=other-or-unset
+GITHUB_TOKEN=proxy-injected
+[exit=0]
+
+$ [ "$AWS_ACCESS_KEY_ID" = proxy-injected ] && echo AWS_ACCESS_KEY_ID=proxy-injected || echo AWS_ACCESS_KEY_ID=other-or-unset
+AWS_ACCESS_KEY_ID=proxy-injected
+[exit=0]
+
+--- 4d: per-URL proxied vs direct matrix ---
+
+$ for u in ...; do curl proxied; curl --noproxy '*' direct; done
+https://github.com                            proxied=400  direct=200
+https://api.github.com                        proxied=200  direct=403
+https://cache.nixos.org/nix-cache-info        proxied=200  direct=200
+https://nixos.org                             proxied=on timed out after 8001 milliseconds
+000  direct=200
+https://pypi.org/simple/                      proxied=200  direct=200
+https://archive.ubuntu.com                    proxied=200  direct=200
+https://registry-1.docker.io/v2/              proxied=401  direct=401
+https://example.com                           proxied=200  direct=200
+https://dl-cdn.alpinelinux.org                proxied=200  direct=200
+https://api.anthropic.com                     proxied=404  direct=404
+
+--- 4d: is 'direct' really direct? TLS chain comparison ---
+
+$ curl -sS -m 8 -v https://example.com -o /dev/null 2>&1 | grep -iE 'issuer|subject:|CApath|CAfile|Establish|SSL connection|proxy|CONNECT' | head -12
+* Uses proxy env variable no_proxy == 'localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local'
+* Uses proxy env variable https_proxy == 'http://127.0.0.1:45153'
+* Connected to 127.0.0.1 (127.0.0.1) port 45153
+* CONNECT tunnel: HTTP/1.1 negotiated
+* allocate connect buffer
+* Establish HTTP proxy tunnel to example.com:443
+> CONNECT example.com:443 HTTP/1.1
+> Proxy-Connection: Keep-Alive
+< HTTP/1.1 200 Connection Established
+* CONNECT phase completed
+* CONNECT tunnel established, response 200
+*  CAfile: /root/.ccr/ca-bundle.crt
+[exit=0]
+
+$ curl -sS -m 8 --noproxy '*' -v https://example.com -o /dev/null 2>&1 | grep -iE 'issuer|subject:|Establish|SSL connection|Connected to' | head -12
+* Connected to example.com (104.20.23.154) port 443
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519 / RSASSA-PSS
+*  subject: CN=example.com
+*  issuer: O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)
+[exit=0]
+
+$ echo | timeout 8 openssl s_client -connect example.com:443 -servername example.com 2>/dev/null | grep -E '^(issuer|subject|verify)' | head -6
+subject=CN = example.com
+issuer=O = Anthropic, CN = Egress Gateway SDS Issuing CA (production)
+[exit=0]
+
+$ curl -sS -m 8 http://127.0.0.1:45153/__agentproxy/status 2>&1 | head -c 2000; echo
+{
+  "enabled": true,
+  "port": 45153,
+  "caBundlePath": "/root/.ccr/ca-bundle.crt",
+  "hasSystemCa": true,
+  "noProxy": "localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local",
+  "selective": false,
+  "standalone": false,
+  "toolScoped": false,
+  "installedProxyPreconfiguredClis": [],
+  "javaTrustStorePath": "/root/.ccr/java-truststore.p12",
+  "readmePath": "/root/.ccr/README.md",
+  "gitConfigInjection": true,
+  "gitSshRewrite": true,
+  "recentRelayFailures": [],
+  "downloadQueuedBytes": 0,
+  "downloadQueuedPeakBytes": 0,
+  "downloadReceivePauseSupported": true,
+  "downloadReceiveGateEnabled": true,
+  "uploadPausedClients": 0,
+  "uploadPauses": 0,
+  "uploadPauseSupported": true,
+  "uploadGateEnabled": true,
+  "bufferedAmountTrusted": true
+}
+
+[exit=0]
+
+--- 4d: raw non-HTTP TCP egress ---
+
+$ timeout 5 bash -c 'echo > /dev/tcp/1.1.1.1/53' 2>&1 && echo TCP53_DIRECT_OK || echo TCP53_DIRECT_BLOCKED
+TCP53_DIRECT_BLOCKED
+[exit=0]
+
+$ timeout 5 bash -c 'echo > /dev/tcp/140.82.112.3/22' 2>&1 && echo SSH22_DIRECT_OK || echo SSH22_DIRECT_BLOCKED
+SSH22_DIRECT_BLOCKED
+[exit=0]
+
+$ timeout 8 bash -c 'echo > /dev/tcp/1.1.1.1/443' 2>&1 && echo TCP443_RAWIP_OK || echo TCP443_RAWIP_BLOCKED
+TCP443_RAWIP_OK
+[exit=0]
+
+$ timeout 6 dig +short +time=2 example.com @8.8.8.8 2>&1 || timeout 6 nslookup example.com 8.8.8.8 2>&1 | tail -4
+timeout: failed to run command 'dig': No such file or directory
+timeout: failed to run command 'nslookup': No such file or directory
+[exit=0]
+
+$ ping -c 2 -W 2 1.1.1.1 2>&1 | tail -3
+environment: line 18: ping: command not found
+[exit=0]
+
+$ iptables -t nat -S 2>&1 | head -20; echo "---filter---"; iptables -S 2>&1 | head -20
+-P PREROUTING ACCEPT
+-P INPUT ACCEPT
+-P OUTPUT ACCEPT
+-P POSTROUTING ACCEPT
+-N DOCKER
+-A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+-A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+-A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+---filter---
+-P INPUT ACCEPT
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-N DOCKER
+-N DOCKER-BRIDGE
+-N DOCKER-CT
+-N DOCKER-FORWARD
+-N DOCKER-INTERNAL
+-N DOCKER-USER
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-A DOCKER ! -i docker0 -o docker0 -j DROP
+-A DOCKER-BRIDGE -o docker0 -j DOCKER
+-A DOCKER-CT -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-FORWARD -j DOCKER-CT
+-A DOCKER-FORWARD -j DOCKER-INTERNAL
+-A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-FORWARD -i docker0 -j ACCEPT
+[exit=0]
+
+=== PHASE 4e (part 1): NIX PRE-CHECKS ===
+
+$ command -v nix && nix --version || echo "NIX ABSENT"
+NIX ABSENT
+[exit=0]
+
+$ ls -ld /nix 2>&1
+ls: cannot access '/nix': No such file or directory
+[exit=2]
+
+$ cat /proc/sys/kernel/unprivileged_userns_clone 2>&1
+cat: /proc/sys/kernel/unprivileged_userns_clone: No such file or directory
+[exit=1]
+
+$ unshare -Ur true && echo USERNS_OK || echo USERNS_BLOCKED
+USERNS_OK
+[exit=0]
+
+$ pidof systemd >/dev/null && echo SYSTEMD_PRESENT || echo NO_SYSTEMD
+NO_SYSTEMD
+[exit=0]
+
+$ zcat /proc/config.gz | grep -E "^CONFIG_USER_NS|^CONFIG_OVERLAY_FS|^CONFIG_SECCOMP"
+CONFIG_USER_NS=y
+CONFIG_SECCOMP=y
+CONFIG_SECCOMP_FILTER=y
+CONFIG_OVERLAY_FS=y
+CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW=y
+[exit=0]
+
+--- 4d: port-level egress policy characterization ---
+tcp/22    to 1.1.1.1: BLOCKED/REFUSED
+tcp/53    to 1.1.1.1: BLOCKED/REFUSED
+tcp/80    to 1.1.1.1: OPEN
+tcp/443   to 1.1.1.1: OPEN
+tcp/8080  to 1.1.1.1: BLOCKED/REFUSED
+tcp/3128  to 1.1.1.1: BLOCKED/REFUSED
+tcp/993   to 1.1.1.1: BLOCKED/REFUSED
+tcp/1194  to 1.1.1.1: BLOCKED/REFUSED
+
+$ timeout 4 bash -c 'exec 3<>/dev/udp/8.8.8.8/53 && echo UDP53_SOCKET_OK' 2>&1 || echo UDP53_FAIL
+UDP53_SOCKET_OK
+[exit=0]
+
+$ getent ahostsv4 example.com | head -2
+172.66.147.243  STREAM example.com
+172.66.147.243  DGRAM  
+[exit=0]
+
+$ curl -sS -m 8 -i https://github.com 2>&1 | head -12
+HTTP/1.1 200 Connection Established
+
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Content-Length: 138
+Connection: close
+
+{"message":"Request path could not be canonicalized.","documentation_url":"https://docs.anthropic.com/en/docs/claude-code/github-actions"}[exit=0]
+
+$ curl -sS -m 8 --noproxy '*' -o /dev/null -w 'direct github.com http=%{http_code} ip=%{remote_ip}\n' https://github.com 2>&1
+direct github.com http=200 ip=140.82.113.4
+[exit=0]
+
+$ curl -sS -m 8 -v --noproxy '*' https://api.github.com -o /dev/null 2>&1 | grep -iE 'issuer|Connected to' | head -4
+* Connected to api.github.com (140.82.114.5) port 443
+*  issuer: O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)
+[exit=0]
+
+$ curl -sS -m 6 --noproxy '*' -o /dev/null -w 'http://example.com direct http=%{http_code}\n' http://example.com 2>&1
+http://example.com direct http=200
+[exit=0]
+
+=== PHASE 4e (part 2): NIX INSTALL ===
+
+$ sh <(curl -L https://nixos.org/nix/install) --no-daemon --yes   [tail]
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  6 25.8M    6 1758k    0     0  4082k      0  0:00:06 --:--:--  0:00:06 4079k100 25.8M  100 25.8M    0     0  38.9M      0 --:--:-- --:--:-- --:--:-- 38.9M
+Note: a multi-user installation is possible. See https://nix.dev/manual/nix/stable/installation/installing-binary.html#multi-user-installation
+[1;31mwarning: installing Nix as root is not supported by this script![0m
+performing a single-user installation of Nix...
+directory /nix does not exist; creating it by running 'mkdir -m 0755 /nix && chown root /nix' using sudo
+copying Nix to /nix/store...
+
+warning: the group 'nixbld' specified in 'build-users-group' does not exist
+warning: the group 'nixbld' specified in 'build-users-group' does not exist
+installing 'nix-2.35.2'
+error: the group 'nixbld' specified in 'build-users-group' does not exist
+/tmp/nix-binary-tarball-unpack.ZiEqeKz9sS/unpack/nix-2.35.2-x86_64-linux/install: unable to install Nix into your default profile
+
+$ ls -d /nix/store/*nix-2* 2>&1 | head -3
+/nix/store/irfrbndi76zhkvqsfhmsn4a99iafck29-nix-2.35.2
+[exit=0]
+
+$ cat /etc/nix/nix.conf
+build-users-group =
+experimental-features = nix-command flakes
+[exit=0]
+
+$ ls /nix/store/irfrbndi76zhkvqsfhmsn4a99iafck29-nix-2.35.2/bin | head -5
+nix
+nix-build
+nix-channel
+nix-collect-garbage
+nix-copy-closure
+[exit=0]
+
+$ /nix/store/irfrbndi76zhkvqsfhmsn4a99iafck29-nix-2.35.2/bin/nix --version
+nix (Nix) 2.35.2
+[exit=0]
+
+$ /nix/store/irfrbndi76zhkvqsfhmsn4a99iafck29-nix-2.35.2/bin/nix-env -i $(ls -d /nix/store/*-nix-2.35.2 | head -1) 2>&1 | tail -3
+installing 'nix-2.35.2'
+building '/nix/store/3v9waf1zcy52sd2xf30ndbwssp7d4sza-user-environment.drv'...
+[exit=0]
+
+$ ls -l /root/.nix-profile/bin/nix 2>&1; cat /root/.nix-profile/etc/profile.d/nix.sh 2>&1 | head -5
+-r-xr-xr-x 1 root root 4795512 Jan  1  1970 /root/.nix-profile/bin/nix
+# This file is tested by tests/installer/default.nix.
+if [ -n "${HOME-}" ] && [ -n "${USER-}" ]; then
+
+    # Set up the per-user profile.
+
+[exit=0]
+
+--- 4e: nix config, substituters, system-features ---
+
+$ nix --version
+nix (Nix) 2.35.2
+[exit=0]
+
+$ nix config show 2>/dev/null | grep -E '^(system-features|trusted-users|substituters|sandbox|system) '
+sandbox = true
+substituters = https://cache.nixos.org/
+system = x86_64-linux
+system-features = benchmark big-parallel kvm nixos-test uid-range
+trusted-users = root
+[exit=0]
+
+$ nix config show 2>/dev/null | grep -E 'system-features'
+system-features = benchmark big-parallel kvm nixos-test uid-range
+[exit=0]
+
+$ echo "NIX_SSL_CERT_FILE=$NIX_SSL_CERT_FILE"; echo "HTTPS_PROXY=$HTTPS_PROXY"
+NIX_SSL_CERT_FILE=/root/.ccr/ca-bundle.crt
+HTTPS_PROXY=http://127.0.0.1:45153
+[exit=0]
+
+$ curl -sS -m 10 https://cache.nixos.org/nix-cache-info 2>&1
+StoreDir: /nix/store
+WantMassQuery: 1
+Priority: 40
+[exit=0]
+
+--- 4e: is nix's 'kvm' system-feature real? (it is derived from the /dev/kvm NODE, which we fabricated via mknod) ---
+
+$ ls -l /dev/kvm; nix config show 2>/dev/null | grep system-features
+crw------- 1 root root 10, 232 Aug 30 15:17 /dev/kvm
+system-features = benchmark big-parallel kvm nixos-test uid-range
+[exit=0]
+
+$ rm -f /dev/kvm; ls -l /dev/kvm 2>&1; nix config show 2>/dev/null | grep system-features
+ls: cannot access '/dev/kvm': No such file or directory
+system-features = benchmark big-parallel nixos-test uid-range
+[exit=0]
+
+$ mknod -m 600 /dev/kvm c 10 232; ls -l /dev/kvm; nix config show 2>/dev/null | grep system-features
+crw------- 1 root root 10, 232 Aug 30 15:21 /dev/kvm
+system-features = benchmark big-parallel kvm nixos-test uid-range
+[exit=0]
+
+--- 4e: nix build nixpkgs#hello (substitution through the proxy) ---
+
+$ nix build --extra-experimental-features 'nix-command flakes' --print-build-logs nixpkgs#hello 2>&1 | tail -12
+unpacking 'https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz' into the Git cache...
+these 5 paths will be fetched (10.8 MiB download, 36.2 MiB unpacked):
+  /nix/store/n51dhmdbik1kfrsm62j5knavmigwrl1a-glibc-2.42-84
+  /nix/store/wzr035k31pmpn2caabq8qwv1npg571z9-hello-2.12.3
+  /nix/store/nga9d6m9iplygw3iqghk2g840nz7b0gy-libidn2-2.3.8
+  /nix/store/yh8rykx8wakl1ccn8rc351f6r2wbg4cn-libunistring-1.4.2
+  /nix/store/ssvq1r0xd8f7paf6zqgpfql1a4drwhy2-xgcc-15.3.0-libgcc
+copying path '/nix/store/ssvq1r0xd8f7paf6zqgpfql1a4drwhy2-xgcc-15.3.0-libgcc' from 'https://cache.nixos.org'...
+copying path '/nix/store/yh8rykx8wakl1ccn8rc351f6r2wbg4cn-libunistring-1.4.2' from 'https://cache.nixos.org'...
+copying path '/nix/store/nga9d6m9iplygw3iqghk2g840nz7b0gy-libidn2-2.3.8' from 'https://cache.nixos.org'...
+copying path '/nix/store/n51dhmdbik1kfrsm62j5knavmigwrl1a-glibc-2.42-84' from 'https://cache.nixos.org'...
+copying path '/nix/store/wzr035k31pmpn2caabq8qwv1npg571z9-hello-2.12.3' from 'https://cache.nixos.org'...
+[exit=0]
+
+$ ./result/bin/hello 2>&1
+Hello, world!
+[exit=0]
+
+$ ls -l result; readlink -f result
+lrwxrwxrwx 1 root root 56 Aug 30 15:21 result -> /nix/store/wzr035k31pmpn2caabq8qwv1npg571z9-hello-2.12.3
+/nix/store/wzr035k31pmpn2caabq8qwv1npg571z9-hello-2.12.3
+[exit=0]
+
+$ nix build --extra-experimental-features 'nix-command flakes' --print-build-logs --rebuild nixpkgs#hello 2>&1 | grep -iE "copying path|from 'https://cache.nixos.org'|substitut" | head -5 || echo '(already in store; see fresh-path evidence below)'
+copying path '/nix/store/9ipfvwnqp1q8ijnmi5sxvlx9r8w34lw3-bash-5.3p15' from 'https://cache.nixos.org'...
+copying path '/nix/store/wj7phsmi7ncidl8k00p489krqss7n9sd-hello-2.12.3.tar.gz' from 'https://cache.nixos.org'...
+copying path '/nix/store/hd36xbvbc0vrn9f9idrfwxznri0ax427-gnumake-4.4.1' from 'https://cache.nixos.org'...
+copying path '/nix/store/4nylac9gazdpsid79qyk0jpqm312b2jx-gnused-4.10' from 'https://cache.nixos.org'...
+copying path '/nix/store/bpy2ps3f0f3gvgvqjwgqriw1j1n840wd-gawk-5.4.1' from 'https://cache.nixos.org'...
+[exit=0]
+
+$ nix copy --extra-experimental-features 'nix-command' --from https://cache.nixos.org --to /nix/store nixpkgs#hello 2>&1 | tail -3 || true
+       response body:
+
+       404
+[exit=0]
+
+=== PHASE 5 SUPPORT: why each 'could not test' is could-not-test, not negative ===
+
+$ ls -l /dev/mem 2>&1; echo "-> dmidecode needs /dev/mem AND SMBIOS; neither present (Firecracker exposes no DMI)"
+ls: cannot access '/dev/mem': No such file or directory
+-> dmidecode needs /dev/mem AND SMBIOS; neither present (Firecracker exposes no DMI)
+[exit=0]
+
+$ ls /dev/cpu/0/ 2>&1; echo "-> no msr node: CONFIG_X86_MSR not built in, and CONFIG_MODULES=n so it cannot be loaded"
+cpuid
+-> no msr node: CONFIG_X86_MSR not built in, and CONFIG_MODULES=n so it cannot be loaded
+[exit=0]
+
+$ zcat /proc/config.gz | grep -E "^CONFIG_X86_MSR|^CONFIG_X86_CPUID|^# CONFIG_X86_MSR" || echo "CONFIG_X86_MSR: not present in config"
+# CONFIG_X86_MSR is not set
+CONFIG_X86_CPUID=y
+[exit=0]
+
+$ cat /proc/modules 2>&1; echo "-> /proc/modules absent == module loading not supported by this kernel"
+cat: /proc/modules: No such file or directory
+-> /proc/modules absent == module loading not supported by this kernel
+[exit=0]
+
+$ grep -c . /proc/misc; echo "-> kvm absent from /proc/misc: no KVM misc device registered"
+9
+-> kvm absent from /proc/misc: no KVM misc device registered
+[exit=0]
+
+$ uname -r; echo "-> fc = Firecracker; v22 = image revision"
+6.18.44-fc-v22
+-> fc = Firecracker; v22 = image revision
+[exit=0]
+
+$ cat /sys/hypervisor/type 2>&1; ls /sys/hypervisor 2>&1
+cat: /sys/hypervisor/type: No such file or directory
+ls: cannot access '/sys/hypervisor': No such file or directory
+[exit=2]
+
+$ ip -o link show eth0 | head -1
+4: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000\    link/ether 02:fc:00:00:00:01 brd ff:ff:ff:ff:ff:ff
+[exit=0]
+
+$ ls /sys/class/net/
+docker0
+eth0
+ifb0
+ifb1
+lo
+[exit=0]
+
+--- final /dev/kvm state (fabricated via mknod; no driver behind it) ---
+
+$ ls -l /dev/kvm; ./kvmtest; echo "kvmtest exit=$?"
+crw------- 1 root root 10, 232 Aug 30 15:21 /dev/kvm
+kvmtest: open /dev/kvm: No such device
+kvmtest exit=1
+[exit=0]
+
+=== PHASE 4e (part 3): NIXOS VM TEST (attempted despite 4a negative) ===
+$ nix build --impure --print-build-logs --expr '... pkgs.testers.runNixOSTest { name="kvm-probe"; nodes.machine={}; testScript = wait_for_unit(multi-user.target); uname -a; systemd-detect-virt }'
+--- did QEMU use KVM acceleration? (grep the driver's qemu invocation + guest self-report) ---
+1233:vm-test-run-kvm-probe> machine: waiting for unit multi-user.target
+2157:vm-test-run-kvm-probe> machine # [  131.505506] systemd[1]: Startup finished in 6.195s (kernel) + 42.970s (initrd) + 1min 22.334s (userspace) = 2min 11.500s.
+2158:vm-test-run-kvm-probe> machine: (finished: waiting for unit multi-user.target, in 137.60 seconds)
+2159:vm-test-run-kvm-probe> machine: must succeed: uname -a
+2166:vm-test-run-kvm-probe> machine: (finished: must succeed: uname -a, in 0.49 seconds)
+2167:vm-test-run-kvm-probe> Linux machine 6.18.48 #1-NixOS SMP PREEMPT_DYNAMIC Fri Aug 28 06:22:54 UTC 2026 x86_64 GNU/Linux
+2169:vm-test-run-kvm-probe> machine: must succeed: systemd-detect-virt
+2172:vm-test-run-kvm-probe> machine: (finished: must succeed: systemd-detect-virt, in 0.48 seconds)
+2173:vm-test-run-kvm-probe> qemu
+2178:vm-test-run-kvm-probe> test script finished in 139.27s
+2180:vm-test-run-kvm-probe> kill QemuMachine (pid 45)
+2182:vm-test-run-kvm-probe> (finished: cleanup, in 0.07 seconds)
+
+--- RESULT: the nested NixOS guest booted and executed code. systemd-detect-virt INSIDE it printed 'qemu' (NOT 'kvm'),
+---         and boot took 2min11s. Both are the signature of QEMU TCG software emulation, not hardware acceleration.
+[nix build exit: derivation completed; error-line count above]
