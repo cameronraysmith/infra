@@ -69,5 +69,10 @@
         type = "app";
         program = "${config.packages.omnigraph.updateScript}";
       };
+
+      apps.update-moshi-hook = {
+        type = "app";
+        program = "${config.packages.moshi-hook.updateScript}";
+      };
     };
 }

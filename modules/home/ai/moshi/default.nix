@@ -15,9 +15,9 @@
 # Upstream defaults the macOS secret store to Keychain, which cannot be reached
 # from an SSH session against a locked login keychain, and this daemon exists to
 # be driven from a phone over SSH. Setting MOSHI_STATE_DIR switches the store to
-# `<state>/secrets.json` on macOS as well as Linux (verified against
-# moshi-hook 0.2.86: `status --json` then reports `"secretStore":"file"`), which
-# is what makes one launcher work on both platforms.
+# `<state>/secrets.json` on macOS as well as Linux (`status --json` then
+# reports `"secretStore":"file"`), which is what makes one launcher work on
+# both platforms.
 { ... }:
 {
   flake.modules.homeManager.ai =
@@ -235,11 +235,11 @@
           # writes its declared configuration first, then moshi re-adds its own
           # entries on top, every activation.
           #
-          # That composes because `install` is additive and idempotent: against
-          # moshi-hook 0.2.86 it appended its hooks beside nix-declared
-          # PreToolUse and SessionStart entries without touching them, a second
-          # run left the file byte-identical, and `uninstall` removed exactly
-          # its own entries and restored the file to its pre-install content.
+          # That composes because `install` is additive and idempotent: it
+          # appends its hooks beside nix-declared PreToolUse and SessionStart
+          # entries without touching them, a second run leaves the file
+          # byte-identical, and `uninstall` removes exactly its own entries,
+          # restoring the file to its pre-install content.
           home.activation.moshiHookReconcile =
             lib.hm.dag.entryBetween
               [

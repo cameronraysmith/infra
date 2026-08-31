@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell --pure -i bash -p curl cacert nix
+#!nix-shell --pure -i bash -p curl cacert git nix gnused coreutils
 # shellcheck shell=bash
 #
 # Bumps pkgs/by-name/moshi-hook to the latest vendor release: rewrites the
@@ -10,10 +10,8 @@ set -euo pipefail
 
 CDN="https://cdn.getmoshi.app/hook"
 
-# Resolve package.nix relative to this script so the updater edits the correct
-# file regardless of the caller's working directory.
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-PKG_NIX="${SCRIPT_DIR}/package.nix"
+repo_root="$(git rev-parse --show-toplevel)"
+PKG_NIX="${repo_root}/pkgs/by-name/moshi-hook/package.nix"
 
 current_version="$(sed -n 's/.*version = "\(.*\)";/\1/p' "$PKG_NIX" | head -1)"
 
