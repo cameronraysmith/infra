@@ -59,6 +59,13 @@
         "@cloudflare/vite-plugin"
       ],
       "groupName": "cloudflare-workers-tooling"
+    },
+    {
+      "description": "conventional-changelog-conventionalcommits@10 requires conventional-changelog-writer@9, which semantic-release@25's bundled @semantic-release/release-notes-generator@14 does not resolve; hold on 9.x until semantic-release ships a compatible generator",
+      "matchPackageNames": [
+        "conventional-changelog-conventionalcommits"
+      ],
+      "allowedVersions": "<10"
     }
   ]
 }
