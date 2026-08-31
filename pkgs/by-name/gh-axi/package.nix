@@ -11,7 +11,7 @@
 }:
 
 let
-  version = "0.1.29";
+  version = "0.1.35";
 
   # The npm registry tarball carries the built dist/ tree but no lockfile, and
   # the GitHub repo carries a pnpm-lock.yaml that buildNpmPackage cannot read.
@@ -25,7 +25,7 @@ let
     tar -xzf ${
       fetchurl {
         url = "https://registry.npmjs.org/gh-axi/-/gh-axi-${version}.tgz";
-        hash = "sha256-2GMZ59vDc4LCdWBHkRT3hKgqnJtHl4af/wGUhQikw20=";
+        hash = "sha256-9yWr5EfJkqPWzA2aYyWGcj7RzxbHlRpAvODHPgkD5q4=";
       }
     } -C $out --strip-components=1
     jq 'del(.devDependencies, .scripts)' $out/package.json > $out/package.json.stripped
@@ -40,7 +40,7 @@ buildNpmPackage {
   nodejs = nodejs_22;
 
   npmDepsFetcherVersion = 2;
-  npmDepsHash = "sha256-RwgGz7V6F5+f35XqHBP6qcjGEYd4pgwA4jDTgDtL9R0=";
+  npmDepsHash = "sha256-jGlXEgdJqn80dRy89gzIi5uEygKPCEiaOkoyqVhlUQY=";
 
   makeCacheWritable = true;
 
