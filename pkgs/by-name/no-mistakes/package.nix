@@ -9,13 +9,13 @@
 
 buildGoModule (finalAttrs: {
   pname = "no-mistakes";
-  version = "1.45.4";
+  version = "1.60.2";
 
   src = fetchFromGitHub {
     owner = "kunchenguid";
     repo = "no-mistakes";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-pfR60vack5oLItPfu4zDYYk76S8qhDOJP/uiudo7kVI=";
+    hash = "sha256-+aJKgoykK443BLiQQgvMgL0rbsipUrs2LHERz9KdTMY=";
   };
 
   vendorHash = "sha256-NZOYxNYvt4192uqKBdKRxdgrKFvWx3585psdCnRdPSM=";
