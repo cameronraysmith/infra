@@ -37,14 +37,29 @@
     roles.default.extraModules = [
       (
         {
+          lib,
           pkgs,
           ...
         }:
         {
-          # Shell preference (works on both platforms)
-          users.users.cameron.shell = pkgs.zsh;
+          users.users.cameron = lib.mkMerge [
+            {
+              # Shell preference (works on both platforms)
+              shell = pkgs.zsh;
 
-          users.users.cameron.openssh.authorizedKeys.keys = inputs.self.users.cameron.meta.sshKeys;
+              openssh.authorizedKeys.keys = inputs.self.users.cameron.meta.sshKeys;
+            }
+
+            # NixOS-only option, so optionalAttrs keeps the attribute path from
+            # existing at all on darwin. Without lingering the user manager
+            # stops with the last login session and takes every user unit with
+            # it, while session-scope processes survive under
+            # KillUserProcesses=false: unattended work keeps running on a host
+            # whose per-user daemons have already exited.
+            (lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              linger = true;
+            })
+          ];
 
           # Enable zsh system-wide (works on both platforms)
           programs.zsh.enable = true;
