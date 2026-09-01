@@ -396,8 +396,17 @@ in
       users.users.builder = {
         isNormalUser = true;
         description = "Remote nix build user";
-        openssh.authorizedKeys.keys = inputs.self.users.crs58.meta.sshKeys ++ [
-          inputs.self.darwinConfigurations.stibnite.config.clan.core.vars.generators.nix-remote-build.files."key.pub".value
+        # nix-daemon --stdio is exactly what an ssh-ng caller would otherwise
+        # invoke (`remote-program` defaults to nix-daemon), so forcing it serves
+        # the build protocol and discards anything else the client asks for.
+        # sshd runs the forced command through the account's login shell, so the
+        # shell must stay executable; a nologin shell would break the protocol
+        # rather than harden it. Mirrors the stibnite direction of this pair.
+        openssh.authorizedKeys.keys = [
+          ''restrict,command="${config.nix.package}/bin/nix-daemon --stdio" ${
+            lib.removeSuffix "\n"
+              inputs.self.darwinConfigurations.stibnite.config.clan.core.vars.generators.nix-remote-build.files."key.pub".value
+          }''
         ];
       };
 
