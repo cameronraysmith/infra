@@ -121,6 +121,18 @@
             # aiAgentSettings.theme carries, which pi and atomic resolve against a
             # vendored theme file; the two are not interchangeable strings.
             theme.dark = lib.mkDefault "dark-catppuccin";
+
+            # 180000 rather than upstream's 30000: a clone's first export has to
+            # realise the flake devshell, 7.4s here against a populated nix store
+            # and minutes when the closure must be built, and overrunning the
+            # budget runs the command without the devshell rather than failing.
+            # direnv is pinned at its own default so a change to that default
+            # shows up as a diff here.
+            bash = {
+              direnv = lib.mkDefault "auto";
+
+              direnvLoadTimeoutMs = lib.mkDefault 180000;
+            };
             modelRoles = {
               default = lib.mkDefault "anthropic/claude-opus-5:xhigh";
               advisor = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
