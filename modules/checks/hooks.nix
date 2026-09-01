@@ -148,5 +148,51 @@
 
             touch $out
           '';
+
+      checks.updater-repository-paths =
+        pkgs.runCommand "updater-repository-paths"
+          {
+            nativeBuildInputs = [ pkgs.ripgrep ];
+            updaters = ../../pkgs/by-name;
+          }
+          ''
+            set -uo pipefail
+            failures=0
+            identity_pattern='BASH_SOURCE|[$][{]?0([^0-9]|$)'
+
+            for updater in "$updaters"/*/update.sh; do
+              [ -f "$updater" ] || continue
+              package="''${updater%/update.sh}/package.nix"
+
+              if matches=$(rg -n "$identity_pattern" "$updater"); then
+                relative_path="''${updater#"$updaters"/}"
+                echo "FAIL: $relative_path derives package paths from its copied updater identity:" >&2
+                echo "$matches" >&2
+                failures=$((failures + 1))
+              fi
+
+              if rg -q 'git rev-parse --show-toplevel' "$updater" \
+                && ! sed -n '1,2p' "$updater" | rg -q '#!nix-shell.*[[:space:]]git([[:space:]]|$)'; then
+                relative_path="''${updater#"$updaters"/}"
+                echo "FAIL: $relative_path resolves the repository with git but does not declare git in its nix-shell packages." >&2
+                failures=$((failures + 1))
+              fi
+
+              if [ -f "$package" ] \
+                && rg -q 'outputHash[[:space:]]*=' "$package" \
+                && ! rg -q 'outputHash' "$updater"; then
+                relative_path="''${updater#"$updaters"/}"
+                echo "FAIL: $relative_path does not refresh its package's fixed-output hash." >&2
+                failures=$((failures + 1))
+              fi
+            done
+
+            if [ "$failures" -ne 0 ]; then
+              echo "Updater scripts must resolve the repository root with 'git rev-parse --show-toplevel', then address pkgs/by-name/<package> under that root." >&2
+              exit 1
+            fi
+
+            touch $out
+          '';
     };
 }
