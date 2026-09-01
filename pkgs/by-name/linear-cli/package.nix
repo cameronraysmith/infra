@@ -87,7 +87,7 @@ let
       # regenerable artifacts: remote/ (now vendored), analysis & v8 caches, the
       # path-keyed gen/ tree, scripts-warned nonces, and npm registry metadata.
       ( cd "$DENO_DIR"
-        rm -rf remote gen
+        rm -rf remote gen node_compat_bin
         find . -name '*_analysis_cache_v2*' -delete
         find . -name 'v8_code_cache_v2*' -delete
         find . -name '.scripts-warned-*' -delete
