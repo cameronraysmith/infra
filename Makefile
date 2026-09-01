@@ -93,11 +93,13 @@ bootstrap: install-nix install-direnv
 # This bypasses both the Fastly CDN (HTTP 618 errors) and the shell wrapper
 # (which has template placeholders that aren't filled in for raw source files).
 # To update version, change NIX_INSTALLER_VERSION below.
-# Note: versioning jumped from 0.27.0 to 3.11.3, then back to 2.34.6 when
+# Note: versioning jumped from 0.27.0 to 3.11.3, then back to the 2.x line when
 # NixOS/nix-installer removed the 3.x tags (repo renamed from experimental-nix-installer).
+# The installer tag tracks the Nix it embeds (flake.nix: nix.url = github:NixOS/nix/<tag>),
+# so this pin is also the nix version bootstrap lands.
 # https://github.com/NixOS/nix-installer/releases
 #
-# nix-installer 2.34.6 writes /etc/nix/nix.conf in setup_standard_config
+# nix-installer 2.35.1 writes /etc/nix/nix.conf in setup_standard_config
 # (src/action/common/place_nix_configuration.rs:98-154). Its defaults are
 # extra-experimental-features = nix-command, auto-optimise-store = true (Linux
 # only), always-allow-substitutes = true, max-jobs = auto, and
@@ -107,8 +109,8 @@ bootstrap: install-nix install-direnv
 # to get flakes is an interactive prompt that --no-confirm suppresses
 # (src/cli/subcommand/install/mod.rs:119-137), so a non-interactive install
 # without the flag lands nix-command alone. Releases through 2.33.0 wrote
-# nix-command flakes unconditionally, which is why the flag is needed at this pin
-# and was not needed at the previous one.
+# nix-command flakes unconditionally, which is why the flag is needed at any
+# 2.34.4-or-later pin and was not needed before that.
 #
 # flakes is not optional here: install-direnv resolves nixpkgs#direnv and
 # 'make verify' runs 'nix flake --help'.
@@ -120,14 +122,17 @@ bootstrap: install-nix install-direnv
 # deliberately omitted. The experimental feature only makes Nix accept the
 # setting of the same name, and the setting is true nowhere in this repo except
 # magnetite (modules/machines/nixos/magnetite/default.nix:76-83), which pairs it
-# with extra-system-features = uid-range for systemd-nspawn tests. Enabling the
-# feature alone changes no build behaviour, and the daemonless mode below has no
-# daemon to allocate UIDs at all. Bootstrap's nix.conf is transient regardless:
+# with extra-system-features = uid-range for systemd-nspawn tests. That pairing is
+# belt-and-braces: nix's own getDefaultSystemFeatures
+# (nix src/libstore/globals.cc:217-239) already inserts uid-range
+# unconditionally on linux. Enabling the feature alone
+# changes no build behaviour, and the daemonless mode below has no daemon to
+# allocate UIDs at all. Bootstrap's nix.conf is transient regardless:
 # the first 'just activate' regenerates it from the host's own modules.
 #
 # trusted-users lets nix accept flake-specified substituters and public keys
 # without prompts or warnings.
-NIX_INSTALLER_VERSION := 2.34.6
+NIX_INSTALLER_VERSION := 2.35.1
 
 # A usable systemd runtime is detected by the single existence test that
 # /run/systemd/system is present if and only if the machine booted under systemd
