@@ -41,6 +41,8 @@ in
         hm-sops-bridge
         niks3
         ssh-known-hosts
+        stibnite-builder
+        stibnite-session
         buildbot
         nixbot
         gitea
@@ -81,6 +83,30 @@ in
           "cgroups"
         ];
       };
+
+      # magnetite is x86_64-linux and cannot build aarch64-darwin derivations,
+      # so darwin work is dispatched to stibnite, the fleet's only machine of
+      # that system. Two mechanisms, two callers:
+      #   nix.buildMachines below — a local nix build by an operator who wants
+      #     the darwin result in magnetite's store.
+      #   /etc/nix/stibnite-store-uri — a caller that wants the build to happen
+      #     entirely in stibnite's store with nothing copied back.
+      # nixbot.toml sets attribute = "checks.x86_64-linux", which prevents CI
+      # from evaluating or requesting aarch64-darwin work and makes this builder
+      # unreachable from CI. modules/nixos/nixbot.nix and
+      # modules/nixos/buildbot.nix each set buildSystems = [ "x86_64-linux" ]
+      # as an independent second layer. These controls remain because stibnite
+      # is a laptop without guaranteed availability and a sleeping machine
+      # could gate CI.
+      services.stibnite-builder.enable = true;
+      nix.buildMachines = config.services.stibnite-builder.buildMachines;
+
+      # The build and session keys are separately authorized for independent
+      # revocation and rotation. Only the build key is confined to the Nix
+      # protocol by `restrict` and a forced command. The session key is broader:
+      # it grants an unrestricted login as admin-group crs58, already a Nix
+      # trusted user, with build authority plus shell.
+      services.stibnite-session.enable = true;
 
       # User configuration managed via clan inventory users service (modules/clan/inventory/services/users/cameron.nix).
 

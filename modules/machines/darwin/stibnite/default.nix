@@ -40,6 +40,7 @@ in
         zt-dns
         zt-services-trust
         magnetite-builder
+        stibnite-build-host
         # Not importing users module (defines testuser at UID 550)
         # stibnite defines its own user (crs58)
       ]);
@@ -223,6 +224,27 @@ in
 
       # Offload native x86_64-linux builds to magnetite over ZeroTier.
       services.magnetite-builder.enable = true;
+
+      # Inbound side of the same asymmetry: stibnite is the fleet's only
+      # aarch64-darwin machine, so it serves darwin builds to hosts that cannot
+      # perform them. The two keypairs come from magnetite and are authorized
+      # separately for independent revocation and rotation. The build key is
+      # confined at the SSH boundary to the nix protocol. The session key is
+      # broader: it logs in as admin-group crs58, a Nix trusted user, so it has
+      # build authority plus shell access.
+      # Both encrypted private halves and public values are committed under
+      # vars/per-machine/magnetite/. `clan vars generate magnetite` populates
+      # them; only magnetite and authorized users can decrypt the private
+      # halves.
+      services.stibnite-build-host = {
+        enable = true;
+        buildKeys = [
+          inputs.self.nixosConfigurations.magnetite.config.clan.core.vars.generators.stibnite-nix-build.files."key.pub".value
+        ];
+        sessionKeys = [
+          inputs.self.nixosConfigurations.magnetite.config.clan.core.vars.generators.stibnite-agent-session.files."key.pub".value
+        ];
+      };
 
       # Colima for OCI container management (complementary to nix-rosetta-builder)
       services.colima = {
