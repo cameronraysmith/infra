@@ -20,3 +20,8 @@ Conceptual documentation to help you understand the architecture and design patt
 - [Deferred module composition](/concepts/deferred-module-composition/) - Understanding deferred module composition where every Nix file is a module organized by aspect
 - [Clan Integration](/concepts/clan-integration/) - Multi-machine coordination with clan and clear boundaries with other tools
 - [System-user integration](/concepts/system-user-integration/) - Understanding admin users with integrated home-manager vs non-admin standalone users
+
+## Build and CI
+
+- [Build service topology](/concepts/build-service-topology/) - Two CI build services coexisting on magnetite, and the boundaries that keep them apart
+- [Darwin build access](/concepts/darwin-build-access/) - How the fleet reaches stibnite's aarch64-darwin store, and why the remote builder and the remote store are two mechanisms
