@@ -198,6 +198,56 @@ install-nix: ## Install Nix using the NixOS community installer
 		fi; \
 	fi
 
+.PHONY: uninstall-nix
+# The inverse of install-nix, and the only supported one: nix-installer records
+# its plan in /nix/receipt.json and reverses exactly that plan
+# (src/cli/subcommand/uninstall.rs), so hand-removing /nix leaves the build
+# users, the daemon unit and the shell profile snippets behind.
+#
+# The uninstaller must be the copy the install left at /nix/nix-installer, not
+# NIX_INSTALLER_VERSION: the receipt is version-checked, and a binary older than
+# the plan refuses to parse it and prints that same path as the fix
+# (uninstall.rs:110-149). The pinned release is only a fallback for a host whose
+# copy is gone, where it works when the receipt is not newer than the pin.
+#
+# No sudo: ensure_root re-execs the process under sudo --set-home itself
+# (src/cli/mod.rs:133-141), matching install-nix.
+#
+# Deliberately not wired into any aggregate target - bootstrap is the composition
+# worth having - but the pair does compose to the identity map, which is how a
+# pin bump gets verified on a real host rather than only in a container:
+#
+#   make uninstall-nix CONFIRM=1 && make bootstrap && make verify
+uninstall-nix: ## Uninstall Nix by reverting /nix/receipt.json (CONFIRM=1 to skip the prompt)
+	@echo "Uninstalling Nix..."
+	@if [ ! -e /nix/receipt.json ]; then \
+		if [ -e /nix ]; then \
+			echo "No install receipt at /nix/receipt.json, but /nix exists: this Nix was not installed by nix-installer, so refusing to guess at how to remove it."; \
+			exit 1; \
+		fi; \
+		echo "Nix is not installed."; \
+	else \
+		UNINSTALLER=/nix/nix-installer; \
+		if [ ! -x "$$UNINSTALLER" ]; then \
+			case "$$(uname -s)-$$(uname -m)" in \
+				Linux-x86_64)  PLATFORM="x86_64-linux" ;; \
+				Linux-aarch64) PLATFORM="aarch64-linux" ;; \
+				Darwin-arm64)  PLATFORM="aarch64-darwin" ;; \
+				*) echo "Unsupported platform: $$(uname -s)-$$(uname -m)"; exit 1 ;; \
+			esac; \
+			echo "No installer at /nix/nix-installer; falling back to the pinned $(NIX_INSTALLER_VERSION) release."; \
+			curl --proto '=https' --tlsv1.2 -sSf -L --retry 3 --retry-delay 5 \
+				"https://github.com/NixOS/nix-installer/releases/download/$(NIX_INSTALLER_VERSION)/nix-installer-$$PLATFORM" \
+				-o /tmp/nix-installer && chmod +x /tmp/nix-installer; \
+			UNINSTALLER=/tmp/nix-installer; \
+		fi; \
+		if [ "$(CONFIRM)" = "1" ]; then \
+			"$$UNINSTALLER" uninstall --no-confirm; \
+		else \
+			"$$UNINSTALLER" uninstall; \
+		fi; \
+	fi
+
 .PHONY: install-direnv
 install-direnv: ## Install direnv (requires nix to be installed first)
 	@echo "Installing direnv..."
