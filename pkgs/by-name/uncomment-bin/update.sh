@@ -1,14 +1,11 @@
 #!/usr/bin/env nix-shell
-#!nix-shell --pure -i bash -p curl jq cacert nix
+#!nix-shell --pure -i bash -p curl jq cacert git nix
 # shellcheck shell=bash
 
 set -euo pipefail
 
-# Resolve package.nix relative to this script so the updater edits the correct
-# file regardless of the caller's working directory (e.g. nixpkgs update
-# machinery, which does not cd into the package directory).
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-PKG_NIX="${SCRIPT_DIR}/package.nix"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PKG_NIX="${REPO_ROOT}/pkgs/by-name/uncomment-bin/package.nix"
 
 current_version="$(sed -n 's/.*version = "\(.*\)";/\1/p' "$PKG_NIX" | head -1)"
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p curl gnused jq nix-prefetch
+#!nix-shell -i bash -p curl git gnused jq nix-prefetch
 
 set -euo pipefail
 
-ROOT="$(dirname "$(readlink -f "$0")")"
-NIX_DRV="$ROOT/package.nix"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+NIX_DRV="${REPO_ROOT}/pkgs/by-name/dbt-fusion/package.nix"
 if [ ! -f "$NIX_DRV" ]; then
-  echo "ERROR: cannot find package.nix in $ROOT"
+  echo "ERROR: cannot find $NIX_DRV"
   exit 1
 fi
 

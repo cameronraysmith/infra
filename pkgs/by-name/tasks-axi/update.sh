@@ -2,18 +2,11 @@
 #!nix-shell -i bash -p curl jq cacert git nodejs_22 nix
 # shellcheck shell=bash
 
-# Bumps an axi-family package to the current npm registry latest. The firstmate
-# bootstrap tracks these tools at latest and raises its version floors as they
-# publish, so a stale pin eventually reports MISSING rather than out-of-date.
-#
-# This script is byte-identical across the axi-family package directories; the
-# npm package name is taken from the directory it lives in.
-
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PKG="$(basename "$PKG_DIR")"
+PKG_DIR="${REPO_ROOT}/pkgs/by-name/tasks-axi"
+PKG="${PKG_DIR##*/}"
 PKG_NIX="${PKG_DIR}/package.nix"
 
 current_version="$(sed -n 's/.*version = "\(.*\)";/\1/p' "$PKG_NIX" | head -1)"

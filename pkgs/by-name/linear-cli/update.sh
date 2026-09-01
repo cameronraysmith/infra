@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell --pure -i bash -p curl jq cacert nix gnused coreutils gnugrep
+#!nix-shell --pure -i bash -p curl jq cacert git nix gnused coreutils gnugrep
 # shellcheck shell=bash
 #
 # Update linear-cli (schpet/linear-cli) to the latest release.
@@ -10,14 +10,15 @@
 #      paired to each preceding `url` line)
 #   3. the `src` fetchFromGitHub `hash = "...";` line (the hash following
 #      the `rev = "v$VERSION";` line)
+#   4. the Linux source build's `denoDeps.outputHash`
 #
 # Usage: ./update.sh [VERSION]   (VERSION overrides the latest-release lookup)
 
 set -euo pipefail
 
 REPO="schpet/linear-cli"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PKG_NIX="${SCRIPT_DIR}/package.nix"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PKG_NIX="${REPO_ROOT}/pkgs/by-name/linear-cli/package.nix"
 
 current_version="$(sed -n 's/.*version = "\(.*\)";/\1/p' "$PKG_NIX" | head -1)"
 
@@ -85,5 +86,35 @@ fi
 
 sed -i'' -e "/rev = \"v\${version}\"/{ n; s|hash = \"sha256-[^\"]*\"|hash = \"${src_sri}\"|; }" "$PKG_NIX"
 echo "  src: ${src_sri}"
+
+echo "Prefetching x86_64-linux Deno dependencies..."
+fake_hash="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+sed -i'' -e "s|outputHash = \"sha256-[^\"]*\";|outputHash = \"${fake_hash}\";|" "$PKG_NIX"
+
+if ! grep -qF "outputHash = \"${fake_hash}\";" "$PKG_NIX"; then
+  echo "error: failed to replace denoDeps.outputHash with the probe hash" >&2
+  exit 1
+fi
+
+deno_deps_log="$(mktemp)"
+trap 'rm -f "$deno_deps_log"' EXIT
+
+if nix build "${REPO_ROOT}#packages.x86_64-linux.linear-cli.denoDeps" \
+  --system x86_64-linux \
+  --no-link \
+  -L 2>&1 | tee "$deno_deps_log"; then
+  echo "error: denoDeps unexpectedly matched the probe hash" >&2
+  exit 1
+fi
+
+deno_deps_hash="$(sed -n 's/^[[:space:]]*got:[[:space:]]*\(sha256-[^[:space:]]*\)$/\1/p' "$deno_deps_log" | tail -1)"
+
+if [[ -z "$deno_deps_hash" ]]; then
+  echo "error: x86_64-linux denoDeps build failed without producing a fixed-output hash" >&2
+  exit 1
+fi
+
+sed -i'' -e "s|outputHash = \"${fake_hash}\";|outputHash = \"${deno_deps_hash}\";|" "$PKG_NIX"
+echo "  denoDeps (x86_64-linux): ${deno_deps_hash}"
 
 echo "Updated linear-cli to ${latest_version}"
