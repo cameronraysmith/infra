@@ -265,29 +265,60 @@ let
       # against the sops file when the manifest is built (check-mode=sopsfile):
       # declaring a key whose ciphertext is not yet in secrets.yaml would fail
       # home-manager activation on both hosts for a service that is off. The
-      # operator's two actions -- add the two ciphertexts, enable the worker on
-      # a host -- therefore land together, and enabling without the ciphertext
-      # fails at build time naming the missing key.
+      # operator's actions -- add a ciphertext, enable the worker on that host
+      # -- therefore land together, and enabling without it fails at build time
+      # naming the missing key.
+      #
+      # Each host declares only the key for the queue it serves, so the two
+      # stay independent. Declaring both everywhere would couple them through
+      # the sops manifest: the same build-time validation means one host could
+      # not be enabled, nor its token rotated, until the other's ciphertext
+      # also existed and validated on that machine, and each machine would
+      # decrypt a credential it never uses.
+      #
+      # The discriminator is the host platform rather than
+      # `services.devin-worker.outpost`, because these are definitions OF
+      # `outposts` and that option's default is computed FROM `outposts`:
+      # conditioning them on the resolved name is a cycle. Platform is what the
+      # module's own two-tier selection keys on, so the two agree by
+      # construction here, and if a host is ever pointed at a different queue
+      # the module's tokenFile assertion fires by name rather than silently
+      # serving with no credential.
       #
       # Carried as an inline module because `sops.secrets` is already defined
       # in the attribute set above, and a conditional slice of it cannot be a
       # second definition of the same attribute path in one literal.
       imports = [
-        {
-          sops.secrets = lib.mkIf config.services.devin-worker.enable {
-            devin-outposts-token-stibnite = {
-              mode = "0400";
-            };
-            devin-outposts-token-magnetite = {
-              mode = "0400";
-            };
-          };
+        (
+          let
+            devinEnabled = config.services.devin-worker.enable;
+            servesStibnite = devinEnabled && pkgs.stdenv.hostPlatform.isDarwin;
+            servesMagnetite = devinEnabled && pkgs.stdenv.hostPlatform.isLinux;
+          in
+          {
+            sops.secrets = lib.mkMerge [
+              (lib.mkIf servesStibnite {
+                devin-outposts-token-stibnite = {
+                  mode = "0400";
+                };
+              })
+              (lib.mkIf servesMagnetite {
+                devin-outposts-token-magnetite = {
+                  mode = "0400";
+                };
+              })
+            ];
 
-          services.devin-worker.outposts = lib.mkIf config.services.devin-worker.enable {
-            "stibnite-01".tokenFile = config.sops.secrets.devin-outposts-token-stibnite.path;
-            "magnetite-01".tokenFile = config.sops.secrets.devin-outposts-token-magnetite.path;
-          };
-        }
+            services.devin-worker.outposts = lib.mkMerge [
+              (lib.mkIf servesStibnite {
+                "stibnite-01".tokenFile = config.sops.secrets.devin-outposts-token-stibnite.path;
+              })
+              (lib.mkIf servesMagnetite {
+                "magnetite-01".tokenFile = config.sops.secrets.devin-outposts-token-magnetite.path;
+              })
+            ];
+          }
+        )
       ];
 
       # Deploy radicle public key (not secret - can be plaintext, but identity-bound)

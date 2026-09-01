@@ -191,6 +191,14 @@
           darwinWorkDirsDistinct = distinctWorkDirs (
             map (name: darwin.launchd.agents.${name}.config.WorkingDirectory) (agents darwin)
           );
+          # Restart behaviour, which is where the two supervisors differ. On
+          # darwin the worker is kept alive by the presence of its own token
+          # file, so a missing secret stops it instead of respawning at
+          # launchd's floor; `KeepAlive = true` would reintroduce that loop.
+          darwinKeepAliveOnTokenPath =
+            lib.attrNames
+              darwin.launchd.agents."devin-worker-1".config.KeepAlive.PathState;
+          darwinThrottleInterval = darwin.launchd.agents."devin-worker-1".config.ThrottleInterval;
 
           linuxUnits = units linux;
           linuxAgents = agents linux;
@@ -292,6 +300,8 @@
           darwinUnits = [ ];
           darwinPlistEnvKeys = [ "PATH" ];
           darwinWorkDirsDistinct = true;
+          darwinKeepAliveOnTokenPath = [ "/run/secrets/devin-outposts-token-stibnite.dummy" ];
+          darwinThrottleInterval = 30;
 
           linuxUnits = [
             "devin-worker-1"

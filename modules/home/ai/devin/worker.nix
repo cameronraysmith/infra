@@ -33,6 +33,19 @@
 #     cameron on magnetite among others), so the seam is closed at the layer
 #     that owns system users rather than duplicated here.
 #
+# The two supervisors do not reach exact parity on restart, and the difference
+# is stated here rather than implied away. systemd stops a worker that exits
+# with the config-error code and retries anything else after 30s
+# (`RestartPreventExitStatus`). launchd has no per-exit-code equivalent, and
+# its `KeepAlive` dictionary conditions are ORed, so only one is usable:
+# `PathState` on the token file. What darwin therefore does on a missing token
+# is stop -- there is no path to keep alive, so no respawn -- and start on its
+# own once the secret is rendered there. What it does NOT do is distinguish a
+# token file that exists but is empty or unreadable: the launcher still refuses
+# to start, and launchd still respawns it, every 30s under the
+# `ThrottleInterval` set here rather than at its ten-second floor. That case is
+# a slow loop on darwin where linux would stop.
+#
 # Each worker instance gets its own working directory because a session's
 # repositories are checked out under `$(pwd)/repos`: two workers sharing a
 # directory would race on the same checkout. Each also gets its own explicit
@@ -319,9 +332,9 @@
             `id` or `tokenFile` through a default-carried registry would drop
             every other entry, and drop the `platform` of the entry it was
             editing. Definitions merge, so with the registry in the config
-            layer a caller writing `outposts.magnetite.tokenFile = ...` adds
-            to it. Overriding a value this module sets needs `lib.mkForce`,
-            since the module's own entries are `lib.mkDefault`.
+            layer a caller writing `outposts."magnetite-01".tokenFile = ...`
+            adds to it. Overriding a value this module sets needs
+            `lib.mkForce`, since the module's own entries are `lib.mkDefault`.
           '';
         };
 
@@ -329,10 +342,11 @@
           type = lib.types.nullOr lib.types.str;
           default = if lib.length platformOutposts == 1 then lib.head platformOutposts else null;
           defaultText = lib.literalMD ''
-            the single entry of `outposts` whose `platform` matches this host,
-            or `null` when zero or several match
+            the single entry of `outposts` naming this host's platform, or when
+            none names it, the single entry naming no platform; `null` when
+            zero or several remain
           '';
-          example = "magnetite";
+          example = "magnetite-01";
           description = ''
             Queue this host's workers serve. The default resolves whenever the
             registry holds exactly one queue for this platform, which is what
@@ -506,7 +520,25 @@
                   config = {
                     ProgramArguments = [ (lib.getExe (launcher index)) ];
                     RunAtLoad = true;
-                    KeepAlive = true;
+                    # launchd has no per-exit-code equivalent of systemd's
+                    # RestartPreventExitStatus, and its dictionary conditions
+                    # are ORed, so exactly one is meaningful. PathState on the
+                    # token file is the one that matches the failure this
+                    # module actually produces: with no secret rendered there
+                    # is nothing to keep alive, so the worker stops instead of
+                    # respawning at launchd's floor, and it starts on its own
+                    # once the path appears. A plain `true` here would loop a
+                    # tokenless worker every ten seconds forever.
+                    KeepAlive =
+                      if selectedTokenFile == null then
+                        true
+                      else
+                        {
+                          PathState.${toString selectedTokenFile} = true;
+                        };
+                    # Matches RestartSec on the systemd side for the failures
+                    # that do respawn; also lifts launchd's ten-second floor.
+                    ThrottleInterval = 30;
                     WorkingDirectory = workDir index;
                     StandardOutPath = logFile index;
                     StandardErrorPath = logFile index;
@@ -515,7 +547,7 @@
                     # and tests.
                     ProcessType = "Standard";
                     # PATH only. A credential here would be a store-published
-                    # credential; see services.devin-worker.tokenFile.
+                    # credential; see the outpost entry's tokenFile.
                     EnvironmentVariables.PATH = servicePath;
                   };
                 }
@@ -528,11 +560,7 @@
               map (
                 index:
                 lib.nameValuePair (unitName index) {
-                  Unit = {
-                    Description = "Devin Outposts worker ${toString index} serving the ${toString cfg.outpost} queue";
-                    After = [ "network-online.target" ];
-                    Wants = [ "network-online.target" ];
-                  };
+                  Unit.Description = "Devin Outposts worker ${toString index} serving the ${toString cfg.outpost} queue";
                   Service = {
                     ExecStart = lib.getExe (launcher index);
                     WorkingDirectory = workDir index;
