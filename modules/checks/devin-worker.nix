@@ -37,7 +37,9 @@
 #    on the same checkout.
 #
 # 4. Each assertion clause fires on exactly its own malformed input, and a
-#    well-formed configuration fires none.
+#    well-formed configuration fires none. The token probe leaves the sibling
+#    queue fully wired, so it also shows that a queue whose own credential is
+#    missing does not borrow another queue's.
 #
 # Severity rationale (Mayo): each claim fails under a plausible incorrect
 # implementation. Dropping the `mkIf isDarwin` / `mkIf isLinux` gates puts
@@ -55,8 +57,6 @@
     let
       lib = pkgs.lib;
       mkCheck = self.lib.mkStructuralCheck pkgs;
-
-      dummyTokenPath = "/run/secrets/devin-outposts-token.dummy";
 
       # The same package set the home configurations get (see
       # modules/home/mk-home.nix): `self.legacyPackages` is the channel before
@@ -109,13 +109,22 @@
           ];
         }).config;
 
+      # Only the token files are supplied: the ids, platforms and names come
+      # from the module's own registry, so these probes also show that a
+      # partial definition merges with it instead of replacing it -- an option
+      # `default` would have dropped the entries and the platforms.
+      wired = {
+        "stibnite-01".tokenFile = "/run/secrets/devin-outposts-token-stibnite.dummy";
+        "magnetite-01".tokenFile = "/run/secrets/devin-outposts-token-magnetite.dummy";
+      };
+
       darwin = evalHome {
         system = "aarch64-darwin";
         homeDirectory = "/Users/probe";
         worker = {
           enable = true;
           workers = 2;
-          tokenFile = dummyTokenPath;
+          outposts = wired;
         };
       };
 
@@ -125,7 +134,7 @@
         worker = {
           enable = true;
           workers = 2;
-          tokenFile = dummyTokenPath;
+          outposts = wired;
         };
       };
 
@@ -140,6 +149,8 @@
           message:
           if lib.hasInfix "tokenFile is null" message then
             "token"
+          else if lib.hasInfix "id is null" message then
+            "id"
           else if lib.hasInfix "registered for platform" message then
             "platform"
           else if lib.hasInfix "not a key of" message then
@@ -149,6 +160,22 @@
           else
             "unrecognized: ${message}"
         ) (map (a: a.message) (lib.filter (a: !a.assertion) config.assertions));
+
+      # Warnings are the third platform state: neither an assertion failure nor
+      # silence.
+      warnedClauses =
+        config:
+        map (
+          message:
+          if lib.hasInfix "carries no platform" message then "platform-unset" else "unrecognized: ${message}"
+        ) (config.warnings or [ ]);
+
+      # A no-platform queue selected on a darwin host: warned, not asserted.
+      platformUnsetProbe = evalBare "aarch64-darwin" {
+        enable = true;
+        outpost = "magnetite-01";
+        outposts = wired;
+      };
 
       distinctWorkDirs = paths: paths != [ ] && lib.length (lib.unique paths) == lib.length paths;
     in
@@ -174,37 +201,86 @@
             map (name: linux.systemd.user.services.${name}.Service.WorkingDirectory) (units linux)
           );
 
+          # Selection: the exact-platform tier picks stibnite-01 on darwin, and
+          # with no linux-platform entry the no-platform tier picks
+          # magnetite-01 on linux. Both come from the module's registry, so a
+          # wrong name or a missing merge shows up here.
+          darwinOutpost = darwin.services.devin-worker.outpost;
+          darwinSelectedPlatform =
+            darwin.services.devin-worker.outposts.${darwin.services.devin-worker.outpost}.platform;
+          darwinWarned = warnedClauses darwin;
+
+          linuxOutpost = linux.services.devin-worker.outpost;
+          linuxSelectedPlatform =
+            linux.services.devin-worker.outposts.${linux.services.devin-worker.outpost}.platform;
+          # magnetite-01 carries no platform, so agreement with a linux host is
+          # unestablished rather than confirmed. Named as its own state: not a
+          # match, not a mismatch, and deliberately not an assertion, because
+          # whether a no-platform queue can serve this worker is unproven.
+          linuxWarned = warnedClauses linux;
+
           wellFormed = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              tokenFile = dummyTokenPath;
+              outposts = wired;
             }
           );
+          # The sibling queue keeps its token, so this also shows a queue whose
+          # own file is missing does not fall back to another's.
           tokenless = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              tokenFile = null;
+              outposts = {
+                "magnetite-01".tokenFile = wired."magnetite-01".tokenFile;
+              };
             }
           );
+          idless = firedClauses (
+            evalBare "aarch64-darwin" {
+              enable = true;
+              outposts = wired // {
+                "stibnite-01" = {
+                  id = null;
+                  inherit (wired."stibnite-01") tokenFile;
+                };
+              };
+            }
+          );
+          # Both platforms named and different, which is the only mismatch the
+          # module asserts on.
           platformMismatch = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              outpost = "magnetite";
-              tokenFile = dummyTokenPath;
+              outpost = "magnetite-01";
+              outposts = wired // {
+                "magnetite-01" = {
+                  platform = "linux";
+                  inherit (wired."magnetite-01") tokenFile;
+                };
+              };
             }
           );
+          platformUnsetFired = firedClauses platformUnsetProbe;
+          platformUnsetWarned = warnedClauses platformUnsetProbe;
           unknownOutpost = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
               outpost = "no-such-queue";
-              tokenFile = dummyTokenPath;
+              outposts = wired;
             }
           );
+          # Two queues naming this host's platform, so no single default
+          # resolves and the exact tier never falls through to the other.
           unresolvedOutpost = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              outposts = { };
-              tokenFile = dummyTokenPath;
+              outposts = wired // {
+                spare = {
+                  platform = "macos";
+                  id = "outpost_env-11111111111111111111111111111111";
+                  tokenFile = "/run/secrets/devin-outposts-token-spare.dummy";
+                };
+              };
             }
           );
         };
@@ -225,9 +301,19 @@
           linuxUnitEnvNames = [ "PATH" ];
           linuxWorkDirsDistinct = true;
 
+          darwinOutpost = "stibnite-01";
+          darwinSelectedPlatform = "macos";
+          darwinWarned = [ ];
+          linuxOutpost = "magnetite-01";
+          linuxSelectedPlatform = null;
+          linuxWarned = [ "platform-unset" ];
+
           wellFormed = [ ];
           tokenless = [ "token" ];
+          idless = [ "id" ];
           platformMismatch = [ "platform" ];
+          platformUnsetFired = [ ];
+          platformUnsetWarned = [ "platform-unset" ];
           unknownOutpost = [ "unknown-outpost" ];
           unresolvedOutpost = [ "unset-outpost" ];
         };

@@ -39,6 +39,32 @@
 # acceptor id, since the upstream default is generated per worker DATA
 # directory -- which the instances on one host share -- and an id must never
 # be shared, across instances or across machines.
+#
+# One token file per queue, for rotation rather than for containment. The web
+# UI issues a token when an outpost is created, but a token issued for one
+# outpost lists every outpost through the account-level endpoint: measured
+# against the live account, these credentials are account-scoped for reads
+# despite being issued per outpost. Separate files therefore buy independent
+# rotation, not blast-radius containment, and no registry entry may fall back
+# to a sibling's file -- a queue without its own token refuses to start, so a
+# worker never runs addressed at one queue with another queue's credential.
+#
+# Rotating one, in three steps:
+#
+#   1. Rotate the token in the Devin UI for that outpost. No rebuild is
+#      needed for this step alone -- nothing in this repository holds the
+#      value, and the running worker still holds the old one.
+#   2. Replace that one key's value in
+#      secrets/home-manager/users/crs58/secrets.yaml. The other outpost's key
+#      is a separate entry and is not touched.
+#   3. Re-activate that host so the new value reaches the worker's runtime
+#      path, then restart the worker service
+#      (`launchctl kickstart -k gui/$UID/devin-worker-1` on darwin,
+#      `systemctl --user restart devin-worker-1` on linux).
+#
+# Step 3's restart is not optional: the launcher reads the token from the file
+# once, at process start, so a running worker keeps using the old value until
+# it is restarted, however current the file on disk has become.
 { ... }:
 {
   flake.modules.homeManager.devin =
@@ -53,11 +79,39 @@
 
       hostOutpostPlatform = if pkgs.stdenv.hostPlatform.isDarwin then "macos" else "linux";
 
-      platformOutposts = lib.attrNames (
+      # A registry entry's platform may be null: the account permits creating
+      # an outpost without one, and the reference reads a null platform as the
+      # account default rather than as any particular OS. Candidates are
+      # therefore resolved in two tiers -- entries that name this host's
+      # platform, and only if there are none, entries that name no platform at
+      # all. That gives each host in this fleet exactly one candidate
+      # (stibnite-01 names macos; magnetite-01 names nothing) without treating
+      # a null as equal to linux.
+      exactPlatformOutposts = lib.attrNames (
         lib.filterAttrs (_: outpost: outpost.platform == hostOutpostPlatform) cfg.outposts
       );
 
+      unsetPlatformOutposts = lib.attrNames (
+        lib.filterAttrs (_: outpost: outpost.platform == null) cfg.outposts
+      );
+
+      platformOutposts =
+        if exactPlatformOutposts != [ ] then exactPlatformOutposts else unsetPlatformOutposts;
+
       selected = if cfg.outpost == null then null else cfg.outposts.${cfg.outpost} or null;
+
+      # Neither a match nor a mismatch: whether a queue with no platform can
+      # serve this host is unproven here, so the module reports the state and
+      # leaves the worker's own OS validation as the authority at claim time.
+      selectedPlatformUnset = selected != null && selected.platform == null;
+
+      # Both resolve to a harmless empty value when the registry entry is
+      # missing or incomplete, so the assertions below are what report the
+      # problem rather than an evaluation error from deep inside the launcher.
+      selectedOutpostId =
+        if selected == null then "" else (if selected.id == null then "" else selected.id);
+
+      selectedTokenFile = if selected == null then null else selected.tokenFile;
 
       indices = lib.genList (index: index + 1) cfg.workers;
 
@@ -93,10 +147,16 @@
             # plist and a systemd unit both land in the world-readable Nix
             # store, so a credential written into either is a credential
             # published to every user on the machine.
-            token_file=${lib.escapeShellArg (if cfg.tokenFile == null then "" else cfg.tokenFile)}
+            #
+            # This queue's own file, with no shared option to fall back to, so
+            # a queue whose file is missing refuses to start rather than
+            # running with a sibling's credential. That is addressing
+            # discipline, not isolation: the credentials are account-scoped
+            # for reads.
+            token_file=${lib.escapeShellArg (if selectedTokenFile == null then "" else selectedTokenFile)}
             if [ ! -s "$token_file" ]; then
-              echo "${unitName index}: no Outposts token at '$token_file'." >&2
-              echo "${unitName index}: set services.devin-worker.tokenFile to the sops-nix path holding a v3 API token whose service-user role grants Outposts read and write scope." >&2
+              echo "${unitName index}: no Outposts token for the ${toString cfg.outpost} queue at '$token_file'." >&2
+              echo "${unitName index}: set services.devin-worker.outposts.${toString cfg.outpost}.tokenFile to the sops-nix path holding that outpost's worker token." >&2
               echo "${unitName index}: refusing to start. Without a token the CLI would fall back to the operator's interactive login, authenticating as a person rather than this machine and implicitly creating an outpost upstream." >&2
               exit ${toString configErrorExit}
             fi
@@ -111,8 +171,12 @@
             DEVIN_WORKER_ACCEPTOR_ID="''${nodename%%.*}-${cfg.outpost}-${toString index}"
             export DEVIN_WORKER_ACCEPTOR_ID
 
+            # Addressed by id rather than by name: a name can be renamed in
+            # the web UI, and a stale name would surface as a failure at claim
+            # time on a machine nobody is watching, while the id is stable for
+            # the queue's lifetime.
             cd "$work_dir"
-            exec devin worker start --outpost=${lib.escapeShellArg cfg.outpost} ${lib.escapeShellArgs cfg.extraArgs}
+            exec devin worker start --outpost=${lib.escapeShellArg selectedOutpostId} ${lib.escapeShellArgs cfg.extraArgs}
           '';
         };
 
@@ -147,17 +211,89 @@
           type = lib.types.attrsOf (
             lib.types.submodule {
               options = {
-                platform = lib.mkOption {
-                  type = lib.types.enum [
-                    "linux"
-                    "macos"
-                    "windows"
-                  ];
+                id = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  example = "outpost_env-0123456789abcdef0123456789abcdef";
                   description = ''
-                    Machine platform the queue was created for. The worker
-                    refuses a queue whose platform does not match the machine
-                    it runs on, so this is asserted at evaluation time rather
-                    than discovered when a session is claimed and released.
+                    Stable identifier the web UI issues for the queue, of the
+                    form `outpost_env-<32 hex>`. `devin worker start
+                    --outpost=` accepts either a name or an id, and this
+                    module passes the id: the name is the operator's label and
+                    can be changed in the UI, at which point a name-addressed
+                    worker would keep polling and fail when it tried to claim,
+                    on a machine nobody is watching.
+
+                    Null until the queue exists, because the id is issued
+                    rather than chosen. Enabling a worker for an entry with no
+                    id fails evaluation, naming the outpost: a queue that
+                    cannot be addressed is not a working default. Fill it in
+                    here, beside the platform, once the queue is created --
+                    the id is an identifier, not a credential.
+                  '';
+                };
+
+                tokenFile = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  example = lib.literalExpression ''config.sops.secrets."devin-outposts-token-magnetite".path'';
+                  description = ''
+                    Path to a file holding this queue's worker token, normally
+                    a sops-nix secret rendered at activation.
+
+                    One file per queue, for rotation rather than for
+                    containment. The web UI issues a token when an outpost is
+                    created, but a token issued for one outpost lists every
+                    outpost through the account-level endpoint -- measured
+                    against the live account -- so these credentials are
+                    account-scoped for reads despite being issued per outpost.
+                    Separate files buy independent rotation, not a smaller
+                    blast radius.
+
+                    There is deliberately no host-level or module-level token
+                    option, so a queue whose file is missing cannot fall back
+                    to a sibling's: it refuses to start, and a worker never
+                    runs addressed at one queue holding another's credential.
+
+                    The token is a bearer credential, so it must never be
+                    written into a Nix store path: not into a rendered
+                    configuration file, and not into a launchd plist's
+                    EnvironmentVariables or a systemd unit's Environment, both
+                    of which are store files readable by every user on the
+                    machine. The launcher reads this file at start and passes
+                    the value through DEVIN_OUTPOSTS_TOKEN.
+
+                    Left null in the registry defaults deliberately: minting
+                    the token is an account-level action for the operator, and
+                    until it exists this option has nothing correct to point
+                    at.
+                  '';
+                };
+
+                platform = lib.mkOption {
+                  type = lib.types.nullOr (
+                    lib.types.enum [
+                      "linux"
+                      "macos"
+                      "windows"
+                    ]
+                  );
+                  default = null;
+                  description = ''
+                    Machine platform the queue was created for, or null when
+                    the outpost was created without one -- which the account
+                    permits, and which the reference reads as the account
+                    default rather than as a particular OS.
+
+                    A platform that names a different OS than this host is a
+                    mismatch and fails evaluation: the worker validates the
+                    machine's OS against the outpost's platform, and failing
+                    here beats discovering it as sessions are claimed and
+                    released. A null platform is neither a match nor a
+                    mismatch. Whether a queue with no platform can serve this
+                    host is not established, so it is reported as its own
+                    state -- a warning naming the outpost -- and the worker's
+                    own validation remains the authority at claim time.
                   '';
                 };
 
@@ -169,22 +305,23 @@
               };
             }
           );
-          default = {
-            stibnite = {
-              platform = "macos";
-              description = "Apple silicon workstation with a live desktop session for computer use";
-            };
-            magnetite = {
-              platform = "linux";
-              description = "x86_64 server capacity for headless sessions";
-            };
-          };
+          default = { };
           description = ''
             Outpost queues this repository knows about, keyed by the name they
             carry in Devin Cloud. Recording them here is a declaration, not a
             creation: creating and deleting an outpost is an account-level
             action taken through the web app or `devin worker outpost create`,
             and nothing in this module reaches upstream to do it.
+
+            The fleet's own queues are populated by this module's config layer
+            rather than by this option's default, because an option default is
+            replaced wholesale by any definition: a caller adding one entry's
+            `id` or `tokenFile` through a default-carried registry would drop
+            every other entry, and drop the `platform` of the entry it was
+            editing. Definitions merge, so with the registry in the config
+            layer a caller writing `outposts.magnetite.tokenFile = ...` adds
+            to it. Overriding a value this module sets needs `lib.mkForce`,
+            since the module's own entries are `lib.mkDefault`.
           '';
         };
 
@@ -222,30 +359,6 @@
           '';
         };
 
-        tokenFile = lib.mkOption {
-          type = lib.types.nullOr lib.types.path;
-          default = null;
-          example = lib.literalExpression ''config.sops.secrets."devin-outposts-token".path'';
-          description = ''
-            Path to a file holding the worker's v3 API token, normally a
-            sops-nix secret rendered at activation. The token belongs to a
-            service user whose role grants Outposts read and write scope.
-
-            It is a bearer credential, so it must never be written into a Nix
-            store path: not into a rendered configuration file, and not into a
-            launchd plist's EnvironmentVariables or a systemd unit's
-            Environment, both of which are store files readable by every user
-            on the machine. The launcher reads this file at start and passes
-            the value through DEVIN_OUTPOSTS_TOKEN, and refuses to start when
-            the file is missing or empty rather than falling back to the CLI's
-            interactive login.
-
-            Left null deliberately: minting the token is an account-level
-            action for the operator, and until it exists this option has
-            nothing correct to point at.
-          '';
-        };
-
         workRoot = lib.mkOption {
           type = lib.types.path;
           default = "${config.home.homeDirectory}/devin/workers";
@@ -275,112 +388,168 @@
         };
       };
 
-      config = lib.mkIf cfg.enable {
-        assertions = [
-          {
-            assertion = cfg.outpost != null;
-            message = ''
-              services.devin-worker.outpost is unset and no default resolved:
-              services.devin-worker.outposts holds ${toString (lib.length platformOutposts)} queues for this host's platform (${hostOutpostPlatform}). Name the queue this host serves.
-            '';
-          }
-          {
-            assertion = cfg.outpost == null || selected != null;
-            message = ''
-              services.devin-worker.outpost is "${toString cfg.outpost}", which is not a key of
-              services.devin-worker.outposts (${lib.concatStringsSep ", " (lib.attrNames cfg.outposts)}).
-            '';
-          }
-          {
-            assertion = cfg.outpost == null || selected == null || selected.platform == hostOutpostPlatform;
-            message = ''
-              services.devin-worker.outpost "${toString cfg.outpost}" is registered for platform
-              "${toString (selected.platform or null)}" but this host is "${hostOutpostPlatform}". The worker
-              validates the machine's OS against the outpost's platform and refuses to serve a mismatch.
-            '';
-          }
-          {
-            assertion = cfg.tokenFile != null;
-            message = ''
-              services.devin-worker is enabled but services.devin-worker.tokenFile is null.
-              Point it at the sops-nix path holding the Outposts token, e.g.
+      config = lib.mkMerge [
+        # Unconditional, and pure data: the registry has to be readable for
+        # `outpost` to resolve its default, and describing a queue commits this
+        # host to nothing.
+        {
+          # Read from the live account through the fleet API, not assumed: the
+          # names carry an -01 suffix, and magnetite-01 was created without a
+          # platform. Addressing by id is what makes the suffix a labelling
+          # detail rather than a claim-time failure.
+          services.devin-worker.outposts = {
+            "stibnite-01" = {
+              id = lib.mkDefault "outpost_env-f47bd2ee30824fe6bc5f9330f67f3670";
+              platform = lib.mkDefault "macos";
+              description = lib.mkDefault "Apple silicon workstation with a live desktop session for computer use";
+            };
+            "magnetite-01" = {
+              id = lib.mkDefault "outpost_env-e178cc2f14f84011b05f52ea17ccdb66";
+              # Platform deliberately left null, mirroring the account: the
+              # outpost was created without one, and asserting linux here
+              # would be this module inventing a fact the account does not
+              # carry.
+              description = lib.mkDefault "x86_64 server capacity for headless sessions";
+            };
+          };
+        }
 
-                sops.secrets."devin-outposts-token" = { };
-                services.devin-worker.tokenFile = config.sops.secrets."devin-outposts-token".path;
+        (lib.mkIf cfg.enable {
+          assertions = [
+            {
+              assertion = cfg.outpost != null;
+              message = ''
+                services.devin-worker.outpost is unset and no default resolved:
+                ${toString (lib.length platformOutposts)} queues in services.devin-worker.outposts are candidates for this
+                host (platform "${hostOutpostPlatform}", or no platform when none names it). Name the queue this host serves.
+              '';
+            }
+            {
+              assertion = cfg.outpost == null || selected != null;
+              message = ''
+                services.devin-worker.outpost is "${toString cfg.outpost}", which is not a key of
+                services.devin-worker.outposts (${lib.concatStringsSep ", " (lib.attrNames cfg.outposts)}).
+              '';
+            }
+            {
+              assertion =
+                cfg.outpost == null
+                || selected == null
+                || selected.platform == null
+                || selected.platform == hostOutpostPlatform;
+              message = ''
+                services.devin-worker.outpost "${toString cfg.outpost}" is registered for platform
+                "${toString (selected.platform or null)}" but this host is "${hostOutpostPlatform}". The worker
+                validates the machine's OS against the outpost's platform and refuses to serve a mismatch.
+              '';
+            }
+            {
+              assertion = cfg.outpost == null || selected == null || selected.id != null;
+              message = ''
+                services.devin-worker.outposts.${toString cfg.outpost}.id is null, so this host has no
+                stable address for the queue it is meant to serve. The web UI issues the id as
+                outpost_env-<32 hex> when the outpost is created; set it beside that entry's platform.
 
-              Starting without a token is not a fallback worth taking: the CLI would authenticate as
-              the operator's personal login and implicitly create an outpost upstream.
-            '';
-          }
-        ];
+                The name is not used as the address on purpose: renaming the outpost in the UI would
+                leave a name-addressed worker failing at claim time rather than here.
+              '';
+            }
+            {
+              assertion = cfg.outpost == null || selected == null || selected.tokenFile != null;
+              message = ''
+                services.devin-worker is enabled but
+                services.devin-worker.outposts.${toString cfg.outpost}.tokenFile is null.
+                Point it at the sops-nix path holding that outpost's own worker token, e.g.
 
-        # launchd opens the log file and systemd enters the working directory
-        # before the launcher runs, so neither can be left to the launcher to
-        # create on first start.
-        home.activation.devinWorkerDirectories =
-          lib.hm.dag.entryBefore
-            [
-              "setupLaunchAgents"
-              "reloadSystemd"
-            ]
-            ''
-              $DRY_RUN_CMD install -d -m 0700 ${lib.escapeShellArg cfg.stateDir} ${
-                lib.escapeShellArgs (map (index: workDir index) indices)
-              }
-            '';
+                  sops.secrets."devin-outposts-token-<host>" = { mode = "0400"; };
+                  services.devin-worker.outposts."${toString cfg.outpost}".tokenFile =
+                    config.sops.secrets."devin-outposts-token-<host>".path;
 
-        launchd.agents = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (
-          lib.listToAttrs (
-            map (
-              index:
-              lib.nameValuePair (unitName index) {
-                enable = true;
-                config = {
-                  ProgramArguments = [ (lib.getExe (launcher index)) ];
-                  RunAtLoad = true;
-                  KeepAlive = true;
-                  WorkingDirectory = workDir index;
-                  StandardOutPath = logFile index;
-                  StandardErrorPath = logFile index;
-                  # Not "Background": that class caps CPU and I/O priority,
-                  # and a session on this worker runs the repository's builds
-                  # and tests.
-                  ProcessType = "Standard";
-                  # PATH only. A credential here would be a store-published
-                  # credential; see services.devin-worker.tokenFile.
-                  EnvironmentVariables.PATH = servicePath;
-                };
-              }
-            ) indices
-          )
-        );
+                No entry falls back to another's file, so this cannot be satisfied by a sibling
+                queue's token even though the credentials are account-scoped for reads. Starting
+                without one is not a fallback worth taking: the CLI would authenticate as the
+                operator's personal login and implicitly create an outpost upstream.
+              '';
+            }
+          ];
 
-        systemd.user.services = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (
-          lib.listToAttrs (
-            map (
-              index:
-              lib.nameValuePair (unitName index) {
-                Unit = {
-                  Description = "Devin Outposts worker ${toString index} serving the ${toString cfg.outpost} queue";
-                  After = [ "network-online.target" ];
-                  Wants = [ "network-online.target" ];
-                };
-                Service = {
-                  ExecStart = lib.getExe (launcher index);
-                  WorkingDirectory = workDir index;
-                  Restart = "on-failure";
-                  # A worker that cannot authenticate stays down instead of
-                  # polling the API on a loop; every other failure is treated
-                  # as transient and retried on a slow cadence.
-                  RestartPreventExitStatus = configErrorExit;
-                  RestartSec = 30;
-                  Environment = [ "PATH=${servicePath}" ];
-                };
-                Install.WantedBy = [ "default.target" ];
-              }
-            ) indices
-          )
-        );
-      };
+          warnings = lib.optional selectedPlatformUnset ''
+            services.devin-worker.outposts."${toString cfg.outpost}" carries no platform, so this
+            host's agreement with it is unestablished rather than confirmed: the account permits an
+            outpost without a platform and the reference reads that as the account default. This is
+            neither a match nor a mismatch here, and the worker's own OS validation is the authority
+            when it claims a session. Set the platform on the outpost upstream, and on this entry, to
+            have the disagreement caught at evaluation instead.
+          '';
+
+          # launchd opens the log file and systemd enters the working directory
+          # before the launcher runs, so neither can be left to the launcher to
+          # create on first start.
+          home.activation.devinWorkerDirectories =
+            lib.hm.dag.entryBefore
+              [
+                "setupLaunchAgents"
+                "reloadSystemd"
+              ]
+              ''
+                $DRY_RUN_CMD install -d -m 0700 ${lib.escapeShellArg cfg.stateDir} ${
+                  lib.escapeShellArgs (map (index: workDir index) indices)
+                }
+              '';
+
+          launchd.agents = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (
+            lib.listToAttrs (
+              map (
+                index:
+                lib.nameValuePair (unitName index) {
+                  enable = true;
+                  config = {
+                    ProgramArguments = [ (lib.getExe (launcher index)) ];
+                    RunAtLoad = true;
+                    KeepAlive = true;
+                    WorkingDirectory = workDir index;
+                    StandardOutPath = logFile index;
+                    StandardErrorPath = logFile index;
+                    # Not "Background": that class caps CPU and I/O priority,
+                    # and a session on this worker runs the repository's builds
+                    # and tests.
+                    ProcessType = "Standard";
+                    # PATH only. A credential here would be a store-published
+                    # credential; see services.devin-worker.tokenFile.
+                    EnvironmentVariables.PATH = servicePath;
+                  };
+                }
+              ) indices
+            )
+          );
+
+          systemd.user.services = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (
+            lib.listToAttrs (
+              map (
+                index:
+                lib.nameValuePair (unitName index) {
+                  Unit = {
+                    Description = "Devin Outposts worker ${toString index} serving the ${toString cfg.outpost} queue";
+                    After = [ "network-online.target" ];
+                    Wants = [ "network-online.target" ];
+                  };
+                  Service = {
+                    ExecStart = lib.getExe (launcher index);
+                    WorkingDirectory = workDir index;
+                    Restart = "on-failure";
+                    # A worker that cannot authenticate stays down instead of
+                    # polling the API on a loop; every other failure is treated
+                    # as transient and retried on a slow cadence.
+                    RestartPreventExitStatus = configErrorExit;
+                    RestartSec = 30;
+                    Environment = [ "PATH=${servicePath}" ];
+                  };
+                  Install.WantedBy = [ "default.target" ];
+                }
+              ) indices
+            )
+          );
+        })
+      ];
     };
 }

@@ -247,6 +247,49 @@ let
       # modules/home/ai/moshi for how the launcher consumes it.
       services.moshi-hook.pairingTokenFile = config.sops.secrets.moshi-pairing-token.path;
 
+      # Devin Outposts worker tokens, one file per outpost queue so each can be
+      # rotated on its own. Not a containment boundary: a token issued for one
+      # outpost lists every outpost through the account-level endpoint, so both
+      # are account-scoped for reads. See modules/home/ai/devin/worker.nix for
+      # the rotation procedure and for why the launcher reads the path rather
+      # than receiving the value.
+      #
+      # sops rather than clan vars: clan vars is effectively NixOS-shaped in
+      # this fleet -- magnetite carries 41 generators against stibnite's one,
+      # this repository already records a related clan feature as NixOS-only,
+      # and sops-nix through home-manager already delivers secrets to the
+      # darwin host for four existing tools.
+      #
+      # Declaration and wiring are gated on the service, not because either is
+      # conditional in spirit but because sops-nix validates every declared key
+      # against the sops file when the manifest is built (check-mode=sopsfile):
+      # declaring a key whose ciphertext is not yet in secrets.yaml would fail
+      # home-manager activation on both hosts for a service that is off. The
+      # operator's two actions -- add the two ciphertexts, enable the worker on
+      # a host -- therefore land together, and enabling without the ciphertext
+      # fails at build time naming the missing key.
+      #
+      # Carried as an inline module because `sops.secrets` is already defined
+      # in the attribute set above, and a conditional slice of it cannot be a
+      # second definition of the same attribute path in one literal.
+      imports = [
+        {
+          sops.secrets = lib.mkIf config.services.devin-worker.enable {
+            devin-outposts-token-stibnite = {
+              mode = "0400";
+            };
+            devin-outposts-token-magnetite = {
+              mode = "0400";
+            };
+          };
+
+          services.devin-worker.outposts = lib.mkIf config.services.devin-worker.enable {
+            "stibnite-01".tokenFile = config.sops.secrets.devin-outposts-token-stibnite.path;
+            "magnetite-01".tokenFile = config.sops.secrets.devin-outposts-token-magnetite.path;
+          };
+        }
+      ];
+
       # Deploy radicle public key (not secret - can be plaintext, but identity-bound)
       # This is the SSH public key used for Radicle node identity
       home.file.".radicle/keys/radicle.pub".text = ''
