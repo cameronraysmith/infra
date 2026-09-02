@@ -7,9 +7,9 @@
       inventory = self.clan.inventory.machines;
       machineSystems = self.lib.machineSystems;
 
-      inventoryNamesFor = machineClass: builtins.attrNames (
-        lib.filterAttrs (_: machine: machine.machineClass == machineClass) inventory
-      );
+      inventoryNamesFor =
+        machineClass:
+        builtins.attrNames (lib.filterAttrs (_: machine: machine.machineClass == machineClass) inventory);
 
       nixosForSystem = lib.filterAttrs (
         name: machine:
@@ -34,7 +34,8 @@
     {
       checks =
         (lib.mapAttrs' (
-          name: _: lib.nameValuePair "nixos-${name}" self.nixosConfigurations.${name}.config.system.build.toplevel
+          name: _:
+          lib.nameValuePair "nixos-${name}" self.nixosConfigurations.${name}.config.system.build.toplevel
         ) nixosForSystem)
         // (lib.mapAttrs' (
           name: _: lib.nameValuePair "darwin-${name}" self.darwinConfigurations.${name}.system
