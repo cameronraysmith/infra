@@ -84,19 +84,50 @@ The queue feeding it is larger than the window suggested.
 Measured at 02:10 via `gh-axi pr list --state open`: thirty open pull requests, of which twenty-three are bot-authored — seventeen from `app/vanixiets-flake-updater` (2891, 2892, 2895 through 2909) and six from `app/renovate` (2613, 2881, 2910 through 2913) — against seven human-authored (2747, 2772, 2777, 2878, 2890, 2893, 2914).
 So the automated share is 23 of 30 rather than six of eight.
 
-The arithmetic, on a strictly serial evaluator.
-At the measured 180 second mean, clearing one evaluation for each of the twenty-three automated pull requests occupies the single evaluator for 4140 seconds, about sixty-nine minutes.
-At build 172's measured 490 seconds it is 11270 seconds, about three hours eight minutes.
-A single member of the slow class is worse than the whole fast sweep: build 171's 3312 second evaluation consumes fifty-five minutes of the only evaluator, and build 168 consumed the full 3600 second timeout and then failed permanently.
-A human pull request arriving mid-sweep waits behind whatever is in front of it, which is why PR 2890's check sat in progress for a hundred minutes without its own evaluation being slow.
+The arithmetic, with the working shown so the tradeoff is arithmetic rather than a feeling.
+The measured inputs are a healthy evaluation at 490 seconds (build 172), a fast class at about 200 seconds (builds 173 and 176 at 203 and 201), a slow class at 3312 seconds (build 171) and a hard timeout at 3600 seconds (build 168), against an evaluator that runs exactly one evaluation at a time.
+
+One full cycle of the automated set, meaning one evaluation for each of the twenty-three bot-authored pull requests:
+
+    23 x 180 s =  4,140 s = 1 h 09 m   at the measured throughput mean
+    23 x 200 s =  4,600 s = 1 h 17 m   at the fast class
+    23 x 490 s = 11,270 s = 3 h 08 m   at build 172's healthy rate
+
+One slow-class member displaces most of a cycle by itself.
+Build 171's 3312 seconds is 55 minutes of the only evaluator, so substituting one slow member for one healthy member adds 3312 - 490 = 2,822 seconds, 47 minutes, to the cycle total.
+Build 168 consumed the full 3600 second timeout and then failed permanently, spending an hour of the sole evaluator to produce no verdict at all.
+
+A queue item is one evaluation per push rather than per pull request, which multiplies the depth above rather than adding to it.
+PR 2890 alone was force-pushed four times tonight, and every push re-triggers.
+The push multiplier was not measured for the bot population, so it is carried as a parameter rather than asserted, and the cycle cost at build 172's rate scales linearly in it:
+
+    m = 1:  23 evaluations = 11,270 s =  3 h 08 m
+    m = 2:  46 evaluations = 22,540 s =  6 h 16 m
+    m = 4:  92 evaluations = 45,080 s = 12 h 31 m
+
+The measured service rate bounds what the queue can absorb: fifteen evaluations in forty-five minutes is twenty per hour, so any arrival rate above twenty evaluations per hour grows the queue without bound rather than merely lengthening it.
+
+Say plainly what this means for a person: at this depth a human pull request can wait behind hours of automated evaluation.
+A human pull request arriving at the back of one full automated cycle waits 3 hours 8 minutes at the healthy rate before its own evaluation begins, and 6 hours 16 minutes if each of those pull requests is pushed twice.
+That is the consequence that makes this worth deciding rather than absorbing, and it is why PR 2890's check sat in progress for a hundred minutes without its own evaluation ever being slow.
 
 The three findings compound rather than merely coexist, and this is the part worth stating precisely.
 A flake-input update is the maximally expensive input to finding one: bumping `nixpkgs` or `home-manager` invalidates the closure, which converts warm paths into all-miss paths, which is exactly the class costing ~1.27 seconds each.
 So the twenty-three automated pull requests are not just numerous, they are each drawn from the expensive class, and they are metered through a queue that admits one at a time.
 Seventeen of them are flake-input bumps by construction.
 
-The lever here is policy rather than configuration, and the options are genuinely a choice rather than a recommendation with one answer.
-Batching the flake-input updates into a single pull request replaces seventeen serial evaluations with one, at the cost of losing per-input bisection when an update breaks something.
+What batching would save, per cycle, on the same measured inputs.
+Collapsing the flake updater's seventeen pull requests into one combined pull request replaces seventeen serial evaluations with one, taking the cycle from twenty-three evaluations to seven, the six dependency-bot pull requests plus the combined one:
+
+    before: 23 x 490 s = 11,270 s = 3 h 08 m
+    after:   7 x 490 s =  3,430 s = 0 h 57 m
+    saved:  16 x 490 s =  7,840 s = 2 h 11 m per cycle, a 69.6% reduction
+
+At the measured 180 second mean the same collapse saves 16 x 180 = 2,880 seconds, 48 minutes per cycle, and under a push multiplier the saving scales with it: 2 hours 11 minutes becomes 4 hours 21 minutes at m = 2.
+Inferred, and worth stating because it makes batching cheaper than the eval count alone suggests: seventeen separate input bumps each independently invalidate overlapping regions of the 29,244-path union and each pays its own cold fan-out, whereas one combined bump pays that union once, so the saving on finding one's axis is larger than the 17-to-1 ratio in evaluation count.
+
+The lever here is policy rather than configuration, so what follows are recommendations for whoever sets this repository's automation policy rather than decisions taken here.
+Batching the flake-input updates into a single pull request buys the 2 hour 11 minute per-cycle saving above, at the cost of losing per-input bisection when an update breaks something.
 Rate-limiting or scheduling whatever opens them spreads the load off the hours when humans are waiting, at the cost of slower dependency freshness.
 Accepting the queue with eyes open is also a legitimate answer, given that the evaluator is doing real work rather than thrashing; it simply means a human pull request's check latency is set by the bot queue depth at the moment it lands, which should then not be read as a regression.
 
@@ -198,7 +229,9 @@ Distinguishing them needs a fifteen-minute strace and socket capture during one 
 
 Reducing FULL-ACT multiplicity per pull request is the repository-side lever, at 47.4% of the deduplicated path union for 9.4% of the attributes; the four distinct home closure shapes and five host shapes admit a canary-per-shape arrangement with the full set on scheduled or main-branch runs, and the cost is per-user cache fill on pull request runs.
 
-Batching the seventeen flake-input update pull requests is the policy-side lever, replacing seventeen serial evaluations of the expensive class with one, at the cost of per-input bisection.
+Batching the seventeen flake-input update pull requests is the policy-side lever, and it is the largest single saving available: collapsing them into one combined pull request takes an automated cycle from twenty-three serial evaluations to seven, saving 7,840 seconds, 2 hours 11 minutes, per cycle at build 172's measured rate, and more than that under any push multiplier above one.
+The cost is losing per-input bisection when an update breaks something.
+It matters because at the present depth a human pull request can wait behind hours of automated evaluation before its own evaluation begins.
 
 Magnetite's effective `substituters` list contains `cache.nixos.org` twice, once as configured and once as `https://cache.nixos.org/` contributed by the nixpkgs default, because `nix.settings.substituters` has a list type and list options merge by concatenation across modules.
 If nix does not normalise the two forms to one store, every all-miss path pays a redundant round trip of about 145 ms, roughly 11% of the nine-endpoint fan-out.
