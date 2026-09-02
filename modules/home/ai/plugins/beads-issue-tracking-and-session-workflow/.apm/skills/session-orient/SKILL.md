@@ -4,8 +4,7 @@ description: Strategic horizon session skill that assembles complete session con
 ---
 # Session orientation
 
-Symlink location: `~/.claude/skills/session-orient/SKILL.md`
-Slash command: `/session-orient`
+Invoke by name: `session-orient`
 
 Session start protocol that assembles context from all available sources, calibrates work selection by Cynefin domain and planning-depth, and produces a briefing that enables the worker to self-direct.
 This skill operates at the strategic planning horizon, reading the full remaining scope at low resolution.
@@ -39,7 +38,7 @@ This skill orchestrates a higher-level protocol that uses the following skills a
 Do not duplicate their functionality; delegate to them.
 
 - `issues-beads-orient` (retired, pending re-base onto Linear/OpenSpec) provided DAG diagnostics and work selection (phase 1 graph-wide scan, phase 2 signal-table-driven briefing).
-- `/stigmergic-convention` provides the signal table schema, field definitions, and read-modify-write protocol for parsing and interpreting signal tables on candidate issues.
+- `stigmergic-convention` provides the signal table schema, field definitions, and read-modify-write protocol for parsing and interpreting signal tables on candidate issues.
 
 `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running orientation commands.
 
@@ -144,7 +143,7 @@ The `preferences-architecture-diagramming` skill defines the diagram categories 
 fd -e d2 -e tex -e mmd . docs/ 2>/dev/null
 ```
 
-Cross-reference flagged diagrams against the compendium categories in `preferences-architecture-diagramming/04-diagram-compendium.md` to assess coverage gaps.
+Cross-reference flagged diagrams against the compendium categories in the `preferences-architecture-diagramming` skill's `04-diagram-compendium.md` to assess coverage gaps.
 Report missing C4 levels alongside stale diagrams so the worker can prioritize updates and new diagram creation together.
 
 Staleness thresholds vary by Cynefin domain, consistent with the adaptive planning calibration in `preferences-adaptive-planning`.
@@ -163,7 +162,7 @@ fd -t l --broken . contexts/ 2>/dev/null
 
 ### Step 4: parse signal tables on candidate issues
 
-For each candidate issue, extract the signal table from the issue's notes field using the delimiter-based parsing protocol from `/stigmergic-convention`.
+For each candidate issue, extract the signal table from the issue's notes field using the delimiter-based parsing protocol from `stigmergic-convention`.
 
 ```bash
 bd show <id> --json | jq -r '.[0].notes // ""'
@@ -207,7 +206,7 @@ Omit dependency context unless a closed dependency changed an interface the work
 
 At *standard* depth (complicated domain): emit full context including the issue description, all closed dependency closure context in topological order, resolved escalations, and complete acceptance criteria with verification commands.
 If the surprise score from a prior worker exceeds 0.3, highlight the divergence and include checkpoint context that explains what was unexpected.
-When the planning-depth signal indicates multiple independent issues that can proceed in parallel, the diamond workflow (`~/.claude/skills/jj-version-control/diamond-workflow.md` and `~/.claude/skills/jj-version-control/tiered-ceremony.md` tier 3) is the default decomposition pattern in jj mode.
+When the planning-depth signal indicates multiple independent issues that can proceed in parallel, the diamond workflow (the `jj-version-control` skill's `diamond-workflow.md` and the `jj-version-control` skill's `tiered-ceremony.md` tier 3) is the default decomposition pattern in jj mode.
 
 At *deep* depth (complex domain): emit everything from standard plus explicit exploration phase directives.
 Separate "what we know" (from dependency context and prior checkpoint context) from "what we need to discover" (from the issue description's open questions or areas where surprise was high).
@@ -258,7 +257,7 @@ The synthesis includes:
 *Calibrated briefing*: the depth-appropriate briefing assembled in step 5, with exploration directives from step 6 when applicable.
 
 *Work plan with phase recommendation*:
-- Recommend `/session-plan` if the operational buffer is depleted (few ready issues relative to work capacity) or if decomposition is needed before implementation can begin.
+- Recommend `session-plan` if the operational buffer is depleted (few ready issues relative to work capacity) or if decomposition is needed before implementation can begin.
 - Recommend proceeding to implementation if the operational buffer is full and selected issues are ready with clear acceptance criteria.
 - Recommend discovery mode (within this orient session) if planning-depth is deep or probe, before either planning or implementing.
 - Recommend validation or regression-protection work when a candidate's implementation is ahead of its evidence: code exists and tests pass but confidence is still `prototype` or `undemonstrated`, indicating the evidence hasn't been assessed for severity.
@@ -340,19 +339,19 @@ At *probe* depth: include only cross-project context that directly informs the h
 
 After orientation completes, the worker proceeds to one of:
 
-- `/session-plan` if decomposition is needed (operational buffer depleted, scope unclear, or new epic requiring breakdown).
+- `session-plan` if decomposition is needed (operational buffer depleted, scope unclear, or new epic requiring breakdown).
 - Implementation if the operational buffer is full and the selected issue has clear acceptance criteria and verification commands.
-- Discovery mode within this orient session if planning-depth is deep or probe, followed by `/session-checkpoint` after exploration and then either `/session-plan` or implementation.
+- Discovery mode within this orient session if planning-depth is deep or probe, followed by `session-checkpoint` after exploration and then either `session-plan` or implementation.
 
 ---
 
 *Composed skills (delegate, do not duplicate):*
 - `issues-beads-orient` (retired, pending re-base onto Linear/OpenSpec) -- DAG diagnostics, graph-wide scan, signal-table-driven briefing
-- `/stigmergic-convention` -- signal table schema and parsing protocol
+- `stigmergic-convention` -- signal table schema and parsing protocol
 
 *Related skills:*
-- `/session-plan` -- tactical-to-operational decomposition
-- `/session-checkpoint` -- all-horizon state capture and handoff
+- `session-plan` -- tactical-to-operational decomposition
+- `session-checkpoint` -- all-horizon state capture and handoff
 - `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 - `preferences-validation-assurance` for the confidence promotion chain and evidence quality dimensions used to interpret candidate issue readiness
 - `preferences-compositional-continuous-verification` for the theoretical anchor behind the standing traceability-audit habit on `.#checks` and the structural commitment behind the validate-to-merge workflow

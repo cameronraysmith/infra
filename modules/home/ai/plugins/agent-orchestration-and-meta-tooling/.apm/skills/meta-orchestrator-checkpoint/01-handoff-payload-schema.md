@@ -1,6 +1,6 @@
 # Handoff payload schema
 
-Explicit schema for the handoff payload that `/meta-orchestrator-checkpoint` produces and that `/meta-orchestrator-initiate` consumes.
+Explicit schema for the handoff payload that `meta-orchestrator-checkpoint` produces and that `meta-orchestrator-initiate` consumes.
 Load when authoring a handoff payload (in checkpoint) or when parsing one (in initiate).
 
 ## Format
@@ -45,7 +45,7 @@ Required per pair:
 - *Pair identity*: `team_name`, AC name, WO name
 - *Stream*: stream slug, target repo, jj chain lineage
 - *Status*: `active` / `retired` / `completed`
-- *Session-checkpoint pointer* (retired pairs only): absolute path to the AC's `/session-checkpoint` output; absolute path to the WO's `/session-checkpoint` output (if WO produced one)
+- *Session-checkpoint pointer* (retired pairs only): absolute path to the AC's `session-checkpoint` output; absolute path to the WO's `session-checkpoint` output (if WO produced one)
 - *Deliverables*: commits landed, PRs created or merged (with URLs in closure variant), artifacts shipped via dependency map
 - *Surprise observed*: divergence between strategic frame and execution; honest assessment
 - *Design decisions captured*: architectural choices, calibration thresholds, conventions established
@@ -98,7 +98,7 @@ Parameterization-calibration data from mission execution:
 
 ## Embed vs reference for ephemeral artifacts
 
-Pointers to artifacts under `${CLAUDE_JOB_DIR}` — per-AC `/session-checkpoint` outputs, observation logs, spawn prompts, in-flight surface-up drafts — are best-effort references rather than durable storage, because that directory is ephemeral and silently swept between sessions.
+Pointers to artifacts under `${CLAUDE_JOB_DIR}` — per-AC `session-checkpoint` outputs, observation logs, spawn prompts, in-flight surface-up drafts — are best-effort references rather than durable storage, because that directory is ephemeral and silently swept between sessions.
 Canonical content that the next master needs to act on MUST be embedded verbatim in the payload body, not only referenced by path: ratified design decisions, mission-frame summaries and addendum, in-flight surface-up text the resuming master must respond to, and any open-thread artifact whose loss would erase meaning rather than convenience.
 Rule of thumb: if losing the referenced file between checkpoint and resumption would lose meaning the next master needs to reconstruct, embed it; if losing the file would only sacrifice convenience or audit trail, a reference suffices.
 
@@ -165,13 +165,13 @@ Parameterization candidates: spawn-prompt template's WO bootstrap section may wa
 
 ## Parser notes
 
-When `/meta-orchestrator-initiate` parses a payload at step 1:
+When `meta-orchestrator-initiate` parses a payload at step 1:
 
 1. Read frontmatter; if `variant: closure`, the mission is complete and re-invocation is unexpected — surface to user for confirmation
 2. Restore mission frame summary, master observation log path, retired-AC enumeration with pointers
 3. Restore accumulated design decisions and goal-2 insights into master's working memory
 4. Restore parameterization-calibration data (carry forward to inform calibration decisions in the resumed mission)
 5. Read open threads and in-flight work; identify the in-flight surface-up to respond to first
-6. Skip to step 4 of `/meta-orchestrator-initiate` protocol (decomposition refinement, not fresh decomposition) unless the mission frame itself has shifted (user supersession during checkpoint window)
+6. Skip to step 4 of `meta-orchestrator-initiate` protocol (decomposition refinement, not fresh decomposition) unless the mission frame itself has shifted (user supersession during checkpoint window)
 
 Writer (checkpoint) and parser (initiate) must agree on the schema; this file is the normative definition.

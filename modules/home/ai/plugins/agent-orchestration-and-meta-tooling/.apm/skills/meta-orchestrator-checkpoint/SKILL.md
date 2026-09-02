@@ -4,44 +4,43 @@ description: >-
   Team-level checkpoint and handoff for missions coordinated through the master
   orchestrator pattern. Captures cross-cycle accumulated state across the
   master plus retired ACs and their WO cycles, producing a handoff payload that
-  the next master session can resume via /meta-orchestrator-initiate. Two
+  the next master session can resume via `meta-orchestrator-initiate`. Two
   variants: handoff (mid-mission) and closure (mission completion).
 ---
 
 # Meta-orchestrator checkpoint
 
-Symlink location: `~/.claude/skills/meta-orchestrator-checkpoint/SKILL.md`
-Slash command: `/meta-orchestrator-checkpoint`
+Invoke by name: `meta-orchestrator-checkpoint`
 
 Team-level state capture and handoff for the planning master orchestrator.
-Captures cross-cycle accumulated state across the master, retired ACs and their respective WO cycles, parameterization calibration data, and any in-flight work, producing a handoff payload that a fresh master session can consume via `/meta-orchestrator-initiate` to resume the mission.
+Captures cross-cycle accumulated state across the master, retired ACs and their respective WO cycles, parameterization calibration data, and any in-flight work, producing a handoff payload that a fresh master session can consume via `meta-orchestrator-initiate` to resume the mission.
 
-This skill is the team-level analog of `/session-checkpoint`.
-Where `/session-checkpoint` captures one session's state for handoff to the same role's replacement, this captures the master's team-level state for handoff to a fresh master session.
+This skill is the team-level analog of `session-checkpoint`.
+Where `session-checkpoint` captures one session's state for handoff to the same role's replacement, this captures the master's team-level state for handoff to a fresh master session.
 
-## Scope distinction from `/session-checkpoint`
+## Scope distinction from `session-checkpoint`
 
 Two checkpoint scopes exist; do not conflate.
 
-- *`/session-checkpoint`* — session-level scope; each AC and WO runs this at cycle end to capture its own session state and produce a handoff payload for its same-role replacement. Invoked when the AC or WO approaches its own context fill. Owned by whichever role is checkpointing.
-- *`/meta-orchestrator-checkpoint`* — team-level scope; master runs this at mission-level pause points to capture team-level state across the master plus retired ACs and their WO cycles. Invoked when the master approaches its own context fill or at mission natural pause points. Owned by master.
+- *`session-checkpoint`* — session-level scope; each AC and WO runs this at cycle end to capture its own session state and produce a handoff payload for its same-role replacement. Invoked when the AC or WO approaches its own context fill. Owned by whichever role is checkpointing.
+- *`meta-orchestrator-checkpoint`* — team-level scope; master runs this at mission-level pause points to capture team-level state across the master plus retired ACs and their WO cycles. Invoked when the master approaches its own context fill or at mission natural pause points. Owned by master.
 
-The two compose: master's `/meta-orchestrator-checkpoint` payload includes pointers to each retired AC's `/session-checkpoint` output rather than duplicating their content.
+The two compose: master's `meta-orchestrator-checkpoint` payload includes pointers to each retired AC's `session-checkpoint` output rather than duplicating their content.
 
 ## When to invoke
 
 Three triggers with response patterns:
 
-- *Master self-detection of context fill (~50%).* Master invokes `/meta-orchestrator-checkpoint` immediately; does not spawn new pairs; completes the checkpoint and surfaces handoff narrative to user before context exhaustion.
-- *AC surfaces "we should checkpoint and hand off" via wrapper.* Master assesses: is the mission at a natural pause? Is master also near fill? If both yes, checkpoint. If only AC near fill (mission ongoing, master has budget), replace AC instead via the AC's `/session-checkpoint` output as orient addendum for a new AC; do not invoke team-level checkpoint.
-- *User directive to wrap up* ("we need to circle back" / "checkpoint the mission state" / explicit `/meta-orchestrator-checkpoint` slash invocation). Takes priority over any in-flight spawning; master halts new spawns and proceeds to checkpoint.
+- *Master self-detection of context fill (~50%).* Master invokes `meta-orchestrator-checkpoint` immediately; does not spawn new pairs; completes the checkpoint and surfaces handoff narrative to user before context exhaustion.
+- *AC surfaces "we should checkpoint and hand off" via wrapper.* Master assesses: is the mission at a natural pause? Is master also near fill? If both yes, checkpoint. If only AC near fill (mission ongoing, master has budget), replace AC instead via the AC's `session-checkpoint` output as orient addendum for a new AC; do not invoke team-level checkpoint.
+- *User directive to wrap up* ("we need to circle back" / "checkpoint the mission state" / explicit `meta-orchestrator-checkpoint` invocation). Takes priority over any in-flight spawning; master halts new spawns and proceeds to checkpoint.
 
 In all three cases, the invocation can be either handoff variant (mid-mission, mission continues in a fresh master session) or closure variant (mission complete, no further master session needed). Master determines variant from the trigger and state.
 
 ## Composed skills
 
-- `/meta-orchestrator-initiate` — accepts this skill's output as input (payload path); the new master session resumes from documented state rather than re-deriving from a fresh mission frame
-- `/session-checkpoint` — each retired AC runs this; this skill's payload references their outputs by path
+- `meta-orchestrator-initiate` — accepts this skill's output as input (payload path); the new master session resumes from documented state rather than re-deriving from a fresh mission frame
+- `session-checkpoint` — each retired AC runs this; this skill's payload references their outputs by path
 - `meta-agent-teams` — shared task list and teammate lifecycle remain authoritative through the checkpoint and across master handoff
 
 ## Protocol
@@ -57,7 +56,7 @@ For each pair, record:
 - Pair identity (`team_name`, AC name, WO name)
 - Stream name and target repo
 - Current status: active / retired / completed
-- For retired pairs: pointer to the retiring AC's `/session-checkpoint` output path
+- For retired pairs: pointer to the retiring AC's `session-checkpoint` output path
 - For active pairs: current phase and most-recent surface-up state
 
 The enumeration is the scope for steps 2 and 3.
@@ -113,7 +112,7 @@ Payload fields (canonical schema; see sub-file for details):
 
 - Mission frame summary
 - Master observation log path
-- Pair enumeration with retired-pair `/session-checkpoint` pointers
+- Pair enumeration with retired-pair `session-checkpoint` pointers
 - Per-pair synthesis output (step 2)
 - Cross-pair synthesis (step 3)
 - Open threads and in-flight work (step 4)
@@ -128,7 +127,7 @@ Write the payload to `${CLAUDE_JOB_DIR}/handoff/meta-orchestrator-payload.md` (f
 For the handoff variant, draft the continuation prompt the user will send to the fresh master session:
 
 ```
-/meta-orchestrator-initiate <payload-path>
+meta-orchestrator-initiate <payload-path>
 ```
 
 Plus a brief narrative wrapper for the user: what the mission is, where it stands, what the fresh master should expect to find in the payload, what the next action is.
@@ -144,12 +143,12 @@ This skill produces:
 
 The user routes the payload path to the fresh master session (handoff) or files the closure summary (closure).
 
-## Composition with `/meta-orchestrator-initiate`
+## Composition with `meta-orchestrator-initiate`
 
-This skill's output feeds the next `/meta-orchestrator-initiate` invocation.
+This skill's output feeds the next `meta-orchestrator-initiate` invocation.
 The initiate skill's step 1 parses the payload and restores: mission frame, retired-AC enumeration with pointers, accumulated design decisions, parameterization-calibration data, master's observation log path, open threads, in-flight work, next-spawn recommendations.
 
-Canonical text in `/meta-orchestrator-initiate` is the normative source for protocol items (wrapper canon, precedence rule, etc.); this skill does not redefine them. The handoff payload references but does not duplicate canonical text.
+Canonical text in `meta-orchestrator-initiate` is the normative source for protocol items (wrapper canon, precedence rule, etc.); this skill does not redefine them. The handoff payload references but does not duplicate canonical text.
 
 ## Variants: handoff vs closure
 
@@ -177,9 +176,9 @@ Determination of variant: closure if all streams have integrated to main and no 
 ---
 
 *Related skills:*
-- `/meta-orchestrator-initiate` — team-level orchestrator initialization; consumes this skill's output
+- `meta-orchestrator-initiate` — team-level orchestrator initialization; consumes this skill's output
 - `meta-agent-teams` — teammate isolation, issue-to-task-list mirroring, orient/checkpoint lifecycle
-- `/session-checkpoint` — session-level checkpoint each AC and WO runs at cycle end; this skill references their outputs
+- `session-checkpoint` — session-level checkpoint each AC and WO runs at cycle end; this skill references their outputs
 
 *Theoretical anchors:*
 - `preferences-adaptive-planning` — surprise threshold derivation; replanning decision rule; the handoff narrative's load-bearing role in the receding-horizon cycle

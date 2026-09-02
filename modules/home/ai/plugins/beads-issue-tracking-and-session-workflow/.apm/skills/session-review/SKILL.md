@@ -4,20 +4,19 @@ description: Operational-to-tactical feedback skill that verifies assembled subs
 ---
 # Session review
 
-Symlink location: `~/.claude/skills/session-review/SKILL.md`
-Slash command: `/session-review`
+Invoke by name: `session-review`
 
 Session review protocol that verifies assembled subsystems at topological convergence points in the issue DAG, where multiple independent implementation chains merge.
 This skill operates at the operational-to-tactical feedback boundary, validating that independently completed work integrates correctly and measuring accumulated surprise to determine whether replanning is needed.
 It implements the System 3* audit function from the Viable System Model.
 
-This skill is distinct from the per-issue self-verification gate defined in `/stigmergic-convention`.
+This skill is distinct from the per-issue self-verification gate defined in `stigmergic-convention`.
 The self-verification gate runs at issue granularity as part of `bd close`, verifying that a single issue's acceptance criteria are met.
 Session review runs at convergence-point granularity, verifying that multiple closed issues integrate correctly as a subsystem.
-Workers do not invoke `/session-review` for every issue close; they invoke it when a convergence node becomes ready because all its blocking dependencies are closed.
+Workers do not invoke `session-review` for every issue close; they invoke it when a convergence node becomes ready because all its blocking dependencies are closed.
 
 This is the default review command for repositories with the full stigmergic workflow installed.
-For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), the self-verification gate in `/stigmergic-convention` provides the only review mechanism.
+For repositories without the full workflow (no session-layer skills, small utility repos, quick fixes), the self-verification gate in `stigmergic-convention` provides the only review mechanism.
 
 ## Theoretical grounding
 
@@ -45,7 +44,7 @@ For the full theoretical derivation including the R_plan(d) formulation, buffer 
 This skill orchestrates a higher-level protocol that uses the following skills as components.
 Do not duplicate their functionality; delegate to them.
 
-- `/stigmergic-convention` provides the self-verification gate protocol, signal table schema, field definitions, and the read-modify-write protocol for reading surprise scores from closed dependencies and writing updated signals on the convergence node.
+- `stigmergic-convention` provides the self-verification gate protocol, signal table schema, field definitions, and the read-modify-write protocol for reading surprise scores from closed dependencies and writing updated signals on the convergence node.
 - `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) created rework issues when integration verification fails or accumulated surprise exceeds the replanning threshold.
 
 `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running review commands.
@@ -69,7 +68,7 @@ Execute the following steps in order.
 
 A convergence point is a node in the issue DAG whose blocking dependencies are all closed.
 Nodes with high in-degree (many blocking dependencies) are the primary targets for review because they represent integration points where multiple independent work streams merge.
-The jj diamond workflow's *converge* phase (see `~/.claude/skills/jj-version-control/diamond-workflow.md`) is the VCS-level expression of arriving at such a convergence point — the diamond's converge phase and a planning-DAG convergence node refer to the same node-shape from different perspectives.
+The jj diamond workflow's *converge* phase (see the `jj-version-control` skill's `diamond-workflow.md`) is the VCS-level expression of arriving at such a convergence point — the diamond's converge phase and a planning-DAG convergence node refer to the same node-shape from different perspectives.
 
 Identify candidate convergence points:
 
@@ -177,7 +176,7 @@ Produce a verification report summarizing:
 - What integration verification was performed and its results
 - The accumulated surprise score and its relationship to theta
 
-Update the convergence node's signal table via the read-modify-write protocol from `/stigmergic-convention`:
+Update the convergence node's signal table via the read-modify-write protocol from `stigmergic-convention`:
 - Set progress to *verifying* during review, then to *implementing* or the appropriate next state after review completes.
 - Record the accumulated surprise on the convergence node itself (as a synthesized value reflecting its children's experience).
 
@@ -202,17 +201,17 @@ When integration verification fails or accumulated surprise exceeds theta, the e
 Rework issues previously went through `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) to address integration failures.
 Each rework issue should describe the specific failure, reference the convergence node and the relevant closed dependencies, and include acceptance criteria that would resolve the failure.
 
-Update signal tables on affected issues via the read-modify-write protocol from `/stigmergic-convention`:
+Update signal tables on affected issues via the read-modify-write protocol from `stigmergic-convention`:
 - Set escalation to *pending* on the convergence node if the failure requires human judgment about how to proceed.
 - Increase surprise scores on the convergence node to reflect the integration divergence.
 
-Flag the need for replanning via `/session-plan`.
+Flag the need for replanning via `session-plan`.
 The handoff to session-plan should include the rework issues created, the accumulated surprise score, and the specific integration failures that motivated replanning.
 
 If the convergence node previously had a higher confidence level, demote `confidence` to `regressed` to reflect that a previously supported claim no longer holds.
 Record what evidence failed in the checkpoint context so the next worker understands the regression.
 
-When deciding between rework and escalation, apply the self-verification gate's principle from `/stigmergic-convention`: if the failure can be fixed and retried, create rework issues; if the failure reveals an ambiguity that the DAG does not contain enough information to resolve, escalate with a precise question.
+When deciding between rework and escalation, apply the self-verification gate's principle from `stigmergic-convention`: if the failure can be fixed and retried, create rework issues; if the failure reveals an ambiguity that the DAG does not contain enough information to resolve, escalate with a precise question.
 
 ### Step 6: documentation and convention health at convergence
 
@@ -232,7 +231,7 @@ If issue A's work changed an assumption that issue B's spec relies on, flag the 
 #### Diagram coverage at convergence
 
 Check whether the converging work introduced or modified architectural boundaries that the existing diagram set does not cover.
-Compare the C4 levels touched by the converging issues against the diagram categories in `preferences-architecture-diagramming/04-diagram-compendium.md`.
+Compare the C4 levels touched by the converging issues against the diagram categories in the `preferences-architecture-diagramming` skill's `04-diagram-compendium.md`.
 When a convergence point assembles a new subsystem boundary or changes deployment topology and no corresponding diagram exists, flag the gap.
 When existing diagrams depict structures that the converging implementation changed, flag those diagrams as stale.
 
@@ -253,20 +252,20 @@ Record observations via `bd update <epic-id> --append-notes "Review gate [N]: ..
 After review completes, the worker proceeds to one of:
 
 - Implementation if verification passed and the operational buffer still contains ready issues.
-- `/session-plan` if replanning was triggered by high surprise or failed verification.
-- `/session-checkpoint` if the session is ending, to capture the review results in the handoff narrative.
-- `/session-plan` to decompose validation or regression-protection work when review reveals a severity gap — the implementation exists but confidence cannot advance without stronger evidence.
+- `session-plan` if replanning was triggered by high surprise or failed verification.
+- `session-checkpoint` if the session is ending, to capture the review results in the handoff narrative.
+- `session-plan` to decompose validation or regression-protection work when review reveals a severity gap — the implementation exists but confidence cannot advance without stronger evidence.
 
 ---
 
 *Composed skills (delegate, do not duplicate):*
-- `/stigmergic-convention` -- signal table schema, self-verification gate, read-modify-write protocol
+- `stigmergic-convention` -- signal table schema, self-verification gate, read-modify-write protocol
 - `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) -- rework issue creation when integration verification fails
 
 *Related skills:*
-- `/session-orient` -- strategic horizon session start, provides initial context for work selection
-- `/session-plan` -- tactical-to-operational decomposition, invoked when replanning is triggered
-- `/session-checkpoint` -- all-horizon state capture and handoff
+- `session-orient` -- strategic horizon session start, provides initial context for work selection
+- `session-plan` -- tactical-to-operational decomposition, invoked when replanning is triggered
+- `session-checkpoint` -- all-horizon state capture and handoff
 - `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 
 *Theoretical foundations:*

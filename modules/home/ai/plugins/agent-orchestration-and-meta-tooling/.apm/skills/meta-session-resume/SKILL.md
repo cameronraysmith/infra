@@ -79,10 +79,10 @@ The command prints exactly one line; map its sentinel to an action.
 
 Examples:
 
-- `/meta-session-resume` - Auto-detects UUID, generates command, adds to atuin history
-- `/meta-session-resume abc123` - Uses provided UUID, generates command, adds to atuin history
-- `/meta-session-resume nohist` - Auto-detects UUID, generates command, skips atuin history
-- `/meta-session-resume abc123 nohist` - Uses provided UUID, generates command, skips atuin history
-- "Prepare this session for resumption" - Natural language trigger, same as `/meta-session-resume`
+- `meta-session-resume` - Auto-detects UUID, generates command, adds to atuin history
+- `meta-session-resume abc123` - Uses provided UUID, generates command, adds to atuin history
+- `meta-session-resume nohist` - Auto-detects UUID, generates command, skips atuin history
+- `meta-session-resume abc123 nohist` - Uses provided UUID, generates command, skips atuin history
+- "Prepare this session for resumption" - Natural language trigger, same as `meta-session-resume`
 
 IMPORTANT: never run `ccds -r` yourself — the command only records or displays the resume string; executing it would spawn a recursive Claude session.

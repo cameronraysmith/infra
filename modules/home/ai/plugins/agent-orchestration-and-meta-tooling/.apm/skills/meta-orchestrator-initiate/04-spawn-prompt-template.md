@@ -24,7 +24,7 @@ Minimum prompt length is approximately 150 lines; the structural template alone 
 2. *Working directory.* Absolute path to the target repo. Instruction to verify via `pwd` and `cd` if needed as first action.
 3. *Wrapper protocol both directions.* Verbatim canonical text (header / body / closing question / footer) with direction-specific closing question text. Single-external-position rule explicit. The pair will use this for all cross-layer messages.
 4. *Embedded proposal.* The mission frame, the stream's scope, the deliverable, the success criteria. For ACs: includes the push-back-likelihood note as a three-audience artifact (AC self-calibration, master expectation-setting, WO awareness via this same prompt).
-5. *First action.* What the role should do at session start. For ACs: `/session-orient` with master-supplied addendum. For WOs: `/session-orient` with AC-supplied addendum, then audit the target repo's state.
+5. *First action.* What the role should do at session start. For ACs: `session-orient` with master-supplied addendum. For WOs: `session-orient` with AC-supplied addendum, then audit the target repo's state.
 6. *Execution constraints.* What the role is and is not allowed to do. For ACs: critique posture, pullback discipline, no operational pre-cooking. For WOs: subagent-dispatch for in-repo writes, atomic commits, no direct user comm.
 7. *Surfacing protocol.* When and how to surface to the next layer up. For ACs: five-condition protocol. For WOs: group-boundary surfaces, exception surfaces, first-cycle calibration.
 8. *Observation logging.* Path convention for the role's observation log; what to record; append-only discipline.

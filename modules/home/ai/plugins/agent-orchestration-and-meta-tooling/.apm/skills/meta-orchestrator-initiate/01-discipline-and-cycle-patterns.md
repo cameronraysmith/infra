@@ -6,7 +6,7 @@ Load when configuring a new pair's discipline, when calibrating critique posture
 ## Longevity budget heuristic
 
 Target: AC consumes approximately 15-20% of its context window per WO cycle.
-This budget supports 4-5 WO cycles before AC itself requires replacement via `/session-checkpoint`.
+This budget supports 4-5 WO cycles before AC itself requires replacement via `session-checkpoint`.
 
 The budget derives from the observation that a single AC cycle includes: ingest of WO surface-up, dispatch of critique-supporting subagents (if any), composition of critique via wrapper, master coordination on gate transitions.
 A cycle costing more than 25% truncates AC's effective lifespan; a cycle costing less than 10% suggests AC is either pre-cooking operational detail or not engaging at the architectural depth the wrapper forcing-function demands.
@@ -54,10 +54,10 @@ Soft guide; defer to task shape.
 
 | Skill | Owner | When |
 |---|---|---|
-| `/session-orient` | Both (dual-use) | AC reorients on master directive; AC produces addendum for WO; WO runs with AC addendum |
-| `/session-plan` | Situational | If beads-graph-seeding applies; may not apply to all tasks |
-| `/session-review` | AC | Convergence audit (System 3-star posture) |
-| `/session-checkpoint` | Owning role | Whichever role is checkpointing (master, AC, or WO) |
+| `session-orient` | Both (dual-use) | AC reorients on master directive; AC produces addendum for WO; WO runs with AC addendum |
+| `session-plan` | Situational | If beads-graph-seeding applies; may not apply to all tasks |
+| `session-review` | AC | Convergence audit (System 3-star posture) |
+| `session-checkpoint` | Owning role | Whichever role is checkpointing (master, AC, or WO) |
 
 The wrapper-forced critique rule is the load-bearing role-preservation mechanism, not skill allocation.
 Skill allocation is a soft guide that depends on task shape (beads-seeded epic vs single-unit refactor vs cross-cutting investigation).
@@ -79,7 +79,7 @@ Canonical four-case example (user-bookmark-correction supersession context):
 
 Why this works: enumeration covers an axis of receiver-state uncertainty; each case names the state precondition and corresponding action; ordering minimizes total round-trips compared to a request-state-then-direct-action protocol; receiver-side selection avoids sender re-roundtrip.
 
-Distinguished from the cross-time conflict rule in `meta-orchestrator-initiate/SKILL.md`: cross-time is authority-precedence reconciliation across user directives over time (A then master(B) then C); state-dependent recovery is message-passing-latency mitigation within a single coordination episode.
+Distinguished from the cross-time conflict rule in `SKILL.md`: cross-time is authority-precedence reconciliation across user directives over time (A then master(B) then C); state-dependent recovery is message-passing-latency mitigation within a single coordination episode.
 
 ## Post-long-in-turn-operation interim rule
 
@@ -133,11 +133,11 @@ A subagent inherits the master's working-copy pointer at dispatch time but does 
 If the master orchestrates a `[merge]` restructure during the dispatch window, an in-flight return will tangle into the wrong chain and produce cross-namespace commits that violate diamond shape.
 The first discipline is pre-restructure quiescence: before initiating any restructure, master halts in-flight subagents via wrapper directive with the explicit form "do NOT commit any in-flight subagent return until master signals restructure-complete."
 The second discipline is post-restructure inspection: master reads `jj op log --limit N` across the abandons-during-restructure window before declaring state classification, since the empirical failure mode is master misclassifying state (a)-vs-(c) ambiguity from the state-dependent recovery enumeration because the inspection step was skipped.
-The third discipline is routed re-entry: a subagent that returns into the post-restructure window surfaces its diff back to master rather than self-committing, and master routes the diff into the post-restructure correct chain via the append-route (see `jj-version-control/SKILL.md` §"Routing to a chain: append vs amend").
+The third discipline is routed re-entry: a subagent that returns into the post-restructure window surfaces its diff back to master rather than self-committing, and master routes the diff into the post-restructure correct chain via the append-route (see `jj-version-control` §"Routing to a chain: append vs amend").
 
 ## Diamond-invariant pre-flight on adjudications
 
 Any binding adjudication touching diamond shape — chain creation, chain removal, chain restructure, parent-set change, or wip placement — requires a two-point pre-flight in the propagation chain so the directive cannot land as a shape violation downstream.
-Issue-side: before composing the wrapper that carries the directive, master asks whether the directive, applied as written, would preserve all six diamond invariants (i)-(vi) enumerated in `jj-version-control/SKILL.md` §"Diamond invariants"; if any invariant would fail, the directive is reworked before issuance.
+Issue-side: before composing the wrapper that carries the directive, master asks whether the directive, applied as written, would preserve all six diamond invariants (i)-(vi) enumerated in `jj-version-control` §"Diamond invariants"; if any invariant would fail, the directive is reworked before issuance.
 Receive-side: before AC propagates a master adjudication down to WO's spawn or surface-up follow-up, AC repeats the same check, and failure halts propagation back to master with the violated invariant named explicitly.
 The issue-side pre-flight also folds in recipient-state: master checks whether the recipient has already executed the implicit work before forwarding, because redundant "do X now" directives to a recipient who already did X are a noise-and-confusion pattern the pre-flight is meant to catch.

@@ -59,7 +59,7 @@ Path convention:
 - *Fallback* (no `CLAUDE_JOB_DIR` set or no job context): `~/.claude/jobs/manual-handoff/observations/<role>.md`
 
 Logs are append-only running narrative: friction points, parameterization candidates, calibration data, decisions, unexpected state.
-Logs feed the per-role `/session-checkpoint` and the master's `/meta-orchestrator-checkpoint` synthesis.
+Logs feed the per-role `session-checkpoint` and the master's `meta-orchestrator-checkpoint` synthesis.
 
 ## Stream-completion plus main-advance handling
 

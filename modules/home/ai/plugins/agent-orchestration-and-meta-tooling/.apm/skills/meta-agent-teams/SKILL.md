@@ -23,11 +23,11 @@ Keep both in sync: when a team task completes, update the corresponding story or
 ## Teammate lifecycle: orient, work, checkpoint, shutdown, replace
 
 Teammate lifecycle management integrates with the orient/checkpoint pattern.
-Every new teammate should be instructed to execute `/session-orient` at session start to establish full context on the issue graph and current state.
+Every new teammate should be instructed to execute `session-orient` at session start to establish full context on the issue graph and current state.
 For repos without the full workflow (no `session-*` skills installed), instruct the teammate to establish context from the repository's own AGENTS.md and current branch state.
-Teammates should monitor context usage and, when approaching 50% capacity (approximately 100k tokens), execute `/session-checkpoint` to capture learnings, update issue status, and produce a handoff narrative.
+Teammates should monitor context usage and, when approaching 50% capacity (approximately 100k tokens), execute `session-checkpoint` to capture learnings, update issue status, and produce a handoff narrative.
 For repos without the full workflow, have the teammate write the checkpoint narrative to a dated file under `docs/notes/` for the successor.
-After checkpoint, the teammate requests shutdown; the orchestrator spawns a replacement oriented with `/session-orient` to continue the work.
+After checkpoint, the teammate requests shutdown; the orchestrator spawns a replacement oriented with `session-orient` to continue the work.
 This creates a clean lifecycle: orient, work, checkpoint, shutdown, replace.
 
 ## Subagent identity in team context
@@ -45,13 +45,13 @@ The subagent inherits the teammate's working directory and operates against the 
 
 Dispatched subagent Task input omits `isolation: "worktree"`.
 In jj-mode repositories setting it raises an ask at the Agent tool surface, and the answer is normally no: the subagent inherits the shared `@` and the orchestrator routes its diff, so a second tree would fragment the coordination surface rather than protect it.
-Teammates omit the parameter unconditionally to keep behavior consistent across modes, and reach for a worktree only when something outside the team needs its own filesystem tree, per `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
-The subagent edits at `@` (which in tier 3 is the wip commit atop the development join, per `~/.claude/skills/jj-version-control/SKILL.md`'s composite maintenance invariant), and the orchestrator routes the resulting changes to the appropriate chain via the route-and-extend recipe (`jj new -A <chain-tip> --no-edit -m "..."` then `jj squash --from @ --into <new-change-id> --keep-emptied` then `jj bookmark move <name> --to <new-change-id>`).
+Teammates omit the parameter unconditionally to keep behavior consistent across modes, and reach for a worktree only when something outside the team needs its own filesystem tree, per `jj-version-control` §"Worktree interop".
+The subagent edits at `@` (which in tier 3 is the wip commit atop the development join, per `jj-version-control`'s composite maintenance invariant), and the orchestrator routes the resulting changes to the appropriate chain via the route-and-extend recipe (`jj new -A <chain-tip> --no-edit -m "..."` then `jj squash --from @ --into <new-change-id> --keep-emptied` then `jj bookmark move <name> --to <new-change-id>`).
 All teammates edit that same `@`=`[wip]`, which is the shared coordination surface that makes N concurrent editors safe by construction; routing the diff downward with `--keep-emptied` is load-bearing because it leaves `@` an empty `[wip]` in place for the others still writing it.
 Never `jj describe @` into content and never relocate `@` below the join via positional `jj rebase -r @ --insert-before/--insert-after` (nor the `--revisions @` form); both drift the shared surface off `[wip]`.
-Full canon — including the sanctioned destination-form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, and the complete editor-safe routing-down templates — lives in `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii-b)/(vi).
+Full canon — including the sanctioned destination-form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, and the complete editor-safe routing-down templates — lives in `jj-version-control` invariant (iii-b)/(vi).
 
-This is the agent-team specialization of the binding orchestrator-dispatch discipline documented in `~/.claude/CLAUDE.md`.
+This is the agent-team specialization of the binding orchestrator-dispatch discipline documented in the user-level agent context file.
 The same pattern applies to any orchestrator subject to a harness-level edit-gate (background sessions, future isolation requirements); teammates are simply the most common case in team-coordinated work.
 
-The implicit assumption that `@` is stable for the dispatch lifetime breaks during master-orchestrated restructures; see `meta-orchestrator-initiate/01-discipline-and-cycle-patterns.md` §"Subagent-@-inheritance race during restructure" for the pre-restructure quiescence, post-restructure inspection, and routed re-entry disciplines that preserve diamond shape under that race.
+The implicit assumption that `@` is stable for the dispatch lifetime breaks during master-orchestrated restructures; see the `meta-orchestrator-initiate` skill's `01-discipline-and-cycle-patterns.md` §"Subagent-@-inheritance race during restructure" for the pre-restructure quiescence, post-restructure inspection, and routed re-entry disciplines that preserve diamond shape under that race.

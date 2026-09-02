@@ -4,8 +4,7 @@ description: Tactical-to-operational transition skill that transforms scope unde
 ---
 # Session planning
 
-Symlink location: `~/.claude/skills/session-plan/SKILL.md`
-Slash command: `/session-plan`
+Invoke by name: `session-plan`
 
 Session planning protocol that transforms tactical-level understanding into an operational execution buffer of atomic issues with explicit dependencies, acceptance criteria, and Cynefin classification.
 This skill operates at the tactical-to-operational planning horizon, decomposing scope into an implementation buffer at high resolution.
@@ -41,7 +40,7 @@ Do not duplicate their functionality; delegate to them.
 
 - `issues-beads-seed` (retired, pending re-base onto Linear/OpenSpec) created an issue graph from architecture and specification documents; new issue creation from `docs/development/` artifacts awaits re-implementation via that re-base.
 - `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) refined issue graph structure; restructuring existing graph topology (splitting, merging, re-parenting, dependency rewiring) awaits re-implementation via that re-base.
-- `/stigmergic-convention` provides the signal table schema, field definitions, and read-modify-write protocol for writing signal tables on new and updated issues.
+- `stigmergic-convention` provides the signal table schema, field definitions, and read-modify-write protocol for writing signal tables on new and updated issues.
 
 `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running planning commands.
 
@@ -251,7 +250,7 @@ bd show <epic-id> --json | jq -r '.[0].notes // ""' | grep -q 'audit-findings'
 Treat each item in the "Content remediation needed" section as planning scope alongside new work from docs.
 Acceptance criteria rewrites and scope updates went through `issues-beads-evolve` in step 4; that skill is retired and pending re-base onto Linear/OpenSpec.
 Missing regression-protection issues became new issues created via `issues-beads-seed` in step 4; that skill is retired and pending re-base onto Linear/OpenSpec.
-Confidence gaps on closed work are routed to `/session-review` rather than handled during planning.
+Confidence gaps on closed work are routed to `session-review` rather than handled during planning.
 
 After consuming the audit findings, clear the `<!-- audit-findings -->` block from the epic notes to prevent re-processing in future planning sessions.
 Record what was consumed in the planning session's handoff narrative so the audit trail is preserved.
@@ -363,7 +362,7 @@ The containment-versus-sequencing discipline and the "Dependency type discipline
 
 ### Step 6: set signal tables on new issues
 
-Each new issue receives a signal table following the schema from `/stigmergic-convention`.
+Each new issue receives a signal table following the schema from `stigmergic-convention`.
 
 ```
 <!-- stigmergic-signals -->
@@ -383,7 +382,7 @@ Set `confidence` to `undemonstrated`, `evidence-freshness` to `—`, and `regres
 These are starting values — promotion happens when evidence is produced during implementation and review, not during planning.
 The confidence target from step 4 is not recorded in the signal table (it would duplicate what the issue's role in the DAG already expresses); it serves as planning guidance for the worker who implements the issue.
 
-Write signal tables using the read-modify-write protocol from `/stigmergic-convention`.
+Write signal tables using the read-modify-write protocol from `stigmergic-convention`.
 The cynefin and planning-depth values come from the readiness gate's signal derivation (step 1) or from explicit per-issue classification during decomposition (step 4).
 
 ### Step 7: verify graph health
@@ -424,7 +423,7 @@ Identify which issues can be worked in parallel at each stage of the execution o
 
 The execution plan serves as the handoff to implementation.
 A worker reading this plan should understand what to work on first, what can proceed concurrently, and where the bottlenecks are.
-The diamond workflow (`~/.claude/skills/jj-version-control/diamond-workflow.md`) provides the canonical four-phase mapping from beads issue antichains to parallel jj chains: diverge (decompose), develop (multi-parent `@` development join), converge (validate the integrated state), serialize (sequential rebase to main).
+The diamond workflow (the `jj-version-control` skill's `diamond-workflow.md`) provides the canonical four-phase mapping from beads issue antichains to parallel jj chains: diverge (decompose), develop (multi-parent `@` development join), converge (validate the integrated state), serialize (sequential rebase to main).
 
 ```bash
 # Identify all unblocked work as parallel execution candidates
@@ -439,23 +438,23 @@ bd list --pretty
 
 ## Replanning triggers
 
-Four conditions trigger re-invocation of `/session-plan` to restock the operational buffer.
+Four conditions trigger re-invocation of `session-plan` to restock the operational buffer.
 
 *Surprise accumulation exceeds replanning threshold.*
-The `/session-checkpoint` skill detects this condition by computing the sum of surprise scores across session nodes and comparing against threshold theta.
+The `session-checkpoint` skill detects this condition by computing the sum of surprise scores across session nodes and comparing against threshold theta.
 When surprise is high, the existing plan has diverged from reality and requires revision.
 
 *Validation gate completion.*
-When `/session-review` completes integration verification at a DAG convergence point, findings may invalidate planning assumptions.
-The worker detects this condition and invokes `/session-plan` if the review reveals structural issues.
+When `session-review` completes integration verification at a DAG convergence point, findings may invalidate planning assumptions.
+The worker detects this condition and invokes `session-plan` if the review reveals structural issues.
 
 *Specification change.*
 When architecture or requirements documents are revised, the planning assumptions that produced the current buffer may be stale.
-The worker detects this condition and invokes `/session-plan` to reconcile the buffer with the updated specifications.
+The worker detects this condition and invokes `session-plan` to reconcile the buffer with the updated specifications.
 
 *Buffer depletion.*
 When the ready issue count drops below B*, the buffer can no longer sustain continuous implementation.
-The `/session-checkpoint` skill detects this condition via buffer depletion alerts in the handoff narrative.
+The `session-checkpoint` skill detects this condition via buffer depletion alerts in the handoff narrative.
 
 In all cases, begin with step 1 (readiness gate) to validate that the input artifacts remain sufficient, then proceed through the remaining steps to restock the buffer.
 
@@ -475,20 +474,20 @@ Cynefin classification modulates how deeply this skill executes, not whether the
 After planning completes, the worker proceeds to one of:
 
 - Implementation if the operational buffer is now full and issues are ready with clear acceptance criteria and verification commands.
-- `/session-orient` if scope changed during planning and re-calibration is needed before selecting work.
-- Further `/session-plan` if the buffer is still depleted after the current planning pass (rare; usually indicates the scope is too large for a single planning session and should be narrowed).
+- `session-orient` if scope changed during planning and re-calibration is needed before selecting work.
+- Further `session-plan` if the buffer is still depleted after the current planning pass (rare; usually indicates the scope is too large for a single planning session and should be narrowed).
 
 ---
 
 *Composed skills (delegate, do not duplicate):*
 - `issues-beads-seed` (retired, pending re-base onto Linear/OpenSpec) -- issue graph creation from `docs/development/` artifacts
 - `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) -- graph structure refinement (splitting, merging, re-parenting, rewiring)
-- `/stigmergic-convention` -- signal table schema and write protocol
+- `stigmergic-convention` -- signal table schema and write protocol
 
 *Related skills:*
-- `/session-orient` -- strategic horizon session start, provides discovery findings as input
-- `/session-checkpoint` -- all-horizon state capture, detects replanning triggers
-- `/session-review` -- convergence-point validation, may trigger replanning
+- `session-orient` -- strategic horizon session start, provides discovery findings as input
+- `session-checkpoint` -- all-horizon state capture, detects replanning triggers
+- `session-review` -- convergence-point validation, may trigger replanning
 - `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 
 *Theoretical foundations:*

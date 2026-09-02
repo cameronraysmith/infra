@@ -5,24 +5,23 @@ description: Team-level orchestrator initialization for missions requiring multi
 
 # Meta-orchestrator initiate
 
-Symlink location: `~/.claude/skills/meta-orchestrator-initiate/SKILL.md`
-Slash command: `/meta-orchestrator-initiate`
+Invoke by name: `meta-orchestrator-initiate`
 
 Mission start protocol for a planning master orchestrator.
-Assembles the strategic frame from a user-supplied mission directive (or from a prior `/meta-orchestrator-checkpoint` handoff payload), establishes the authority hierarchy and wrapper canon the team will operate under, and produces a self-directing briefing that enables the master to begin proposing the team decomposition.
+Assembles the strategic frame from a user-supplied mission directive (or from a prior `meta-orchestrator-checkpoint` handoff payload), establishes the authority hierarchy and wrapper canon the team will operate under, and produces a self-directing briefing that enables the master to begin proposing the team decomposition.
 
-This skill is the team-level analog of `/session-orient`.
-Where `/session-orient` initializes one session, this initializes a team of sessions: a planning master orchestrator plus N repo-coupled AC↔WO pairs that execute parallel work streams in target repositories.
+This skill is the team-level analog of `session-orient`.
+Where `session-orient` initializes one session, this initializes a team of sessions: a planning master orchestrator plus N repo-coupled AC↔WO pairs that execute parallel work streams in target repositories.
 
 ## When to invoke
 
 Three triggers, all user-initiated:
 
 - User issues a mission directive in conversation channel with addendum (constraints, target repos, deliverable shape, success criteria, observation expectations)
-- User issues `/meta-orchestrator-initiate <checkpoint-payload-path>` to resume a mission from a prior `/meta-orchestrator-checkpoint` output
+- User issues `meta-orchestrator-initiate <checkpoint-payload-path>` to resume a mission from a prior `meta-orchestrator-checkpoint` output
 - User explicitly requests "start a new team for X" or equivalent framing
 
-If the mission scope is single-session-single-repo (no parallel streams, no multi-cycle coordination), use `/session-orient` directly instead — meta-orchestrator overhead is not warranted.
+If the mission scope is single-session-single-repo (no parallel streams, no multi-cycle coordination), use `session-orient` directly instead — meta-orchestrator overhead is not warranted.
 
 ## Composed skills
 
@@ -30,18 +29,18 @@ This skill orchestrates a higher-level protocol that uses the following as compo
 Do not duplicate their functionality; delegate to them.
 
 - `meta-agent-teams` provides teammate spawn conventions, issue-to-task-list mirroring, and the orient/work/checkpoint/shutdown/replace lifecycle for individual pairs
-- `/session-orient` provides the session-level orientation each AC and WO runs after spawn (with a master-supplied addendum)
-- `/session-checkpoint` provides the session-level checkpoint each AC and WO runs at cycle end
-- `/meta-orchestrator-checkpoint` provides the team-level state capture and handoff that this skill consumes when invoked with a checkpoint payload
-- `/nix-flake-pr-cycle` and `preferences-git-version-control` provide Phase-4 PR-cycle conventions invoked when streams complete
+- `session-orient` provides the session-level orientation each AC and WO runs after spawn (with a master-supplied addendum)
+- `session-checkpoint` provides the session-level checkpoint each AC and WO runs at cycle end
+- `meta-orchestrator-checkpoint` provides the team-level state capture and handoff that this skill consumes when invoked with a checkpoint payload
+- `nix-flake-pr-cycle` and `preferences-git-version-control` provide Phase-4 PR-cycle conventions invoked when streams complete
 
 ## Three-layer architecture
 
 | Layer | Identity | Owns | Does not |
 |---|---|---|---|
 | Master orchestrator | Planning AC; this skill's invoker | Strategic routing; spawn primitive; gates; cross-stream coordination; team-level checkpoint | Direct execution; bypassing AC to steer WO; cross-stream comm at AC↔AC or WO↔WO level |
-| Repo-coupled AC | Spawned by master per stream | Strategic frame for stream; critique via wrapper; `/session-review`; pair-internal lifecycle; surfacing to master under five-condition protocol | Pre-cooking operational detail; running audits inline; direct communication with other streams' ACs |
-| Repo-coupled WO | Spawned by master per stream after AC | Operational execution on assigned jj chain; subagent dispatch; atomic commits; `/session-checkpoint` at fill | Direct user comm; cross-WO comm; skipping first-cycle critique |
+| Repo-coupled AC | Spawned by master per stream | Strategic frame for stream; critique via wrapper; `session-review`; pair-internal lifecycle; surfacing to master under five-condition protocol | Pre-cooking operational detail; running audits inline; direct communication with other streams' ACs |
+| Repo-coupled WO | Spawned by master per stream after AC | Operational execution on assigned jj chain; subagent dispatch; atomic commits; `session-checkpoint` at fill | Direct user comm; cross-WO comm; skipping first-cycle critique |
 | Ephemeral subagents | Dispatched per-task by AC or WO | Single bounded task; return on completion | Persisting across turns |
 
 ## Authority hierarchy
@@ -122,8 +121,8 @@ Execute on invocation, in order.
 
 ### Step 1: parse input
 
-If a checkpoint payload path was supplied, read and parse it per the schema in `meta-orchestrator-checkpoint/01-handoff-payload-schema.md`.
-Restore: mission frame summary, retired-AC enumeration with pointers to per-AC `/session-checkpoint` outputs, accumulated design decisions, parameterization-calibration data, master's observation log path, open threads, in-flight work, next-spawn recommendations.
+If a checkpoint payload path was supplied, read and parse it per the schema in the `meta-orchestrator-checkpoint` skill's `01-handoff-payload-schema.md`.
+Restore: mission frame summary, retired-AC enumeration with pointers to per-AC `session-checkpoint` outputs, accumulated design decisions, parameterization-calibration data, master's observation log path, open threads, in-flight work, next-spawn recommendations.
 Resume from the appropriate protocol step based on captured state: step 4 (decomposition refinement) if the payload signals open decomposition issues or mission-frame shifts; step 5 (spawn pairs) if decomposition is ratified but pairs are not yet spawned; step 6 (monitor cycle dynamics) if pairs are active mid-execution.
 Default is step 4 when in doubt; the payload's open-threads-and-in-flight-work section is the operative resumption signal.
 
@@ -169,7 +168,7 @@ At each stream's completion, follow the stream-completion plus main-advance hand
 
 ### Step 7: monitor own context fill
 
-When approaching ~50% context, invoke `/meta-orchestrator-checkpoint` to capture team-level state and hand off to a fresh master session.
+When approaching ~50% context, invoke `meta-orchestrator-checkpoint` to capture team-level state and hand off to a fresh master session.
 Earlier triggers: AC surfaces "we should checkpoint and hand off"; user directive to wrap up.
 
 ## Output
@@ -182,7 +181,7 @@ The briefing this skill produces is for the master's own consumption:
 - Observation log path established
 - Readiness to surface decomposition to user
 
-## Composition with `/meta-orchestrator-checkpoint`
+## Composition with `meta-orchestrator-checkpoint`
 
 This skill's invocation accepts the checkpoint skill's output as input (step 1 path).
 The checkpoint skill produces a payload formatted such that this skill can resume from documented state without re-deriving from a fresh mission frame.
@@ -205,8 +204,8 @@ An exemplar session covering user→master entry, N-stream decomposition with ra
 *Related skills:*
 - `meta-agent-teams` — teammate isolation, issue-to-task-list mirroring, orient/checkpoint lifecycle
 - `meta-orchestrator-checkpoint` — team-level state capture and handoff
-- `/session-orient` — session-level orientation each AC and WO runs with a master addendum
-- `/session-checkpoint` — session-level checkpoint each AC and WO runs at fill
+- `session-orient` — session-level orientation each AC and WO runs with a master addendum
+- `session-checkpoint` — session-level checkpoint each AC and WO runs at fill
 - `nix-flake-pr-cycle` — Phase-4 PR cycle for stream completion
 - `preferences-git-version-control` — jj-mode tiered-ceremony for tier transitions
 

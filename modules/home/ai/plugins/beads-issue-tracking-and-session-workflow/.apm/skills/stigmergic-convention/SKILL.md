@@ -4,8 +4,7 @@ description: Signal table schema, field definitions, update protocol, and CUE va
 ---
 # Stigmergic convention reference
 
-Symlink location: `~/.claude/skills/stigmergic-convention/SKILL.md`
-Slash command: `/stigmergic-convention`
+Invoke by name: `stigmergic-convention`
 
 Protocol reference for stigmergic workflow coordination via structured signal tables on beads issues.
 Workers orient by reading the DAG rather than receiving briefings.
@@ -226,7 +225,7 @@ bd lint          # check for missing template sections
 - `preferences-validation-assurance` for the evidence quality dimensions, confidence promotion chain, and regression harness design underlying the confidence, evidence-freshness, and regression-guard signals
 
 *Composed by:*
-- `/session-orient` -- reads signal tables during orientation briefing assembly
-- `/session-plan` -- sets signal tables on newly created issues
-- `/session-review` -- reads signal tables for surprise accumulation at convergence points
-- `/session-checkpoint` -- updates signal tables during session wind-down
+- `session-orient` -- reads signal tables during orientation briefing assembly
+- `session-plan` -- sets signal tables on newly created issues
+- `session-review` -- reads signal tables for surprise accumulation at convergence points
+- `session-checkpoint` -- updates signal tables during session wind-down

@@ -64,7 +64,7 @@ The AC surfaces to master if and only if at least one condition holds:
 1. *WO surface-up requires master input.* The WO has surfaced a question, blocker, or proposal that exceeds AC's adjudication authority and needs master coordination.
 2. *Phase transition.* The pair is transitioning between phases (e.g., Phase 1 to Phase 2 spawn, Phase 3 to Phase 4 PR cycle).
 3. *Tier-2 escalation.* The stream is ready for tier-2 elevation (push, draft PR creation).
-4. *WO replacement request.* The WO has invoked `/session-checkpoint` and AC is requesting master spawn a replacement.
+4. *WO replacement request.* The WO has invoked `session-checkpoint` and AC is requesting master spawn a replacement.
 5. *Genuine master-bound emergence.* AC has identified a strategic concern, scope expansion candidate, or cross-stream coordination need that only master can resolve.
 
 Routine status updates, internal WO-AC adjudication, and within-cycle critique iterations stay within the pair.
@@ -113,4 +113,4 @@ The map answers: "for stream-Y to proceed past transition T, what must stream-X 
 - *Resolve at delivery*: when a source stream delivers the named artifact, master marks the row delivered and surfaces availability to the target stream's AC.
 - *Replan on conflict*: if a dependency cannot be satisfied (source stream descopes the artifact, target stream changes requirements), master surfaces to user for re-decomposition rather than silently relaxing the dependency.
 
-The map is the canonical alternative to direct AC-to-AC cross-stream communication for the artifact-handoff failure mode. The non-communication invariant in `meta-orchestrator-initiate/SKILL.md` holds; the dependency map plus master-routed coordination is what replaces direct comm.
+The map is the canonical alternative to direct AC-to-AC cross-stream communication for the artifact-handoff failure mode. The non-communication invariant in `SKILL.md` holds; the dependency map plus master-routed coordination is what replaces direct comm.

@@ -32,8 +32,8 @@ This command is designed for a specific development pattern where workspaces con
 
 1. **Primary Development Repository**: Main project under active development
 2. **Adjacent Git Worktrees**: Multiple experimental branches checked out as separate directories for parallel development (e.g., `project-686-feature`, `project-690-bugfix`).
-   In jj-colocated repos (where `.jj/` is present), parallel chains within the primary repo are handled by default via the diamond workflow's development join (see `~/.claude/skills/jj-version-control/tiered-ceremony.md`) rather than adjacent worktrees.
-   An adjacent worktree is still the right structure when something outside the session needs its own filesystem tree — an external agent framework, a long-running build, a side-by-side comparison — under the discipline in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
+   In jj-colocated repos (where `.jj/` is present), parallel chains within the primary repo are handled by default via the diamond workflow's development join (see the `jj-version-control` skill's `tiered-ceremony.md`) rather than adjacent worktrees.
+   An adjacent worktree is still the right structure when something outside the session needs its own filesystem tree — an external agent framework, a long-running build, a side-by-side comparison — under the discipline in `jj-version-control` §"Worktree interop".
 3. **Dependency Source Code**: Full source repositories of libraries and frameworks used
 4. **Reference Materials**: Documentation, papers, tutorials, and related method implementations
 5. **Development Tools**: Utilities, scripts, and analysis tools
@@ -57,7 +57,7 @@ workspace-root/
 
 ## Command Parameters
 
-**Usage:** `/create-workspace-claude [mode] [workspace-name] [primary-repo] [context]`
+**Usage:** `meta-create-workspace-agents-md [mode] [workspace-name] [primary-repo] [context]`
 
 ### Parameter Definitions
 
@@ -72,25 +72,25 @@ workspace-root/
 
 ```bash
 # Auto-detect everything (current behavior)
-/create-workspace-claude
+meta-create-workspace-agents-md
 
 # Auto-detect with workspace name
-/create-workspace-claude auto jax-workspace
+meta-create-workspace-agents-md auto jax-workspace
 
 # Force create new workspace documentation
-/create-workspace-claude create
+meta-create-workspace-agents-md create
 
 # Force create with full specification
-/create-workspace-claude create ai-research-workspace langchain machine-learning
+meta-create-workspace-agents-md create ai-research-workspace langchain machine-learning
 
 # Force update existing documentation
-/create-workspace-claude update
+meta-create-workspace-agents-md update
 
 # Update with additional context
-/create-workspace-claude update planning-workspace docs-framework documentation
+meta-create-workspace-agents-md update planning-workspace docs-framework documentation
 
 # Specify primary repo to help detection
-/create-workspace-claude auto my-workspace pytorch deep-learning-research
+meta-create-workspace-agents-md auto my-workspace pytorch deep-learning-research
 ```
 
 ### Parameter Processing Logic

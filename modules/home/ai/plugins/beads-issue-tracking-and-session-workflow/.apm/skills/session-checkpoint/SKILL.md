@@ -1,13 +1,12 @@
 ---
 name: session-checkpoint
-description: All-horizons session skill that captures session state, evaluates surprise, propagates context downstream, assesses documentation impact, and produces a handoff narrative sufficient for the next session's /session-orient.
+description: All-horizons session skill that captures session state, evaluates surprise, propagates context downstream, assesses documentation impact, and produces a handoff narrative sufficient for the next session's `session-orient`.
 ---
 # Session checkpoint
 
-Symlink location: `~/.claude/skills/session-checkpoint/SKILL.md`
-Slash command: `/session-checkpoint`
+Invoke by name: `session-checkpoint`
 
-Session wind-down protocol that captures state across all planning horizons, evaluates accumulated surprise, propagates discoveries to downstream issues, assesses documentation impact, and produces a self-contained handoff narrative sufficient for the next session to self-direct via `/session-orient`.
+Session wind-down protocol that captures state across all planning horizons, evaluates accumulated surprise, propagates discoveries to downstream issues, assesses documentation impact, and produces a self-contained handoff narrative sufficient for the next session to self-direct via `session-orient`.
 This skill operates across all horizons simultaneously: it updates operational state (signal tables, checkpoint context), evaluates tactical feedback (surprise accumulation, replanning thresholds), and captures strategic observations (documentation impact, Cynefin reclassification).
 
 This is the default session wind-down command for repositories with the full stigmergic workflow installed.
@@ -25,7 +24,7 @@ Stigmergic coordination binds it together — agents orient by reading structure
 Queue economics calibrates the pipeline: buffer sizing via Little's Law, agent utilization at 70-85% (not 100%, due to queueing instability), and batch sizing via the U-curve between planning overhead and plan staleness.
 
 This skill operates across all VSM systems simultaneously: capturing operational state (signal tables, checkpoint context), evaluating tactical feedback (surprise accumulation against the replanning threshold theta), and recording strategic observations (Cynefin reclassifications, documentation impact assessments).
-It produces the handoff narrative that enables the next session to self-direct via `/session-orient`, completing the MPC receding-horizon cycle.
+It produces the handoff narrative that enables the next session to self-direct via `session-orient`, completing the MPC receding-horizon cycle.
 The quality of the handoff directly determines the next session's planning accuracy — a poor checkpoint degrades the entire pipeline.
 
 This skill operates under the reflexive severity mandate: when patterns suggest the framework itself is producing poor outcomes, the agent's obligation is to pause and surface the observation rather than pressing on.
@@ -40,7 +39,7 @@ Do not duplicate their functionality; delegate to them.
 
 - `issues-beads-checkpoint` (retired, pending re-base onto Linear/OpenSpec) provided the per-issue signal table update, checkpoint-context write, escalation handling, proactive pheromone propagation, buffer depletion checks, graph health verification, and beads commit; per-issue checkpoint mechanics await re-implementation via that re-base.
 - `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) provided graph restructuring when checkpoint reveals structural issues (splitting, merging, re-parenting, dependency rewiring); graph restructuring when step 2 or step 5 reveals the need awaits re-implementation via that re-base.
-- `/stigmergic-convention` provides the signal table schema, field definitions, read-modify-write protocol, and checkpoint-context format.
+- `stigmergic-convention` provides the signal table schema, field definitions, read-modify-write protocol, and checkpoint-context format.
   Reference this skill for signal table semantics; do not redefine them here.
 
 `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) previously provided core beads conventions and a command quick reference to load before running checkpoint commands.
@@ -145,7 +144,7 @@ Compare the accumulated surprise against the replanning threshold theta.
 The replanning threshold is context-dependent.
 Complex-domain issues have a lower per-issue threshold because surprise in complex domains has higher downstream impact: a small deviation in a complex subsystem can cascade unpredictably.
 
-Per-issue theta heuristics (consistent with `/session-review`):
+Per-issue theta heuristics (consistent with `session-review`):
 - *Clear* domain: theta = 0.5 per issue (high tolerance; clear-domain surprise is usually bounded).
 - *Complicated* domain: theta = 0.3 per issue (moderate tolerance).
 - *Complex* domain: theta = 0.2 per issue (low tolerance; complex-domain surprise cascades).
@@ -230,13 +229,13 @@ When surprise exceeds 0.5 and reveals fundamental spec inaccuracy that drops und
 1. Create a working note in `docs/notes/` capturing the revised understanding and what probes are needed.
 2. Mark the spec with `superseded-by:` frontmatter pointing to the working note.
 3. The superseded spec remains as historical record until a replacement is promoted.
-4. Flag affected beads issues for replanning in the next `/session-plan`.
+4. Flag affected beads issues for replanning in the next `session-plan`.
 
 #### Diagram staleness
 
 Check whether the session's implementation changes affect areas depicted by existing diagrams.
 When code or configuration changes fall within the scope of an existing diagram (deployment topology, component structure, bounded context boundaries), flag that diagram for update.
-Reference diagram categories from `preferences-architecture-diagramming/04-diagram-compendium.md` when identifying which C4 level is affected.
+Reference diagram categories from the `preferences-architecture-diagramming` skill's `04-diagram-compendium.md` when identifying which C4 level is affected.
 Include flagged diagrams in the handoff narrative's documentation impact section so the next session can prioritize updates.
 
 #### Sunset flagging
@@ -249,7 +248,7 @@ If the doc has `superseded-by` frontmatter older than 30 days, recommend deletio
 
 When closing an issue whose results affect an external repo issue, include the cross-reference in the closure reason.
 Format: "Implemented; results consumed by {prefix}-{id} in {repo}."
-This ensures the next `/session-orient` in the external repo detects the upstream completion via the closure-reason signaling mechanism.
+This ensures the next `session-orient` in the external repo detects the upstream completion via the closure-reason signaling mechanism.
 
 #### Cross-doc consistency check
 
@@ -260,7 +259,7 @@ Flag inconsistencies in the checkpoint context for the next session.
 #### Last-validated frontmatter
 
 For docs that were reviewed and confirmed accurate during this session (even if not modified), update or add `last-validated: YYYY-MM-DD` frontmatter.
-This feeds the staleness scan in the next `/session-orient` step 3.
+This feeds the staleness scan in the next `session-orient` step 3.
 
 ### Step 6: propagate discoveries to downstream issues
 
@@ -336,7 +335,7 @@ These checks are performed inline rather than delegating to `issues-beads-audit`
 
 ### Step 8: produce handoff narrative
 
-Synthesize a self-contained handoff narrative sufficient for the next session to self-direct via `/session-orient`.
+Synthesize a self-contained handoff narrative sufficient for the next session to self-direct via `session-orient`.
 The narrative captures what happened, what was surprising, what the next session should focus on, and what alerts require attention.
 
 The handoff narrative has the following sections.
@@ -353,7 +352,7 @@ Group by impact: local surprises (affecting only the issue itself), propagated s
 Organize by response type: minor inaccuracies (revise in place), major inaccuracies (revise or demote), and promotion candidates (working notes that reached tactical resolution).
 For demotions, note the Cynefin reclassification that motivated the demotion.
 
-*Replanning alerts*: conditions that warrant re-invocation of `/session-plan`.
+*Replanning alerts*: conditions that warrant re-invocation of `session-plan`.
 Include alerts when accumulated surprise exceeds theta (from step 4), when documentation was demoted (from step 5), or when any other replanning trigger fired during the session.
 
 *Confidence status*: for each touched issue, state the current confidence level and whether it advanced during this session.
@@ -369,7 +368,7 @@ For pending propagations, include enough detail for the next session to complete
 
 *Next session focus*: recommended starting point for the next session.
 Identify the highest-priority ready issue or the most impactful unblocking action.
-When replanning was triggered, recommend starting the next session with `/session-plan` rather than jumping to implementation.
+When replanning was triggered, recommend starting the next session with `session-plan` rather than jumping to implementation.
 
 ```
 Session summary:
@@ -406,7 +405,7 @@ Cross-repo propagation:
 Next session:
 - Recommended: <issue-id> (<rationale>)
 - Alternative entry points: <issue-id>, <issue-id>
-- Phase recommendation: {/session-plan | implement | /session-orient discovery mode}
+- Phase recommendation: {session-plan | implement | session-orient discovery mode}
 ```
 
 ### Step 9: push beads state
@@ -425,7 +424,7 @@ For multi-issue sessions, summarize by category rather than listing every issue.
 
 ### Step 10: generate session resume command
 
-Invoke `/meta-session-resume` to produce the `ccds -r` command and add it to atuin history.
+Invoke `meta-session-resume` to produce the `ccds -r` command and add it to atuin history.
 No arguments are needed — the skill auto-detects the session UUID via `$PPID`.
 
 ## Cynefin modulation within checkpoint
@@ -442,21 +441,21 @@ Cynefin classification modulates how deeply this skill executes, not whether the
 ## Typical next steps
 
 After checkpoint completes, the session ends.
-The next session starts with `/session-orient`, which reads the handoff narrative, signal tables, and checkpoint contexts produced by this skill.
+The next session starts with `session-orient`, which reads the handoff narrative, signal tables, and checkpoint contexts produced by this skill.
 
-When replanning was triggered (surprise exceeded theta or documentation was demoted), the handoff narrative recommends that the next session begin with `/session-orient` followed by `/session-plan` before resuming implementation.
+When replanning was triggered (surprise exceeded theta or documentation was demoted), the handoff narrative recommends that the next session begin with `session-orient` followed by `session-plan` before resuming implementation.
 
 ---
 
 *Composed skills (delegate, do not duplicate):*
 - `issues-beads-checkpoint` (retired, pending re-base onto Linear/OpenSpec) -- per-issue signal table update, checkpoint-context write, escalation handling, pheromone propagation, buffer depletion check, graph health verification, beads commit
 - `issues-beads-evolve` (retired, pending re-base onto Linear/OpenSpec) -- graph restructuring when checkpoint reveals structural issues
-- `/stigmergic-convention` -- signal table schema, field definitions, read-modify-write protocol
+- `stigmergic-convention` -- signal table schema, field definitions, read-modify-write protocol
 
 *Related skills:*
-- `/session-orient` -- strategic horizon session start, consumes the handoff narrative produced here
-- `/session-plan` -- tactical-to-operational decomposition, invoked when replanning is triggered
-- `/session-review` -- convergence-point validation, uses compatible theta heuristics
+- `session-orient` -- strategic horizon session start, consumes the handoff narrative produced here
+- `session-plan` -- tactical-to-operational decomposition, invoked when replanning is triggered
+- `session-review` -- convergence-point validation, uses compatible theta heuristics
 - `issues-beads-prime` (retired, pending re-base onto Linear/OpenSpec) -- core beads conventions and command quick reference
 
 *Theoretical foundations:*
