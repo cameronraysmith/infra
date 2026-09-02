@@ -1,5 +1,6 @@
 {
   "name": "preferences-event-driven-systems",
   "version": "0.0.0",
-  "description": "Event-driven systems preferences — event modeling, event sourcing, EventCatalog tooling, Qlerify transform, schema versioning."
+  "description": "Event-driven systems preferences — event modeling, event sourcing, EventCatalog tooling, Qlerify transform, schema versioning.",
+  "skills": ["./.apm/skills"]
 }

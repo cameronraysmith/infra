@@ -9,8 +9,9 @@ created: 2026-08-25
 These counts are computed rather than maintained here: `testing-and-quality/.apm/skills/harborize/scripts/census.py --root modules/home/ai/plugins` regenerates `census.json`, whose `provenance` block carries the authoritative totals and the revision they were taken at.
 Each group directory carries an `apm.yml` and a `plugin.json`; the marketplace manifest is `../../../../.github/plugin/marketplace.json`.
 
-A group's skills are discovered by reading its `.apm/skills/` directory, so neither manifest enumerates them.
-Adding a skill means creating `<group>/.apm/skills/<name>/SKILL.md`; there is no registration step.
+Each `plugin.json` declares `"skills": ["./.apm/skills"]`, and apm enumerates that container's immediate children as the deployable set.
+Adding a skill still means creating `<group>/.apm/skills/<name>/SKILL.md`; there is no registration step, since the container declaration covers every child without naming it.
+apm 0.29.0 requires a plugin-classified package to declare its skill sources, so an undeclared `.apm/skills/` directory deploys nothing.
 
 ## Two things that will silently discard your edits
 
