@@ -60,6 +60,11 @@
         program = "${config.packages.worktrunk-bin.updateScript}";
       };
 
+      apps.update-mergify-cli-bin = {
+        type = "app";
+        program = "${config.packages.mergify-cli-bin.updateScript}";
+      };
+
       apps.update-buzz-source = {
         type = "app";
         program = "${config.packages.buzz-source.updateScript}";
