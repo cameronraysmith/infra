@@ -1,36 +1,43 @@
-# Machine toplevel build-realization checks.
-#
-# Programmatic per-system derivation: iterates self.{nixos,darwin}Configurations,
-# partitions by config.nixpkgs.hostPlatform.system, and emits one check per
-# machine assigned to the current system. Mirrors home.nix's derivation-from-
-# config precedent (enumerableUsers from flake.users) rather than the hardcoded
-# mic92 attrset style.
-#
-# Excludes: none currently. The `deferred` mechanism is preserved (now an
-# empty list) for future per-machine deferrals (e.g., when a machine's
-# evaluation depends on cache readiness or upstream brokenness).
-#
-# Closes: nix-144.3 (Phase 2 - darwin machine coverage).
 { self, lib, ... }:
 {
   perSystem =
     { system, ... }:
     let
       deferred = [ "scheelite" ];
+      inventory = self.clan.inventory.machines;
+      machineSystems = self.lib.machineSystems;
+
+      inventoryNamesFor = machineClass: builtins.attrNames (
+        lib.filterAttrs (_: machine: machine.machineClass == machineClass) inventory
+      );
 
       nixosForSystem = lib.filterAttrs (
-        name: cfg: cfg.config.nixpkgs.hostPlatform.system == system && !(builtins.elem name deferred)
-      ) self.nixosConfigurations;
+        name: machine:
+        machine.machineClass == "nixos"
+        && machineSystems.${name} == system
+        && !(builtins.elem name deferred)
+      ) inventory;
 
       darwinForSystem = lib.filterAttrs (
-        name: cfg: cfg.config.nixpkgs.hostPlatform.system == system
-      ) self.darwinConfigurations;
+        name: machine: machine.machineClass == "darwin" && machineSystems.${name} == system
+      ) inventory;
     in
+    assert lib.assertMsg (
+      builtins.attrNames machineSystems == builtins.attrNames inventory
+    ) "flake.lib.machineSystems names must match clan.inventory.machines";
+    assert lib.assertMsg (
+      inventoryNamesFor "nixos" == builtins.attrNames self.nixosConfigurations
+    ) "NixOS inventory names must match nixosConfigurations";
+    assert lib.assertMsg (
+      inventoryNamesFor "darwin" == builtins.attrNames self.darwinConfigurations
+    ) "Darwin inventory names must match darwinConfigurations";
     {
       checks =
         (lib.mapAttrs' (
-          name: cfg: lib.nameValuePair "nixos-${name}" cfg.config.system.build.toplevel
+          name: _: lib.nameValuePair "nixos-${name}" self.nixosConfigurations.${name}.config.system.build.toplevel
         ) nixosForSystem)
-        // (lib.mapAttrs' (name: cfg: lib.nameValuePair "darwin-${name}" cfg.system) darwinForSystem);
+        // (lib.mapAttrs' (
+          name: _: lib.nameValuePair "darwin-${name}" self.darwinConfigurations.${name}.system
+        ) darwinForSystem);
     };
 }
