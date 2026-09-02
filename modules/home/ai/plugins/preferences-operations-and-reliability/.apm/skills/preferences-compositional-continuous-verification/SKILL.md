@@ -132,7 +132,7 @@ The meta-check derivations — traceability, adequacy, integrity, and exemption-
 Their design, the structured manifest declaring per-package deliverables and required check kinds, the coverage-model schema, and the mutation-testing sampling strategy are all flake-level engineering documented in the CCV reference proper.
 This skill provides the theoretical anchor and the agent-side habit; the flake-side machinery is a separate concern that `preferences-nix-checks-architecture` covers from the construction side.
 
-Per-package manifests, per-artifact coverage profiles, and the incident-to-check feedback loop are documented in the CCV doc proper at `~/projects/sciexp/planning/docs/notes/development/continuous-verification/compositional-continuous-verification.md`; their adoption into the vanixiets flake is a deferred epic to be tracked separately when the prerequisites land.
+Per-package manifests, per-artifact coverage profiles, and the incident-to-check feedback loop are documented in the CCV doc proper in the private `sciexp/planning` tree at `docs/notes/development/continuous-verification/compositional-continuous-verification.md`; their adoption into the vanixiets flake is a deferred epic to be tracked separately when the prerequisites land.
 
 ## Forward hooks
 

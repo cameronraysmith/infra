@@ -1550,7 +1550,7 @@ Its fleet-sync runs `git fetch --prune`, `git branch -D` on gone-tracking branch
 
 Cite upstream `jj-vcs/jj` source by symbol and file rather than by line, following `preferences-documentation` §"Citing source files".
 
-The local clone at `~/ghq/github.com/jj-vcs/jj` is shallow at `v0.44.0-12-g8f29cac` while the installed binary is 0.43.0.
+The local clone of `jj-vcs/jj` is shallow at `v0.44.0-12-g8f29cac` while the installed binary is 0.43.0.
 Its line numbers are wrong in both directions against either reference, so it cannot be used to check a citation or to repair one.
 Use it to confirm that a symbol exists, and check behavioral claims against the installed binary instead.
 

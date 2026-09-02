@@ -4,8 +4,6 @@ This matrix places the three modalities this skill owns — property-based testi
 Cells grounded in a local clone cite its source path.
 Cells resting on model knowledge are marked *(model knowledge)* explicitly, and the one deliberate exclusion (Aeneas is not in the SMT column) is stated where it would otherwise be miscategorized.
 
-Local clones read for this matrix live under `/Users/crs58/projects/rust-workspace/`, `/Users/crs58/projects/haskell-workspace/`, `/Users/crs58/projects/python-workspace/`, and `/Users/crs58/projects/functional-programming-workspace/`.
-
 ## The matrix
 
 | Language | PBT | DbC / refinement | SMT / concolic |

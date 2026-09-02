@@ -34,7 +34,7 @@ Airflow admits no clean BSàlC reading — not "almost", but genuinely none.
 ## Point 2 — Flyte v2: typed monadic fusion, an almost-indexed-effect monad
 
 Flyte v2 is a clean-break redesign of v1 and inverts v1's model in the one respect that matters here.
-Verified against `~/projects/sciops-workspace/flyte-sdk/src/flyte/`: the v2 public surface is task-centric, and v1's static-DAG vocabulary is gone.
+Verified against `flyteorg/flyte-sdk` at `src/flyte/`: the v2 public surface is task-centric, and v1's static-DAG vocabulary is gone.
 There is no `@workflow`, no `@dynamic`, no `conditional`/`if_`, no `map_task`, no `LaunchPlan`.
 Fan-out is `flyte.map` and human-in-the-loop gating is `flyte.new_condition`/`ConditionWebhook`, but neither reintroduces a static DAG — `map` is run-time fan-out parallelism over a task and `new_condition` is an awaited external signal, both runtime helpers within the async task model rather than v1's static branching.
 The only authoring decorator is `@env.task` on a `flyte.TaskEnvironment`; a "workflow" is just an `async def` parent task that `await`s child tasks.
@@ -108,7 +108,7 @@ Flyte v2 fuses *with types*: the monadic, runtime-grown action tree is lawful at
 That "almost" is where the information is: typed fusion is still principled — a coherent indexed-effect discipline a careful author can hold themselves to — it is simply a different mathematics than the free-applicative-or-monad-term-plus-store-interpreter mathematics that Dagster wears on its sleeve.
 
 A note on provenance for the constraint vocabulary used above.
-The `Applicative ⊂ Selective ⊂ Monad` chain is invoked here through `Applicative` and `Monad` only; the intermediate `Selective` point (static visibility of all candidate dependencies with selective execution of one branch's effects) is the natural home for a conditional, statically-extractable orchestrator, but Mokhov, Mitchell and Peyton Jones, "Build Systems à la Carte" (ICFP 2018, `~/projects/planning-workspace/engineering-references/mokhov-2018-build-systems-a-la-carte/`) predates `Selective`, which was added in their 2019 "Selective Applicative Functors" and folded into the JFP 2020 extended version.
+The `Applicative ⊂ Selective ⊂ Monad` chain is invoked here through `Applicative` and `Monad` only; the intermediate `Selective` point (static visibility of all candidate dependencies with selective execution of one branch's effects) is the natural home for a conditional, statically-extractable orchestrator, but Mokhov, Mitchell and Peyton Jones, "Build Systems à la Carte" (ICFP 2018; our copy lives in the private `cameronraysmith/engineering-references` tree at `mokhov-2018-build-systems-a-la-carte/`) predates `Selective`, which was added in their 2019 "Selective Applicative Functors" and folded into the JFP 2020 extended version.
 None of the three orchestrators here sits cleanly at the `Selective` point, so the omission does not affect the spectrum; flag it only when invoking `Selective` directly.
 
 ## Cross-references
@@ -117,4 +117,4 @@ None of the three orchestrators here sits cleanly at the `Selective` point, so t
 - *03-fp-discipline-and-enforcement.md* — the lawful IO-manager example and the proof obligation that materialization is a pure function of `(AssetKey, PartitionKey)`, which makes Dagster's interpreter side honest.
 - preferences-theoretical-foundations, its internal-language reference — free structures, functors, indexed/fibered families, and the categorical vocabulary the spectrum leans on.
 - preferences-algebraic-laws — the law-as-specification stance behind "almost / aspirational" versus "lawful"; the indexed-monad reading of Flyte v2 is the former, not the latter.
-- Mokhov, Mitchell, Peyton Jones, "Build Systems à la Carte" (ICFP 2018), `~/projects/planning-workspace/engineering-references/mokhov-2018-build-systems-a-la-carte/sections/`.
+- Mokhov, Mitchell, Peyton Jones, "Build Systems à la Carte" (ICFP 2018), `cameronraysmith/engineering-references` at `mokhov-2018-build-systems-a-la-carte/sections/`.

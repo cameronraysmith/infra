@@ -65,13 +65,13 @@ It generates static documentation sites from markdown files with structured fron
 
 Source code and tooling for EventCatalog development:
 
-- `~/projects/lakescope-workspace/eventcatalog` - EventCatalog core source
-- `~/projects/lakescope-workspace/create-eventcatalog` - Project scaffolding CLI
-- `~/projects/lakescope-workspace/eventcatalog-mcp-server` - MCP server for AI-assisted catalog queries
-- `~/projects/lakescope-workspace/eventstorm-to-catalog` - EventStorming artifact conversion
+- `event-catalog/eventcatalog` - EventCatalog core source
+- `event-catalog/eventcatalog` (`packages/create-eventcatalog`) - Project scaffolding CLI (the standalone `create-eventcatalog` repo is archived; its content moved into this subpath)
+- `event-catalog/mcp-server` - MCP server for AI-assisted catalog queries
+- `event-catalog/eventstorm-to-catalog` - EventStorming artifact conversion
 
 For documentation queries, use context7 MCP with `/websites/eventcatalog_dev` for the official documentation.
-For source code exploration, search the local repositories above.
+For source code exploration, see the repositories above.
 
 ### Event documentation structure
 

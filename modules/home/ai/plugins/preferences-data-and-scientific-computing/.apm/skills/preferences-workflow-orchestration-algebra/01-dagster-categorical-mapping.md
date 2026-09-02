@@ -2,11 +2,11 @@
 
 Each Dagster primitive maps onto either the free term or the interpreter of the Build Systems à la Carte construction, and naming which side a primitive lives on — and how tightly it fits — is what turns the analogy into a proof obligation.
 
-The framing spine is *Build Systems à la Carte* (Mokhov, Mitchell, Peyton Jones, ICFP 2018, local copy at `~/projects/planning-workspace/engineering-references/mokhov-2018-build-systems-a-la-carte/`): a build is a fixpoint of `value(k) = task_k(values of deps(k))`, every system factors as `scheduler ∘ rebuilder` over a `Tasks c k v` abstraction, and `c` is `Applicative` (static dependencies) or `Monad` (dynamic dependencies).
+The framing spine is *Build Systems à la Carte* (Mokhov, Mitchell, Peyton Jones, ICFP 2018; our copy lives in the private `cameronraysmith/engineering-references` tree at `mokhov-2018-build-systems-a-la-carte/`): a build is a fixpoint of `value(k) = task_k(values of deps(k))`, every system factors as `scheduler ∘ rebuilder` over a `Tasks c k v` abstraction, and `c` is `Applicative` (static dependencies) or `Monad` (dynamic dependencies).
 A `Tasks` value is a free structure (free applicative or free monad) over a signature of fetch-dependency operations; the build system is an interpreter — an algebra, or a natural transformation — that runs it against a store.
 Most of Dagster maps onto *either the free term or the interpreter*, and confusing the two is the main source of muddle.
 
-Each entry below states the exact Dagster API (verified against `~/projects/omicslake-workspace/dagster/python_modules/dagster/dagster/`, version `1!0+dev`), the categorical target, and a tightness tag.
+Each entry below states the exact Dagster API (verified against `dagster-io/dagster` at `python_modules/dagster/dagster/`, version `1!0+dev`), the categorical target, and a tightness tag.
 A tag of *tight* means the structure is present and Dagster maintains it; *almost* means the structure holds exactly when a coherence condition Dagster does not enforce is met, and the entry names that condition.
 
 ## 1. The asset graph is the free diagram — the `Tasks` object itself
@@ -172,4 +172,4 @@ This file says what-maps-to-what; *03-fp-discipline-and-enforcement.md* establis
 - *03-fp-discipline-and-enforcement.md* — the enforcement toolchain and the fully worked lawful IO-manager example discharging the entry-3 proof obligation.
 - preferences-theoretical-foundations, its internal-language reference — free constructions, functors, natural transformations, and the categorical vocabulary underpinning the free-term-versus-interpreter split.
 - preferences-algebraic-laws — the functor, applicative, and monad laws the static-versus-dynamic mapping (entry 2) and the trace replay (entry 5) rest on.
-- Mokhov, Mitchell, Peyton Jones, "Build Systems à la Carte", ICFP 2018, `~/projects/planning-workspace/engineering-references/mokhov-2018-build-systems-a-la-carte/` — the `Tasks c k v` abstraction, the `scheduler ∘ rebuilder` factoring, the constraint hierarchy, and the trace taxonomy. The local copy predates Selective functors (2019 / JFP 2020).
+- Mokhov, Mitchell, Peyton Jones, "Build Systems à la Carte", ICFP 2018, `cameronraysmith/engineering-references` at `mokhov-2018-build-systems-a-la-carte/` — the `Tasks c k v` abstraction, the `scheduler ∘ rebuilder` factoring, the constraint hierarchy, and the trace taxonomy. The local copy predates Selective functors (2019 / JFP 2020).

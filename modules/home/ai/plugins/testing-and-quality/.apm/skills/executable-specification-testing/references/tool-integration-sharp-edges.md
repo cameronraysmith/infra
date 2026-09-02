@@ -1,7 +1,7 @@
 # Tool-integration sharp edges
 
 These are the friction points the safeadt worked example surfaced by actually running the single-contract stack under a current toolchain.
-Each is grounded in the safeadt source tree at `/Users/crs58/projects/functional-programming-workspace/safeadt/`, read at the revision whose README reports CPython 3.14.2, Hypothesis 6.139.3, basedpyright 1.39.9, crosshair-tool 0.0.107, and icontract-hypothesis 1.1.7.
+Each is grounded in the private `cameronraysmith/safeadt` source tree — not independently checkable by a reader without access — read at the revision whose README reports CPython 3.14.2, Hypothesis 6.139.3, basedpyright 1.39.9, crosshair-tool 0.0.107, and icontract-hypothesis 1.1.7.
 
 ## beartype's claw hook crashes CrossHair's native importer
 

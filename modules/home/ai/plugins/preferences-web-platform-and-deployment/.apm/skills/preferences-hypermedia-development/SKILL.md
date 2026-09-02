@@ -71,11 +71,11 @@ When the document is self-contained and does not need server state (experiments,
 
 **Reference implementations:**
 
-Ironstar (`~/projects/rust-workspace/ironstar`) is the canonical Rust integration of algebraic DDD with hypermedia architecture.
+Ironstar (`sciexp/ironstar`) is the canonical Rust integration of algebraic DDD with hypermedia architecture.
 It demonstrates the Decider pattern (fmodel-rust) for pure domain logic, embedded infrastructure (SQLite event store, Zenoh pub/sub, DuckDB analytics, moka cache), Open Props + CUBE CSS cascade layer architecture, hypertext lazy templates with datastar-rust SSE events, and Idris2 formal specifications for domain model verification.
 See the repo's CLAUDE.md for the authoritative architectural context.
 
-Stario (`~/projects/lakescope-workspace/stario`) is an illustrative Python 3.14+ framework for Datastar integration.
+Stario (`Bobowski/stario`) is an illustrative Python 3.14+ framework for Datastar integration.
 It demonstrates the Go-style handler pattern `(Context, Writer) -> None`, declarative HTML element functions, `data`/`at` Datastar attribute helpers, and the Relay in-process pub/sub system for broadcasting events across SSE connections.
 
 ## Related documents

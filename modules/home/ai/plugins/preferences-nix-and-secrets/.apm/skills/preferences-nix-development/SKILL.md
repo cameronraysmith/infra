@@ -83,12 +83,12 @@ Conflating the two causes silent failures in cross-compilation and missing runti
 Rust packages use crane, which separates dependency compilation from source compilation for incremental caching.
 The typical pattern chains `buildDepsOnly` (compiles only Cargo dependencies), `buildPackage` (compiles project source against cached deps), `cargoClippy` (lint check), and `cargoNextest` (test runner).
 For PyO3/maturin hybrid packages that produce Python wheels from Rust source, crane-maturin provides `buildMaturinPackage`.
-Reference repo: `~/projects/nix-workspace/crane-maturin`.
+Reference repo: `vlaci/crane-maturin`.
 
 Python packaging uses uv2nix and pyproject-nix rather than nixpkgs' `buildPythonPackage`.
 The uv2nix approach reads `uv.lock` files via `workspace.loadWorkspace`, produces nix overlays through `mkPyprojectOverlay`, and composes them with `pyproject-build-systems` into a Python package set.
 `mkVirtualEnv` produces the final installable environment.
-Reference repos: `~/projects/nix-workspace/pyproject.nix`, `~/projects/nix-workspace/uv2nix`.
+Reference repos: `pyproject-nix/pyproject.nix`, `pyproject-nix/uv2nix`.
 The nixpkgs `buildPythonPackage` remains a fallback for packages not managed by uv that need nix-specific fixups.
 
 JavaScript packages use bun2nix with `fetchBunDeps` for reproducible dependency fetching from `bun.lock` files.

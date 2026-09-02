@@ -187,8 +187,8 @@ DuckDB provides first-class bindings that all produce Arrow record batches throu
 The bindings vary in maturity and ecosystem integration but share the same zero-copy Arrow output path.
 
 - Python: `duckdb` package, the most mature binding with tight pandas and polars integration
-- Julia: `DuckDB.jl` (source at `~/projects/duckdb/tools/juliapkg`), enabling Julia's SciML ecosystem (DiffEq.jl, Lux.jl, KernelAbstractions.jl) to consume lakehouse data directly as Arrow record batches
-- Rust: `duckdb-rs` (`~/projects/omicslake-workspace/duckdb-rs`) for embedded analytics, and `async-duckdb` (`~/projects/rust-workspace/async-duckdb`) for async web application serving via axum
+- Julia: `DuckDB.jl` (`duckdb/DuckDB.jl`), enabling Julia's SciML ecosystem (DiffEq.jl, Lux.jl, KernelAbstractions.jl) to consume lakehouse data directly as Arrow record batches
+- Rust: `duckdb-rs` (`duckdb/duckdb-rs`) for embedded analytics, and `async-duckdb` (`jessekrubin/async-duckdb`) for async web application serving via axum
 
 All three language ecosystems benefit equally from the DuckDB-to-Arrow pipeline.
 A single DuckLake catalog can serve Python notebooks running probabilistic inference, Julia processes solving differential equations, and Rust services delivering query results over HTTP — all consuming the same Arrow record batches without format translation.
@@ -256,10 +256,10 @@ Combined with DuckLake's catalog metadata, the query planner can prune partition
 Parquet is the current standard on-disk columnar format and the default for DuckLake data storage.
 Two emerging formats extend the columnar ecosystem in complementary directions.
 
-Vortex (`~/projects/omicslake-workspace/vortex`) is an emerging successor to Parquet with improved compression and query performance.
+Vortex (`vortex-data/vortex`) is an emerging successor to Parquet with improved compression and query performance.
 DuckDB already supports native Vortex read and write, though DuckLake's catalog implementation does not yet support Vortex as a storage backend.
 
-Lance (used by `~/projects/omicslake-workspace/slaf`) is an Arrow-native format optimized for ML and vector workloads.
+Lance (used by `slaf-project/slaf`) is an Arrow-native format optimized for ML and vector workloads.
 DuckDB supports Lance via extension, and Lance files are lakehouse-compatible.
 
 The practical stance is Parquet today, with Vortex and Lance as they mature.

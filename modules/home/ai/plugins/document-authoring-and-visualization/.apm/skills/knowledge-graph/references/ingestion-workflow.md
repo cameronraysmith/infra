@@ -6,7 +6,7 @@ description: Worked-example runbook for populating reference corpora into cognee
 # ingestion workflow
 
 This runbook walks two real corpora from empty to queryable and shows how to use the resulting graphs as grounding context while writing or reviewing a technical manuscript.
-The targets are `engineering-references-v2` (writing and architecture craft) and `modeling-references` (the scientific subject matter), and the intended consumer is `/Users/crs58/projects/hodosome-workspace/hodosome/docs/manuscript/manuscript.qmd`, a paper on stochastic dynamical modeling and inference of gene-regulatory network architecture.
+The targets are `engineering-references-v2` (writing and architecture craft) and `modeling-references` (the scientific subject matter), and the intended consumer is `docs/manuscript/manuscript.qmd` in the private `sciexp/hodosome` tree, a paper on stochastic dynamical modeling and inference of gene-regulatory network architecture.
 
 Throughout, ingestion means indexing curated reference documents, not capturing session state.
 The verbs are named for memory but used for reference-corpus indexing; the discipline is in what you ingest and why you query.

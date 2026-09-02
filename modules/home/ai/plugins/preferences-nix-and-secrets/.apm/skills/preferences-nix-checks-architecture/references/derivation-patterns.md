@@ -220,7 +220,7 @@ Each package maintains its own dependency resolution while sharing a common Pyth
 `mkEditablePyprojectOverlay` produces an editable overlay for the devshell where source changes are reflected without rebuilding.
 `pyproject-build-systems.overlays.default` provides build system packages (setuptools, hatchling, maturin, etc.) that pyproject-nix needs.
 
-Reference repos: `~/projects/nix-workspace/pyproject.nix`, `~/projects/nix-workspace/uv2nix`, `~/projects/nix-workspace/python-nix-template`.
+Reference repos: `pyproject-nix/pyproject.nix`, `pyproject-nix/uv2nix`, `sciexp/python-nix-template`.
 
 
 ## Rust/Python interop (crane-maturin)
@@ -249,7 +249,7 @@ in
 The `nixpkgsPrebuilt` function from pyproject-nix's hacks module (`pyproject-nix.build.hacks.nixpkgsPrebuilt`) injects the crane-maturin compiled output into the uv2nix package set, avoiding a second compilation during Python packaging.
 The package exposes `passthru.tests` with pytest, clippy, documentation, formatting, and cargo test derivations.
 
-Reference repo: `~/projects/nix-workspace/crane-maturin`.
+Reference repo: `vlaci/crane-maturin`.
 
 
 ## JavaScript/TypeScript (bun2nix)

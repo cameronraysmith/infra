@@ -102,7 +102,7 @@ Three skills cover Dagster work and they do not overlap; route by what the quest
 | this skill | the algebra, the BSalC mapping, and the FP-law discipline closing the almost-gaps | mapping a primitive to its categorical object, choosing asset-vs-task, writing a lawful IO manager, enforcing type-safe FP laws on a pipeline |
 
 The boundary is clean: this skill names the *law and structure*, `dagster-expert` holds the *API*, `dignified-python` holds the *imperative style*.
-When this skill needs an operational API it defers to `dagster-expert` by reference rather than restating symbols; both Dagster skills live under `/Users/crs58/projects/omicslake-workspace/dagster-skills/skills/`.
+When this skill needs an operational API it defers to `dagster-expert` by reference rather than restating symbols.
 
 ## Contents
 

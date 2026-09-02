@@ -34,7 +34,7 @@ Each utility applies exactly one property, and utilities override block defaults
 The `exceptions` layer handles per-context overrides via `data-*` attributes.
 These are state-specific or variant-specific adjustments that need the highest layer priority.
 
-This layer ordering follows the same priority hierarchy as Ironstar (`~/projects/rust-workspace/ironstar`), which uses `components, utilities, app` for the equivalent positions.
+This layer ordering follows the same priority hierarchy as Ironstar (`sciexp/ironstar`), which uses `components, utilities, app` for the equivalent positions.
 The document skill uses CUBE CSS terminology (`blocks`, `utilities`, `exceptions`) while preserving the same cascade semantics: utilities override blocks, exceptions override everything.
 
 ## Open Props design tokens

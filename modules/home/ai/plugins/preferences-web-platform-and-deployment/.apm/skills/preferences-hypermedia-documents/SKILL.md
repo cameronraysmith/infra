@@ -155,7 +155,7 @@ See `04-presentations.md` for the complete presentation architecture.
 
 *Server connectivity (when needed):* Datastar (~15KB) provides SSE-driven reactivity when the document transitions to a hybrid application.
 
-*Reference implementation:* Ironstar (`~/projects/rust-workspace/ironstar`) demonstrates the full Open Props + CUBE CSS + Datastar integration in a server-connected context.
+*Reference implementation:* Ironstar (`sciexp/ironstar`) demonstrates the full Open Props + CUBE CSS + Datastar integration in a server-connected context.
 Ironstar is primarily a server-connected application, but its CSS architecture and design token usage apply directly to standalone documents.
 
 ## File organization

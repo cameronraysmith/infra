@@ -273,9 +273,9 @@ The exception is network-dependent effects: the local machine may have different
 
 ## Reference repositories
 
-`~/projects/nix-workspace/buildbot-nix` contains the buildbot-nix source, including the effect runner, the NixOS modules for master and worker, the GitHub and Gitea forge backends, and the `buildbot-effects` CLI.
+`nix-community/buildbot-nix` contains the buildbot-nix source, including the effect runner, the NixOS modules for master and worker, the GitHub and Gitea forge backends, and the `buildbot-effects` CLI.
 The `GITHUB.md` file documents the GitHub App setup procedure.
 
-`~/projects/nix-workspace/hercules-ci-effects` contains the upstream effect library: `mkEffect`, `modularEffect`, all common effect types (`runNixOS`, `runNixDarwin`, `flakeUpdate`, etc.), the flake-parts module, and the `secretsMap` infrastructure.
+`hercules-ci/hercules-ci-effects` contains the upstream effect library: `mkEffect`, `modularEffect`, all common effect types (`runNixOS`, `runNixDarwin`, `flakeUpdate`, etc.), the flake-parts module, and the `secretsMap` infrastructure.
 The `effects/` directory contains the implementation of each effect type.
 The `flake-module.nix` file contains the flake-parts integration.

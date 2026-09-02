@@ -6,10 +6,9 @@ disable-model-invocation: true
 Add process-compose integration for local development with dual Nix/non-Nix support.
 
 Read the CLAUDE.md files in these ecosystem repos for context and patterns:
-- ~/projects/nix-workspace/process-compose (upstream Go tool, YAML format)
-- ~/projects/nix-workspace/process-compose-flake (Nix module layer)
-- ~/projects/nix-workspace/services-flake (pre-built service modules)
-- ~/projects/nix-workspace/process-compose-flake-shell (devShell integration)
+- `F1bonacc1/process-compose` (upstream Go tool, YAML format)
+- `Platonic-Systems/process-compose-flake` (Nix module layer, includes devShell integration)
+- `juspay/services-flake` (pre-built service modules)
 
 First analyze this project to identify needed services (database, cache, queue, dev server, etc.) based on existing dependencies and configuration.
 
