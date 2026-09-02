@@ -1,4 +1,17 @@
 {
+  flake.lib.machineSystems = {
+    argentum = "aarch64-darwin";
+    blackphos = "aarch64-darwin";
+    cinnabar = "x86_64-linux";
+    electrum = "x86_64-linux";
+    galena = "x86_64-linux";
+    magnetite = "x86_64-linux";
+    pyrite = "x86_64-linux";
+    rosegold = "aarch64-darwin";
+    scheelite = "x86_64-linux";
+    stibnite = "aarch64-darwin";
+  };
+
   clan.inventory.machines = {
     cinnabar = {
       tags = [
