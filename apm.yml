@@ -62,3 +62,25 @@ marketplace:
     - name: testing-and-quality
       source: ./modules/home/ai/plugins/testing-and-quality
       version: 0.0.0
+targets:
+  - agent-skills
+dependencies:
+  apm:
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-functional-programming-theory#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-domain-driven-architecture#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-event-driven-systems#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-operations-and-reliability#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/document-authoring-and-visualization#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/event-modeling-workflow#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations#main
+    - cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality#main

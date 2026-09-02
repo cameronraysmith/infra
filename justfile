@@ -572,6 +572,16 @@ bun-update-latest-stable:
 openspec-regen:
   {{nix_cmd}} run .#openspec-refresh-vendored-artifacts
 
+# Materialize this repo's own apm skill packages from the committed lockfile.
+[group('agents')]
+agents-install:
+  {{nix_cmd}} run .#apm-skills-install
+
+# Re-resolve apm skill packages' `#main` pins and rewrite the committed lockfile.
+[group('agents')]
+agents-relock:
+  {{nix_cmd}} run .#apm-skills-install -- --relock
+
 ## terraform/terranix
 
 # Run terraform via terranix flake app (init + apply, arguments not supported)
