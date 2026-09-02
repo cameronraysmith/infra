@@ -81,6 +81,9 @@
         }:
         (inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = probePkgs system;
+          # Same reason as modules/home/mk-home.nix: a module formal that the
+          # module system cannot resolve throws rather than taking its default.
+          extraSpecialArgs.osConfig = null;
           modules = [
             self.modules.homeManager.devin
             {
@@ -98,6 +101,7 @@
       evalBare =
         system: worker:
         (lib.evalModules {
+          specialArgs.osConfig = null;
           modules = [
             self.modules.homeManager.devin
             {
@@ -124,6 +128,7 @@
         worker = {
           enable = true;
           workers = 2;
+          outpost = "stibnite-01";
           outposts = wired;
         };
       };
@@ -134,6 +139,7 @@
         worker = {
           enable = true;
           workers = 2;
+          outpost = "magnetite-01";
           outposts = wired;
         };
       };
@@ -155,7 +161,7 @@
             "platform"
           else if lib.hasInfix "not a key of" message then
             "unknown-outpost"
-          else if lib.hasInfix "no default resolved" message then
+          else if lib.hasInfix "has not been told which queue it serves" message then
             "unset-outpost"
           else
             "unrecognized: ${message}"
@@ -209,16 +215,15 @@
             map (name: linux.systemd.user.services.${name}.Service.WorkingDirectory) (units linux)
           );
 
-          # Selection: the exact-platform tier picks stibnite-01 on darwin, and
-          # with no linux-platform entry the no-platform tier picks
-          # magnetite-01 on linux. Both come from the module's registry, so a
-          # wrong name or a missing merge shows up here.
-          darwinOutpost = darwin.services.devin-worker.outpost;
+          # `outpost` must have nothing to resolve on its own. A default that
+          # inferred it from the host's platform is what would put every linux
+          # machine in this repository on the same queue.
+          outpostDefault = (evalBare "x86_64-linux" { }).services.devin-worker.outpost;
+
           darwinSelectedPlatform =
             darwin.services.devin-worker.outposts.${darwin.services.devin-worker.outpost}.platform;
           darwinWarned = warnedClauses darwin;
 
-          linuxOutpost = linux.services.devin-worker.outpost;
           linuxSelectedPlatform =
             linux.services.devin-worker.outposts.${linux.services.devin-worker.outpost}.platform;
           # magnetite-01 carries no platform, so agreement with a linux host is
@@ -230,6 +235,7 @@
           wellFormed = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
+              outpost = "stibnite-01";
               outposts = wired;
             }
           );
@@ -238,6 +244,7 @@
           tokenless = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
+              outpost = "stibnite-01";
               outposts = {
                 "magnetite-01".tokenFile = wired."magnetite-01".tokenFile;
               };
@@ -246,6 +253,7 @@
           idless = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
+              outpost = "stibnite-01";
               outposts = wired // {
                 "stibnite-01" = {
                   id = null;
@@ -277,18 +285,19 @@
               outposts = wired;
             }
           );
-          # Two queues naming this host's platform, so no single default
-          # resolves and the exact tier never falls through to the other.
-          unresolvedOutpost = firedClauses (
-            evalBare "aarch64-darwin" {
+          # The regression this module's shape exists to prevent, in the form
+          # it will arrive: pyrite and cinnabar are linux machines coming up
+          # shortly on this same user. Enabling the worker there without naming
+          # a queue must fail, because the alternative -- inferring one -- puts
+          # them on magnetite's queue, where they would serve its sessions
+          # perfectly well and report nothing.
+          secondLinuxHostUnnamed = firedClauses (evalBare "x86_64-linux" { enable = true; });
+          # And naming a queue whose credential this host does not have fails
+          # by name rather than borrowing a sibling's.
+          secondLinuxHostBorrowing = firedClauses (
+            evalBare "x86_64-linux" {
               enable = true;
-              outposts = wired // {
-                spare = {
-                  platform = "macos";
-                  id = "outpost_env-11111111111111111111111111111111";
-                  tokenFile = "/run/secrets/devin-outposts-token-spare.dummy";
-                };
-              };
+              outpost = "magnetite-01";
             }
           );
         };
@@ -311,10 +320,9 @@
           linuxUnitEnvNames = [ "PATH" ];
           linuxWorkDirsDistinct = true;
 
-          darwinOutpost = "stibnite-01";
+          outpostDefault = null;
           darwinSelectedPlatform = "macos";
           darwinWarned = [ ];
-          linuxOutpost = "magnetite-01";
           linuxSelectedPlatform = null;
           linuxWarned = [ "platform-unset" ];
 
@@ -325,7 +333,8 @@
           platformUnsetFired = [ ];
           platformUnsetWarned = [ "platform-unset" ];
           unknownOutpost = [ "unknown-outpost" ];
-          unresolvedOutpost = [ "unset-outpost" ];
+          secondLinuxHostUnnamed = [ "unset-outpost" ];
+          secondLinuxHostBorrowing = [ "token" ];
         };
       };
     };

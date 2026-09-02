@@ -13,6 +13,16 @@
 # queue when starting the session and cannot know which worker is free.
 # Concurrency belongs on the worker count.
 #
+# Which queue a host serves is named per host, never derived. `outpost` has no
+# default: enabling the service without naming a queue fails evaluation and
+# names the host. The tempting inference -- serve the queue whose platform
+# matches this host -- is wrong here, because this repository carries six
+# NixOS machines and four darwin ones, so it would put every linux host that
+# enabled the service onto the same linux queue. Those workers would serve
+# another machine's sessions perfectly well, since N workers on one queue
+# serve N concurrent sessions, which is exactly why nothing would report it.
+# `platform` validates the pairing a host names; it never picks one.
+#
 # Per host the platform decides the supervisor:
 #
 #   * darwin gets a launchd USER AGENT, deliberately not a system daemon.
@@ -85,6 +95,9 @@
       config,
       lib,
       pkgs,
+      # Supplied as a specialArg by home-manager's NixOS and nix-darwin
+      # modules, absent in a standalone home configuration.
+      osConfig ? null,
       ...
     }:
     let
@@ -92,24 +105,20 @@
 
       hostOutpostPlatform = if pkgs.stdenv.hostPlatform.isDarwin then "macos" else "linux";
 
-      # A registry entry's platform may be null: the account permits creating
-      # an outpost without one, and the reference reads a null platform as the
-      # account default rather than as any particular OS. Candidates are
-      # therefore resolved in two tiers -- entries that name this host's
-      # platform, and only if there are none, entries that name no platform at
-      # all. That gives each host in this fleet exactly one candidate
-      # (stibnite-01 names macos; magnetite-01 names nothing) without treating
-      # a null as equal to linux.
-      exactPlatformOutposts = lib.attrNames (
-        lib.filterAttrs (_: outpost: outpost.platform == hostOutpostPlatform) cfg.outposts
-      );
-
-      unsetPlatformOutposts = lib.attrNames (
-        lib.filterAttrs (_: outpost: outpost.platform == null) cfg.outposts
-      );
-
-      platformOutposts =
-        if exactPlatformOutposts != [ ] then exactPlatformOutposts else unsetPlatformOutposts;
+      # Which host serves which queue is a deployment decision, so it is named
+      # rather than derived. `platform` validates the pairing; it does not pick
+      # it. Deriving the queue from the platform looked adequate while one
+      # darwin and one linux host had queues, but this repository already
+      # carries six NixOS machines and four darwin ones: under that rule every
+      # further linux host that enabled the service would default onto
+      # magnetite's queue and silently serve its sessions, which Devin permits
+      # -- N workers on one queue serve N concurrent sessions -- and so would
+      # not surface as an error anywhere.
+      hostLabel =
+        if osConfig != null then
+          osConfig.networking.hostName
+        else
+          "${config.home.username or "this user"}@${pkgs.stdenv.hostPlatform.system}";
 
       selected = if cfg.outpost == null then null else cfg.outposts.${cfg.outpost} or null;
 
@@ -340,20 +349,22 @@
 
         outpost = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
-          default = if lib.length platformOutposts == 1 then lib.head platformOutposts else null;
-          defaultText = lib.literalMD ''
-            the single entry of `outposts` naming this host's platform, or when
-            none names it, the single entry naming no platform; `null` when
-            zero or several remain
-          '';
+          default = null;
           example = "magnetite-01";
           description = ''
-            Queue this host's workers serve. The default resolves whenever the
-            registry holds exactly one queue for this platform, which is what
-            makes the two hosts in this repository work without configuration;
-            a third host of an existing platform has to name its own queue,
-            because serving another machine's queue would send that machine's
-            sessions here.
+            Queue this host's workers serve, named per host. Required whenever
+            the service is enabled: enabling without it fails evaluation and
+            names the host.
+
+            There is deliberately no default to infer it from. Which machine
+            serves which queue is a deployment decision, not a computable
+            fact, and the obvious inference -- take the queue whose platform
+            matches this host -- is actively wrong at fleet scale: with six
+            NixOS machines in this repository, every linux host that enabled
+            the service would land on the same linux queue and quietly serve
+            another machine's sessions. Devin allows that, since N workers on
+            one queue serve N concurrent sessions, so nothing upstream would
+            report it.
           '';
         };
 
@@ -433,9 +444,14 @@
             {
               assertion = cfg.outpost != null;
               message = ''
-                services.devin-worker.outpost is unset and no default resolved:
-                ${toString (lib.length platformOutposts)} queues in services.devin-worker.outposts are candidates for this
-                host (platform "${hostOutpostPlatform}", or no platform when none names it). Name the queue this host serves.
+                services.devin-worker is enabled on ${hostLabel} but services.devin-worker.outpost is
+                unset, so this host has not been told which queue it serves. Name it, e.g.
+                services.devin-worker.outpost = "magnetite-01"; known queues are
+                ${lib.concatStringsSep ", " (lib.attrNames cfg.outposts)}.
+
+                There is no default on purpose. Inferring the queue from this host's platform would
+                put every linux host in this repository on the same queue, serving another machine's
+                sessions without any error to notice.
               '';
             }
             {

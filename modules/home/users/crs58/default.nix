@@ -10,6 +10,8 @@ let
       pkgs,
       lib,
       flake, # from extraSpecialArgs
+      # from home-manager's NixOS and nix-darwin modules; absent standalone
+      osConfig ? null,
       ...
     }:
     let
@@ -264,26 +266,29 @@ let
       # conditional in spirit but because sops-nix validates every declared key
       # against the sops file when the manifest is built (check-mode=sopsfile):
       # declaring a key whose ciphertext is not yet in secrets.yaml would fail
-      # home-manager activation on both hosts for a service that is off. The
-      # operator's actions -- add a ciphertext, enable the worker on that host
-      # -- therefore land together, and enabling without it fails at build time
-      # naming the missing key.
+      # home-manager activation for a service that is off. The operator's
+      # actions -- add a ciphertext, enable the worker on that host -- land
+      # together, and enabling without it fails at build time naming the
+      # missing key.
       #
-      # Each host declares only the key for the queue it serves, so the two
-      # stay independent. Declaring both everywhere would couple them through
-      # the sops manifest: the same build-time validation means one host could
-      # not be enabled, nor its token rotated, until the other's ciphertext
-      # also existed and validated on that machine, and each machine would
-      # decrypt a credential it never uses.
+      # They are gated again on the queue the host actually serves, so a host
+      # declares exactly one key and exactly one tokenFile, and a host serving
+      # no queue declares neither. Declaring every key everywhere would couple
+      # the machines through that same validation: none could be enabled, nor
+      # its token rotated, until every other ciphertext existed and validated
+      # on it too, and each machine would decrypt credentials it never uses.
       #
-      # The discriminator is the host platform rather than
-      # `services.devin-worker.outpost`, because these are definitions OF
-      # `outposts` and that option's default is computed FROM `outposts`:
-      # conditioning them on the resolved name is a cycle. Platform is what the
-      # module's own two-tier selection keys on, so the two agree by
-      # construction here, and if a host is ever pointed at a different queue
-      # the module's tokenFile assertion fires by name rather than silently
-      # serving with no credential.
+      # The second gate sits on the leaf rather than on the attribute set: the
+      # outpost names are literals either way, so `outposts` contributes the
+      # same attribute names whatever the condition, and only the tokenFile
+      # value is conditional. Nothing consults a tokenFile to learn the names
+      # or the platforms, so there is no cycle here.
+      #
+      # Which queue each host serves is a deployment fact, so it is keyed on
+      # the machine, not on its platform: six NixOS machines share this user,
+      # and a platform-keyed rule would put every one of them on magnetite's
+      # queue. A machine absent from this table serves no queue, and enabling
+      # the worker there fails evaluation naming it.
       #
       # Carried as an inline module because `sops.secrets` is already defined
       # in the attribute set above, and a conditional slice of it cannot be a
@@ -291,32 +296,50 @@ let
       imports = [
         (
           let
-            devinEnabled = config.services.devin-worker.enable;
-            servesStibnite = devinEnabled && pkgs.stdenv.hostPlatform.isDarwin;
-            servesMagnetite = devinEnabled && pkgs.stdenv.hostPlatform.isLinux;
+            outpostByHost = {
+              stibnite = "stibnite-01";
+              magnetite = "magnetite-01";
+            };
+
+            hostName = if osConfig == null then null else osConfig.networking.hostName;
+            hostOutpost = if hostName == null then null else outpostByHost.${hostName} or null;
+
+            # Both conjuncts matter. The host's own entry in the table is what
+            # makes a machine with no queue declare nothing, even if someone
+            # names another machine's queue on it -- that host then has no
+            # credential and the module's tokenFile assertion fails the build
+            # by name, rather than the host quietly serving sessions from a
+            # queue that is not its own on a credential that is not its own.
+            # The second conjunct keeps a key from being declared on a host
+            # whose assignment has been pointed elsewhere.
+            serves =
+              name:
+              config.services.devin-worker.enable
+              && hostOutpost == name
+              && config.services.devin-worker.outpost == name;
           in
           {
+            services.devin-worker.outpost = lib.mkIf (hostOutpost != null) (lib.mkDefault hostOutpost);
+
             sops.secrets = lib.mkMerge [
-              (lib.mkIf servesStibnite {
+              (lib.mkIf (serves "stibnite-01") {
                 devin-outposts-token-stibnite = {
                   mode = "0400";
                 };
               })
-              (lib.mkIf servesMagnetite {
+              (lib.mkIf (serves "magnetite-01") {
                 devin-outposts-token-magnetite = {
                   mode = "0400";
                 };
               })
             ];
 
-            services.devin-worker.outposts = lib.mkMerge [
-              (lib.mkIf servesStibnite {
-                "stibnite-01".tokenFile = config.sops.secrets.devin-outposts-token-stibnite.path;
-              })
-              (lib.mkIf servesMagnetite {
-                "magnetite-01".tokenFile = config.sops.secrets.devin-outposts-token-magnetite.path;
-              })
-            ];
+            services.devin-worker.outposts = {
+              "stibnite-01".tokenFile =
+                lib.mkIf (serves "stibnite-01") config.sops.secrets.devin-outposts-token-stibnite.path;
+              "magnetite-01".tokenFile =
+                lib.mkIf (serves "magnetite-01") config.sops.secrets.devin-outposts-token-magnetite.path;
+            };
           }
         )
       ];
