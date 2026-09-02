@@ -131,7 +131,14 @@ bootstrap: install-nix install-direnv
 # the first 'just activate' regenerates it from the host's own modules.
 #
 # trusted-users lets nix accept flake-specified substituters and public keys
-# without prompts or warnings.
+# without prompts or warnings. Nix's own default is `root` alone, so without
+# this the person who ran bootstrap cannot use the flake's caches and rebuilds
+# everything from source. The three admin groups are one per platform
+# convention - @admin on darwin, @wheel on nixos/fedora/arch, @sudo on
+# debian/ubuntu - because none of the three exists everywhere and nix ignores
+# the ones that do not resolve. Groups rather than $(USER) so the value is
+# static and stays right for a second admin on the same host; trusting them is
+# no escalation, since a sudoer is already root-equivalent.
 NIX_INSTALLER_VERSION := 2.35.1
 
 # A usable systemd runtime is detected by the single existence test that
@@ -184,7 +191,7 @@ install-nix: ## Install Nix using the NixOS community installer
 				"$$INSTALLER_URL" -o /tmp/nix-installer && chmod +x /tmp/nix-installer; then \
 				/tmp/nix-installer install $$PLANNER_ARGS --no-confirm \
 					--enable-flakes \
-					--extra-conf "trusted-users = root @admin @wheel" && break; \
+					--extra-conf "trusted-users = root @admin @wheel @sudo" && break; \
 			fi; \
 			attempt=$$((attempt + 1)); \
 			if [ $$attempt -le $$max_attempts ]; then \
