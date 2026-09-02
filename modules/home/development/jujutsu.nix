@@ -93,6 +93,11 @@
               "private()" = ''subject(regex:"^(private|wip)(:|$)") | conflicts()'';
               "merged(x)" = "first_parent(x)..x-";
               "sign(x)" = "(mutable() ~ signed())::x ~ @::";
+              # The default log revset caps ancestor depth below the mutable
+              # frontier, so a borrowed immutable join leg renders as one tip
+              # plus "(elided revisions)". This shows every commit between
+              # trunk and each join parent regardless of mutability.
+              "diamond()" = "present(@) | @- | trunk() | trunk()..parents(@-)";
             };
 
             revsets = {
