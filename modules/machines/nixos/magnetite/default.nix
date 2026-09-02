@@ -259,50 +259,9 @@ in
       # srvos both set 512 MiB / 3 GiB via mkDefault, which is undersized for
       # buildbot-nix workers materializing large closures on a CX53 with niks3
       # GC pressure. Trigger GC at 30 GiB free, free until 80 GiB available.
-      #
-      # http-connections and max-substitution-jobs raise the daemon's ceiling on
-      # concurrent cache round trips. Both were at their nix defaults, and the
-      # daemon is where every substituter byte originates: nixbot.service sets
-      # RestrictAddressFamilies=AF_UNIX and runs nix-eval-jobs under bwrap, so
-      # the evaluator reaches the network only by asking the daemon over its
-      # UNIX socket. nixbot hard-codes --check-cache-status in that invocation
-      # (nix_eval.py), so every evaluated attribute's closure is resolved
-      # against all nine configured substituters before the evaluation can
-      # finish, and neither the flag nor nixbot's eval_concurrency is reachable
-      # from its NixOS module.
-      #
-      # Measured on 2026-09-02, build 172 (117 attributes, 490 s): a ~75-90 s
-      # burst where six nix-eval-jobs workers each hold 75-85% of a core, then
-      # 6.5-7 min in which the master has no children at all and sits in
-      # unix_stream_read on the daemon socket with a flat
-      # voluntary_ctxt_switches count, taking ~48 reads/s, while the daemon
-      # itself idles at a few percent CPU holding established TLS connections
-      # to the caches. 85% of that evaluation's wall clock is this wait. Host
-      # load was 1.11 of 16 CPUs with vmstat wa=0, so it is neither CPU nor IO
-      # saturation. A path absent from every cache costs the sum over the nine
-      # endpoints, ~1.27 s of serial-equivalent latency measured by curl, of
-      # which TLS is only 30-65 ms: the cost is round trips, not handshakes,
-      # and keep-alive reuse was confirmed working (6 ms warm hit).
-      #
-      # Both dials therefore oversubscribe relative to the 16 cores on purpose,
-      # because the work they bound is latency-bound rather than CPU-bound.
-      # Neither is bounded by RAM: they live in nix-daemon.service, outside the
-      # eval cgroup whose evalMaxMemorySize x (evalWorkerCount + 1) = 14 GiB cap
-      # is the one ceiling that must stay enforceable, since exceeding it fails
-      # a pull request permanently with no retry. A curl handle costs tens of
-      # KiB, so 100 connections is single-digit MiB against 20 GiB available.
       nix.settings = {
         min-free = 30 * 1024 * 1024 * 1024;
         max-free = 80 * 1024 * 1024 * 1024;
-
-        # Default 25. Bounded by file descriptors and outbound sockets.
-        http-connections = 100;
-
-        # Default 16. Bounded by CPU for decompression and by network for the
-        # transfers themselves; unlike http-connections this one is not measured
-        # as binding, because the wait above is evaluation-time narinfo
-        # resolution rather than build-time substitution.
-        max-substitution-jobs = 32;
       };
 
       # base sets nix.gc.options fleet-wide as a plain string (modules/system/
