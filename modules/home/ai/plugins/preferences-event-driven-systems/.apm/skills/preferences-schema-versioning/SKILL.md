@@ -309,8 +309,8 @@ Use these types for cross-database compatibility:
 
 For patterns on modeling domain types in schemas and generated code:
 
-- **~/.claude/skills/preferences-algebraic-data-types/SKILL.md** - ENUMs (sum types), DOMAIN types (newtypes), making illegal states unrepresentable, cross-language ADT patterns
-- **~/.claude/skills/preferences-railway-oriented-programming/SKILL.md** - Result types in generated code, effect signatures for database operations
+- **`preferences-algebraic-data-types`** - ENUMs (sum types), DOMAIN types (newtypes), making illegal states unrepresentable, cross-language ADT patterns
+- **`preferences-railway-oriented-programming`** - Result types in generated code, effect signatures for database operations
 
 Apply these patterns to:
 - Model order status as ENUM instead of VARCHAR
@@ -388,7 +388,7 @@ def test_migration_compatibility():
 The same PostgreSQL schema generates type-safe code across languages.
 Each language uses its native type system and validation libraries.
 
-For detailed patterns on sum types, newtypes, and Result types in generated code, see ~/.claude/skills/preferences-algebraic-data-types/SKILL.md and ~/.claude/skills/preferences-railway-oriented-programming/SKILL.md.
+For detailed patterns on sum types, newtypes, and Result types in generated code, see `preferences-algebraic-data-types` and `preferences-railway-oriented-programming`.
 
 ### Python (Pydantic)
 

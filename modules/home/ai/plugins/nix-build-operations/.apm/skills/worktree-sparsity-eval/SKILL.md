@@ -6,8 +6,8 @@ description: >-
   `git worktree` in any mode, or a `jj workspace add` in a non-flake jj repository — and
   only to size that invocation.** It does not decide whether to create one. In jj mode the
   diamond workflow's development join remains the default for parallel chains and needs no
-  sparsity evaluation; see `~/.claude/skills/jj-version-control/tiered-ceremony.md` for the
-  triggers and `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" for the
+  sparsity evaluation; see the `jj-version-control` skill's `tiered-ceremony.md` for the
+  triggers and `jj-version-control` §"Worktree interop" for the
   discipline. Also invoke for periodic re-evaluation when a repo has grown significantly.
 ---
 
@@ -17,9 +17,9 @@ Collect repository metrics and determine whether worktrees should use sparse che
 Three conditions must all hold for sparse checkout to be recommended.
 
 This skill sizes a separate working copy that is already warranted; it does not decide whether to create one.
-That decision belongs to `~/.claude/skills/jj-version-control/tiered-ceremony.md`, whose default in jj mode is the diamond workflow's development join in a single working copy — which needs no sparsity evaluation.
+That decision belongs to the `jj-version-control` skill's `tiered-ceremony.md`, whose default in jj mode is the diamond workflow's development join in a single working copy — which needs no sparsity evaluation.
 In a flake repository the separate working copy must be a `git worktree add` rather than `jj workspace add`, so the sparse-checkout recipes below apply directly; the `jj workspace add` form applies only in non-flake jj repositories.
-Before creating a worktree in a jj-colocated repository, read `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" for the branch-ownership and return-by-ref discipline.
+Before creating a worktree in a jj-colocated repository, read `jj-version-control` §"Worktree interop" for the branch-ownership and return-by-ref discipline.
 
 ## Thresholds
 

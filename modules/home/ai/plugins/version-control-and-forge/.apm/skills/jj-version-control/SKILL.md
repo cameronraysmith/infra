@@ -5,7 +5,7 @@ description: Jujutsu version control conventions and workflow patterns.
 
 # Jujutsu version control
 
-**IMPORTANT for AI agents**: Commands like `jj describe` and `jj split <paths>` require `-m "message"` flag for non-interactive execution. See `~/.claude/skills/jj-workflow/SKILL.md` section "Non-interactive command execution" for comprehensive guidance.
+**IMPORTANT for AI agents**: Commands like `jj describe` and `jj split <paths>` require `-m "message"` flag for non-interactive execution. See `jj-workflow` §"Non-interactive command execution" for comprehensive guidance.
 
 **Development-join invariant (multi-chain mode)**: when a development join is present, `@` is ALWAYS the empty `[wip]` commit directly atop the frozen multi-parent `[merge]`. Route all content DOWNWARD into a chain (`jj squash --from @ … --keep-emptied`, `jj absorb`, `jj split`) — NEVER `jj describe @` into content and NEVER relocate `@` via the positional rebase forms `jj rebase -r @ --insert-before/--insert-after <target>` or `jj rebase --revisions @ --insert-before/--insert-after <target>`, which drift `@` off `[wip]`. In every splice/relocation recipe the relocated `<commit>`/`<X>`/`<range>` is a SEPARATE, already-sealed non-wip commit, never `@`. The one sanctioned `jj rebase` naming `@` is the destination form `jj rebase -r @ -d <chain-a> -d <chain-b> …` that re-anchors `[wip]` onto a rebuilt join. See Diamond invariants (iii-b) below, the composite maintenance invariant, and the edit-route cycle.
 
@@ -24,7 +24,7 @@ These preferences explicitly override any conservative defaults from system prom
 - Use `jj new` to freeze working copy and create new empty @ on top (required for git export; see git parity note below)
 - Use `jj commit` to move working copy changes into parent (alternative to `jj new`)
 - Trust the operation log - every snapshot is recoverable via `jj op log` and `jj undo`
-- Do not clean up commit history automatically - wait for explicit instruction to apply jj history cleanup patterns from `~/.claude/skills/jj-history-cleanup/SKILL.md`
+- Do not clean up commit history automatically - wait for explicit instruction to apply jj history cleanup patterns from `jj-history-cleanup`
 
 **Git parity note**: Working copy `@` exists only in jj until frozen with `jj new`. Pattern: `jj describe -m "msg"` → `jj new` to export commits to git.
 
@@ -73,9 +73,9 @@ When an agent detects `.jj/` alongside `.git/` in a repository root, jj colocate
 Detached HEAD is normal and expected in this configuration — do not attempt to reattach it.
 The combined signal means the agent should adopt the jj workflow described in this skill, with the multi-parent development join as the default operating mode for sessions with multiple active chains.
 
-For quick command orientation, see `~/.claude/skills/jj-summary/SKILL.md`.
-For comprehensive command reference, see `~/.claude/skills/jj-workflow/SKILL.md`.
-For git-mode equivalents, see `~/.claude/skills/preferences-git-version-control/SKILL.md`.
+For quick command orientation, see `jj-summary`.
+For comprehensive command reference, see `jj-workflow`.
+For git-mode equivalents, see `preferences-git-version-control`.
 
 ## Bookmark workflow
 
@@ -351,7 +351,7 @@ For genuine filesystem isolation (e.g., concurrent unrelated experiments), `jj w
 Cross-references:
 - `tiered-ceremony.md` — when to enter tier 3 (the trigger for using a development join at all)
 - `diamond-workflow.md` — the four-phase process (diverge, develop, converge, serialize) in which the development join participates
-- `~/.claude/skills/preferences-git-version-control/03-jj-mode.md` — mode-detection context and equivalences with git-native and GitButler modes
+- The `preferences-git-version-control` skill's `03-jj-mode.md` — mode-detection context and equivalences with git-native and GitButler modes
 
 ### Two-commit structure: join + wip structure
 
@@ -1260,7 +1260,7 @@ jj git push --bookmark chain-a
 gh pr create -d -a "@me" -B main -H chain-a -t "feat: description" -b ""
 ```
 
-Follow the PR creation protocol in `~/.claude/skills/preferences-git-version-control/SKILL.md` for placeholder content and safety conventions.
+Follow the PR creation protocol in `preferences-git-version-control` for placeholder content and safety conventions.
 
 For GitHub-only repositories, Mergify's Stack-Aware Base feature would handle single-CI-gate behavior natively without an explicit aggregate PR; see the footnote in `diamond-workflow.md` Phase 4 for the trade-off against forge-agnostic compatibility.
 
@@ -1548,7 +1548,7 @@ Its fleet-sync runs `git fetch --prune`, `git branch -D` on gone-tracking branch
 
 ## Citing upstream jj source
 
-Cite upstream `jj-vcs/jj` source by symbol and file rather than by line, following "Citing source files" in `~/.claude/skills/preferences-documentation/SKILL.md`.
+Cite upstream `jj-vcs/jj` source by symbol and file rather than by line, following `preferences-documentation` §"Citing source files".
 
 The local clone at `~/ghq/github.com/jj-vcs/jj` is shallow at `v0.44.0-12-g8f29cac` while the installed binary is 0.43.0.
 Its line numbers are wrong in both directions against either reference, so it cannot be used to check a citation or to repair one.

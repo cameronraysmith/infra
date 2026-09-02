@@ -7,7 +7,7 @@ description: Cloudflare wrangler comprehensive reference for Workers, D1, R2, an
 
 Comprehensive configuration reference for Cloudflare Wrangler synthesized from production patterns.
 
-See @~/.claude/skills/preferences-web-application-deployment/SKILL.md for deployment workflows and practical patterns.
+See `preferences-web-application-deployment` for deployment workflows and practical patterns.
 
 ## Configuration schema
 

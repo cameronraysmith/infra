@@ -81,7 +81,7 @@ This is a demotion of LinkML from the domain spine, not its removal from the str
 Semantic identity is data that no type system carries.
 Whether a slot's range is CL:0000540, which CURIE an enum value binds, how a local term maps to an external vocabulary: none of this is a projection of anything in Lean, so it is curated and joined in at the LinkML layer.
 The semantic and provenance overlay is one framework, LinkML, at full strength: ontology binding via class_uri, slot_uri, and CURIE-bound enums; OWL, SHACL, and RDF emission; and a curator- and biologist-editable surface.
-LinkML's broader ontology and semantic facilities, including cross-ontology mapping provenance, are realized per-schema rather than as separate tools, grounded in the linkml and linkml-biolink-model reference repos under /Users/crs58/projects/omicslake-workspace.
+LinkML's broader ontology and semantic facilities, including cross-ontology mapping provenance, are realized per-schema rather than as separate tools, grounded in the linkml and linkml-biolink-model reference repos in the local `omicslake-workspace` repository.
 
 The join of the axes is projection-plus-overlay: the [build] projection emits a LinkML skeleton from the Lean data model, and curator-authored ontology bindings are merged onto it as a mixin.
 A property-based conformance test closes the join: the published LinkML schema must accept exactly the serializations the algebraic model emits and round-trip them.

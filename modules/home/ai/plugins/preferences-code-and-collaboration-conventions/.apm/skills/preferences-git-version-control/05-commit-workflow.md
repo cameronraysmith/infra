@@ -3,7 +3,7 @@
 Operational recipes for the atomic commit workflow across all three VCS modes (git-native, GitButler, jj).
 This file covers file state verification, the per-mode atomic commit cycle, handling pre-existing mixed changes, commit formatting, and session commit summary.
 For the top-level routing index, commit behavior override, VCS terminology glossary, branch workflow, and merge strategy selection, see [`SKILL.md`](SKILL.md).
-For the deep operational detail of the jj development-join edit-route cycle, see `~/.claude/skills/jj-version-control/SKILL.md` §"Development join".
+For the deep operational detail of the jj development-join edit-route cycle, see `jj-version-control` §"Development join".
 
 ## File state verification
 
@@ -44,14 +44,14 @@ In this mode `@` is always the empty `[wip]` commit sitting directly on the mult
 Never `jj describe @` into content and never relocate `@` via the positional rebase forms `jj rebase -r @ --insert-before/--insert-after <target>` (nor `jj rebase --revisions @ --insert-before/--insert-after <target>`).
 Doing so drifts `@` off `[wip]`, destroys the shared editing surface concurrent actors are writing, and — in this repo — drags the pushed `wip` deploy bookmark below the join and breaks the join's single-`[wip]`-child invariant; recover any drift with `jj op restore`.
 The one sanctioned `jj rebase` that may name `@` is the destination add/remove-chain form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, which re-anchors the empty `@` onto a rebuilt join without drifting it.
-See `~/.claude/skills/jj-version-control/SKILL.md` §"Development join" for the canonical invariant, splice/by-relocation recipes, and the full concurrency rationale — this section is a routing summary, not the source of truth.
+See `jj-version-control` §"Development join" for the canonical invariant, splice/by-relocation recipes, and the full concurrency rationale — this section is a routing summary, not the source of truth.
 Two routing patterns exist:
 
 - *Amend existing chain commit:* `jj squash --from @ --into <target-parent> --keep-emptied -- <path>` routes the file into the existing commit while leaving `@` the empty `[wip]` on the join.
   Always pass `--from @` (a bare `--into` is a no-op when `@` is empty) and `--keep-emptied` (otherwise the emptied source is abandoned and the join + wip structure is disrupted).
   Omit `-m` so the target chain commit's existing description is preserved; the empty `[wip]` carries no description, so the description-merge editor never opens.
   Use when the chain commit already exists and the change belongs in it.
-- *Extend chain with new commit:* use the route-and-extend pattern from `~/.claude/skills/jj-version-control/SKILL.md`.
+- *Extend chain with new commit:* use the route-and-extend pattern from `jj-version-control`.
   Use when the change is a logically separate commit that should extend the chain.
 - *Auto-route by blame:* `jj absorb` distributes changes to appropriate ancestors automatically.
 
@@ -63,7 +63,7 @@ If `@` somehow acquired a description or drifted off the join, treat it as an er
 
 Do not use `jj new` (without `-A`) in development join mode — it creates a new change descending from the development join `@` rather than routing to a chain.
 `jj new -A <bookmark> --no-edit` is safe because it inserts after the specified bookmark without moving `@`.
-See the edit-route cycle in `~/.claude/skills/jj-version-control/SKILL.md` for the full workflow.
+See the edit-route cycle in `jj-version-control` for the full workflow.
 
 ## Handling pre-existing mixed changes
 
@@ -100,4 +100,4 @@ In jj mode: `jj log --no-graph -r 'main@origin..main' -T 'separate(" ", change_i
 - [`01-git-native-mode.md`](01-git-native-mode.md) — git-native mode working-branch isolation recipes
 - [`02-gitbutler-mode.md`](02-gitbutler-mode.md) — GitButler mode working-branch isolation recipes
 - [`03-jj-mode.md`](03-jj-mode.md) — jj mode working-branch isolation recipes
-- `~/.claude/skills/jj-version-control/SKILL.md` §"Development join" — operational detail for jj development-join edit-route cycle
+- `jj-version-control` §"Development join" — operational detail for jj development-join edit-route cycle

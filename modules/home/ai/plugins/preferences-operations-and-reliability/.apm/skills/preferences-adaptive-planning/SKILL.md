@@ -118,7 +118,7 @@ See `preferences-validation-assurance` for the full treatment of evidence qualit
   - Graph homomorphisms: structural mappings between specification DAGs and implementation DAGs = traceability.
   - Incremental recomputation: when a spec node changes, the minimal subgraph requiring replanning is determinable (cf. build systems a la carte — Mokhov, Mitchell, Peyton Jones).
 - *References*: Mokhov, *Algebraic Graphs with Class* (Haskell Symposium, 2017); Mokhov, Mitchell & Peyton Jones, "Build Systems a la Carte" (ICFP, 2018); Davey & Priestley, *Introduction to Lattices and Order*.
-- *See also*: the diamond workflow in `~/.claude/skills/jj-version-control/SKILL.md` applies these algebraic structures to connect beads epic graphs to jj chain topology.
+- *See also*: the diamond workflow in `jj-version-control` applies these algebraic structures to connect beads epic graphs to jj chain topology.
 
 ## Operational framework
 
@@ -149,7 +149,7 @@ Keep the operational buffer at $B^*$ items — enough to absorb planning variabi
 
 Place validation gates at topological convergence points in the DAG — nodes where multiple independent implementation chains merge.
 These are natural integration boundaries where architectural assumptions face reality.
-The jj diamond workflow's *converge* phase (see `~/.claude/skills/jj-version-control/diamond-workflow.md`) occurs at a planning-DAG convergence point in this sense — they refer to the same node-shape from different perspectives.
+The jj diamond workflow's *converge* phase (see the `jj-version-control` skill's `diamond-workflow.md`) occurs at a planning-DAG convergence point in this sense — they refer to the same node-shape from different perspectives.
 The interval between gates should satisfy:
 
 $$\text{Expected rework cost between gates} < \text{Validation overhead per gate}$$

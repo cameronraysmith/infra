@@ -30,14 +30,14 @@ This does not make LinkML a structural source.
 
 ## Grounding instances
 
-The flow is grounded in a real instance and its template, both under /Users/crs58/projects/omicslake-workspace.
+The flow is grounded in a real instance and its template, both in the local `omicslake-workspace` repository.
 
 - test-linkml — the concrete reference instance, a copier-instantiated LinkML project; its src/test_linkml/schema/test_linkml.yaml generates src/test_linkml/datamodel/{test_linkml_pydantic.py, test_linkml.py}, and its project/ tree holds the other twelve generated bindings. We author our schema manually following its inferred practices, not through the copier.
 - linkml-project-copier — the copier template whose template/justfile defines the gen-* recipes (gen-python, gen-project, gen-pydantic, gen-doc, and the per-binding recipes) that drive schema-to-datamodel generation.
 
 ## Reference repositories
 
-All under /Users/crs58/projects/omicslake-workspace, verified present.
+All in the local `omicslake-workspace` repository, verified present.
 Near the contracts discussion:
 
 - open-data-product-standard — the ODPS specification source.

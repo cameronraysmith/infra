@@ -21,7 +21,7 @@ The real emitters are future work and are not built in v1.
 
 The three emitters traverse three different intermediate representations, but they describe the same nominal type system.
 Rather than three bespoke JSON shapes, this skill specifies *one* node/edge vocabulary that all three populate, so that two graphs can be diffed as data rather than compared as pictures.
-The schema is versioned by a single integer `schemaVersion` field at the document root; a consumer asserts the version it understands and refuses unknown ones, exactly as the rustdoc `FORMAT_VERSION` contract instructs (`src/lib.rs:104-117` in `~/projects/rust-workspace/rustdoc-types`).
+The schema is versioned by a single integer `schemaVersion` field at the document root; a consumer asserts the version it understands and refuses unknown ones, exactly as the rustdoc `FORMAT_VERSION` contract instructs (`src/lib.rs:104-117` in `rustdoc-types`).
 The v1 schema is `schemaVersion = 1`.
 
 A document is a set of nodes plus a set of edges, tagged with the emitter that produced it and which IR stage the emitter read.
@@ -78,7 +78,7 @@ The spec side is ground truth because the Lean 4 declarations *are* the specific
 The emitter is a `lake exe` metaprogram that walks the elaborated `Lean.Environment` and emits one node per relevant declaration plus the edges its type and constructors imply.
 It is not part of the refine/lower, Charon, or Aeneas stages; it consumes the same `Environment` those stages elaborate against, and produces the artifact translation validation later checks against (see `references/check-translation-validation.md`).
 
-The environment is obtained outside elaboration via `importModules ... (leakEnv := true) (loadExts := true)` after `initSearchPath (← findSysroot)`, the recipe doc-gen4 uses (`DocGen4/Load.lean:12-15` and `:21-38` in `~/projects/functional-programming-workspace/lean-doc-gen4`); `loadExts := true` is required because the structure and instance extensions are read below.
+The environment is obtained outside elaboration via `importModules ... (leakEnv := true) (loadExts := true)` after `initSearchPath (← findSysroot)`, the recipe doc-gen4 uses (`DocGen4/Load.lean:12-15` and `:21-38` in `lean-doc-gen4`); `loadExts := true` is required because the structure and instance extensions are read below.
 The walk iterates `env.constants` (an `SMap` with a `ForIn` instance over `(Name × ConstantInfo)` pairs) inside `MetaM`, run via `Meta.MetaM.toIO`.
 The `Environment` structure has changed shape across recent Lean versions, so the emitter goes through the public accessors (`constants`, `find?`, `header`, `getModuleIdxFor?`) and never pattern-matches the structure directly, exactly as doc-gen4 does; a consumer building against an arbitrary toolchain re-confirms these signatures against that toolchain rather than assuming them.
 
@@ -100,7 +100,7 @@ An `Option` field whose name ends in `?` is omitted from the JSON when `none` (t
 
 The impl side is the second authority, faithful not to the Rust source but to the LLBC that Aeneas actually verifies against.
 LLBC is the lowered, monomorphization-aware, body-bearing IR; it is the object the functional translation consumes, so a type graph read from it describes exactly the type system the lifted Lean model will reflect.
-The emitter is an OCaml consumer of charon-ml (`~/projects/functional-programming-workspace/charon/charon-ml`), version-locked to the Charon checkout (`0.1.216` at this clone, `charon-ml/src/CharonVersion.ml:3`); the deserializer rejects any LLBC whose version differs (`OfJson.ml:27-34`), so the impl-side graph cannot silently drift from the IR it claims to describe.
+The emitter is an OCaml consumer of charon-ml (the `charon-ml/` tree of the `charon` repository), version-locked to the Charon checkout (`0.1.216` at this clone, `charon-ml/src/CharonVersion.ml:3`); the deserializer rejects any LLBC whose version differs (`OfJson.ml:27-34`), so the impl-side graph cannot silently drift from the IR it claims to describe.
 
 The crate is loaded with `OfJson.crate_of_json_file`, yielding a `crate` record whose `type_decls : type_decl TypeDeclId.Map.t` is the node table (`charon-ml/src/GAst.ml:33-47`).
 Each `type_decl.kind` is a `type_decl_kind` (`Generated_Types.ml:1234-1247`): `Struct of field list` becomes a `struct` node, `Enum of variant list` becomes an `enum` node, `Union of field list` becomes a `struct` node (with a `union` flag in `attrs`), and `Opaque`/`Alias`/`TDeclError` produce nodes flagged accordingly but with no field edges.
@@ -120,7 +120,7 @@ The Charon invocation that produces an LLBC the emitter then reads is the Aeneas
 ## Emitter (iii): rustdoc-types over rustdoc JSON (independent cross-check)
 
 The third emitter is deliberately *not* an authority.
-It reads the rustdoc JSON produced by `cargo +nightly rustdoc -- --output-format json -Z unstable-options` (`README.md:5-7` in `~/projects/rust-workspace/rustdoc-types`), parsed into a `rustdoc_types::Crate` and gated on `format_version == FORMAT_VERSION` (`57` at this pin).
+It reads the rustdoc JSON produced by `cargo +nightly rustdoc -- --output-format json -Z unstable-options` (`README.md:5-7` in `rustdoc-types`), parsed into a `rustdoc_types::Crate` and gated on `format_version == FORMAT_VERSION` (`57` at this pin).
 It exists to provide an independent third witness along a different tool path (rustc's rustdoc) than either authority, so that agreement at the public-API boundary cross-validates the spec and impl emitters without pretending to be verification-faithful ground truth.
 
 Node population reads `Crate::index : HashMap<Id, Item>`; each `Item.inner` is an `ItemEnum` whose snake-cased tag selects the kind (`src/lib.rs:713-830`): `Struct` becomes `struct`, `Enum` becomes `enum`, `Function` becomes `function`, `Trait` becomes the rustdoc analogue of a class.

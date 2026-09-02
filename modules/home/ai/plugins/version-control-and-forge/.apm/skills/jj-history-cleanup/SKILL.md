@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Jujutsu history cleanup
 
-**IMPORTANT for AI agents**: Commands like `jj describe -r` and `jj split <paths>` require `-m "message"` flag for non-interactive execution. See `~/.claude/skills/jj-workflow/SKILL.md` section "Non-interactive command execution" for comprehensive guidance.
+**IMPORTANT for AI agents**: Commands like `jj describe -r` and `jj split <paths>` require `-m "message"` flag for non-interactive execution. See `jj-workflow` §"Non-interactive command execution" for comprehensive guidance.
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Use the operation log (`jj op log`) as your safety net instead of backup branche
 
 ## Operations
 
-For detailed command mappings from git interactive rebase, see `~/.claude/skills/jj-git-interactive-rebase-to-jj/SKILL.md`.
+For detailed command mappings from git interactive rebase, see `jj-git-interactive-rebase-to-jj`.
 
 ### Reorder commits
 
@@ -470,7 +470,7 @@ Auto-rebase of `@` triggered by editing its ancestors is safe and jj-managed, an
 What you must never do is make `@` itself a content commit or relocate it off the join: do not `jj describe @` (consumes the wip into a content commit) and do not relocate it via the positional forms `jj rebase -r @ --insert-before/--insert-after <target>` or `jj rebase --revisions @ --insert-before/--insert-after <target>` (drops the wip into a chain interval).
 Either removes the shared editing surface other actors are concurrently writing and breaks the diamond invariants.
 To route a change down a chain while leaving `@` empty, use `jj absorb` (above) — the preferred routing-down verb in a development join, which distributes the working-copy diff into the commits that last touched each path while leaving `@` in place and empty — or `jj squash --from @ --into <chain-tip> --keep-emptied [-- <paths>]` (amend, `-m` omitted to preserve the tip description) and `jj squash --from @ --insert-after/--insert-before <target> -m "msg" --keep-emptied [-- <paths>]` (append/splice), each carrying explicit `-m` for non-interactive safety.
-The six diamond invariants and the never-rewrite-`@` discipline are canonical in `~/.claude/skills/jj-version-control/SKILL.md` and `jj-version-control/diamond-workflow.md`; defer to them for the join-safe routing and splice recipes before applying any cleanup idiom from this skill.
+The six diamond invariants and the never-rewrite-`@` discipline are canonical in the `jj-version-control` skill's `SKILL.md` and `diamond-workflow.md`; defer to them for the join-safe routing and splice recipes before applying any cleanup idiom from this skill.
 
 The linear-chain idioms throughout this skill assume a single chain rooted at `main` with `@` at its tip, and several of them move or reuse `@` (the per-commit `jj new $commit` test loop under "Verify atomicity", `jj bookmark set ... -r @`, `jj squash -r <c>  # into current @`).
 In a multi-parent development join `@` is the shared empty `[wip]` sitting on the join: never `jj describe @` and never positional `jj rebase -r @`/`--revisions @ --insert-before/--insert-after`, since either drifts the wip off the join, breaks concurrent editing, and drags the pushed `wip` deploy bookmark below the join.
@@ -494,7 +494,7 @@ Recovery: `jj undo`.
 - `jj op restore <id>` returns to any prior state
 - Test incrementally instead of at the end
 - `jj revert` reverses a change. Requires explicit placement: `--onto`, `--insert-before`, or `--insert-after`.
-- Reference `~/.claude/skills/jj-git-interactive-rebase-to-jj/SKILL.md` for detailed command mappings
+- Reference `jj-git-interactive-rebase-to-jj` for detailed command mappings
 
 ## Advanced patterns
 

@@ -8,9 +8,9 @@ description: Git history cleanup patterns for rewriting, squashing, and reorgani
 ## scope
 
 This skill covers history refinement in git-native and GitButler modes (`git rebase -i`, `git revise`, `but move`/`but squash`/`but reword`, `GIT_SEQUENCE_EDITOR` patterns).
-For jj-mode history refinement (`jj rebase`, `jj squash`, `jj split`, `jj abandon`, `jj describe -r`), see `~/.claude/skills/jj-history-cleanup/SKILL.md`.
-In a jj-colocated repository, do not apply any `git rebase -i` or `git revise` recipe from this file to the working copy; jj history refinement and the `@`-stays-empty-`[wip]` development-join invariant are owned by `~/.claude/skills/jj-history-cleanup/SKILL.md` and `~/.claude/skills/jj-version-control/diamond-workflow.md`.
-Mode detection is described in `~/.claude/skills/preferences-git-version-control/SKILL.md` §"Commit behavior override".
+For jj-mode history refinement (`jj rebase`, `jj squash`, `jj split`, `jj abandon`, `jj describe -r`), see `jj-history-cleanup`.
+In a jj-colocated repository, do not apply any `git rebase -i` or `git revise` recipe from this file to the working copy; jj history refinement and the `@`-stays-empty-`[wip]` development-join invariant are owned by `jj-history-cleanup` and the `jj-version-control` skill's `diamond-workflow.md`.
+Mode detection is described in `preferences-git-version-control` §"Commit behavior override".
 
 ## purpose
 

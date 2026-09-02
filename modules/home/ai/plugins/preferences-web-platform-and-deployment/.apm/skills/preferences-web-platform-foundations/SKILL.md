@@ -176,7 +176,7 @@ Datastar serves as the thin reactivity layer at approximately 15KB, providing de
 Choose this paradigm when the server is authoritative for state, UI updates tolerate a server round-trip, minimal client JavaScript is valued, and real-time updates are server-pushed.
 This is the default paradigm for new projects unless specific requirements demand otherwise.
 
-Reference: `~/.claude/skills/preferences-hypermedia-development/SKILL.md`
+Reference: `preferences-hypermedia-development`
 
 ### Standalone document (static)
 
@@ -189,7 +189,7 @@ This paradigm is appropriate for content that is complete at authoring time: doc
 Choose this paradigm when content is self-contained, no server state is needed, or the use case is experimentation or presentation.
 Static documents can be hosted anywhere (CDN, local filesystem, embedded in other documents) because they have no runtime dependencies beyond the browser.
 
-Reference: `~/.claude/skills/preferences-hypermedia-documents/SKILL.md`
+Reference: `preferences-hypermedia-documents`
 
 ### SPA (client-driven)
 
@@ -201,7 +201,7 @@ The application assumes JavaScript execution and typically requires a build step
 
 Choose this paradigm when an offline-first requirement exists, ultra-low-latency interactions are needed, complex client-side state is unavoidable (video editor, CAD, collaborative canvas), or existing React ecosystem investment makes migration impractical.
 
-Reference: `~/.claude/skills/preferences-react-tanstack-ui-development/SKILL.md`
+Reference: `preferences-react-tanstack-ui-development`
 
 ### Decision procedure
 
@@ -251,8 +251,8 @@ When a feature is Chrome-only, document the degraded experience for other browse
 
 ## Related documents
 
-- `~/.claude/skills/preferences-hypermedia-development/SKILL.md` — server-connected hypermedia applications
-- `~/.claude/skills/preferences-hypermedia-documents/SKILL.md` — standalone document authoring
-- `~/.claude/skills/preferences-react-tanstack-ui-development/SKILL.md` — client-driven SPA development
-- `~/.claude/skills/preferences-functional-reactive-programming/SKILL.md` — theoretical foundations (signals as comonads, web components as coalgebras)
-- `~/.claude/skills/preferences-architectural-patterns/SKILL.md` — onion/hexagonal architecture, effect boundaries
+- `preferences-hypermedia-development` — server-connected hypermedia applications
+- `preferences-hypermedia-documents` — standalone document authoring
+- `preferences-react-tanstack-ui-development` — client-driven SPA development
+- `preferences-functional-reactive-programming` — theoretical foundations (signals as comonads, web components as coalgebras)
+- `preferences-architectural-patterns` — onion/hexagonal architecture, effect boundaries

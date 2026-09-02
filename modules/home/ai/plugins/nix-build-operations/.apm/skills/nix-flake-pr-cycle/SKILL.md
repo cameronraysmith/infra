@@ -123,7 +123,7 @@ gh pr comment <N> --body "<markdown description>"
 Title and description in the immutable fields cannot be edited after creation, so the discipline is generic-at-creation, detailed-in-comment.
 The conventional-commits title is the one mutable surface that survives into the merged-commit subject when Mergify uses `fast-forward` merge, so it is worth getting right at creation time even though `gh pr edit --title` remains available until merge.
 
-For multi-chain epic integrations (a development join with two or more active chains), Phase 4 expands into the N+1 stacked-base submission pattern documented in `~/.claude/skills/jj-version-control/diamond-workflow.md` §"Phase 4: serialize (integrate)".
+For multi-chain epic integrations (a development join with two or more active chains), Phase 4 expands into the N+1 stacked-base submission pattern documented in the `jj-version-control` skill's `diamond-workflow.md` §"Phase 4: serialize (integrate)".
 The `jj-linearize-join` sibling tool performs the diamond-workflow → linearized-chain transformation; the `jj-stack-submit` sibling tool performs the Phase A submission (push N+1 bookmarks, create N stacked-base chain PRs + 1 aggregate PR, optionally backlink and mark ready).
 The aggregate PR is the merge gate, and Phases 5–7 of this skill apply to the aggregate PR; the chain PRs render the dependency structure on the forge and auto-close when GitHub observes their head commits reachable from `main`.
 

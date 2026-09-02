@@ -33,7 +33,7 @@ A worktree and the diamond nest rather than compete: the tree gives an isolated 
 
 A worktree carries obligations the diamond does not.
 A branch is owned by exactly one working copy; work returns from the worktree by ref rather than by checkout; and the primary's HEAD stays detached throughout.
-Read `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" before creating one — it is the authority for the ownership rules, the return path, the forbidden operations against the primary, and the recovery commands.
+Read `jj-version-control` §"Worktree interop" before creating one — it is the authority for the ownership rules, the return path, the forbidden operations against the primary, and the recovery commands.
 
 ## The apply gate confirms the choice
 
@@ -48,7 +48,7 @@ The orchestrator routes each commit as a new commit onto the unit's chain inside
 Routing is always downward from the shared empty `[wip]` at `@`, never by mutating `@` itself.
 In development-join mode `@` is the empty `[wip]` commit atop the frozen multi-parent merge, and that `[wip]` is the shared coordination surface every editor writes; content leaves it by routing DOWN into the owning chain with `@` left in place and empty.
 Do not consume the wip with `jj describe @`, and do not relocate `@` below the join with a positional `jj rebase -r @ --insert-before/--insert-after`; either drift removes the surface other actors are concurrently writing.
-For the canonical invariant and the editor-safe routing-down command templates (`jj absorb`, `jj squash --from @ … --keep-emptied`, `jj split`), see the development-join invariant (iii-b) in `jj-version-control/SKILL.md`.
+For the canonical invariant and the editor-safe routing-down command templates (`jj absorb`, `jj squash --from @ … --keep-emptied`, `jj split`), see the development-join invariant (iii-b) in `jj-version-control`.
 
 Integration is jj-native and user-gated.
 The bridge's finishing-a-development-branch step would open a PR; under jj the chain is instead linearized onto main by sequential rebase at completion, and that integration is a user-gated decision.

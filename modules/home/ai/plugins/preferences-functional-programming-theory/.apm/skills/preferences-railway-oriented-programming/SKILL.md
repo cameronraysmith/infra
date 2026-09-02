@@ -1388,16 +1388,16 @@ Cross-reference `preferences-observability-engineering` for the observability mo
 
 ## Integration with other preferences
 
-See `~/.claude/skills/preferences-algebraic-data-types/SKILL.md` for:
+See `preferences-algebraic-data-types` for:
 - How to model domain types that work with Result
 - Sum types for error variants
 - Newtypes for validated values
 
-See `~/.claude/skills/preferences-schema-versioning/SKILL.md` for:
+See `preferences-schema-versioning` for:
 - Configuring sqlc to generate Result-returning queries
 - Database operations in railway-oriented style
 
-See `~/.claude/skills/preferences-data-modeling/SKILL.md` for:
+See `preferences-data-modeling` for:
 - How ROP fits into data pipeline architecture
 - Effect isolation at boundaries
 - Capability-interface discharge for effect composition at boundaries

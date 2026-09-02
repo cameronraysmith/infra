@@ -5,7 +5,7 @@ It describes the diamond workflow pattern that connects beads epic issue graphs 
 
 The companion design note at `docs/notes/development/version-control/epic-to-branch-diamond-workflow.md` is the theoretical foundation with full citations (Winskel event structures, Dilworth's antichain theorem, Lamport's partial order, Beer's VSM, Krycho's effective theory); when the *why* is in question, read the design note.
 The sibling `tiered-ceremony.md` is the policy authority for *when* the diamond workflow applies — it answers "should I be using the diamond at all?" before this document answers "how do I run a diamond?".
-The sibling `~/.claude/skills/jj-version-control/SKILL.md` is the operational entity-level reference for the development join itself (the multi-parent `@`, conflict behavior, edit-route cycle, route-and-extend recipe); when you need the day-to-day mechanics of working in a join, look there.
+The sibling `SKILL.md` is the operational entity-level reference for the development join itself (the multi-parent `@`, conflict behavior, edit-route cycle, route-and-extend recipe); when you need the day-to-day mechanics of working in a join, look there.
 
 ## Two-peer ontology: process and entity
 
@@ -139,7 +139,7 @@ Independent chains within the same linearization step can be ordered discretiona
    Throughout the develop phase `@` stays the single empty `[wip]` directly atop `[merge]` (invariant (iii)/(vi)); this shared `[wip]` is the stable coordination point that lets multiple concurrent editors write the same integrated surface safely.
    Route every change DOWN from `@` using only `@`-preserving verbs — `jj squash --from @ … --keep-emptied`, `jj absorb`, or `jj split` keeping the wip — and never `jj describe @` into content nor make `@` the subject of `jj rebase` / `--revisions @`, which drift `@` off `[wip]`, remove the surface other actors are concurrently writing, and (in this repo) drag the pushed `wip` deploy bookmark that machines rebuild from.
    The one sanctioned `jj rebase` touching `@` is the destination add/remove-chain form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, which keeps `@` an empty child of the rebuilt join; the positional `--insert-before` / `--insert-after` (and the `-A` / `-B` aliases) forms are the prohibited ones.
-   See `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii-b) for the canonical statement.
+   See the sibling `SKILL.md` invariant (iii-b) for the canonical statement.
    Each route from `[wip]` to a chain is either an append-route (default: land a new atomic commit on the chain) or an amend-route (fixups against the existing tip).
    The append-route is the default for landing new work:
    ```bash
@@ -152,7 +152,7 @@ Independent chains within the same linearization step can be ordered discretiona
    As of jj 0.43.0, `jj squash --help` documents `-o`, `-A`, and `-B` under a heading of EXPERIMENTAL FEATURES.
    `--keep-emptied` preserves the single shared `[wip]` on top of `[merge]` (invariant (vi)); the bookmark-move is a separate explicit step because jj does not auto-advance a bookmark onto a newly inserted commit.
    Target the new commit's change ID from the `Created new commit <id>` output line, not `@-`: in a multi-parent join, `@-` resolves to the rebuilt `[merge]` (the new commit is one of its parents, not a direct ancestor of `@`), and pointing the bookmark there advances `<chain>` onto `[merge]`.
-   See `~/.claude/skills/jj-version-control/SKILL.md` §"Routing to a chain: append vs amend" for the full rationale and the amend-route fixup recipe.
+   See the sibling `SKILL.md` §"Routing to a chain: append vs amend" for the full rationale and the amend-route fixup recipe.
 
    Path-restriction (`-- <paths>`) can be added to either recipe when multiple streams' hunks coexist in `[wip]` and only one stream's paths should be routed in this operation.
 
@@ -196,11 +196,11 @@ jj describe <merge-change-id> -m "join N=k+1: <alphabetical bookmarks including 
 Step 4 is the second half of the `jj rebase -r <merge>` tool-pair documented in `SKILL.md` §"Re-attaching `[wip]` after `jj rebase -r <merge>`".
 Steps 3 and 4 are one sequence: issuing step 3 without step 4 leaves `@` a two-parent merge at the old parent set with the rebuilt join orphaned.
 Step 4 names `[merge]`'s former direct child and uses `-s` so that its descendants come along; `-r` would move `[wip]` alone and orphan any commits stacked above it.
-After step 5, run the diamond-health diagnostic from `~/.claude/skills/jj-version-control/SKILL.md` as a sanity check on the executed recipe.
+After step 5, run the diamond-health diagnostic from the sibling `SKILL.md` as a sanity check on the executed recipe.
 
 ### Phase 3: converge (validate)
 
-The converge phase occurs *at* a planning-DAG convergence point in the sense used by `~/.claude/skills/preferences-adaptive-planning/SKILL.md` and `~/.claude/skills/session-review/SKILL.md` — the diamond's converge phase and the planning DAG's topological convergence node refer to the same shape of synchronization point in the workflow.
+The converge phase occurs *at* a planning-DAG convergence point in the sense used by `preferences-adaptive-planning` and `session-review` — the diamond's converge phase and the planning DAG's topological convergence node refer to the same shape of synchronization point in the workflow.
 
 7. The development join working copy represents the full integration.
 8. Run tests, manual QA, and integration validation against the development join.
@@ -307,19 +307,19 @@ Invariant for every operation in this section: `@` is and stays the empty `[wip]
 Never `jj describe @` into a content commit and never make `@` the subject of `jj rebase` / `--revisions @` (nor the positional `--insert-before` / `--insert-after` / `-A` / `-B` forms); the by-relocation arm below relocates a SEPARATE, already-sealed non-wip commit, and `<X>` is never `@`/`[wip]`.
 Drifting `@` below the join removes the shared `[wip]` that concurrent editors write to — the stable coordination point that makes N concurrent editors safe by construction — and, in this repo, drags the pushed `wip` deploy bookmark below the join, from which machines rebuild.
 Route content that is still live in `@` DOWN with `jj squash --from @ … --keep-emptied`, which leaves `@` empty atop the join; only relocate already-sealed separate commits.
-See `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii-b) for the canonical statement.
+See the sibling `SKILL.md` invariant (iii-b) for the canonical statement.
 
 **Splice-below-join** handles `<base>`-bound commits — hotfixes, formatting, config tweaks, dependency bumps — that should land on `<base>` before the diamond's chains.
 Two arms: *by-construction* (author the commit directly in the splice position with `jj new --insert-before 'children(fork_point(parents(<join>))) & ::<join>'`) and *by-relocation* (move an EXISTING, SEPARATE, already-sealed NON-wip commit `<X>` — `<X>` MUST NOT be `@`/`[wip]` — from above the join into the splice region with `jj rebase --revisions <X> --insert-before 'children(fork_point(parents(<join>))) & ::<join>'`).
 Never `jj describe @` then `jj rebase --revisions @ --insert-before <splice-target>`: that drifts `@` off `[wip]`, opens a transient window with NO `[wip]` on the join (catastrophic under concurrency), and (in this repo) drags the pushed `wip` deploy bookmark below the join.
 When the change is still live in `@`, route it down with `jj squash --from @ --insert-before 'children(fork_point(parents(<join>))) & ::<join>' -m "fix(scope): description" --keep-emptied -- <paths>` instead, which leaves `@` empty atop the join.
 The accumulated splice region fast-forwards `<base>` independently of when the diamond's chains land in Phase 4.
-See `~/.claude/skills/jj-version-control/SKILL.md` §"Splice-below-join" for the full recipe, anti-patterns (naked `--insert-after <base>`, single-target `--insert-before <one-root>`, `jj rebase -r <X> -d <base>` destination form), and verification.
+See the sibling `SKILL.md` §"Splice-below-join" for the full recipe, anti-patterns (naked `--insert-after <base>`, single-target `--insert-before <one-root>`, `jj rebase -r <X> -d <base>` destination form), and verification.
 
 **Diamond integration on remote advance** handles the case where `<base>@origin` advances during diamond work — typically because a collaborator merged to remote, or a dependency-update bot pushed.
 The recipe rebases the entire diamond (splice region if any, chain roots, chains, chain tips, join, `@`) onto the new remote tip in one operation, after `jj git fetch`.
 This is distinct from Phase 4 serialize: it preserves the diamond shape rather than linearizing it.
-See `~/.claude/skills/jj-version-control/SKILL.md` §"Diamond integration on remote advance" for the recipe, the breakdown of what `jj git fetch` handles automatically versus the diamond-on-old-base gap requiring explicit rebase, and verification.
+See the sibling `SKILL.md` §"Diamond integration on remote advance" for the recipe, the breakdown of what `jj git fetch` handles automatically versus the diamond-on-old-base gap requiring explicit rebase, and verification.
 
 Both operations target the same topological location — commits between `<base>` and the antichain `children(fork_point(parents(<join>))) & ::<join>`.
 Splice-below-join inserts new commits there during diamond work; diamond integration on remote advance moves the entire diamond above a new `<base>` position, carrying the splice region (if any) with it.
@@ -349,5 +349,5 @@ The adaptive planning skill's MPC framework suggests this depends on requirement
 
 - `docs/notes/development/version-control/epic-to-branch-diamond-workflow.md` — the ratified design note containing the working-document version of the citations above, with motivation, design history, and open questions in their original context.
 - `tiered-ceremony.md` (sibling) — the policy authority establishing when the diamond workflow applies (tier 3 of the three-tier ceremony model); read this before deciding to run a diamond.
-- `~/.claude/skills/jj-version-control/SKILL.md` (sibling) — the operational entity-level reference for the development join (multi-parent `@`, conflict behavior, edit-route cycle, route-and-extend recipe, composite maintenance invariant).
-- `~/.claude/skills/preferences-adaptive-planning/SKILL.md` and `~/.claude/skills/session-review/SKILL.md` — the planning-DAG convergence-point semantics that align with the diamond's converge phase.
+- `SKILL.md` (sibling) — the operational entity-level reference for the development join (multi-parent `@`, conflict behavior, edit-route cycle, route-and-extend recipe, composite maintenance invariant).
+- `preferences-adaptive-planning` and `session-review` — the planning-DAG convergence-point semantics that align with the diamond's converge phase.

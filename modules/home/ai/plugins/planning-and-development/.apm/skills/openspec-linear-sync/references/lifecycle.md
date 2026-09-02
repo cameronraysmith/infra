@@ -43,13 +43,13 @@ The same non-blocking degradation also covers workspace mode: when `openspec sta
 
 Every transition resolves and passes the team's Linear state NAME (for example "In Review") via linear-cli, never the workflow-state type.
 In Progress and In Review both carry the workflow-state type "started" in the live workspace, so keying on type would conflate the two; passing the exact state name is what disambiguates them.
-That `--state` accepts a name or a type is a linear-cli fact documented in `~/.claude/skills/linear-cli/references/issue.md`.
+That `--state` accepts a name or a type is a linear-cli fact documented in the `linear-cli` skill's `references/issue.md`.
 
 State-name resolution is team-scoped: the ledger's `last_synced_state` and every transition target are resolved against the change's `linear_team`, because Linear workflow states are defined per team.
 The same state name can name different states on different teams, so resolving in the wrong team's context would compare against the wrong board; the change's `linear_team` (from proposal.md frontmatter) is the resolution context.
 
 The overlay degrades gracefully for a team that lacks an In Review state.
-The transition is attempted and its NotFoundError is caught as a dropped best-effort write recorded in the attempt log, leaving the issue In Progress until Done; the NotFoundError error-class on an unresolvable `--state` is a linear-cli behavior documented in `~/.claude/skills/linear-cli/references/issue.md`, and the literal command appears once in references/linear-cli-mapping.md rather than being restated here.
+The transition is attempted and its NotFoundError is caught as a dropped best-effort write recorded in the attempt log, leaving the issue In Progress until Done; the NotFoundError error-class on an unresolvable `--state` is a linear-cli behavior documented in the `linear-cli` skill's `references/issue.md`, and the literal command appears once in references/linear-cli-mapping.md rather than being restated here.
 No Linear state is fabricated, and the dropped write is observable in the ledger rather than silently absorbed.
 
 ## The local sync ledger (D10)

@@ -5,7 +5,7 @@ description: Jujutsu workflow summary with essential paradigm shifts and decisio
 
 # Jujutsu workflow summary
 
-Quick reference and decision guide for jj version control. Full documentation: ~/.claude/skills/jj-workflow/SKILL.md
+Quick reference and decision guide for jj version control. Full documentation: `jj-workflow`
 
 ## When to read full documentation
 
@@ -145,7 +145,7 @@ jj bookmark set <bookmark> -r <id>        # Advance bookmark to new tip (use the
 # Route-and-extend multi-commit-range form: relocate an N-commit linear segment into a chain
 jj rebase --revisions '<range-start>::<range-end>' --insert-after <chain-tip>
 jj bookmark set <chain-bookmark> -r <range-end>
-# See ~/.claude/skills/jj-version-control/SKILL.md §"Extending a chain with a new commit (route-and-extend pattern)" → Multi-commit-range form
+# See `jj-version-control` §"Extending a chain with a new commit (route-and-extend pattern)" → Multi-commit-range form
 # Add/remove chains dynamically:
 # name one -d per chain the join is to carry afterward
 jj rebase -r @ -d <chain-a> -d <chain-b> -d new-bm    # Add chain to the development join
@@ -162,13 +162,13 @@ jj squash --from @ --insert-before 'children(fork_point(parents(<join>))) & ::<j
 # Precondition (by-relocation only): relocation set's files must be disjoint from any chain's files
 # (skill/aggregator files frequently collide; on collision use route-and-extend or new-chain instead)
 jj rebase --revisions <separate-sealed-non-wip-commit> --insert-before 'children(fork_point(parents(<join>))) & ::<join>'
-# See ~/.claude/skills/jj-version-control/SKILL.md §"Splice-below-join"
+# See `jj-version-control` §"Splice-below-join"
 
 # Diamond integration on remote advance: rebase diamond onto fast-forwarded remote
 jj git fetch
 jj rebase --source 'roots(<base>@origin..@)' --destination '<base>@origin'
 jj bookmark set <base> -r '<base>@origin'
-# See ~/.claude/skills/jj-version-control/SKILL.md §"Diamond integration on remote advance"
+# See `jj-version-control` §"Diamond integration on remote advance"
 
 # Diamond-health diagnostic (surfaces all five diamond invariants in one view)
 jj log -r 'present(@) | ancestors(immutable_heads().., 2) | trunk()'
@@ -316,7 +316,7 @@ jj rebase -r @ -d <chain-a> -d <chain-b>                   # Remove chain
 **Diamond workflow (epic-scoped, four phases):**
 
 The diamond connects a beads epic graph to jj chain topology via diverge, develop, converge, serialize.
-Canonical recipe: `~/.claude/skills/jj-version-control/diamond-workflow.md`.
+Canonical recipe: the `jj-version-control` skill's `diamond-workflow.md`.
 
 ```bash
 # Pre-edit recon: which chain (if any) already touched this file?
@@ -366,7 +366,7 @@ jj log -r 'mine() & ~bookmarks()'
 - **No backup branches**: Use `jj op log` and `jj op restore` instead
 - **Bookmarks stay put**: Explicitly move with `jj bookmark set`, don't assume movement
 - **@ is ephemeral**: Working copy commit constantly rewritten, bookmark @ parent not @
-- **@ stays empty `[wip]` in a development join**: when a multi-parent join exists, `@` is the empty `[wip]` directly atop `[merge]` and the SHARED editing surface for all concurrent editors. Never `jj describe @` into a content commit and never `jj rebase -r @` / `jj rebase --revisions @` — both drift `@` off `[wip]`, vanish the shared coordination point, break the join's one-child invariant (vi), and (in this repo) drag the pushed `wip` deploy bookmark. Route DOWN into the owning chain via `jj squash --from @ … --keep-emptied`, `jj absorb`, or `jj split` (keeping the wip). Canon: `~/.claude/skills/jj-version-control/SKILL.md` §development join / invariants (iii-b)/(vi), and `diamond-workflow.md`.
+- **@ stays empty `[wip]` in a development join**: when a multi-parent join exists, `@` is the empty `[wip]` directly atop `[merge]` and the SHARED editing surface for all concurrent editors. Never `jj describe @` into a content commit and never `jj rebase -r @` / `jj rebase --revisions @` — both drift `@` off `[wip]`, vanish the shared coordination point, break the join's one-child invariant (vi), and (in this repo) drag the pushed `wip` deploy bookmark. Route DOWN into the owning chain via `jj squash --from @ … --keep-emptied`, `jj absorb`, or `jj split` (keeping the wip). Canon: `jj-version-control` §development join / invariants (iii-b)/(vi), and `diamond-workflow.md`.
 - **Conflicts are first-class**: Committed and resolved when convenient, never blocking
 - **Detached HEAD is normal**: In a jj-colocated repo, detached HEAD is the expected state. Do not attempt to reattach HEAD or "fix" this.
 
@@ -380,25 +380,25 @@ jj log -r 'mine() & ~bookmarks()'
 
 2. Need PR/CI validation via buildbot flake checks (multi-platform fleet matrix, large change benefiting from unified PR review, or fleet-wide gate before trunk)?
    → Tier 2: single named bookmark created retroactively on the chain.
-   `jj bookmark create <name> -r <change-id>` then `jj git push --bookmark <name>`; follow `~/.claude/skills/nix-flake-pr-cycle/SKILL.md`.
+   `jj bookmark create <name> -r <change-id>` then `jj git push --bookmark <name>`; follow `nix-flake-pr-cycle`.
 
 3. Multiple independent work streams in flight (multiple beads issues within an epic, parallel agent dispatch, parallel experiments to compose)?
    → Tier 3: diamond workflow via development join over the chains' bookmarks.
    `jj new <existing-bookmark> <new-bookmark> -m "join N=2: <alphabetical bookmarks, comma-separated>"`; route edits via `jj squash --from @ --into <tip> -u` plus `jj bookmark move <name> --to <tip>`, and rewrite the `[merge]` description in full whenever the parent set changes so it always reflects the current `join N=<cardinality>: <alphabetical bookmarks>` state.
-   - Mid-diamond commit belongs on `<base>` below all chains → splice-below-join (see `~/.claude/skills/jj-version-control/SKILL.md` §"Splice-below-join")
-   - Remote `<base>` advanced during diamond work → diamond integration on remote advance (see `~/.claude/skills/jj-version-control/SKILL.md` §"Diamond integration on remote advance")
+   - Mid-diamond commit belongs on `<base>` below all chains → splice-below-join (see `jj-version-control` §"Splice-below-join")
+   - Remote `<base>` advanced during diamond work → diamond integration on remote advance (see `jj-version-control` §"Diamond integration on remote advance")
 
 4. Does something outside this session need its own filesystem tree (an external framework driving its own agent process, a long-running build, side-by-side comparison), or did the user explicitly request isolation by name (`worktree`, `workspace`, `isolate`, `separate working copy`, or path forms like `.worktrees/X`)?
    → Create a separate tree; otherwise stay at tier 3 and parallelize via the development join in a single working copy, which remains the default for parallel chains.
    In a flake repository that tree is a `git worktree add`, not `jj workspace add`, because a jj workspace has no `.git` and flake evaluation there loses the revision.
    `EnterWorktree`, `git worktree add` against a jj-colocated repository, and subagent dispatch (tool name `Agent`) with `isolation: "worktree"` each raise an ask; `ExitWorktree` is ungated.
-   Before creating one, read `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" — exclusive branch ownership and return-by-ref are the load-bearing rules.
+   Before creating one, read `jj-version-control` §"Worktree interop" — exclusive branch ownership and return-by-ref are the load-bearing rules.
 
 **Should I read jj-workflow.md?**
 1. Never used jj? → Read "Core philosophy" and "Foundation"
 2. Need parallel experiments? → Read "Parallel experimentation" and `jj-version-control/tiered-ceremony.md` tier 3
 3. A separate filesystem tree is warranted? → Read "Workspace creation" there, and `jj-version-control/SKILL.md` §"Worktree interop" for the git-worktree form a flake repository requires
-4. Working on 2+ independent chains? → Tier 3 development join over per-chain bookmarks; see `~/.claude/skills/jj-version-control/SKILL.md` for mechanics and `tiered-ceremony.md` for the policy.
+4. Working on 2+ independent chains? → Tier 3 development join over per-chain bookmarks; see `jj-version-control` for mechanics and `tiered-ceremony.md` for the policy.
 5. Cleaning history? → Read "History refinement"
 6. Integrating work? → Read "Advanced patterns"
 7. Just need command? → Check "Quick command reference" above or "Reference" section
@@ -411,6 +411,6 @@ jj log -r 'mine() & ~bookmarks()'
 
 ## For full documentation
 
-- Full jj workflow reference: `~/.claude/skills/jj-workflow/SKILL.md`
-- Development join workflow, beads integration: `~/.claude/skills/jj-version-control/SKILL.md`
-- VCS mode detection, beads conventions: `~/.claude/skills/preferences-git-version-control/SKILL.md`
+- Full jj workflow reference: `jj-workflow`
+- Development join workflow, beads integration: `jj-version-control`
+- VCS mode detection, beads conventions: `preferences-git-version-control`

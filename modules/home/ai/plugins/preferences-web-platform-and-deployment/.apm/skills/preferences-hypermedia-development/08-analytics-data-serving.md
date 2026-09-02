@@ -202,6 +202,6 @@ Cross-reference section 07 for the event architecture foundation, including the 
 - `02-sse-patterns.md` - SSE streaming mechanics, reconnection
 - `03-datastar.md` - signal system, ReadSignals pattern, PatchElements/PatchSignals
 - `07-event-architecture.md` - event sourcing, projection pipelines, CQRS
-- `~/.claude/skills/preferences-data-modeling/SKILL.md` - DuckDB/DuckLake patterns, materialized views, scientific data contracts
-- `~/.claude/skills/preferences-rust-development/SKILL.md` - Rust-specific patterns for axum integration
-- `~/.claude/skills/preferences-scalable-probabilistic-modeling-workflow/SKILL.md` - section 06 defines the diagnostic artifacts (simulation ensembles, posterior samples, calibration tables) that this serving pipeline delivers to visualization tools
+- `preferences-data-modeling` - DuckDB/DuckLake patterns, materialized views, scientific data contracts
+- `preferences-rust-development` - Rust-specific patterns for axum integration
+- `preferences-scalable-probabilistic-modeling-workflow` - section 06 defines the diagnostic artifacts (simulation ensembles, posterior samples, calibration tables) that this serving pipeline delivers to visualization tools

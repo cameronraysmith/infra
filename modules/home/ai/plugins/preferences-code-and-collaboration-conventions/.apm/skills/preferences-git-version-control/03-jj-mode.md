@@ -3,7 +3,7 @@
 Working branch isolation recipes for jj mode.
 jj provides a development join (multi-parent working copy) that achieves the same simultaneous multi-branch editing as GitButler's applied-branches model.
 All bookmarks coexist in a single working tree, so parallel chains need no worktree, and the development join is the default technique for them.
-A linked git worktree remains available and is warranted when a separate filesystem tree is itself the requirement — an external agent framework driving its own process, a long-running build, side-by-side comparison — under the ownership and return-by-ref discipline in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
+A linked git worktree remains available and is warranted when a separate filesystem tree is itself the requirement — an external agent framework driving its own process, a long-running build, side-by-side comparison — under the ownership and return-by-ref discipline in `jj-version-control` §"Worktree interop".
 
 ## Creating a multi-parent working copy
 
@@ -55,7 +55,7 @@ The second half takes `-s`, not `-r`, so that any commits stacked above `[wip]` 
 Do NOT make the empty `[wip]` the subject of a positional rebase — `jj rebase -r @ --insert-before <target>` / `--insert-after <target>` (and the `jj rebase --revisions @ --insert-before/--insert-after <target>` aliases) relocate `@` below or into the join, dropping the shared editing surface concurrent actors are writing and dragging the pushed `wip` deploy bookmark (the catastrophic concurrency failure).
 In the simpler single-commit join — where `@` IS the join with no separate `[wip]` — the sanctioned destination form `jj rebase -r @ -d <chain-a> -d <chain-b> …`, naming one `-d` per chain the join is to carry afterward, re-parents in place and keeps `@` an empty direct child of the join; the two-commit `[merge]`+`[wip]` pair above is canonical for diamond work.
 This destination form is the ONLY `jj rebase` that may name `@`; it is distinct from the prohibited positional `--insert-before/--insert-after` forms.
-See `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii) and §"Adding and removing chains" for the full canon.
+See `jj-version-control` invariant (iii) and §"Adding and removing chains" for the full canon.
 
 ## Auto-rebase behavior
 
@@ -109,7 +109,7 @@ jj squash --into {epic-b}-descriptor -u -- <path>
 In jj mode, subagents do not create bookmarks, and dispatch omits the `isolation` parameter by default.
 All agents — including parallel agents — edit files directly in the shared `@` working copy.
 The orchestrator routes changes to the correct chain via `jj absorb` or `jj squash --into <target> -u -- <path>` after each subagent completes.
-Requesting `isolation: "worktree"` raises an ask rather than a denial; answer it affirmatively only when the subagent genuinely needs its own filesystem tree, and follow the discipline in `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop" when it does.
+Requesting `isolation: "worktree"` raises an ask rather than a denial; answer it affirmatively only when the subagent genuinely needs its own filesystem tree, and follow the discipline in `jj-version-control` §"Worktree interop" when it does.
 
 When working in the development join, use a join + wip structure (two-commit pattern).
 The development join integrates all parent bookmarks and has a description to prevent auto-abandonment.
@@ -122,7 +122,7 @@ The shared `[wip]` is the stable coordination point that makes N concurrent edit
 Never `jj describe @` into a content commit (that consumes the empty wip), and never make `@` the subject of `jj rebase` as a routing move — `jj rebase -r @` / `jj rebase --revisions @` with the positional `--insert-before/--insert-after` forms drifts `@` off the join, removes the shared editing surface concurrent agents write to, and drags the pushed `wip` deploy bookmark.
 Routing verbs leave `@` in place and empty: `jj absorb` (auto-distribute by blame; scoped `jj absorb <path>` under concurrency), `jj squash --from @ --into <chain-tip> --keep-emptied [-- <paths>]` (amend-route), `jj squash --from @ --insert-after <chain-tip> -m "msg" --keep-emptied -- <paths>` (append-route), and `jj split` keeping the wip remainder.
 To place a change BELOW the join, route it down from the live `@` with `jj squash --from @ --insert-before <target> -m "msg" --keep-emptied -- <paths>`; any by-relocation `<target>`/`<commit>` is a SEPARATE already-sealed non-wip commit, never `@` itself.
-The canonical invariants and the `--keep-emptied` routing primitives are normative in `~/.claude/skills/jj-version-control/SKILL.md` invariant (iii).
+The canonical invariants and the `--keep-emptied` routing primitives are normative in `jj-version-control` invariant (iii).
 
 Coordination protocol: atomic one-file changes, periodic `jj log` review, prompt routing to keep `@` clean.
 Subagent dispatch prompts specify which files to edit and the target chain context but do not include jj routing commands.
@@ -130,7 +130,7 @@ The subagent edits files in the shared `@` and does NOT run `jj`, `git`, or `bd`
 
 Example prompt fragment: "Edit only modules/.../<file>.nix; do not run jj/git/bd. Your changes will be routed to the nix-pxj-4-deploy-validate bookmark by the orchestrator after you return."
 
-See the parallel agent coordination protocol in `~/.claude/skills/jj-version-control/SKILL.md` for the full model.
+See the parallel agent coordination protocol in `jj-version-control` for the full model.
 
 ## Completing issues and epics
 
@@ -170,10 +170,10 @@ jj development joins operate in a single working tree, so the repository root's 
 
 When epic-scoped work spans multiple parallel streams — a Linear initiative or project, an OpenSpec change group, or (in Manual mode) a beads epic — it uses the diamond workflow's four phases (diverge, develop, converge, serialize) to map the dependency graph onto jj bookmark chain topology.
 The mechanical implementation leverages jj's multi-parent working copy; the pattern generalizes conceptually to GitButler's applied-branches model and git-native worktrees.
-For the canonical operational recipe, theoretical foundations, and dependency-graph-to-jj mapping (including the beads-to-jj mapping used in Manual mode), see `~/.claude/skills/jj-version-control/diamond-workflow.md`.
+For the canonical operational recipe, theoretical foundations, and dependency-graph-to-jj mapping (including the beads-to-jj mapping used in Manual mode), see the `jj-version-control` skill's `diamond-workflow.md`.
 
 The sibling tools `jj-linearize-join` and `jj-stack-submit` are the canonical tooling for the diamond → linearized-chain → N+1 PR submission path: the former linearizes a development join into a stacked-base chain, the latter handles forge submission (push + N+1 PR creation via `gh`/`tea`).
-See `~/.claude/skills/jj-version-control/diamond-workflow.md` Phase 4 for the operational recipe.
+See the `jj-version-control` skill's `diamond-workflow.md` Phase 4 for the operational recipe.
 
 ## See also
 

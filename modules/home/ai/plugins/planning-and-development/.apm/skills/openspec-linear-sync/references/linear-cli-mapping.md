@@ -2,12 +2,12 @@
 
 This reference maps every Linear operation the overlay needs onto linear-cli verbs, replacing the disabled Linear MCP entirely.
 Verbs are at linear-cli v2.0.0.
-The bundled linear-cli skill is the authoritative home for every flag spelling and JSON shape below, delegated by subfile: issue verbs in `~/.claude/skills/linear-cli/references/issue.md`, document verbs in `~/.claude/skills/linear-cli/references/document.md`, `auth whoami` and `--workspace` in `~/.claude/skills/linear-cli/references/auth.md`, the `linear api` GraphQL fallback in `~/.claude/skills/linear-cli/references/api.md`, and JSON-shape introspection in `~/.claude/skills/linear-cli/references/schema.md`.
+The bundled linear-cli skill is the authoritative home for every flag spelling and JSON shape below, delegated by subfile: issue verbs in the `linear-cli` skill's `references/issue.md`, document verbs in the `linear-cli` skill's `references/document.md`, `auth whoami` and `--workspace` in the `linear-cli` skill's `references/auth.md`, the `linear api` GraphQL fallback in the `linear-cli` skill's `references/api.md`, and JSON-shape introspection in the `linear-cli` skill's `references/schema.md`.
 This file maps operations to verbs and carries the policy; it is not the source of truth for flag spellings or JSON shapes, which live in those subfiles.
 The Linear MCP is recommended against and never invoked here.
 
 Prefer file-based content flags over inline content to avoid escaping artifacts; this is the one content-handling policy this file owns.
-Which verbs expose `--json`, a content-file flag, or `--no-interactive` is mechanics with an authoritative home: see `~/.claude/skills/linear-cli/references/issue.md` and `~/.claude/skills/linear-cli/references/document.md` for per-verb flag availability, and the `## Best Practices for Markdown Content` section of `~/.claude/skills/linear-cli/SKILL.md` for why file-based flags are preferred.
+Which verbs expose `--json`, a content-file flag, or `--no-interactive` is mechanics with an authoritative home: see the `linear-cli` skill's `references/issue.md` and the `linear-cli` skill's `references/document.md` for per-verb flag availability, and the `## Best Practices for Markdown Content` section of `linear-cli` for why file-based flags are preferred.
 
 Every linear-cli invocation in this overlay, reads as well as mutations, passes an explicit `--workspace <slug>`, resolved from `workspace.slug` in the openspec/linear.yaml registry.
 A command that omits `--workspace` resolves to the credentials default, which is the personal workspace in this deployment, so an unscoped read silently queries the wrong workspace exactly as an unscoped mutation would write to it.
@@ -42,9 +42,9 @@ Every command, read or mutation, passes an explicit `--workspace <slug>` after t
 | Document create | `save_document` (create) | `linear document create` |
 | Document update | `save_document` (update) | `linear document update` |
 
-Which verb maps to which operation is the policy this table owns, and the `--workspace <slug>` rule above applies to every row; the exact flags for each verb live in the bundled skill: issue verbs in `~/.claude/skills/linear-cli/references/issue.md` (including the `linear issue update --description-file <path>` flag, documented there as preferred for markdown content, which the issue-description sync uses), document verbs in `~/.claude/skills/linear-cli/references/document.md`, and the setup reads in `~/.claude/skills/linear-cli/references/team.md`, `~/.claude/skills/linear-cli/references/project.md`, and `~/.claude/skills/linear-cli/references/label.md`.
+Which verb maps to which operation is the policy this table owns, and the `--workspace <slug>` rule above applies to every row; the exact flags for each verb live in the bundled skill: issue verbs in the `linear-cli` skill's `references/issue.md` (including the `linear issue update --description-file <path>` flag, documented there as preferred for markdown content, which the issue-description sync uses), document verbs in the `linear-cli` skill's `references/document.md`, and the setup reads in the `linear-cli` skill's `references/team.md`, the `linear-cli` skill's `references/project.md`, and the `linear-cli` skill's `references/label.md`.
 
-Read backlog candidates with `issue query`, not `issue list`; the alias relationship and the `--state`/`--json` reasoning that forces this choice live in `~/.claude/skills/linear-cli/references/issue.md`.
+Read backlog candidates with `issue query`, not `issue list`; the alias relationship and the `--state`/`--json` reasoning that forces this choice live in the `linear-cli` skill's `references/issue.md`.
 
 The state transition always passes the team's Linear state NAME via `--state`, not the workflow-state type, because the name disambiguates In Progress from In Review, which share the "started" type.
 
@@ -65,7 +65,7 @@ For each capability the change produces:
 1. Look up the stored document id first: read `projects."<project-slug>".archive_documents."<capability>".id` from openspec/linear.yaml, where `<project-slug>` is the change's `linear_project`.
 2. If a stored id exists, update in place: `linear document update <stored-id> --title "OpenSpec: <capability>" --content-file <spec-file> --workspace <slug>`.
 3. Only if no stored id exists, fall back to a title scan: `linear document list --project <p> --json --workspace <slug>` and match the deterministic title `OpenSpec: <capability>` over the `.nodes[]` array of the returned connection object.
-   The `--json` output is a connection with `nodes` and `pageInfo`, not a bare array, so the match must walk `.nodes[]`; introspect the exact shape via `linear schema -o <file>` and confirm against `~/.claude/skills/linear-cli/references/api.md` and `~/.claude/skills/linear-cli/references/schema.md`.
+   The `--json` output is a connection with `nodes` and `pageInfo`, not a bare array, so the match must walk `.nodes[]`; introspect the exact shape via `linear schema -o <file>` and confirm against the `linear-cli` skill's `references/api.md` and the `linear-cli` skill's `references/schema.md`.
 4. If the title scan finds a match, update that id as in step 2.
 5. If no stored id and no title match, create: `linear document create --project <p> --title "OpenSpec: <capability>" --content-file <spec-file> --workspace <slug>`, which creates it already parented to the project, and store the returned id back into openspec/linear.yaml under `projects."<project-slug>".archive_documents."<capability>".id` so the next archive takes the stored-id path.
 
@@ -77,7 +77,7 @@ The body mirrors only the canonical folded main-spec content at `<planning-root>
 Escalate to GraphQL only for fields the document subcommand cannot set, because most create and update paths lack `--json`.
 The two sanctioned uses are reparenting an existing document (`document update` has no `--project`, so moving a document to a different project requires GraphQL) and reading back the structured id of a freshly created entity when stdout parsing of the create output is insufficient.
 Do not route routine create or update paths through GraphQL; the document and issue subcommands cover them.
-The CLI surface for the escalation — `linear api` for raw GraphQL requests and `linear schema -o <file>` for type discovery — is documented in `~/.claude/skills/linear-cli/references/api.md` and `~/.claude/skills/linear-cli/references/schema.md`; the no-`--project` premise for `document update` is in `~/.claude/skills/linear-cli/references/document.md`.
+The CLI surface for the escalation — `linear api` for raw GraphQL requests and `linear schema -o <file>` for type discovery — is documented in the `linear-cli` skill's `references/api.md` and the `linear-cli` skill's `references/schema.md`; the no-`--project` premise for `document update` is in the `linear-cli` skill's `references/document.md`.
 
 ## End-to-end worked example: one HIL issue Backlog to Done
 
@@ -87,7 +87,7 @@ Every step is guarded by the strictly-behind rule (see references/lifecycle.md):
 The ledger updates that accompany each transition (`last_synced_state`, `last_synced_at`, `review_round`, `attempt_log`) are written to this change's proposal.md frontmatter, not to openspec/linear.yaml.
 
 This trace is a policy-level walkthrough: the ordering, the guards, the archive sequence, and the per-crossing comment discipline are the load-bearing parts.
-The concrete flags and the two `.nodes[]` jq filters below are illustrative at linear-cli v2.0.0; they are authoritative in `~/.claude/skills/linear-cli/references/issue.md`, `~/.claude/skills/linear-cli/references/document.md`, `~/.claude/skills/linear-cli/references/api.md`, and `~/.claude/skills/linear-cli/references/schema.md`, and in `~/.claude/skills/linear-cli/references/auth.md` for the `whoami` gate.
+The concrete flags and the two `.nodes[]` jq filters below are illustrative at linear-cli v2.0.0; they are authoritative in the `linear-cli` skill's `references/issue.md`, the `linear-cli` skill's `references/document.md`, the `linear-cli` skill's `references/api.md`, and the `linear-cli` skill's `references/schema.md`, and in the `linear-cli` skill's `references/auth.md` for the `whoami` gate.
 
 First, gate on the workspace before any mutation:
 
@@ -102,7 +102,7 @@ Backlog to Todo, fired when proposal.md is created (this step also writes the bi
 linear issue update <id> --state "Todo" --workspace <slug>
 # Seed the Linear issue description (the business "what") distilled from proposal.md Why / What Changes / Capabilities
 # into a stakeholder-facing TL;DR / deliverables / scope / acceptance; technical design stays in design.md.
-# Best-effort and non-blocking; --description-file is preferred for markdown (see issue.md). Record a dropped
+# Best-effort and non-blocking; --description-file is preferred for markdown (see the `linear-cli` skill's `references/issue.md`). Record a dropped
 # attempt in the proposal.md attempt_log if Linear is unavailable.
 <distill proposal.md business sections into /tmp/body.md>
 linear issue update <id> --description-file /tmp/body.md --workspace <slug>
@@ -215,8 +215,8 @@ Here the local milestone files show the change at In Review (proposal.md, a firs
 # 1. Resolve the local phase from milestone-file existence (the authoritative current-phase signal).
 #    proposal.md + first tasks.md `- [x]` + verify.md, not yet archived  =>  local phase is "In Review".
 # 2. Read the current Linear state. The `issue view --json` verb is in
-#    ~/.claude/skills/linear-cli/references/issue.md; the `.state.name` payload shape is
-#    authoritative in ~/.claude/skills/linear-cli/references/api.md and references/schema.md
+#    the `linear-cli` skill's `references/issue.md`; the `.state.name` payload shape is
+#    authoritative in the `linear-cli` skill's `references/api.md` and the `linear-cli` skill's `references/schema.md`
 #    (introspect via `linear schema -o <file>` if the shape is in doubt at the pinned version).
 CUR=$(linear issue view <id> --json --workspace <slug> | jq -r '.state.name')   # => "Todo"
 # 3. Compute strictly-behind: "Todo" is two states behind "In Review".

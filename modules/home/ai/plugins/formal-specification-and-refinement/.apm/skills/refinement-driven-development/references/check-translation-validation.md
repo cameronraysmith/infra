@@ -29,14 +29,14 @@ It is not a requirement, and its absence is not a failure of the loop.
 An undischarged correspondence is an open obligation, not a defect: it is precisely the thing the next refine iteration can target, or that a lower tier can cover with empirical evidence in the meantime.
 
 The reference corpus treats unproven obligations exactly this way.
-Tutorial theorems ship as `axiom` declarations — honest, non-failing placeholders that Lean accepts while verifying nothing — with a documented roadmap to discharge them later with real Aeneas tactics (`~/projects/functional-programming-workspace/rust-lean-aeneas`, `GAP_ANALYSIS.md`, `STATUS.md`).
+Tutorial theorems ship as `axiom` declarations — honest, non-failing placeholders that Lean accepts while verifying nothing — with a documented roadmap to discharge them later with real Aeneas tactics (`rust-lean-aeneas`, `GAP_ANALYSIS.md`, `STATUS.md`).
 The trusted-kernel completion criterion is stated alongside this openly: if `lake build` succeeds on a real proof, the Lean kernel has verified it; if a theorem is still an `axiom`, that is simply recorded as an open item rather than masked.
 
 The kernel-recheck guarantee is what makes the whole ladder safe, and especially what makes AI-assisted proof safe.
 An ordinary Lean proof term is re-checked by the small trusted kernel regardless of how it was produced.
 A human-written proof, an Aeneas-tactic-generated proof, and an LLM-generated proof are all just proof terms, and the kernel re-checks every one of them.
 Provenance is therefore irrelevant to soundness: a mis-generated proof simply fails to typecheck.
-The sharp in-corpus contrast is between `decide` and `native_decide`: `decide` (and any normal tactic-produced proof) yields a kernel-checked term that adds no axiom, whereas `native_decide` is documented as adding the entire Lean compiler to the trusted base and surfacing a new axiom in `#print axioms` for anything that transitively depends on it (`~/projects/functional-programming-workspace/lean4`, `src/Init/Tactics.lean`).
+The sharp in-corpus contrast is between `decide` and `native_decide`: `decide` (and any normal tactic-produced proof) yields a kernel-checked term that adds no axiom, whereas `native_decide` is documented as adding the entire Lean compiler to the trusted base and surfacing a new axiom in `#print axioms` for anything that transitively depends on it (`lean4`, `src/Init/Tactics.lean`).
 The corollary is that you may let automation, including an LLM, propose proofs aggressively at tier 1, because nothing it proposes can corrupt soundness — at worst it fails to compile.
 
 ## Three notions of agreement
@@ -47,12 +47,12 @@ Each tier targets one or more of them, and naming which one you are after disamb
 *Definitional (judgmental) equality* holds when two expressions reduce to the same normal form purely by computation.
 The kernel checks it automatically with no reasoning step: `example : 2 + 3 = 5 := rfl` succeeds because both sides compute to 5.
 Definitional equality is strong but brittle.
-For a variable `n`, the equation `n + 0 = n` is *not* definitional, because `Nat.add` recurses on its second argument so `n + 0` does not reduce, and proving it needs `induction` (`~/projects/functional-programming-workspace/rust-lean-aeneas`, `LEAN.md`).
+For a variable `n`, the equation `n + 0 = n` is *not* definitional, because `Nat.add` recurses on its second argument so `n + 0` does not reduce, and proving it needs `induction` (`rust-lean-aeneas`, `LEAN.md`).
 Definitional equality is the rare, lucky case where the lifted model and the spec are literally the same function up to computation; do not expect it across a refine/lower boundary.
 
 *Functional / observational equivalence* holds when two differently-implemented functions compute the same input-to-output relation — the same mathematical function — even with different internal strategies.
 This is a *propositional* equality, proved by induction or case analysis rather than by reduction.
-The canonical worked instance in the corpus is the infix-versus-RPN evaluator equivalence: tree recursion and a stack machine are completely different evaluation strategies that nonetheless compute the same function, and the bridging theorem states exactly that (`~/projects/functional-programming-workspace/rust-lean-aeneas`, `tutorials/03-infix-calculator/.../Equivalence.lean`).
+The canonical worked instance in the corpus is the infix-versus-RPN evaluator equivalence: tree recursion and a stack machine are completely different evaluation strategies that nonetheless compute the same function, and the bridging theorem states exactly that (`rust-lean-aeneas`, `tutorials/03-infix-calculator/.../Equivalence.lean`).
 A roundtrip/inverse property such as decrypt(encrypt(p, key), key) = p is another observational identity.
 Across a refine/lower boundary, equivalence is the usual aspiration: the Rust you wrote should compute the same function as the Lean spec it was lowered from.
 
@@ -74,7 +74,7 @@ theorem mul2_add1_spec (x : U32)
     mul2_add1 x ⦃ y => ↑ y = 2 * ↑x + (1 : Nat) ⦄   -- success ∧ postcondition
 ```
 
-The `⦃ y => P y ⦄` notation is Aeneas' postcondition / success-monad-spec syntax, written in the Hoare-logic style the tutorial advises — preconditions as hypotheses, postcondition inside the brace (`~/projects/functional-programming-workspace/aeneas`, `tests/lean/BaseTutorial.lean`).
+The `⦃ y => P y ⦄` notation is Aeneas' postcondition / success-monad-spec syntax, written in the Hoare-logic style the tutorial advises — preconditions as hypotheses, postcondition inside the brace (`aeneas`, `tests/lean/BaseTutorial.lean`).
 Read against the three notions: the theorem asserts the lifted `mul2_add1` *refines* a spec that says "given no overflow, return twice the input plus one", and because the postcondition pins the result exactly, this particular instance also witnesses functional equivalence on the precondition's domain.
 
 ## Tier 1 — mechanical: kernel-checked refinement proof
@@ -88,13 +88,13 @@ Hammer-class automation — `aesop`, `duper`, LeanHammer — sits at the *extern
 
 Aeneas' own tactics are the engine for discharging refinement obligations over the lifted model.
 The principal tactic is `step`, with spec theorems registered via the `@[step]` attribute.
-`step` looks for a suitable theorem — supplied by the user or found in the `@[step]` database — describing the behaviour of a monadic function, applies it to the current goal, introduces the existentially quantified result variables, splits the postcondition conjunctions, and tries to discharge the preconditions automatically, leaving any it cannot prove as subgoals (`~/projects/functional-programming-workspace/aeneas`, `backends/lean/Aeneas/Tactic/Step/Step.lean`, `tests/lean/BaseTutorial.lean`).
+`step` looks for a suitable theorem — supplied by the user or found in the `@[step]` database — describing the behaviour of a monadic function, applies it to the current goal, introduces the existentially quantified result variables, splits the postcondition conjunctions, and tries to discharge the preconditions automatically, leaving any it cannot prove as subgoals (`aeneas`, `backends/lean/Aeneas/Tactic/Step/Step.lean`, `tests/lean/BaseTutorial.lean`).
 Precondition discharge internally threads a `grind` state across successive `step` calls, so `step` is itself a composite that delegates to lean4's `grind`.
-The names `progress` and the `@[pspec]` / `@[progress]` attributes are deprecated aliases retained only for backward compatibility — they emit a deprecation warning and delegate to `step` / `@[step]` (`~/projects/functional-programming-workspace/aeneas`, `backends/lean/Aeneas/Tactic/Step/Deprecated.lean`).
+The names `progress` and the `@[pspec]` / `@[progress]` attributes are deprecated aliases retained only for backward compatibility — they emit a deprecation warning and delegate to `step` / `@[step]` (`aeneas`, `backends/lean/Aeneas/Tactic/Step/Deprecated.lean`).
 Use `step` and `@[step]` in all new proofs; mention `progress` and `@[pspec]` only to note that they are deprecated.
 
 Arithmetic obligations inside a refinement proof are discharged with `scalar_tac`, not bare `omega`.
-`scalar_tac` is Aeneas' arithmetic solver, aware of machine-integer bounds (`U32`, `Usize`, and so on); it heavily preprocesses the goal and then calls `omega` under the hood, and with `scalar_tac +nonLin` it reaches some non-linear goals as well (`~/projects/functional-programming-workspace/aeneas`, `backends/lean/Aeneas/Tactic/Solver/ScalarTac/ScalarTac.lean`).
+`scalar_tac` is Aeneas' arithmetic solver, aware of machine-integer bounds (`U32`, `Usize`, and so on); it heavily preprocesses the goal and then calls `omega` under the hood, and with `scalar_tac +nonLin` it reaches some non-linear goals as well (`aeneas`, `backends/lean/Aeneas/Tactic/Solver/ScalarTac/ScalarTac.lean`).
 This is the load-bearing scope rule for the check leg: `omega` is forbidden *inside* Aeneas refinement proofs over the lifted model, because those goals manipulate machine-integer scalars whose bounds bare `omega` does not know; `scalar_tac` supplies the bounds preprocessing before delegating to `omega`.
 Hand-authored, spec-side Lean over plain `Nat` or `Int` may use `omega` directly — that restriction applies only within the Aeneas-lifted refinement proofs.
 Keep this distinction explicit wherever `omega` appears.
@@ -120,7 +120,7 @@ theorem clamp_in_bounds (x lo hi : Std.I32) (h : lo ≤ hi) :
   split <;> split <;> simp_all <;> constructor <;> scalar_tac
 ```
 
-Both of these are genuine kernel-checked proofs, not `axiom` placeholders, and the corpus also carries real ones — for example an invariant-preservation theorem and a reachability induction over an Aeneas-lifted traffic-light state machine, finished with `simp`, `cases`, `simp_all`, and `induction` (`~/projects/functional-programming-workspace/rust-lean-aeneas`, `tutorials/04-state-machines/.../TrafficLightProofs.lean`).
+Both of these are genuine kernel-checked proofs, not `axiom` placeholders, and the corpus also carries real ones — for example an invariant-preservation theorem and a reachability induction over an Aeneas-lifted traffic-light state machine, finished with `simp`, `cases`, `simp_all`, and `induction` (`rust-lean-aeneas`, `tutorials/04-state-machines/.../TrafficLightProofs.lean`).
 
 Aeneas' `Result` model is what these proofs reason over.
 The current `Result` type has three constructors — `ok`, `fail`, and `div` — paired with a seven-constructor `Error`.
@@ -133,16 +133,16 @@ When a tier-1 proof is not yet available, or as a fast preliminary sanity check 
 The hand-authored Lean spec is ordinary executable Lean, and the Aeneas-lifted model is also executable Lean over the `Result` monad, so the two can be tested against each other directly: generate many random inputs and check that the spec's output agrees with the lifted model's output (the ≈ relation), collecting statistical evidence for the ≈-identity short of a proof.
 
 The framework is Plausible, Lean's QuickCheck-style property-based testing library (upstream `leanprover-community/plausible`).
-Plausible is a standalone package, not part of lean4 core; Mathlib re-exports it and adds instances under (`~/projects/functional-programming-workspace/mathlib4`, `Mathlib/Testing/Plausible/`).
+Plausible is a standalone package, not part of lean4 core; Mathlib re-exports it and adds instances under (`mathlib4`, `Mathlib/Testing/Plausible/`).
 Its confirmed API surface is the `Plausible.Testable` type class (a testable proposition, run under a `Configuration`), `Plausible.SampleableExt` (random sample generation for a type so it can appear in a tested ∀-quantifier), `Plausible.Shrinkable` (counterexample shrinking), `Plausible.Gen` (the random-generation monad), and `Plausible.TestResult` / `Plausible.PrintableProp` (counterexample reporting).
 State the agreement between the two executable Lean artifacts as a universally-quantified decidable proposition, then exercise it through one of two front-ends that both call the same runner.
-The `#test <prop>` command tests the property at elaboration time; it is a macro that desugars to `#eval Plausible.Testable.check <prop>` (`~/projects/functional-programming-workspace/plausible`, `Plausible/Testable.lean:625`).
-The `plausible` tactic (the confirmed successor to Mathlib's older `slim_check`) attacks a goal of that same shape (`~/projects/functional-programming-workspace/plausible`, `Plausible/Tactic.lean:158`).
-Both route to `Plausible.Testable.check`, which runs `numInst` (default 100) randomized trials and reports a shrunk counterexample as `TestResult.failure` (`~/projects/functional-programming-workspace/plausible`, `Plausible/Testable.lean:80-102`), or reports success when no counterexample is found.
-`Testable.run` is *not* a runner entry point: it is the `Testable` class method returning `Gen (TestResult p)` (`~/projects/functional-programming-workspace/plausible`, `Plausible/Testable.lean:174-176`); the runners proper are `Testable.check` (`Plausible/Testable.lean:603`) and `Testable.checkIO` (`Plausible/Testable.lean:549`).
+The `#test <prop>` command tests the property at elaboration time; it is a macro that desugars to `#eval Plausible.Testable.check <prop>` (`plausible`, `Plausible/Testable.lean:625`).
+The `plausible` tactic (the confirmed successor to Mathlib's older `slim_check`) attacks a goal of that same shape (`plausible`, `Plausible/Tactic.lean:158`).
+Both route to `Plausible.Testable.check`, which runs `numInst` (default 100) randomized trials and reports a shrunk counterexample as `TestResult.failure` (`plausible`, `Plausible/Testable.lean:80-102`), or reports success when no counterexample is found.
+`Testable.run` is *not* a runner entry point: it is the `Testable` class method returning `Gen (TestResult p)` (`plausible`, `Plausible/Testable.lean:174-176`); the runners proper are `Testable.check` (`Plausible/Testable.lean:603`) and `Testable.checkIO` (`Plausible/Testable.lean:549`).
 
 Tier 2 establishes only empirical, approximate identity — not a proof — and that is its honest role: it is evidence that the spec and lifted model agree on the sampled inputs, strong enough to catch a divergence early and cheap enough to run constantly, but it never closes a refinement obligation on its own.
-The load-bearing reason is mechanical, not merely a matter of statistical coverage: the `plausible` tactic is a test aid, not a proof tactic, and when it finds no counterexample it *admits* the goal via `admitGoal` (`~/projects/functional-programming-workspace/plausible`, `Plausible/Tactic.lean:206`) rather than discharging the theorem.
+The load-bearing reason is mechanical, not merely a matter of statistical coverage: the `plausible` tactic is a test aid, not a proof tactic, and when it finds no counterexample it *admits* the goal via `admitGoal` (`plausible`, `Plausible/Tactic.lean:206`) rather than discharging the theorem.
 A passing `plausible` or `#test` run therefore raises confidence that Φ(S) ≈ S but does not establish it — producing a machine-checked refinement or equivalence is exactly tier 1's job, and that is precisely why tier 2 yields ≈-evidence while tier 1 yields a kernel-checked ⊑ or equivalence.
 A passing tier-2 campaign over a function is a good reason to attempt tier 1 on it; a failing one is a counterexample that bounces straight back into the next refine iteration.
 Note that this Lean-side spec-versus-lifted-model testing is the *prescribed* design for the loop, not something already wired in the corpus — the existing tutorials run Rust-side `proptest` / `quickcheck` on the Rust core as a tier-2 analog rather than testing the two Lean artifacts against each other.

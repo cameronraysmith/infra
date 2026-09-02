@@ -8,7 +8,7 @@ The diamond workflow is reserved for genuine multi-stream parallel work, not for
 
 For the theoretical treatment of the diamond workflow (lattice theory, event structures, VSM mapping, four-phase recipe), see `diamond-workflow.md` in this directory.
 For the operational reference on the development join entity (edit-route cycle, conflict behavior, join + wip structure, composite maintenance invariant), see `SKILL.md` in this directory.
-For mode-detection context (when this document applies versus git-native or GitButler), see `~/.claude/skills/preferences-git-version-control/03-jj-mode.md`.
+For mode-detection context (when this document applies versus git-native or GitButler), see the `preferences-git-version-control` skill's `03-jj-mode.md`.
 
 ## Tier 1: anonymous chain on `@`
 
@@ -46,7 +46,7 @@ jj bookmark create <name> -r <change-id>   # or -r @- for the chain tip
 jj git push --bookmark <name>
 ```
 
-Then follow `~/.claude/skills/nix-flake-pr-cycle/SKILL.md` for the canonical draft-PR / buildbot-monitor / ready / Mergify sequence.
+Then follow `nix-flake-pr-cycle` for the canonical draft-PR / buildbot-monitor / ready / Mergify sequence.
 
 Operations to integrate: rebase the bookmark onto trunk when ready, then either let Mergify FF-merge the PR or perform the FF merge directly.
 After merge, delete the bookmark and return to tier 1 for subsequent work.

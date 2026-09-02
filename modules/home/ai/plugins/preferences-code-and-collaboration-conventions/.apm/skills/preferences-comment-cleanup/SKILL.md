@@ -7,7 +7,7 @@ description: Uncomment-driven workflow for auditing and removing noise comments 
 
 ## Scope
 
-This skill is the operational enforcement arm of the code-comments policy defined in `~/.claude/skills/preferences-style-and-conventions/SKILL.md` §"Code comments"; it does not restate that policy but drives it over real trees.
+This skill is the operational enforcement arm of the code-comments policy defined in `preferences-style-and-conventions` §"Code comments"; it does not restate that policy but drives it over real trees.
 It is a workflow sibling to `preferences-git-history-cleanup`, and like it, a comment-only cleanup is a legitimate standalone change.
 
 ## The tool: uncomment
@@ -49,10 +49,10 @@ Group the applied cuts by subsystem into a small number of atomic commits; never
 
 Exclude vendored, generated, and upstream-mirrored trees by path, since uncomment has no ignore-glob and its language list is not an allowlist.
 Watch for cross-branch file collisions with any active VCS chains, and keep dry-run-first discipline before every apply.
-A hardened starting config ships beside this skill at `~/.claude/skills/preferences-comment-cleanup/uncommentrc.toml`; it preserves the license/SPDX headers, linter and formatter pragmas, code-generation markers, and `SAFETY:` comments that uncomment's built-ins miss past the first few lines.
+A hardened starting config ships beside this skill at `uncommentrc.toml`; it preserves the license/SPDX headers, linter and formatter pragmas, code-generation markers, and `SAFETY:` comments that uncomment's built-ins miss past the first few lines.
 Copy it to the target repository root as `.uncommentrc.toml` and treat it as a targeted-assist config for a specific run, not a standing repo-wide policy.
 
 ## Cross-links
 
-The owning policy this skill enforces is `~/.claude/skills/preferences-style-and-conventions/SKILL.md` §"Code comments".
+The owning policy this skill enforces is `preferences-style-and-conventions` §"Code comments".
 For the sibling cleanup workflow see `preferences-git-history-cleanup`; for severity grading and adversarial verification of proposed cuts see `preferences-validation-assurance`; for the classification fan-out see `dispatching-parallel-agents` and `preferences-workflow-orchestration-algebra`; and the tool itself is this repository's `uncomment-bin` package at `pkgs/by-name/uncomment-bin`.

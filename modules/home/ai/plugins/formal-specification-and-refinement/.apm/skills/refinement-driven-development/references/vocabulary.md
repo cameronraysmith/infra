@@ -107,8 +107,8 @@ Read the direction column as the arrow within the pipeline composition above.
 
 ## Source anchors
 
-Eurydice as a Rust-to-C transpiler and its shared Charon front-end are grounded in `~/projects/functional-programming-workspace/eurydice` (README and `bin/main.ml`).
-Aeneas as a verification toolchain translating to a pure lambda calculus, its four backends, and the backward-function model are grounded in `~/projects/functional-programming-workspace/aeneas` (README, `src/Config.ml`, `src/Main.ml`, `backends/lean`).
-Charon's LLBC/ULLBC distinction, the Aeneas preset, and the JSON surface are grounded in `~/projects/functional-programming-workspace/charon` (`docs/usage.md`, `src/options.rs`, `charon-ml`).
+Eurydice as a Rust-to-C transpiler and its shared Charon front-end are grounded in `eurydice` (README and `bin/main.ml`).
+Aeneas as a verification toolchain translating to a pure lambda calculus, its four backends, and the backward-function model are grounded in `aeneas` (README, `src/Config.ml`, `src/Main.ml`, `backends/lean`).
+Charon's LLBC/ULLBC distinction, the Aeneas preset, and the JSON surface are grounded in `charon` (`docs/usage.md`, `src/options.rs`, `charon-ml`).
 The disciplined-term contrast and the extraction hazard are developed in `references/lift-charon-aeneas.md` and `references/check-translation-validation.md`; the name anchor in refinement calculus is developed in `references/mathematics.md`.
 For the spec-side authoring conventions this vocabulary serves, see `preferences-domain-modeling`.

@@ -1,7 +1,7 @@
 # Git-native mode
 
 This file applies only in **git-native mode** (no `.jj/` directory present in repo root).
-For jj mode — the preferred mode in this workspace — see `03-jj-mode.md` and `~/.claude/skills/jj-version-control/tiered-ceremony.md`.
+For jj mode — the preferred mode in this workspace — see `03-jj-mode.md` and the `jj-version-control` skill's `tiered-ceremony.md`.
 
 Working branch isolation recipes for git-native mode.
 Bead implementation work uses worktrees rooted in `.worktrees/` at the repository root.

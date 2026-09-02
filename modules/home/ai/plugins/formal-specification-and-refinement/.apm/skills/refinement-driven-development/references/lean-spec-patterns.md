@@ -196,9 +196,9 @@ The spec's lakefile must pin its `lean-toolchain` to the exact string in the Aen
 The Aeneas Lean library is itself a `require` only in the round-trip and differential-testing context, where you compare the spec against the lifted model inside Lean; a standalone Lean spec needs only its own dependencies (mathlib and Plausible) and not the Aeneas library, and that standalone case — a Lean spec kept beside a non-Rust implementation such as Python — is owned by `preferences-theoretical-foundations`.
 Property testing is the fast-falsification half of the development loop: state the spec-versus-model correspondence as a `∀`-quantified decidable proposition, throw random inputs at it to find a counter-example quickly, then prove it (or `decide` / `native_decide` the finite instances) for the final check.
 
-The package is the standalone Lake package `plausible`, imported with `import Plausible`; mathlib4 re-exposes it transitively through `Mathlib.Tactic.Common` (`~/projects/functional-programming-workspace/plausible`, `Mathlib/Tactic/Common.lean:12`).
-There are three equivalent ways to run a property, all of which synthesize a `Testable` instance and call the same `Testable.check`: the `#test <prop>` command, a direct `#eval Testable.check <prop>`, or the `plausible` tactic applied to a goal of that shape (`~/projects/functional-programming-workspace/plausible`, `Plausible/Tactic.lean:158`).
-The `#test` command is itself a macro that desugars to `#eval Plausible.Testable.check <prop>` (`~/projects/functional-programming-workspace/plausible`, `Plausible/Testable.lean:625`).
+The package is the standalone Lake package `plausible`, imported with `import Plausible`; mathlib4 re-exposes it transitively through `Mathlib.Tactic.Common` (`plausible`, `Mathlib/Tactic/Common.lean:12`).
+There are three equivalent ways to run a property, all of which synthesize a `Testable` instance and call the same `Testable.check`: the `#test <prop>` command, a direct `#eval Testable.check <prop>`, or the `plausible` tactic applied to a goal of that shape (`plausible`, `Plausible/Tactic.lean:158`).
+The `#test` command is itself a macro that desugars to `#eval Plausible.Testable.check <prop>` (`plausible`, `Plausible/Testable.lean:625`).
 
 ```lean
 import Plausible
@@ -224,12 +224,12 @@ A bare `by plausible` uses the default config.
 Property testing requires `SampleableExt` (built from `Arbitrary`, which supplies the `Gen α` generator, and `Shrinkable`) plus `Repr` instances for the quantified types; `SampleableExt` is usually inferable for closed types via `:= by infer_instance`, while `Arbitrary` and `Shrinkable` are hand-written for the non-derivable ones.
 This dependency is the reason a *runnable, decidable* spec is the prerequisite for property-testing it: the same constructive instances that make the spec `#eval`-able are the ones the generators and the `Testable` mechanism consume.
 
-The underlying class is `Testable`, declared `class Testable (p : Prop) where run (cfg : Configuration) (minimize : Bool) : Gen (TestResult p)` (`~/projects/functional-programming-workspace/plausible`, `Plausible/Testable.lean:174-176`).
+The underlying class is `Testable`, declared `class Testable (p : Prop) where run (cfg : Configuration) (minimize : Bool) : Gen (TestResult p)` (`plausible`, `Plausible/Testable.lean:174-176`).
 `Testable.run` is the class *method* that produces a `Gen (TestResult p)`; it is not a run-and-get-result entry point, so reach for the runners instead — `Testable.check : CoreM PUnit` (`Plausible/Testable.lean:603`), which `#test` and the tactic call, and `Testable.checkIO : IO (TestResult p)` (`Plausible/Testable.lean:549`) for programmatic use.
 A `TestResult` is one of `success`, `gaveUp`, or `failure`, the last carrying the shrunk counter-example (`Plausible/Testable.lean:80-102`).
 The default trial count is `numInst = 100`, raised or lowered through the configuration record as `(config := { numInst := N })`.
 
-Custom quantified types supply their own generation: derive or instance `Repr`, `Plausible.Shrinkable` (its `shrink : α → List α` drives counter-example minimization), and `Plausible.Arbitrary` (a `Gen α`), and `Plausible.SampleableExt` then follows automatically via the `selfContained` default instance (`~/projects/functional-programming-workspace/plausible`, `Plausible/Sampleable.lean:123-129`).
+Custom quantified types supply their own generation: derive or instance `Repr`, `Plausible.Shrinkable` (its `shrink : α → List α` drives counter-example minimization), and `Plausible.Arbitrary` (a `Gen α`), and `Plausible.SampleableExt` then follows automatically via the `selfContained` default instance (`plausible`, `Plausible/Sampleable.lean:123-129`).
 The older `SampleableExt.mkSelfContained` route is deprecated as of 2025-10-22 (`Plausible/Sampleable.lean:132`).
 These signatures were read at toolchain v4.32.0-rc1; `Arbitrary` in particular has seen churn across versions, so confirm it against the toolchain the spec's lakefile actually pins.
 

@@ -250,7 +250,7 @@ Key practices for web components in documents:
 - Clean up resources in `disconnectedCallback` (WebGL contexts, animation frames, event listeners)
 - Components are guests in the document and should not take over layout or navigation
 
-For detailed web component patterns, see `~/.claude/skills/preferences-hypermedia-development/05-web-components.md`.
+For detailed web component patterns, see the `preferences-hypermedia-development` skill's `05-web-components.md`.
 
 ## Layer 7: Datastar (server connectivity)
 
@@ -267,7 +267,7 @@ Activating this layer means a backend is required (Ironstar/Rust, Stario/Python,
 The preceding layers 0-6 remain in effect.
 Datastar enhances the document; it does not replace its foundation.
 
-For detailed Datastar patterns, see `~/.claude/skills/preferences-hypermedia-development/03-datastar.md`.
+For detailed Datastar patterns, see the `preferences-hypermedia-development` skill's `03-datastar.md`.
 
 ## Layer activation by purpose
 

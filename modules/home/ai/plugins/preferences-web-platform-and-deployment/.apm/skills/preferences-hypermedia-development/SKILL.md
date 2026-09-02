@@ -46,7 +46,7 @@ The Decider pattern (fmodel-rust) enforces this structurally: `decide` and `evol
 - Real-time updates are server-pushed (notifications, live data)
 
 **For standalone documents (no server):**
-When the document is self-contained and does not need server state (experiments, presentations, visualizations), see `~/.claude/skills/preferences-hypermedia-documents/SKILL.md` for the standalone authoring patterns that share the same design system and progressive enhancement approach.
+When the document is self-contained and does not need server state (experiments, presentations, visualizations), see `preferences-hypermedia-documents` for the standalone authoring patterns that share the same design system and progressive enhancement approach.
 
 **Reconsider when:**
 - Application requires offline-first functionality
@@ -80,13 +80,13 @@ It demonstrates the Go-style handler pattern `(Context, Writer) -> None`, declar
 
 ## Related documents
 
-- `~/.claude/skills/preferences-web-platform-foundations/SKILL.md` - shared vocabulary: 15 web platform properties, capability ladder, paradigm routing
-- `~/.claude/skills/preferences-hypermedia-documents/SKILL.md` - standalone document authoring (presentations, experiments, visualizations) without a server backend
+- `preferences-web-platform-foundations` - shared vocabulary: 15 web platform properties, capability ladder, paradigm routing
+- `preferences-hypermedia-documents` - standalone document authoring (presentations, experiments, visualizations) without a server backend
 - preferences-theoretical-foundations - algebraic foundations: signals as comonads, web components as coalgebras, event sourcing as free monoids (see its decide-evolve-lens reference)
-- `~/.claude/skills/preferences-architectural-patterns/SKILL.md` - onion/hexagonal architecture, effect boundaries
-- `~/.claude/skills/preferences-domain-modeling/SKILL.md` - functional domain modeling, smart constructors
-- `~/.claude/skills/preferences-railway-oriented-programming/SKILL.md` - Result-based error handling
-- `~/.claude/skills/preferences-distributed-systems/SKILL.md` - event log authority, CQRS, idempotency patterns
-- `~/.claude/skills/preferences-data-modeling/SKILL.md` - materialized views, DuckDB/DuckLake patterns
-- `~/.claude/skills/preferences-rust-development/SKILL.md` - Rust-specific patterns (integrates with Datastar-Rust/hypertext)
-- `~/.claude/skills/preferences-typescript-nodejs-development/SKILL.md` - TypeScript patterns for Node.js backends
+- `preferences-architectural-patterns` - onion/hexagonal architecture, effect boundaries
+- `preferences-domain-modeling` - functional domain modeling, smart constructors
+- `preferences-railway-oriented-programming` - Result-based error handling
+- `preferences-distributed-systems` - event log authority, CQRS, idempotency patterns
+- `preferences-data-modeling` - materialized views, DuckDB/DuckLake patterns
+- `preferences-rust-development` - Rust-specific patterns (integrates with Datastar-Rust/hypertext)
+- `preferences-typescript-nodejs-development` - TypeScript patterns for Node.js backends

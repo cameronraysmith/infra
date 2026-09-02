@@ -25,7 +25,7 @@ Errors caught at this stage — choosing a construct that does not lift — are 
 
 ## The Aeneas/Charon-safe Rust subset
 
-Aeneas functionalizes a subset of *safe* Rust (`~/projects/functional-programming-workspace/aeneas`, `README.md:121-139`).
+Aeneas functionalizes a subset of *safe* Rust (`aeneas`, `README.md:121-139`).
 The soundness premise is Rust's borrow checker: because `&mut T` guarantees exclusive access, a mutable borrow can be modeled purely as "take a value in, return the (possibly modified) value out."
 Anything that breaks that exclusive-aliasing guarantee falls outside the model.
 That single principle explains every inclusion and exclusion that follows.

@@ -12,7 +12,7 @@ description: Style and formatting conventions for code, documentation, naming, a
 - Keep section header nesting shallow. Avoid deeply nested subsections (###, ####) when flatter structure with clear prose transitions would be more readable. Most documents should rarely need headers beyond three levels.
 - Use bold text (`**`) sparingly, primarily for critical emphasis within sentences. Avoid bolding section labels, definitions, or key terms when plain text suffices. Prefer italic (`*`) for subtle emphasis.
 - Avoid using emojis in code, comments, documentation, markdown files, etc unless explicitly requested to do so.
-- For documentation-specific markdown conventions (frontmatter titles, header levels), see "Markdown formatting conventions" in `~/.claude/skills/preferences-documentation/SKILL.md`.
+- For documentation-specific markdown conventions (frontmatter titles, header levels), see "Markdown formatting conventions" in `preferences-documentation`.
 
 ## Naming and case conventions
 
@@ -68,7 +68,7 @@ Ousterhout's calibration applies: comments exist to capture design intent and ra
 
 ## File organization
 
-- Never pollute the repository root or other working directory with markdown files. Always place these types of working notes in suitable paths like: `./docs/notes/[category]/[lower-kebab-case-filename.md]` where you may need to create the directory if it doesn't exist before creating the file. See "Working notes" in `~/.claude/skills/preferences-documentation/SKILL.md` for lifecycle management and integration with formal documentation.
+- Never pollute the repository root or other working directory with markdown files. Always place these types of working notes in suitable paths like: `./docs/notes/[category]/[lower-kebab-case-filename.md]` where you may need to create the directory if it doesn't exist before writing the file. See "Working notes" in `preferences-documentation` for lifecycle management and integration with formal documentation.
 
 ### File length and modularization
 
@@ -97,7 +97,7 @@ Log files captured with `tee` during long-running commands live in a repository'
 
 Before writing there, verify that `logs/` is actually ignored by that repository.
 If it is not ignored, write to `$XDG_STATE_HOME/agent-logs/<repo>/` instead and report the missing ignore entry rather than adding it silently.
-Never leave an untracked, unignored file inside a jj working copy; see `~/.claude/skills/jj-version-control/hazards.md` for why a tracked log file is harmful once jj has begun snapshotting it.
+Never leave an untracked, unignored file inside a jj working copy; see the `jj-version-control` skill's `hazards.md` for why a tracked log file is harmful once jj has begun snapshotting it.
 Never delete logs within a session.
 Pruning anything older than fourteen days is an explicit maintenance action only, never a side effect of other work.
 When writing code, follow the XDG Base Directory specification for config, cache, and data paths.

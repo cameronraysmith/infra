@@ -15,8 +15,8 @@ A document becomes an application when it requires server-side state management,
 Most of the work described here stays within the document regime, where the browser is the runtime and the filesystem (or a static host) is the server.
 
 This skill covers the standalone (no server) case.
-For server-connected hypermedia applications, see `~/.claude/skills/preferences-hypermedia-development/SKILL.md`.
-For the shared vocabulary of web platform properties and the paradigm routing framework, see `~/.claude/skills/preferences-web-platform-foundations/SKILL.md`.
+For server-connected hypermedia applications, see `preferences-hypermedia-development`.
+For the shared vocabulary of web platform properties and the paradigm routing framework, see `preferences-web-platform-foundations`.
 
 ## Contents
 
@@ -176,8 +176,8 @@ This suits multi-step demos or documentation sites that do not warrant a static 
 
 ## Related documents
 
-- `~/.claude/skills/preferences-web-platform-foundations/SKILL.md` -- shared vocabulary: 15 platform properties, capability ladder, paradigm routing
-- `~/.claude/skills/preferences-hypermedia-development/SKILL.md` -- server-connected hypermedia applications with Datastar, SSE, event architecture
-- `~/.claude/skills/preferences-hypermedia-development/04-css-architecture.md` -- detailed CSS architecture reference (CUBE CSS, Open Props, cascade layers)
-- `~/.claude/skills/preferences-hypermedia-development/05-web-components.md` -- detailed web component patterns (Lit, morph exclusion, event design)
-- `~/.claude/skills/preferences-architectural-patterns/SKILL.md` -- onion/hexagonal architecture, effect boundaries
+- `preferences-web-platform-foundations` -- shared vocabulary: 15 platform properties, capability ladder, paradigm routing
+- `preferences-hypermedia-development` -- server-connected hypermedia applications with Datastar, SSE, event architecture
+- the `preferences-hypermedia-development` skill's `04-css-architecture.md` -- detailed CSS architecture reference (CUBE CSS, Open Props, cascade layers)
+- the `preferences-hypermedia-development` skill's `05-web-components.md` -- detailed web component patterns (Lit, morph exclusion, event design)
+- `preferences-architectural-patterns` -- onion/hexagonal architecture, effect boundaries

@@ -50,12 +50,12 @@ This guide is organized into focused topic files for easy navigation and AI agen
 
 This document integrates guidance from:
 
-- **Functional domain modeling**: See `~/.claude/skills/preferences-domain-modeling/SKILL.md` for universal patterns, `~/.claude/skills/preferences-architectural-patterns/SKILL.md` for application structure, `~/.claude/skills/preferences-railway-oriented-programming/SKILL.md` for error composition
+- **Functional domain modeling**: See `preferences-domain-modeling` for universal patterns, `preferences-architectural-patterns` for application structure, `preferences-railway-oriented-programming` for error composition
 - **Microsoft Pragmatic Rust Guidelines**: https://microsoft.github.io/rust-guidelines/agents/all.txt - comprehensive production Rust guidance from Microsoft engineers
 - **Rust API Guidelines**: https://rust-lang.github.io/api-guidelines/ - official Rust API design checklist
 
 ### Related documents
 
-- `~/.claude/skills/preferences-distributed-systems/SKILL.md` - universal distributed systems decision framework
+- `preferences-distributed-systems` - universal distributed systems decision framework
 - preferences-theoretical-foundations - category-theoretic underpinnings
-- `~/.claude/skills/preferences-algebraic-data-types/SKILL.md` - sum/product type patterns
+- `preferences-algebraic-data-types` - sum/product type patterns

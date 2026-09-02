@@ -14,7 +14,7 @@ A comprehensive guide for Git users transitioning to Jujutsu, mapping all intera
 > In this repo a pushed `wip` deploy bookmark additionally tracks `@`, so machines rebuild from it.
 > Inside a join never `jj describe @`, never `jj rebase -r @` / `--revisions @`, and never bare `jj squash -r @` (the form at the squashing example below advances `@` through a chain and consumes the `[wip]`).
 > Route changes downward while leaving `@` empty in place with `jj squash --from @ --insert-after <target> -m "..." --keep-emptied [-- <paths>]` (or `--insert-before`), `jj absorb` (documented below as the blame-routed down-route), or `jj split` keeping the wip.
-> Canonical rule, the single-shared-`[wip]` invariant, and rationale live in `~/.claude/skills/jj-version-control/diamond-workflow.md`; join mechanics in `~/.claude/skills/jj-version-control/SKILL.md`; non-interactive command execution in `~/.claude/skills/jj-workflow/SKILL.md`.
+> Canonical rule, the single-shared-`[wip]` invariant, and rationale live in the `jj-version-control` skill's `diamond-workflow.md`; join mechanics in `jj-version-control`; non-interactive command execution in `jj-workflow`.
 
 ## Table of Contents
 
@@ -183,7 +183,7 @@ jj squash -r @      # D squashed into C, @ now points to C
 > Single-chain cleanup only.
 > In a development join `@` is the shared empty `[wip]` sitting on the multi-parent join, so `jj squash -r @` would consume that `[wip]` into its parent and re-point `@` — emptying the editing surface concurrent actors write to and, in this repo, dragging the pushed `wip` deploy bookmark.
 > There, route changes downward with `jj squash --from @ --insert-before <target> --keep-emptied -m "..."` (or `--insert-after <target>`), which leaves `@` empty and in place, or `jj absorb`.
-> See `~/.claude/skills/jj-version-control/diamond-workflow.md`.
+> See the `jj-version-control` skill's `diamond-workflow.md`.
 
 Or more directly:
 ```bash
@@ -545,7 +545,7 @@ jj split -r <commit> -- file1.txt -m "Part 1"
 | Edit commit without checkout | `jj diffedit -r <commit>` |
 | Duplicate commit | `jj duplicate <commit>` |
 | Duplicate to specific location | `jj duplicate <commit> -d <dest>` |
-| Inside a development join: keep `@` as the empty `[wip]` | Do not `describe @` / `rebase -r @` / bare `squash -r @`; route down with `jj squash --from @ --insert-after <target> -m "..." --keep-emptied`, `jj absorb`, or `jj split` (keep wip). See `~/.claude/skills/jj-version-control/diamond-workflow.md`. |
+| Inside a development join: keep `@` as the empty `[wip]` | Do not `describe @` / `rebase -r @` / bare `squash -r @`; route down with `jj squash --from @ --insert-after <target> -m "..." --keep-emptied`, `jj absorb`, or `jj split` (keep wip). See the `jj-version-control` skill's `diamond-workflow.md`. |
 
 #### Commit Reordering & Moving
 

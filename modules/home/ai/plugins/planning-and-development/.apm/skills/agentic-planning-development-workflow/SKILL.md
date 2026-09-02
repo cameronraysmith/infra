@@ -21,8 +21,8 @@ For the collaborator map naming who owns what, see references/collaborators.md.
 ### One-time initialization
 
 Run the workspace safety gate first, before any Linear call.
-Assert both `LINEAR_API_KEY` and `LINEAR_WORKSPACE` are unset, then `linear auth whoami --workspace <slug>` to confirm the reported workspace is the intended personal-versus-work one, and pass an explicit `--workspace <slug>` on every later call including reads; the gate mechanics live in linear-project-management/references/linear-workspace-safety-gate.md.
-As a one-time act, create or extend the openspec/linear.yaml registry with the teams and projects entries for the chosen team and project; then, per change at the Backlog-to-Todo bind, write `linear_story_*` plus `linear_team` and `linear_project` and initialize the D10 sync ledger into that change's proposal.md frontmatter only, and seed the Linear issue description from the change's proposal.md business-facing content, referencing the registry's teams and projects entries rather than writing the binding into the registry; the config schema, the one-question setup, and the write-before-read frontmatter binding live in openspec-linear-sync/references/config-and-frontmatter.md.
+Assert both `LINEAR_API_KEY` and `LINEAR_WORKSPACE` are unset, then `linear auth whoami --workspace <slug>` to confirm the reported workspace is the intended personal-versus-work one, and pass an explicit `--workspace <slug>` on every later call including reads; the gate mechanics live in the `linear-project-management` skill's `references/linear-workspace-safety-gate.md`.
+As a one-time act, create or extend the openspec/linear.yaml registry with the teams and projects entries for the chosen team and project; then, per change at the Backlog-to-Todo bind, write `linear_story_*` plus `linear_team` and `linear_project` and initialize the D10 sync ledger into that change's proposal.md frontmatter only, and seed the Linear issue description from the change's proposal.md business-facing content, referencing the registry's teams and projects entries rather than writing the binding into the registry; the config schema, the one-question setup, and the write-before-read frontmatter binding live in the `openspec-linear-sync` skill's `references/config-and-frontmatter.md`.
 Orient beads for the Manual-mode drill-down via /session-orient, with the comprehensive command reference in the issues-beads skill.
 
 ### Quick flow (HIL)
@@ -37,8 +37,8 @@ Each step is a Skill-tool invocation, with the board transition it fires called 
 5. Invoke the `openspec-continue-change` skill for the retrospective artifact, inside the In Review window.
 6. Invoke the `openspec-archive-change` skill: readiness then sync then archive then mirror UPSERT => T4 In Review to Done; Done binds to archive.
 
-The shared re-queue receives a verify.md checked-FAIL `(fail) FAIL` or a rejection at either In-Review sub-gate and routes In Review back to In Progress above the mode fork, under a bounded-retries default of 3; the re-queue and bounded-retries mechanics live in references/board-and-gates.md and the transition mechanics in openspec-linear-sync/references/lifecycle.md.
-Catch-up reconciliation fires a single transition straight to the local phase when the local phase and the resolved Linear state disagree by more than one step, rather than walking the intermediate crossings; it is owned by openspec-linear-sync/references/lifecycle.md, with the board side in references/board-and-gates.md.
+The shared re-queue receives a verify.md checked-FAIL `(fail) FAIL` or a rejection at either In-Review sub-gate and routes In Review back to In Progress above the mode fork, under a bounded-retries default of 3; the re-queue and bounded-retries mechanics live in references/board-and-gates.md and the transition mechanics in the `openspec-linear-sync` skill's `references/lifecycle.md`.
+Catch-up reconciliation fires a single transition straight to the local phase when the local phase and the resolved Linear state disagree by more than one step, rather than walking the intermediate crossings; it is owned by the `openspec-linear-sync` skill's `references/lifecycle.md`, with the board side in references/board-and-gates.md.
 
 ### Step-by-step note
 
@@ -113,7 +113,7 @@ The isolation policy, the apply-gate confirmation, and orchestrator-routed commi
 
 In a development join every editor edits the same empty `@`=`[wip]`, which is the shared coordination surface that keeps concurrent editors safe, and routes completed content downward into the owning chain.
 Never `jj describe @` into content and never relocate `@` with a positional `jj rebase -r @`; either dissolves the surface the others are concurrently writing.
-Defer the full canon to jj-version-control/SKILL.md invariant (iii-b)/(vi).
+Defer the full canon to `jj-version-control` invariant (iii-b)/(vi).
 
 ## Contents
 

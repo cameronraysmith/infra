@@ -77,7 +77,7 @@ Two routes avoid this, neither of which moves `@`: resolve at the join by naming
 Prefer the squash route for a hand-crafted resolution.
 The built-in tools `--tool :ours` and `--tool :theirs` select side #1 and side #2 of the conflict, and which parent those correspond to under a merge with three or more parents is not established here.
 
-`~/.claude/skills/jj-version-control/SKILL.md` holds the full procedure and the join-specific recovery steps.
+`jj-version-control` holds the full procedure and the join-specific recovery steps.
 
 ### Mandatory command verification protocol
 
@@ -171,7 +171,7 @@ All content leaves `@` by routing downward with `@` left in place and empty, via
 
 The splice-below-join must use the `--keep-emptied` squash form, never `jj describe @` followed by `jj rebase --revisions @ --insert-before <target>`: that two-step opens a transient window with no `[wip]` on the join, which is catastrophic under concurrency, and in this repo drags the pushed `wip` deploy bookmark below the join.
 In every splice/relocation recipe the relocated `<commit>`/`<X>`/`<range>` is a separate, already-sealed non-wip commit, never `@`/`[wip]` itself.
-For the canonical invariant statement (iii-b), command templates, and rationale, see `~/.claude/skills/jj-version-control/SKILL.md` §"Development join".
+For the canonical invariant statement (iii-b), command templates, and rationale, see `jj-version-control` §"Development join".
 
 ### Git parity and the `jj new` requirement
 
@@ -440,13 +440,13 @@ Workspace creation is reserved for cases where a separate filesystem tree is its
 Parallel related work in jj mode uses the diamond workflow's development join, which remains the default.
 
 In a flake repository the separate tree must be a `git worktree add` rather than a `jj workspace add`, because a jj workspace has no `.git` and flake evaluation there degrades to a `path:` source with no revision.
-The `jj workspace add` mechanics below therefore apply to non-flake repositories; for the git-worktree path and the discipline that governs it, see `~/.claude/skills/jj-version-control/SKILL.md` §"Worktree interop".
+The `jj workspace add` mechanics below therefore apply to non-flake repositories; for the git-worktree path and the discipline that governs it, see `jj-version-control` §"Worktree interop".
 
 Cross-references:
-- `~/.claude/skills/jj-version-control/tiered-ceremony.md` — policy authority for when ceremony escalates from anonymous chain to bookmarked chain, and for why a separate working copy is not a tier.
-- `~/.claude/skills/jj-version-control/diamond-workflow.md` — default parallel-work technique using multi-parent `@`.
-- `~/.claude/skills/jj-version-control/SKILL.md` "Development join" — the multi-parent working-copy entity that carries parallel work in one tree.
-- `~/.claude/skills/jj-version-control/SKILL.md` "Worktree interop" — the git-worktree alternative, its ownership rules, and its recovery commands.
+- The `jj-version-control` skill's `tiered-ceremony.md` — policy authority for when ceremony escalates from anonymous chain to bookmarked chain, and for why a separate working copy is not a tier.
+- The `jj-version-control` skill's `diamond-workflow.md` — default parallel-work technique using multi-parent `@`.
+- `jj-version-control` §"Development join" — the multi-parent working-copy entity that carries parallel work in one tree.
+- `jj-version-control` §"Worktree interop" — the git-worktree alternative, its ownership rules, and its recovery commands.
 
 ### Trigger condition
 
@@ -714,8 +714,8 @@ The resulting `@` is a development join.
 When a parent bookmark advances (via `squash --into`, `absorb`, commits from another workspace, collaborator push, or `jj git fetch`), jj automatically rebases `@` onto the updated parents.
 The development join's working tree stays current without manual rebase steps.
 
-For the operational workflow, conflict semantics, edit-route cycle, route-and-extend pattern, composite-maintenance invariant, and beads-integration recipes, see `~/.claude/skills/jj-version-control/SKILL.md` §"Development join".
-For the cross-tool terminology mapping ("GitButler equivalence mapping"), see `~/.claude/skills/preferences-git-version-control/03-jj-mode.md`.
+For the operational workflow, conflict semantics, edit-route cycle, route-and-extend pattern, composite-maintenance invariant, and beads-integration recipes, see `jj-version-control` §"Development join".
+For the cross-tool terminology mapping ("GitButler equivalence mapping"), see the `preferences-git-version-control` skill's `03-jj-mode.md`.
 For background on multi-parent `jj new` and the design rationale, see Chris Krycho's ["jj init" essay](https://raw.githubusercontent.com/chriskrycho/v5.chriskrycho.com/d3f989498a3828aeb7e5e816e115b9fc0196d8d0/site/essays/jj%20init.md), particularly the section on creating three-parent merges.
 
 ## History refinement
@@ -763,7 +763,7 @@ Each step executes immediately. Use `jj undo` to back out of any step.
 
 These rebase-by-revision recipes assume `<commit>` is a stacked, non-wip commit in a single chain.
 When a multi-parent development join is present (see "Composite working copy maintenance" above and §"Diamond workflow"), never pass `@` (the empty `[wip]`) as the rebased revision: relocating `@` below the join destroys the shared editing surface concurrent actors write to and drags the pushed `wip` deploy bookmark.
-To splice a fix below the join from the working copy, use `jj squash --from @ --insert-before <target> -m "msg" --keep-emptied -- <paths>`, which leaves `@` in place and empty; see the splice-below-join recipe in `~/.claude/skills/jj-version-control/SKILL.md` §"Development join".
+To splice a fix below the join from the working copy, use `jj squash --from @ --insert-before <target> -m "msg" --keep-emptied -- <paths>`, which leaves `@` in place and empty; see the splice-below-join recipe in `jj-version-control` §"Development join".
 
 Reorder commits:
 
@@ -1018,7 +1018,7 @@ If any step fails, `jj undo` backs out immediately.
 
 The diamond workflow connects beads epic issue graphs to jj chain topology through four phases: diverge, develop, converge, serialize.
 Tactical commands at use-sites include `jj new chain-a chain-b ...` for the development join, `jj describe -m "join N=<cardinality>: <alphabetical bookmarks, comma-separated>"` then `jj new` for the join + wip structure, and `jj squash --from <src> --into <chain>` for routing changes.
-For the canonical operational recipe, theoretical foundations, and beads-to-jj mapping, see `~/.claude/skills/jj-version-control/diamond-workflow.md`.
+For the canonical operational recipe, theoretical foundations, and beads-to-jj mapping, see the `jj-version-control` skill's `diamond-workflow.md`.
 
 ### Integration strategies
 
@@ -1055,7 +1055,7 @@ jj git push --bookmark main
 
 Integrate multiple experiments (when both valuable):
 
-For dissolving a development join and sequential rebase linearization of N chains onto main, see `~/.claude/skills/jj-version-control/SKILL.md` §"Integration strategies at completion" (canonical entity reference) and `~/.claude/skills/jj-version-control/diamond-workflow.md` §"Phase 4: serialize (integrate)" (full recipe including N+1 stacked-base PR submission).
+For dissolving a development join and sequential rebase linearization of N chains onto main, see `jj-version-control` §"Integration strategies at completion" (canonical entity reference) and the `jj-version-control` skill's `diamond-workflow.md` §"Phase 4: serialize (integrate)" (full recipe including N+1 stacked-base PR submission).
 
 ### Sub-experiments within experiments
 
@@ -1336,7 +1336,7 @@ jj absorb                      # Auto-distribute @ to ancestors
 #   concurrency, drags the pushed wip deploy bookmark, breaks the one-child invariant); jj describe @ consumes
 #   the wip into content. Route down instead via jj absorb or
 #   jj squash --from @ --into/--insert-after <target> --keep-emptied.
-#   See "Composite working copy maintenance" and ~/.claude/skills/jj-version-control/SKILL.md §"Development join".
+#   See "Composite working copy maintenance" and `jj-version-control` §"Development join".
 jj rebase -r <commit> -d <dest>       # Move commit to new parent
 jj rebase -s <commit> -d <dest>       # Move commit and descendants
 jj rebase -r <commit> -A <after>      # Insert after commit
@@ -1403,7 +1403,7 @@ Use explicit operation IDs from session start for precise ranges.
 - Operation log is history (commits are snapshots, operations are timeline)
 - Bookmarks don't move automatically (only on commit rewrites)
 - Working copy commit `@` is ephemeral in solo work (constantly rewritten); in a multi-parent development join it is held STABLE as the empty `[wip]` coordination point — do not treat it as freely rewritable (see "Composite working copy maintenance")
-- `@` is the stable `[wip]` in a development join: when a multi-parent join is active, `@` is the empty `[wip]` shared by all concurrent editors and tracked by the pushed `wip` deploy bookmark (machines rebuild from it); route changes DOWN with `jj absorb` or `jj squash --from @ --insert-before/--insert-after <target> -m "msg" --keep-emptied [-- <paths>]`, and never `jj describe @` into content nor `jj rebase -r @` / `jj rebase --revisions @` — either drifts `@` off the join, destroys the shared editing surface, and drags the deploy bookmark (see `~/.claude/skills/jj-version-control/SKILL.md` §"Development join")
+- `@` is the stable `[wip]` in a development join: when a multi-parent join is active, `@` is the empty `[wip]` shared by all concurrent editors and tracked by the pushed `wip` deploy bookmark (machines rebuild from it); route changes DOWN with `jj absorb` or `jj squash --from @ --insert-before/--insert-after <target> -m "msg" --keep-emptied [-- <paths>]`, and never `jj describe @` into content nor `jj rebase -r @` / `jj rebase --revisions @` — either drifts `@` off the join, destroys the shared editing surface, and drags the deploy bookmark (see `jj-version-control` §"Development join")
 - Change IDs provide stability (commit IDs change, change IDs don't)
 - No staging area (working copy state is commit state)
 - Conflicts are first-class (committed, resolved when convenient)

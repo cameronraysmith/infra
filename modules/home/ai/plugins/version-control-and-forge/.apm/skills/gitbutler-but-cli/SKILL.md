@@ -287,7 +287,7 @@ but pull
 - Avoid `--help` probes; use this skill and `references/reference.md` first. Only use `--help` after a failed attempt.
 - Run `but skill check` only when command behavior diverges from this skill, not as routine preflight.
 - jj provides an equivalent multi-parent working copy pattern via `jj new bookmark-a bookmark-b`.
-  See `~/.claude/skills/jj-workflow/SKILL.md` for the jj-native workflow and `~/.claude/skills/preferences-git-version-control/SKILL.md` for the cross-tool mapping.
+  See `jj-workflow` for the jj-native workflow and `preferences-git-version-control` for the cross-tool mapping.
 - For command syntax and flags: `references/reference.md`
 - For workspace model: `references/concepts.md`
 - For workflow examples: `references/examples.md`

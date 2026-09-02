@@ -1,7 +1,7 @@
 # Prior art: ironstar's Idris2 spec and Rust crates
 
 The ironstar template is the closest existing prior art for this skill's loop, and it is the substrate for the later full-loop test exercise.
-It already practices the spec-leads-implementation half of refinement-driven development by hand: a dependently-typed Idris2 specification at `~/projects/rust-workspace/ironstar/spec` defines the domain model, algebraic laws, and proof terms, and a Rust workspace at `~/projects/rust-workspace/ironstar/crates` realizes those specifications as concrete types and trait implementations.
+It already practices the spec-leads-implementation half of refinement-driven development by hand: a dependently-typed Idris2 specification in the local `ironstar` checkout's `spec/` defines the domain model, algebraic laws, and proof terms, and a Rust workspace in its `crates/` realizes those specifications as concrete types and trait implementations.
 What ironstar does *not* yet have is the mechanized lift: no Charon, Aeneas, LLBC, or Lean material exists in the repository today, so its spec-to-code relationship is maintained entirely by hand and by tests.
 That missing half is exactly what the later exercise targets, and this reference mines ironstar read-only to prepare for it; the actual Idris2 to Lean 4 re-modeling is the user's test of the finished skill, not work performed now.
 
@@ -17,7 +17,7 @@ That missing half is exactly what the later exercise targets, and this reference
 ## How the spec and crates mirror each other
 
 The Idris2 spec is organized as five `Core.*` abstraction modules (Decider, View, Saga, Effect, Event), a `SharedKernel.UserId` module, and four bounded contexts (Analytics as the core domain, Session and Workspace as supporting, Todo as a generic example), with `%default total` set in every module.
-The whole pattern family descends from Jérémie Chassaing's Decider, realized in Rust via the `fmodel-rust` dependency (a local clone lives at `~/projects/rust-workspace/fmodel-rust`).
+The whole pattern family descends from Jérémie Chassaing's Decider, realized in Rust via the `fmodel-rust` dependency (a local clone of the upstream repository).
 The central abstraction is a record of three function fields: `decide :: c -> s -> Either err (List e)` (the coalgebra unfolding commands into events), `evolve :: s -> e -> s` (the algebra folding events into state, deliberately total), and `initialState :: s`.
 The totality of `evolve` is itself the encoding of the domain fact that events are historical and cannot fail.
 
@@ -115,6 +115,6 @@ These are the manual translation-validation that the mechanized check is meant t
 
 A few claims here are sketched in ironstar itself and should be confirmed against source before the exercise leans on them.
 It is not settled whether real property tests (`proptest!` macro bodies) exist versus only example-based `DeciderTestSpecification` Given/When/Then; the Todo decider tests inspected were example-based, and the `proptest` mentions matched mostly README and re-export lines, so treat the laws as verified by example primarily.
-The exact `fmodel-rust` 0.9 surface for `View`/`Saga`/`Aggregate` was read through ironstar's re-exports and usage rather than upstream source; consult `~/projects/rust-workspace/fmodel-rust` directly for the `Decider`/`Sum` definitions when assessing lift translatability.
+The exact `fmodel-rust` 0.9 surface for `View`/`Saga`/`Aggregate` was read through ironstar's re-exports and usage rather than upstream source; consult the local `fmodel-rust` clone directly for the `Decider`/`Sum` definitions when assessing lift translatability.
 The `MonotonicIds` `MonoCons` constructor as written appears to be a sketch that does not thread the ordering proof, so treat `MonotonicIds` as aspirational, not load-bearing, when porting (the `List.Chain'`/`List.Sorted` substitution in the table is the cleaner target anyway).
 Finally, the Analytics and Workspace per-aggregate modules were not exhaustively line-cited; they follow the same Decider-plus-sum-state-plus-`Either`-error shape, but specific command and event names should be read from source per aggregate when porting them.
