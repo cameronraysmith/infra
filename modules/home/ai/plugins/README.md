@@ -73,7 +73,7 @@ Three separate, independently-operated mechanisms currently suppress or withhold
 
 1. **`disable-model-invocation: true` frontmatter**, set per skill, prevents that skill from auto-triggering on a description match; the skill is still delivered and still invocable by explicit name or slash command. 21 of the 126 skills in this corpus carry the flag set to `true`, and 2 carry it explicitly set to `false`. Factually, all 21 are operational or command-style skills — meta-tooling commands, event-modeling workflow steps, document-conversion utilities, and git/jj/nix operational commands — and none of them are `preferences-*` conceptual-foundation skills; no `preferences-*` skill in this corpus carries the flag.
 2. **The delivery exclusion list** (`excludedSkills` in `../skills/default.nix`) removes a skill from every delivered harness target (`~/.claude/skills`, `~/.factory/skills`, codex, opencode) even though the skill still exists in the composed tree. It currently withholds `tdd` and `harborize`, each for a documented reason in that file.
-3. **The `@` force-load prefix** in `../../tools/agents-md.nix` (this file's sibling) inlines a skill's full body into the generated context file itself, bypassing both delivery and description-based discovery. Only one skill carries it after this change; see "Archived skill index" below for the one that no longer does.
+3. **A named reference with an explicit loading condition**, in `../../tools/agents-md.nix` (this file's sibling), states a skill's name in the generated context text alongside a stated condition for when to load it, rather than inlining the skill's full body via a path-based force-load prefix and bypassing both delivery and description-based discovery. Only one skill carries this treatment; see "Archived skill index" below for the one that used to carry the old `@` force-load prefix instead.
 
 The `issues-beads-*` family (`issues-beads`, `issues-beads-audit`, `issues-beads-checkpoint`, `issues-beads-evolve`, `issues-beads-init`, `issues-beads-orient`, `issues-beads-prime`, `issues-beads-seed`) previously sat behind mechanisms 1 and 2 above; both are now moot for that family because the eight directories were deleted outright on 2026-08-26, since beads no longer owns the work — Linear and OpenSpec now do. Recover any of them from history, once this deletion is committed, with `git log --diff-filter=D -- modules/home/ai/plugins/beads-issue-tracking-and-session-workflow/.apm/skills/`, which finds the deleting commit by path prefix rather than by a hash that does not exist yet.
 
@@ -83,85 +83,85 @@ The `issues-beads-*` family (`issues-beads`, `issues-beads-audit`, `issues-beads
 <summary>Frozen snapshot of the proactive-read skill index, taken 2026-08-26, removed from <code>../../tools/agents-md.nix</code></summary>
 
 This list is not maintained.
-It is a byte-for-byte copy of the bullets that were force-loaded or proactively read from `agents-md.nix` at the moment they were deleted from that file, kept only so a reader can see what a session used to be told to read.
+It is a byte-for-byte copy of the descriptive glosses that were force-loaded or proactively read from `agents-md.nix` at the moment they were deleted from that file, kept only so a reader can see what a session used to be told to read.
 Do not treat any gloss below as current: a skill's own `description` frontmatter in its `SKILL.md` is the authoritative, currently-maintained source, and drift between these glosses and that frontmatter has already been observed at least once.
-`skillsPath` below is the literal Nix interpolation as it appeared in the generator, expanding to `${config.home.homeDirectory}/.claude/skills`.
+Each entry's reference below is normalized to a bare skill name rather than reproducing the generator's original `skillsPath` interpolation (a machine-local `~/.claude/skills` prefix, with an `@` prefix on the two entries that force-loaded), since this README publishes into the marketplace and must not carry machine-local paths.
 
-- style and conventions: @${skillsPath}/preferences-style-and-conventions/SKILL.md
-- git version control: @${skillsPath}/preferences-git-version-control/SKILL.md
-- prose clarity (sentence-level writing discipline, reader processing cost, calibrated claims, editing others' text): ${skillsPath}/preferences-prose-clarity/SKILL.md
-- essential complexity (complexity pays rent in domain invariants; refinement-chain care scaling; falsifiable rigor, sorry-debt): ${skillsPath}/preferences-essential-complexity/SKILL.md
-- git history cleanup: ${skillsPath}/preferences-git-history-cleanup/SKILL.md
-- comment cleanup (uncomment-driven noise-comment removal, load-bearing marker preservation; operational arm of the code-comments policy): ${skillsPath}/preferences-comment-cleanup/SKILL.md
-- jj version control: ${skillsPath}/jj-summary/SKILL.md
-- jj workflow (full): ${skillsPath}/jj-workflow/SKILL.md
-- jj history cleanup (atomic reorder/squash/split, conventional-commit narrative; jj analog of git history cleanup; see also jj-git-interactive-rebase-to-jj): ${skillsPath}/jj-history-cleanup/SKILL.md
-- documentation (three tiers — user-facing Diataxis, development AMDiRE, and the local README hierarchy with its index/leaf roles and earns-its-place bar; prose defers to prose-clarity, diagrams to architecture-diagramming): ${skillsPath}/preferences-documentation/SKILL.md
-- change management: ${skillsPath}/preferences-change-management/SKILL.md
-- agentic planning and development (state-machine router across the Linear-canonical board Backlog -> Todo -> In Progress -> In Review -> Done; AFK/HIL/Manual execution-mode fork; four file-anchored OpenSpec-artifact forward gates): ${skillsPath}/agentic-planning-development-workflow/SKILL.md
-- linear project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work): ${skillsPath}/linear-project-management/SKILL.md
-- superpowers discipline gate (invoke the relevant skill before any response or action, including clarifying questions; process-skills-first): ${skillsPath}/using-superpowers/SKILL.md
-- session resumption (resume command, atuin history, session continuation): ${skillsPath}/meta-session-resume/SKILL.md
-- session search (session transcript discovery, keyword intersection): ${skillsPath}/meta-search-sessions/SKILL.md
-- knowledge graph grounding (cognee reference-corpus indexing/retrieval for grounding technical writing and review; a reference-knowledge index, not agent session memory): ${skillsPath}/knowledge-graph/SKILL.md
-- team orchestration initiate (master-orchestrator mission start; team-level analog of orientation; actor-critic / worker-orchestrator decomposition): ${skillsPath}/meta-orchestrator-initiate/SKILL.md
-- team orchestration checkpoint (master-level cross-cycle state capture and handoff): ${skillsPath}/meta-orchestrator-checkpoint/SKILL.md
-- architectural patterns: ${skillsPath}/preferences-architectural-patterns/SKILL.md
-- architecture diagramming (C4, format selection, diagram compendium): ${skillsPath}/preferences-architecture-diagramming/SKILL.md
-- functional domain modeling (DDD, types, aggregates): ${skillsPath}/preferences-domain-modeling/SKILL.md
-- event sourcing (event replay, state reconstruction, CQRS): ${skillsPath}/preferences-event-sourcing/SKILL.md
-- event catalog tooling (EventCatalog, schema documentation): ${skillsPath}/preferences-event-catalog-tooling/SKILL.md
-- qlerify to eventcatalog (transformation workflow): ${skillsPath}/preferences-event-catalog-qlerify/SKILL.md
-- event modeling (Event Modeling, Qlerify, D2 diagrams): ${skillsPath}/preferences-event-modeling/SKILL.md
-- discovery process: ${skillsPath}/preferences-discovery-process/SKILL.md
-- collaborative modeling (EventStorming, Domain Storytelling): ${skillsPath}/preferences-collaborative-modeling/SKILL.md
-- strategic domain analysis (Core/Supporting/Generic classification): ${skillsPath}/preferences-strategic-domain-analysis/SKILL.md
-- bounded context design (context mapping, integration, ACL): ${skillsPath}/preferences-bounded-context-design/SKILL.md
-- functional reactive programming (FRP foundations, arrows, presheaves): ${skillsPath}/preferences-functional-reactive-programming/SKILL.md
-- algebraic data types (sum/product types, discriminated unions, pattern matching, making illegal states unrepresentable): ${skillsPath}/preferences-algebraic-data-types/SKILL.md
-- theoretical foundations (category/type-theory keystone; capability interfaces over transformer stacks, graded effects/coeffects, Lean-spec-beside-implementation; pairs with refinement-driven-development): ${skillsPath}/preferences-theoretical-foundations/SKILL.md
-- computational system taxonomy (closed vs open systems from automata theory and process calculi; batch/stream/services terminology mapping; heterogeneous composition patterns): ${skillsPath}/preferences-computational-system-taxonomy/SKILL.md
-- algebraic laws (functor/monad laws, property-based testing): ${skillsPath}/preferences-algebraic-laws/SKILL.md
-- refinement-driven development (dependently-typed Lean 4 spec, refine/lower to a Charon/Aeneas-safe Rust subset, lift via Aeneas.Charon, check by translation validation; mechanical proof the ideal not a requirement): ${skillsPath}/refinement-driven-development/SKILL.md
-- requirements engineering (WRSPM pentad; the two obligations W∧S⇒R, the satisfaction argument, and P⇒S; the four dark corners; the designation table; indicative/optative separation; KAOS goal-obstacle analysis; Parnas four-variable model; the WRSPM-versus-AMDiRE shear): ${skillsPath}/preferences-requirements-engineering/SKILL.md
-- satisfaction argument audit (three-gate chain across proof institutions; blind informalization for specification-versus-intent; the trust-surface inventory; the claims status table with satisfiability, non-vacuity, co-vacuity; safe external wording; the never-claim-end-to-end prohibition): ${skillsPath}/satisfaction-argument-audit/SKILL.md
-- nucleus platform (thin router for the spec-anchored approximately-verifiable data-modeling monorepo; Lean 4 structural source of truth; instantiate-then-reconstruct round trip driving structural drift toward zero): ${skillsPath}/nucleus-platform/SKILL.md
-- adaptive planning (control theory, buffer sizing, planning horizons, VSM mapping): ${skillsPath}/preferences-adaptive-planning/SKILL.md
-- workflow orchestration algebra (Dagster/Flyte read through Build Systems à la Carte; free-term vs store-interpreter split, lawful IO managers; data-pipeline orchestration, not agent DAGs): ${skillsPath}/preferences-workflow-orchestration-algebra/SKILL.md
-- validation assurance (severity, evidence quality, confidence, test adequacy, regression, refinement): ${skillsPath}/preferences-validation-assurance/SKILL.md
-- compositional continuous verification (CCV — operating-envelope-plus-regulator pairs composing into a closure operator; theoretical anchor for system-level approximate correctness): ${skillsPath}/preferences-compositional-continuous-verification/SKILL.md
-- acceptance-test-driven development (ATDD outer loop wrapping inner TDD; routes each proposition to BDD / property / law / proof / smoke): ${skillsPath}/atdd-outer-loop/SKILL.md
-- test-driven development (red-green-refactor; no production code without a failing test first): ${skillsPath}/test-driven-development/SKILL.md
-- systematic debugging (root-cause-before-fix discipline; question the architecture after repeated failed fixes; see also diagnosing-bugs): ${skillsPath}/systematic-debugging/SKILL.md
-- verification before completion (evidence before claims; run the verification command before asserting done/passing/fixed/committing): ${skillsPath}/verification-before-completion/SKILL.md
-- code review (two-axis Standards + Spec review of the diff; requesting-code-review author side, receiving-code-review responder side): ${skillsPath}/code-review/SKILL.md
-- observability engineering (structured events, traces, SLOs, instrumentation, telemetry architecture): ${skillsPath}/preferences-observability-engineering/SKILL.md
-- production readiness (ODD, progressive delivery, health checks, incident learning, CI/CD observability): ${skillsPath}/preferences-production-readiness/SKILL.md
-- distributed systems (CAP/PACELC/linearizability, consistency models, CRDTs, idempotency, sagas, dual-write avoidance, deterministic replay): ${skillsPath}/preferences-distributed-systems/SKILL.md
-- scalable probabilistic modeling (Bayesian workflow, simulation-based inference, stochastic dynamical systems): ${skillsPath}/preferences-scalable-probabilistic-modeling-workflow/SKILL.md
-- scientific inquiry methodology (Peircean pragmatism, effective theories, Mayo severity, iterative model building; hierarchy of mechanistic evidence): ${skillsPath}/preferences-scientific-inquiry-methodology/SKILL.md
-- smart constructors and validation patterns: see preferences-domain-modeling
-- error handling and workflow composition (Result types, railway-oriented): ${skillsPath}/preferences-railway-oriented-programming/SKILL.md
-- data modeling (database schemas, normalization, ER diagrams): ${skillsPath}/preferences-data-modeling/SKILL.md
-- json querying (duckdb, jaq): ${skillsPath}/preferences-json-querying/SKILL.md
-- schema versioning: ${skillsPath}/preferences-schema-versioning/SKILL.md
-- web application deployment: ${skillsPath}/preferences-web-application-deployment/SKILL.md
-- cloudflare wrangler configuration: ${skillsPath}/preferences-cloudflare-wrangler-reference/SKILL.md
-- secrets management: ${skillsPath}/preferences-secrets/SKILL.md
-- nix development (flakes, derivations, modules, code style; new files need tracking before a flake build can see them, since flake sources are git-tracked only; verify with targeted `nix eval`/`nix build` probes and `just check-fast` rather than a bare `nix flake check` sweep — see nix flake PR cycle): ${skillsPath}/preferences-nix-development/SKILL.md
-- nix flake checks architecture (check taxonomy, derivation patterns, VM tests): ${skillsPath}/preferences-nix-checks-architecture/SKILL.md
-- nix CI/CD integration (nix-fast-build, buildbot-nix, effects, migration): ${skillsPath}/preferences-nix-ci-cd-integration/SKILL.md
-- nix flake PR cycle (enumerate checks, probe via nix eval/build, just check-fast, draft PR, buildbot monitor, ready, Mergify): ${skillsPath}/nix-flake-pr-cycle/SKILL.md
-- CI workflow log verification (GHA + buildbot unified retrieval, full log archives, buildbot-logs): ${skillsPath}/ci-log-verification/SKILL.md
-- python development: ${skillsPath}/preferences-python-development/SKILL.md
-- rust development: ${skillsPath}/preferences-rust-development/SKILL.md
-- haskell development: ${skillsPath}/preferences-haskell-development/SKILL.md
-- typescript/node.js development: ${skillsPath}/preferences-typescript-nodejs-development/SKILL.md
-- react/ui development: ${skillsPath}/preferences-react-tanstack-ui-development/SKILL.md
-- web platform foundations (15 properties, capability ladder, paradigm routing): ${skillsPath}/preferences-web-platform-foundations/SKILL.md
-- hypermedia/server-driven UI development: ${skillsPath}/preferences-hypermedia-development/SKILL.md
-- hypermedia document authoring (presentations, SVG, MathML, standalone experiments): ${skillsPath}/preferences-hypermedia-documents/SKILL.md
-- scientific data visualization (figures, tables, diagrams, colormaps): ${skillsPath}/scientific-visualization/SKILL.md
-- text-to-visual iteration (compile-inspect-refine loop, SVG/PNG/PDF pipelines): ${skillsPath}/text-to-visual-iteration/SKILL.md
+- style and conventions: `preferences-style-and-conventions`
+- git version control: `preferences-git-version-control`
+- prose clarity (sentence-level writing discipline, reader processing cost, calibrated claims, editing others' text): `preferences-prose-clarity`
+- essential complexity (complexity pays rent in domain invariants; refinement-chain care scaling; falsifiable rigor, sorry-debt): `preferences-essential-complexity`
+- git history cleanup: `preferences-git-history-cleanup`
+- comment cleanup (uncomment-driven noise-comment removal, load-bearing marker preservation; operational arm of the code-comments policy): `preferences-comment-cleanup`
+- jj version control: `jj-summary`
+- jj workflow (full): `jj-workflow`
+- jj history cleanup (atomic reorder/squash/split, conventional-commit narrative; jj analog of git history cleanup; see also jj-git-interactive-rebase-to-jj): `jj-history-cleanup`
+- documentation (three tiers — user-facing Diataxis, development AMDiRE, and the local README hierarchy with its index/leaf roles and earns-its-place bar; prose defers to prose-clarity, diagrams to architecture-diagramming): `preferences-documentation`
+- change management: `preferences-change-management`
+- agentic planning and development (state-machine router across the Linear-canonical board Backlog -> Todo -> In Progress -> In Review -> Done; AFK/HIL/Manual execution-mode fork; four file-anchored OpenSpec-artifact forward gates): `agentic-planning-development-workflow`
+- linear project management (Linear Method ontology, workspace safety gate, ownership-by-layer: Linear + OpenSpec own the work): `linear-project-management`
+- superpowers discipline gate (invoke the relevant skill before any response or action, including clarifying questions; process-skills-first): `using-superpowers`
+- session resumption (resume command, atuin history, session continuation): `meta-session-resume`
+- session search (session transcript discovery, keyword intersection): `meta-search-sessions`
+- knowledge graph grounding (cognee reference-corpus indexing/retrieval for grounding technical writing and review; a reference-knowledge index, not agent session memory): `knowledge-graph`
+- team orchestration initiate (master-orchestrator mission start; team-level analog of orientation; actor-critic / worker-orchestrator decomposition): `meta-orchestrator-initiate`
+- team orchestration checkpoint (master-level cross-cycle state capture and handoff): `meta-orchestrator-checkpoint`
+- architectural patterns: `preferences-architectural-patterns`
+- architecture diagramming (C4, format selection, diagram compendium): `preferences-architecture-diagramming`
+- functional domain modeling (DDD, types, aggregates): `preferences-domain-modeling`
+- event sourcing (event replay, state reconstruction, CQRS): `preferences-event-sourcing`
+- event catalog tooling (EventCatalog, schema documentation): `preferences-event-catalog-tooling`
+- qlerify to eventcatalog (transformation workflow): `preferences-event-catalog-qlerify`
+- event modeling (Event Modeling, Qlerify, D2 diagrams): `preferences-event-modeling`
+- discovery process: `preferences-discovery-process`
+- collaborative modeling (EventStorming, Domain Storytelling): `preferences-collaborative-modeling`
+- strategic domain analysis (Core/Supporting/Generic classification): `preferences-strategic-domain-analysis`
+- bounded context design (context mapping, integration, ACL): `preferences-bounded-context-design`
+- functional reactive programming (FRP foundations, arrows, presheaves): `preferences-functional-reactive-programming`
+- algebraic data types (sum/product types, discriminated unions, pattern matching, making illegal states unrepresentable): `preferences-algebraic-data-types`
+- theoretical foundations (category/type-theory keystone; capability interfaces over transformer stacks, graded effects/coeffects, Lean-spec-beside-implementation; pairs with refinement-driven-development): `preferences-theoretical-foundations`
+- computational system taxonomy (closed vs open systems from automata theory and process calculi; batch/stream/services terminology mapping; heterogeneous composition patterns): `preferences-computational-system-taxonomy`
+- algebraic laws (functor/monad laws, property-based testing): `preferences-algebraic-laws`
+- refinement-driven development (dependently-typed Lean 4 spec, refine/lower to a Charon/Aeneas-safe Rust subset, lift via Aeneas.Charon, check by translation validation; mechanical proof the ideal not a requirement): `refinement-driven-development`
+- requirements engineering (WRSPM pentad; the two obligations W∧S⇒R, the satisfaction argument, and P⇒S; the four dark corners; the designation table; indicative/optative separation; KAOS goal-obstacle analysis; Parnas four-variable model; the WRSPM-versus-AMDiRE shear): `preferences-requirements-engineering`
+- satisfaction argument audit (three-gate chain across proof institutions; blind informalization for specification-versus-intent; the trust-surface inventory; the claims status table with satisfiability, non-vacuity, co-vacuity; safe external wording; the never-claim-end-to-end prohibition): `satisfaction-argument-audit`
+- nucleus platform (thin router for the spec-anchored approximately-verifiable data-modeling monorepo; Lean 4 structural source of truth; instantiate-then-reconstruct round trip driving structural drift toward zero): `nucleus-platform`
+- adaptive planning (control theory, buffer sizing, planning horizons, VSM mapping): `preferences-adaptive-planning`
+- workflow orchestration algebra (Dagster/Flyte read through Build Systems à la Carte; free-term vs store-interpreter split, lawful IO managers; data-pipeline orchestration, not agent DAGs): `preferences-workflow-orchestration-algebra`
+- validation assurance (severity, evidence quality, confidence, test adequacy, regression, refinement): `preferences-validation-assurance`
+- compositional continuous verification (CCV — operating-envelope-plus-regulator pairs composing into a closure operator; theoretical anchor for system-level approximate correctness): `preferences-compositional-continuous-verification`
+- acceptance-test-driven development (ATDD outer loop wrapping inner TDD; routes each proposition to BDD / property / law / proof / smoke): `atdd-outer-loop`
+- test-driven development (red-green-refactor; no production code without a failing test first): `test-driven-development`
+- systematic debugging (root-cause-before-fix discipline; question the architecture after repeated failed fixes; see also diagnosing-bugs): `systematic-debugging`
+- verification before completion (evidence before claims; run the verification command before asserting done/passing/fixed/committing): `verification-before-completion`
+- code review (two-axis Standards + Spec review of the diff; requesting-code-review author side, receiving-code-review responder side): `code-review`
+- observability engineering (structured events, traces, SLOs, instrumentation, telemetry architecture): `preferences-observability-engineering`
+- production readiness (ODD, progressive delivery, health checks, incident learning, CI/CD observability): `preferences-production-readiness`
+- distributed systems (CAP/PACELC/linearizability, consistency models, CRDTs, idempotency, sagas, dual-write avoidance, deterministic replay): `preferences-distributed-systems`
+- scalable probabilistic modeling (Bayesian workflow, simulation-based inference, stochastic dynamical systems): `preferences-scalable-probabilistic-modeling-workflow`
+- scientific inquiry methodology (Peircean pragmatism, effective theories, Mayo severity, iterative model building; hierarchy of mechanistic evidence): `preferences-scientific-inquiry-methodology`
+- smart constructors and validation patterns: see `preferences-domain-modeling`
+- error handling and workflow composition (Result types, railway-oriented): `preferences-railway-oriented-programming`
+- data modeling (database schemas, normalization, ER diagrams): `preferences-data-modeling`
+- json querying (duckdb, jaq): `preferences-json-querying`
+- schema versioning: `preferences-schema-versioning`
+- web application deployment: `preferences-web-application-deployment`
+- cloudflare wrangler configuration: `preferences-cloudflare-wrangler-reference`
+- secrets management: `preferences-secrets`
+- nix development (flakes, derivations, modules, code style; new files need tracking before a flake build can see them, since flake sources are git-tracked only; verify with targeted `nix eval`/`nix build` probes and `just check-fast` rather than a bare `nix flake check` sweep — see nix flake PR cycle): `preferences-nix-development`
+- nix flake checks architecture (check taxonomy, derivation patterns, VM tests): `preferences-nix-checks-architecture`
+- nix CI/CD integration (nix-fast-build, buildbot-nix, effects, migration): `preferences-nix-ci-cd-integration`
+- nix flake PR cycle (enumerate checks, probe via nix eval/build, just check-fast, draft PR, buildbot monitor, ready, Mergify): `nix-flake-pr-cycle`
+- CI workflow log verification (GHA + buildbot unified retrieval, full log archives, buildbot-logs): `ci-log-verification`
+- python development: `preferences-python-development`
+- rust development: `preferences-rust-development`
+- haskell development: `preferences-haskell-development`
+- typescript/node.js development: `preferences-typescript-nodejs-development`
+- react/ui development: `preferences-react-tanstack-ui-development`
+- web platform foundations (15 properties, capability ladder, paradigm routing): `preferences-web-platform-foundations`
+- hypermedia/server-driven UI development: `preferences-hypermedia-development`
+- hypermedia document authoring (presentations, SVG, MathML, standalone experiments): `preferences-hypermedia-documents`
+- scientific data visualization (figures, tables, diagrams, colormaps): `scientific-visualization`
+- text-to-visual iteration (compile-inspect-refine loop, SVG/PNG/PDF pipelines): `text-to-visual-iteration`
 
 </details>

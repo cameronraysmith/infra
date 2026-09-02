@@ -6,23 +6,8 @@
 { ... }:
 {
   flake.modules.homeManager.tools =
-    { config, lib, ... }:
-    let
-      # Base path for skills (without @ prefix)
-      # The @ prefix triggers Claude Code auto-loading; applied deliberately
-      # and selectively, currently only to the style-and-conventions skill,
-      # which applies to every artifact any session produces
-      # All tools share the same text; @ auto-loading is Claude Code-specific
-      skillsPath = "${config.home.homeDirectory}/.claude/skills";
-    in
+    { lib, ... }:
     {
-      # https://github.com/mirkolenz/nixos/blob/0911e2e/home/options/agents-md.nix#L22-L31
-      #
-      # The @ prefix on a full path triggers auto-loading in generated
-      # CLAUDE.md; applied selectively, not to every skill. The topical index
-      # of proactively-read skills previously maintained here is archived in
-      # modules/home/ai/plugins/README.md
-      #
       # Two harness hazards worth recording here rather than fixing: omp
       # resolves exactly one user-level context file by provider priority,
       # and ~/.omp/agent/AGENTS.md at priority 100 would outrank
@@ -48,8 +33,7 @@
           authorship — repositories we maintain live under `~/projects/<repo>/`,
           repositories we only read live under `~/ghq/<host>/<org>/<repo>/`. The
           full lookup procedure, on-miss acquisition, and the `(see local)`
-          marker directive live in
-          ${skillsPath}/dependency-source-acquisition/SKILL.md.
+          marker directive live in the `dependency-source-acquisition` skill.
           4. Should I present my task decomposition for approval before
           dispatching?
 
@@ -75,10 +59,9 @@
 
           # Development guidelines
 
-          The style-and-conventions skill governs every artifact this session
-          produces, so it stays force-loaded regardless of topic:
-
-          - style and conventions: @${skillsPath}/preferences-style-and-conventions/SKILL.md
+          The `preferences-style-and-conventions` skill governs every
+          artifact this session produces; load it before writing or editing
+          any artifact, regardless of topic.
 
           Every other skill in this corpus is discoverable through each
           harness's own name-and-description catalog; do not maintain or consult
@@ -99,7 +82,7 @@
           contradictions to the user with provenance evidence — file paths,
           dates, relevant line ranges — rather than silently choosing one
           interpretation. The full procedure and its application scope live in
-          ${skillsPath}/preferences-documentation/SKILL.md under "Temporal
+          the `preferences-documentation` skill §"Temporal
           provenance".
 
           # Operating principles
@@ -123,8 +106,8 @@
           when an assumption is wrong, say so directly and explain why
           rather than building on it.
           Applied per medium:
-          - prose, any writing or editing: ${skillsPath}/preferences-prose-clarity/SKILL.md
-          - code, specs, and proofs: ${skillsPath}/preferences-essential-complexity/SKILL.md
+          - prose, any writing or editing: `preferences-prose-clarity`
+          - code, specs, and proofs: `preferences-essential-complexity`
 
           # Communication
 
@@ -328,8 +311,8 @@
           control; agent teams for parallel independent streams and adversarial
           review; hybrid — DAG research first, then a team for implementation
           and review. For teammate isolation, Linear/OpenSpec-to-task-list
-          mirroring, and the orient/checkpoint lifecycle, see
-          ${skillsPath}/meta-agent-teams/SKILL.md
+          mirroring, and the orient/checkpoint lifecycle, see the
+          `meta-agent-teams` skill.
 
           # Version control and work dispatch
 
@@ -344,15 +327,14 @@
           mode (the default for this workspace); otherwise almost surely
           git-native mode.
 
-          See ${skillsPath}/preferences-git-version-control/SKILL.md for
+          See the `preferences-git-version-control` skill for
           working-branch isolation conventions and subagent dispatch in each
-          mode. For the three-tier ceremony model in jj mode, see
-          ${skillsPath}/jj-version-control/tiered-ceremony.md. For multi-stream
-          parallel work in jj mode, the default is the diamond workflow's
-          development join — see ${skillsPath}/jj-version-control/SKILL.md
-          "Development join" for the entity reference and
-          ${skillsPath}/jj-version-control/diamond-workflow.md for the
-          four-phase process recipe.
+          mode. For the three-tier ceremony model in jj mode, see the
+          `jj-version-control` skill's `tiered-ceremony.md`. For
+          multi-stream parallel work in jj mode, the default is the diamond
+          workflow's development join — see the `jj-version-control` skill
+          §"Development join" for the entity reference and its
+          `diamond-workflow.md` for the four-phase process recipe.
 
           ## Stacked landing protocol
 
@@ -411,8 +393,7 @@
           Read-only inspection takes the global `--ignore-working-copy` so it
           does not snapshot and race a concurrent session. Recovery for the
           destructive class is top-level `jj undo`; there is no `jj op undo`.
-          See ${skillsPath}/jj-version-control/SKILL.md for the diamond
-          workflow.
+          See the `jj-version-control` skill for the diamond workflow.
 
           ## Working-copy hazards
 
@@ -423,8 +404,8 @@
           there is no `jj op undo`. The full catalog — splice impossibility
           below the join, the clan-install second child, the `wip` bookmark
           slide, snapshot size gating, concurrent-session foreign modifications,
-          auto-rebase commit-id churn — lives in
-          ${skillsPath}/jj-version-control/hazards.md.
+          auto-rebase commit-id churn — lives in the `jj-version-control`
+          skill's `hazards.md`.
 
           ## Worktree interop and external frameworks
 
@@ -439,8 +420,8 @@
           fetch --prune`, or `git stash` in a jj working copy. An external agent
           framework such as firstmate gets its own clone rather than a symlink
           to a working copy we also use, because its fleet-sync runs exactly the
-          operations forbidden above. Full mechanics and recovery:
-          ${skillsPath}/jj-version-control/SKILL.md under "Worktree interop"
+          operations forbidden above. Full mechanics and recovery: the
+          `jj-version-control` skill §"Worktree interop".
         '';
       };
     };
