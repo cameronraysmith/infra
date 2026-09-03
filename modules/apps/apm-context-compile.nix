@@ -8,25 +8,26 @@
       inputs',
       pkgs,
       lib,
+      config,
       ...
     }:
     {
+      packages.apm-context-compile = pkgs.writeShellApplication {
+        name = "apm-context-compile";
+        runtimeInputs = [
+          inputs'.llm-agents.packages.apm
+          pkgs.git # repo root resolution
+          pkgs.yq-go
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.gnugrep
+        ];
+        text = builtins.readFile ./apm-context-compile.sh;
+      };
+
       apps.apm-context-compile = {
         type = "app";
-        program = lib.getExe (
-          pkgs.writeShellApplication {
-            name = "apm-context-compile";
-            runtimeInputs = [
-              inputs'.llm-agents.packages.apm
-              pkgs.git # repo root resolution
-              pkgs.yq-go
-              pkgs.coreutils
-              pkgs.findutils
-              pkgs.gnugrep
-            ];
-            text = builtins.readFile ./apm-context-compile.sh;
-          }
-        );
+        program = lib.getExe config.packages.apm-context-compile;
       };
     };
 }

@@ -31,6 +31,23 @@
           config.pre-commit.devShell
         ];
 
+        # Composes the repo-root AGENTS.md/CLAUDE.md from the agent-context-*
+        # apm fragments on shell entry, mirroring the git-hooks.nix precedent
+        # above of writing a git-ignored generated file from a shellHook.
+        # `lib.getExe` embeds the store path at eval time so entering the
+        # shell costs a fork+exec, not a nix evaluation; `--if-stale` makes
+        # that exec a no-op once the composed output already matches the
+        # fragments. `--auto` lets the script itself pick the repository
+        # tier vs every tier by checking for a user-level agent context file
+        # (see apm-context-compile.sh); it never fails the shell, since a
+        # missing AGENTS.md degrades an agent session but must not block a
+        # human terminal or direnv.
+        shellHook = ''
+          if ! ${lib.getExe config.packages.apm-context-compile} --if-stale --auto; then
+            echo "apm-context-compile: skipped (run 'just agents-context' to regenerate AGENTS.md/CLAUDE.md manually)" >&2
+          fi
+        '';
+
         # The playwright-web-flake default devShell is intentionally not inherited;
         # select the browser set explicitly. Use the full flake set (chromium,
         # firefox, webkit) on both platforms: the fork carries working macOS-15
