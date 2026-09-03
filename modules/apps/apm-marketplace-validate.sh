@@ -32,8 +32,11 @@ Usage: apm-marketplace-validate [--local | --remote] [--repo OWNER/REPO] [--ref 
 
 Registers the vanixiets apm skills marketplace in a throwaway, fully isolated
 environment (overrides $HOME and every XDG dir) and installs each published
-package the way an external apm consumer would, asserting a SKILL.md lands per
-package. Never touches the real $HOME / ~/.claude / ~/.config.
+package the way an external apm consumer would, asserting a SKILL.md or an
+instructions/rules artifact lands per package (the marketplace publishes
+both skill packages and instructions packages; see the per-package install
+loop for the distinction). Never touches the real $HOME / ~/.claude /
+~/.config.
 
 Modes:
   --local   (default) register the worktree as a kind=local marketplace. apm
@@ -214,18 +217,38 @@ for i in "${!published[@]}"; do
   shopt -s nullglob
   claude_skills=("${root}"/.claude/skills/*/SKILL.md)
   agents_skills=("${root}"/.agents/skills/*/SKILL.md)
+  claude_rules=("${root}"/.claude/rules/*.md)
+  agents_rules=("${root}"/.agents/rules/*.md)
   shopt -u nullglob
+  skill_count=$((${#claude_skills[@]} + ${#agents_skills[@]}))
+  rules_count=$((${#claude_rules[@]} + ${#agents_rules[@]}))
 
-  if [ "${rc}" -eq 0 ] && { [ "${#claude_skills[@]}" -gt 0 ] || [ "${#agents_skills[@]}" -gt 0 ]; }; then
-    status[i]=OK
-    passed=$((passed + 1))
-    echo "APM-VALIDATE-PKG-OK: ${pkg} (claude_skills=${#claude_skills[@]} agents_skills=${#agents_skills[@]})"
+  # this marketplace publishes two package shapes: skill packages, whose
+  # deliverable is a SKILL.md under .claude/skills/ or .agents/skills/, and
+  # instructions packages (the agent-context-* set) whose manifest carries
+  # only .apm/instructions/*.instructions.md and deliberately no skills
+  # directory at all. apm deploys the latter as .claude/rules/*.md rules
+  # instead (observed empirically: "N rule(s) integrated -> .claude/rules/"
+  # in the install log). a package installing zero SKILL.md is therefore not
+  # necessarily broken; only a package delivering neither shape is.
+  if [ "${skill_count}" -gt 0 ]; then
+    kind=skills
+  elif [ "${rules_count}" -gt 0 ]; then
+    kind=instructions
   else
-    status[i]=FAIL
+    kind=none
+  fi
+
+  if [ "${rc}" -eq 0 ] && [ "${kind}" != none ]; then
+    status[i]="OK (${kind})"
+    passed=$((passed + 1))
+    echo "APM-VALIDATE-PKG-OK: ${pkg} kind=${kind} (claude_skills=${#claude_skills[@]} agents_skills=${#agents_skills[@]} claude_rules=${#claude_rules[@]} agents_rules=${#agents_rules[@]})"
+  else
+    status[i]="FAIL (${kind})"
     failed=$((failed + 1))
     echo "APM-VALIDATE-PKG-FAIL: ${pkg} (rc=${rc})" >&2
     if [ "${rc}" -eq 0 ]; then
-      echo "    install succeeded but no SKILL.md landed under ${root}" >&2
+      echo "    install succeeded but no SKILL.md or rules artifact landed under ${root}" >&2
     fi
     while IFS= read -r line; do
       echo "    ${line}" >&2
