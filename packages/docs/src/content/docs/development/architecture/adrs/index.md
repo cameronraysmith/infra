@@ -10,6 +10,7 @@ Architecture Decision Records (ADRs) documenting key technical and design decisi
 - [ADR-0002: Use generic just recipes](0002-use-generic-just-recipes/)
 - [ADR-0009: Nix flake-based development environment](0009-nix-development-environment/)
 - [ADR-0022: Committed per-repository agent context](0022-committed-per-repository-agent-context/)
+- [ADR-0023: Modular agent context fragments](0023-modular-agent-context-fragments/)
 
 ## Nix Configuration
 
