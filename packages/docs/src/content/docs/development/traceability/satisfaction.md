@@ -1,205 +1,263 @@
 ---
 title: Satisfaction argument
 description: Discharge status for every requirement in the OpenSpec corpus
-generated: 2026-08-26
+generated: 2026-09-02
 ---
 
-# Satisfaction argument
-
 This file is a projection over `openspec/specs/`, regenerated wholesale at archive time and never patched.
-A patched discharge table accumulates exactly the staleness the artifact exists to prevent, so any edit here is lost on the next regeneration.
+A discharge cell names a concrete check, scenario execution, proof obligation, or dated inspection.
+A capability description is not discharge evidence.
 
-It records, per requirement, which specification properties and which world assumptions discharge it — the `W ∧ S ⇒ R` obligation.
-An undischarged requirement is recorded as such rather than omitted.
-
-A discharge cell (`Discharged by (S)` or `Under (W)`) names a concrete artifact — a named check, a named scenario execution, a proof obligation, or a dated manual inspection — or it is left empty.
-A capability-level characterisation is not evidence and is never written into a per-requirement cell.
-
-## Correction
-
-The regeneration before this one (`generated: 2026-08-25`) marked 19 of 68 requirements as discharged or partially discharged.
-Every one of those 19 cells held one of exactly two phrases — `skill-corpus-interface: resolvability, trigger surface` or `own interface properties` — repeated verbatim across requirements in different capabilities.
-Neither phrase names a check, a scenario execution, a proof obligation, or a dated inspection; both are capability-level characterisations restated as if they were per-requirement evidence, and no such per-requirement evidence exists anywhere in the corpus for these 19 rows.
-This regeneration removes both phrases and leaves the affected cells empty.
-
-- Before: 68 requirements across 9 capabilities. 9 discharged (S only), 10 partially discharged, 49 undischarged. 19 rows carried discharge text; all 19 carried the same two fabricated phrases.
-- After: 77 requirements across 10 capabilities (`world-assumptions`, added by `extract-world-assumptions`, contributes 9). 0 discharged, 0 partially discharged. 6 requirements now name a concrete world assumption (`Under (W)`) but remain undischarged because no specification-side artifact (`Discharged by (S)`) has been established for them. 62 requirements are undischarged with both cells empty. The 9 `world-assumptions` rows are indicative claims, not `R`-side requirements, and are reported separately rather than folded into the discharged/undischarged tally.
-
-The lower count is a correction, not a regression: the 19 discharged and partially-discharged rows in the prior generation were never actually backed by the evidence they cited.
-The 6 new `Under (W)` cells are a genuine gain, made possible by `extract-world-assumptions` naming, for the first time, which world assumption each affected `pi-agent-environment` requirement's discharge argument rests on.
+The projection records the `W ∧ S ⇒ R` obligation separately from implementation refinement.
+An implementation can match its specification while that specification still fails to satisfy the intended requirement.
+Nothing in this projection is an end-to-end guarantee.
 
 ## Status
 
-- 77 requirements across 10 capabilities: 68 `R`-side requirements (behavioral or interface stratum) plus 9 `world`-stratum assumption requirements.
-- 0 of the 68 `R`-side requirements are discharged (S established).
-- 6 of the 68 name a concrete world assumption under `Under (W)` but remain undischarged pending a specification-side artifact.
-- 62 of the 68 are undischarged with both `Discharged by (S)` and `Under (W)` empty.
-- The 9 `world-assumptions` rows are the corpus's first non-empty designation table and its first indicative assumptions; they are not themselves discharged or undischarged in the `R`-sense and are reported in their own section.
+The post-sync corpus contains 100 requirements across 15 capabilities: 91 requirement-side rows and 9 world-assumption rows.
+Three of the 91 requirement-side rows are discharged at their stated interface boundaries.
+Eighty-eight remain undischarged: 82 have neither specification-side evidence nor a named world assumption, and 6 name world assumptions but no specification-side evidence.
 
-Of the 68 `R`-side requirements, 19 were authored under the stratum discipline (`skill-corpus-interface`, `requirements-stratification`, `satisfaction-argument-audit`, `stratified-change-authoring`) and 49 predate it; the latter are shown at their inferred stratum and have not been re-audited.
-Guard level across every stratum-discipline capability remains `none`: no automated check currently guards any requirement in `skill-corpus-interface`, `requirements-stratification`, `satisfaction-argument-audit`, or `stratified-change-authoring`.
+The three discharged rows establish only Nix-boundary source alignment and offline composition, composed skill identity, and rendered guidance.
+They do not establish repository-local frozen delivery, harness selection, human compliance, authorization, forge correctness, activation, or a successful landing.
+Unless a row names a more specific follow-up, `evidence annotation follow-up` refers to OpenSpec change `annotate-discharge-evidence`, whether active or later archived.
+
+The strata of capabilities that predate the stratum discipline remain inferred and have not been re-audited.
+CAM-41 declared its three added requirements as `interface`.
+
+## agentic-workflow-routing
+
+Predates the stratum discipline; the interface classification is inferred from its skill and board interfaces.
+
+| Requirement | Stratum | Discharged by (S) | Under (W) | Status |
+|---|---|---|---|---|
+| Unified seven-state Linear-canonical board | interface | — | — | undischarged — evidence annotation follow-up |
+| In Review decomposes into two ordered human-steered sub-gates | interface | — | — | undischarged — evidence annotation follow-up |
+| Shared re-queue with bounded-retries termination guarantee | interface | — | — | undischarged — evidence annotation follow-up |
+| AFK, HIL, and Manual execution-mode fork at the Todo to In Progress boundary | interface | — | — | undischarged — evidence annotation follow-up |
+| Compose by delegation, never re-implement | interface | — | — | undischarged — evidence annotation follow-up |
+| HIL apply-phase jj and worktree isolation guidance | interface | — | — | undischarged — evidence annotation follow-up |
 
 ## apple-laptop-hardware-support
 
-Predates the stratum discipline; not yet audited against it.
+Predates the stratum discipline; the behavioral classification is inferred and has not been re-audited.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| The pyrite host module imports the upstream model profile with its unwanted firmware pulls disabled | behavioral | — | — | undischarged |
-| The machine module states its firmware affirmations rather than inheriting them | behavioral | — | — | undischarged |
-| The stage-1 initrd force-loads the four SPI/SMC modules that make the unlock prompt answerable | behavioral | — | — | undischarged |
-| boot.initrd.kernelModules is never overridden with mkForce | behavioral | — | — | undischarged |
-| A USB-C keyboard and the clan-vars passphrase are prerequisites of the first boot, not recoveries improvised afterward | behavioral | — | — | undischarged |
-| The machine's configuration is never seeded from nixos-generate-config | behavioral | — | — | undischarged |
-| The sleep path is gated by three units the machine module defines itself | behavioral | — | — | undischarged |
-| Suspend is entered through the systemd-sleep path and resumes with the pool intact | behavioral | — | — | undischarged |
-| A panic that outlives the disk is recorded through EFI pstore, because every other channel is unavailable on this machine | behavioral | — | — | undischarged |
+| The pyrite host module imports the upstream model profile with its unwanted firmware pulls disabled | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The machine module states its firmware affirmations rather than inheriting them | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The stage-1 initrd force-loads the four SPI/SMC modules that make the unlock prompt answerable | behavioral | — | — | undischarged — evidence annotation follow-up |
+| boot.initrd.kernelModules is never overridden with mkForce | behavioral | — | — | undischarged — evidence annotation follow-up |
+| A USB-C keyboard and the clan-vars passphrase are prerequisites of the first boot, not recoveries improvised afterward | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The machine's configuration is never seeded from nixos-generate-config | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The sleep path is gated by three units the machine module defines itself | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Suspend is entered through the systemd-sleep path and resumes with the pool intact | behavioral | — | — | undischarged — evidence annotation follow-up |
+| A panic that outlives the disk is recorded through EFI pstore, because every other channel is unavailable on this machine | behavioral | — | — | undischarged — evidence annotation follow-up |
 
 ## bare-metal-install-path
 
-Predates the stratum discipline; not yet audited against it.
+Predates the stratum discipline; the behavioral classification is inferred and has not been re-audited.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| The install path is recorded in the repository, and is written to be re-runnable without being shown to be | behavioral | — | — | undischarged |
-| An install is accepted as evidence only if it exercised the create path | behavioral | — | — | undischarged |
-| The hardware report is committed as static data and never regenerated on the target | behavioral | — | — | undischarged |
-| The machine is registered across every hand-maintained list a new machine touches | behavioral | — | — | undischarged |
-| Network association is declarative, and the credentials are sops-encrypted clan vars | behavioral | — | — | undischarged |
-| ZeroTier admission requires redeploying the controller | behavioral | — | — | undischarged |
-| A FIDO2 token is verified present before each enrollment, and disko's own guard is never that verification | behavioral | — | — | undischarged |
+| The install path is recorded in the repository, and is written to be re-runnable without being shown to be | behavioral | — | — | undischarged — evidence annotation follow-up |
+| An install is accepted as evidence only if it exercised the create path | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The hardware report is committed as static data and never regenerated on the target | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The machine is registered across every hand-maintained list a new machine touches | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Network association is declarative, and the credentials are sops-encrypted clan vars | behavioral | — | — | undischarged — evidence annotation follow-up |
+| ZeroTier admission requires redeploying the controller | behavioral | — | — | undischarged — evidence annotation follow-up |
+| A FIDO2 token is verified present before each enrollment, and disko's own guard is never that verification | behavioral | — | — | undischarged — evidence annotation follow-up |
 
 ## encrypted-zfs-root
 
-Predates the stratum discipline; not yet audited against it.
+Predates the stratum discipline; the behavioral classification is inferred and has not been re-audited.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| The root is a ZFS pool created with an explicit ashift matching the disk's 4096-byte sectors | behavioral | — | — | undischarged |
-| The ESP is typed EF00 and sized 1G | behavioral | — | — | undischarged |
-| A sibling partition carries the ZFS content that becomes the pool's vdev | behavioral | — | — | undischarged |
-| The pool device is named by a namespace-explicit by-id path | behavioral | — | — | undischarged |
-| The pool sits inside a LUKS2 container holding the clan-vars passphrase in slot 0 and a FIDO2 token in each of slots 1 and 2 | behavioral | — | — | undischarged |
-| The costs and the gains of the LUKS layer are both recorded rather than discovered later | behavioral | — | — | undischarged |
-| The LUKS header and the keyslot inventory are maintained artifacts, not install-time byproducts | behavioral | — | — | undischarged |
+| The root is a ZFS pool created with an explicit ashift matching the disk's 4096-byte sectors | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The ESP is typed EF00 and sized 1G | behavioral | — | — | undischarged — evidence annotation follow-up |
+| A sibling partition carries the ZFS content that becomes the pool's vdev | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The pool device is named by a namespace-explicit by-id path | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The pool sits inside a LUKS2 container holding the clan-vars passphrase in slot 0 and a FIDO2 token in each of slots 1 and 2 | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The costs and the gains of the LUKS layer are both recorded rather than discovered later | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The LUKS header and the keyslot inventory are maintained artifacts, not install-time byproducts | behavioral | — | — | undischarged — evidence annotation follow-up |
+
+## first-party-skill-distribution
+
+Predates the stratum discipline except for CAM-41's declared interface requirement.
+
+| Requirement | Stratum | Discharged by (S) | Under (W) | Status |
+|---|---|---|---|---|
+| Build-time apm composition of first-party skills | interface | — | — | undischarged — archived CAM-41 `verify.md` W1 and W2 |
+| Immutable delivery and always-succeeds activation | interface | — | — | undischarged — evidence annotation follow-up |
+| Flat skill name preservation | interface | — | — | undischarged — archived CAM-41 `verify.md` W3 |
+| Distinct first-party policy and upstream mechanism skills | interface | `.#apm-skills-compose`; byte comparison with the pinned source; `git-stacked-pr-integration` sections `Stacked PR integration policy`, `Role contracts`, and `VCS routing` | — | discharged at the two-target Nix composition interface |
 
 ## graphical-desktop-session
 
-Predates the stratum discipline; not yet audited against it.
+Predates the stratum discipline; the behavioral classification is inferred and has not been re-audited.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| The pyrite host provides a local GNOME desktop under GDM | behavioral | — | — | undischarged |
+| The pyrite host provides a local GNOME desktop under GDM | behavioral | — | — | undischarged — evidence annotation follow-up |
+
+## openspec-linear-sync
+
+Predates the stratum discipline; the interface classification is inferred from its CLI and artifact interfaces.
+
+| Requirement | Stratum | Discharged by (S) | Under (W) | Status |
+|---|---|---|---|---|
+| Drive Linear exclusively through linear-cli | interface | — | — | undischarged — evidence annotation follow-up |
+| Bind four forward transitions plus re-queue with invariants | interface | — | — | undischarged — evidence annotation follow-up |
+| Local sync ledger as authoritative current-phase signal | interface | — | — | undischarged — evidence annotation follow-up |
+| Single-location frontmatter binding that resolves against the registry | interface | — | — | undischarged — evidence annotation follow-up |
+| Mirror the Linear issue description from proposal.md business content | interface | — | — | undischarged — evidence annotation follow-up |
+| Archive-time document UPSERT with mirroring | interface | — | — | undischarged — evidence annotation follow-up |
+| One-question setup, never-auto-select, best-effort non-blocking | interface | — | — | undischarged — evidence annotation follow-up |
 
 ## pi-agent-environment
 
-Predates the stratum discipline for its `Discharged by (S)` column; no specification-side artifact has been audited or established for any of the 25 requirements below.
-`extract-world-assumptions` restated six of these requirements to name the specific `world-assumptions` requirement(s) their discharge depends on, so those six now carry a concrete `Under (W)` citation; the other 19 name no world assumption in their text and their `Under (W)` cell stays empty.
-Naming `W` alone does not discharge a requirement — `W ∧ S ⇒ R` needs both — so every row below remains undischarged.
+Predates the stratum discipline for its specification-side evidence.
+Six requirements name world assumptions, but none of the 24 requirements has a per-requirement specification-side discharge annotation.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| Nix-owned Pi resources | behavioral | — | — | undischarged |
-| Mutable settings seed | behavioral | — | — | undischarged |
-| Runtime state boundary | behavioral | — | — | undischarged |
-| Source-only extension package | behavioral | — | — | undischarged |
-| Selected extensions | behavioral | — | — | undischarged |
-| Nix-owned runtime executables | behavioral | — | — | undischarged |
-| Excluded extension resources | behavioral | — | — | undischarged |
-| Retained compaction extension | behavioral | — | — | undischarged |
-| Canonical skill sink | behavioral | — | — | undischarged |
-| Catppuccin source provenance | behavioral | — | — | undischarged |
-| Catppuccin theme delivery | behavioral | — | — | undischarged |
-| Permission-gate reuse | behavioral | — | world-assumptions A1 | undischarged (W named, S pending) |
-| Additional shell policy | behavioral | — | world-assumptions A2 | undischarged (W named, S pending) |
-| Non-Bash edit and write policy | behavioral | — | world-assumptions A1, A2, A3, A4, A5, A6, A7 | undischarged (W named, S pending) |
-| Git default-branch boundary | behavioral | — | world-assumptions A3, A5, A7, A8 | undischarged (W named, S pending) |
-| Jj diamond boundary | behavioral | — | world-assumptions A3, A5, A7, A8 | undischarged (W named, S pending) |
-| Fail-open policy | behavioral | — | world-assumptions A1, A2, A3, A4 | undischarged (W named, S pending) |
-| Secret-safe direnv | behavioral | — | — | undischarged |
-| Opt-in slow mode | behavioral | — | — | undischarged |
-| Consolidated custom regulators | behavioral | — | — | undischarged |
-| Offline aggregate smoke | behavioral | — | — | undischarged |
-| Stale Pi version cleanup | behavioral | — | — | undischarged |
-| Human-only activation | behavioral | — | — | undischarged |
-| Confirmation-gated live verification | behavioral | — | — | undischarged |
-| Rollback preservation | behavioral | — | — | undischarged |
+| Nix-owned Pi resources | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Mutable settings seed | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Runtime state boundary | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Source-only extension package | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Selected extensions | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Nix-owned runtime executables | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Excluded extension resources | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Retained compaction extension | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Canonical skill sink | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Catppuccin source provenance | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Catppuccin theme delivery | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Permission-gate reuse | behavioral | — | `world-assumptions` A1 | undischarged — specification evidence pending |
+| Additional shell policy | behavioral | — | `world-assumptions` A2 | undischarged — specification evidence pending |
+| Non-Bash edit and write policy | behavioral | — | `world-assumptions` A1, A2, A3, A4, A5, A6, A7 | undischarged — specification evidence pending |
+| Git default-branch boundary | behavioral | — | `world-assumptions` A3, A5, A7, A8 | undischarged — specification evidence pending |
+| Jj diamond boundary | behavioral | — | `world-assumptions` A3, A5, A7, A8 | undischarged — specification evidence pending |
+| Fail-open policy | behavioral | — | `world-assumptions` A1, A2, A3, A4 | undischarged — specification evidence pending |
+| Secret-safe direnv | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Opt-in slow mode | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Consolidated custom regulators | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Offline aggregate smoke | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Rollback preservation | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Activation requires explicit permission | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Post-activation confirmation gate | behavioral | — | — | undischarged — evidence annotation follow-up |
 
-## world-assumptions
+## project-management-hub
 
-Added by `extract-world-assumptions`.
-These 9 requirements are the `W` side of the argument, not `R`-side requirements: an assumption is not itself discharged by a specification property, so `Discharged by (S)` and `Under (W)` are not applicable and are shown as `—` for every row in this section.
-Each assumption's own truth is asserted in its requirement text; no independent check, scenario execution, proof obligation, or dated inspection in the corpus verifies any of A1 through A8 against Pi's actual behavior, so `Status` records them as self-attested rather than discharged.
-The `Discharges (R)` column lists which `pi-agent-environment` requirements lose their discharge argument if the assumption is falsified, copied from each requirement's own violation-condition scenario.
+Predates the stratum discipline; the interface classification is inferred from its delivered guidance and CLI boundary.
 
-| Requirement | Stratum | Discharges (R) | Status |
-|---|---|---|---|
-| A1 — No native permission system | world | Permission-gate reuse, Non-Bash edit and write policy, Fail-open policy | self-attested |
-| A2 — Unanswerable dialog stalls a session with UI but no human present | world | Additional shell policy, Non-Bash edit and write policy, Fail-open policy | self-attested |
-| A3 — Policy failure carries no safety evidence | world | Non-Bash edit and write policy, Git default-branch boundary, Jj diamond boundary, Fail-open policy | self-attested |
-| A4 — Refusing on ambiguity has a real cost and prevents nothing | world | Non-Bash edit and write policy, Fail-open policy | self-attested |
-| A5 — A tracked target is recoverable from repository history | world | Non-Bash edit and write policy, Git default-branch boundary, Jj diamond boundary | self-attested |
-| A6 — Atomic inherits Pi's configuration root unconditionally | world | Non-Bash edit and write policy | self-attested |
-| A7 — Pi's enumerated path forms are exhaustive | world | Non-Bash edit and write policy, Git default-branch boundary, Jj diamond boundary | self-attested |
-| A8 — Jj's outside-repository diagnostic is stable | world | Git default-branch boundary, Jj diamond boundary | self-attested |
-| Grounded vocabulary for behavioral requirements (designation table) | world | (grounds every behavioral requirement's content nouns; not requirement-scoped) | self-attested |
+| Requirement | Stratum | Discharged by (S) | Under (W) | Status |
+|---|---|---|---|---|
+| Linear Method ontology spine | interface | — | — | undischarged — evidence annotation follow-up |
+| Four flat one-level reference areas | interface | — | — | undischarged — evidence annotation follow-up |
+| Linear workspace safety gate keyed on confirmed credentials | interface | — | — | undischarged — evidence annotation follow-up |
 
 ## requirements-stratification
 
-`skill-corpus-interface` establishes that the guidance reaches an agent, not that it is applied correctly, and no automated check guards this capability (guard level: none).
-The prior generation's `Discharged by (S)` cells for all five rows below held the phrase `skill-corpus-interface: resolvability, trigger surface`, identical across all five and identical to the phrase used for the unrelated `satisfaction-argument-audit` capability; that phrase names no check, scenario execution, proof obligation, or inspection specific to any one of these five requirements, so every cell is now empty.
+Behavioral stratum.
+No automated check guards this capability, and no per-requirement evidence is recorded.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| Stratum assignment for any requirement-like statement | behavioral | — | — | undischarged |
-| Grounding of terms used in requirements | behavioral | — | — | undischarged |
-| Separation of what is assumed from what is wanted | behavioral | — | — | undischarged |
-| Discharge of a requirement is stated, not implied | behavioral | — | — | undischarged |
-| Obstacle analysis produces the boundary and open questions | behavioral | — | — | undischarged |
+| Stratum assignment for any requirement-like statement | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Grounding of terms used in requirements | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Separation of what is assumed from what is wanted | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Discharge of a requirement is stated, not implied | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Obstacle analysis produces the boundary and open questions | behavioral | — | — | undischarged — evidence annotation follow-up |
 
 ## satisfaction-argument-audit
 
-`skill-corpus-interface` establishes that the guidance reaches an agent, not that it is applied correctly, and no automated check guards this capability (guard level: none).
-The prior generation's `Discharged by (S)` cells for all five rows below held the same `skill-corpus-interface: resolvability, trigger surface` phrase described above, for the same reason now empty.
+Behavioral stratum.
+No automated check guards this capability, and no per-requirement evidence is recorded.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| Specification is checked against intent independently | behavioral | — | — | undischarged |
-| Everything the argument depends on unverified is enumerated | behavioral | — | — | undischarged |
-| Agreement between two artifacts is not treated as confirmation | behavioral | — | — | undischarged |
-| External claims are bounded by what was actually established | behavioral | — | — | undischarged |
-| The audit runs at a boundary, not continuously | behavioral | — | — | undischarged |
+| Specification is checked against intent independently | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Everything the argument depends on unverified is enumerated | behavioral | — | — | undischarged — evidence annotation follow-up |
+| Agreement between two artifacts is not treated as confirmation | behavioral | — | — | undischarged — evidence annotation follow-up |
+| External claims are bounded by what was actually established | behavioral | — | — | undischarged — evidence annotation follow-up |
+| The audit runs at a boundary, not continuously | behavioral | — | — | undischarged — evidence annotation follow-up |
 
 ## skill-corpus-interface
 
-Interface stratum. No automated check guards this capability (guard level: none).
-The prior generation's `Discharged by (S)` cells for all three rows below held the phrase `own interface properties`, identical across all three and identical to the phrase used for the unrelated `stratified-change-authoring` capability; that phrase names no check, scenario execution, proof obligation, or inspection specific to any one of these three requirements, so every cell is now empty.
+Interface stratum.
+The CAM-41 row is discharged only for authored, composed, and rendered guidance.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| A named skill is resolvable in the delivered corpus | interface | — | — | undischarged |
-| A skill's trigger surface admits the situations it must fire on | interface | — | — | undischarged |
-| Stated ownership boundaries hold across the corpus | interface | — | — | undischarged |
+| A named skill is resolvable in the delivered corpus | interface | — | — | undischarged — evidence annotation follow-up |
+| A skill's trigger surface admits the situations it must fire on | interface | — | — | undischarged — evidence annotation follow-up |
+| Stated ownership boundaries hold across the corpus | interface | — | — | undischarged — evidence annotation follow-up |
+| Stacked landing guidance is conditioned by role and repository mode | interface | `git-stacked-pr-integration` sections `Role contracts`, `Requirement-to-mechanism map`, `Checked landing boundary`, and `VCS routing`; evaluated `programs.agents-md.settings.text`; integrated-main `stack-land` predicate and tests | — | discharged at the composed and rendered guidance interface |
 
 ## stratified-change-authoring
 
-Interface stratum. No automated check guards this capability (guard level: none).
-The prior generation's `Discharged by (S)` cells for all six rows below held the same `own interface properties` phrase described above, for the same reason now empty.
+Interface stratum.
+No automated check guards this capability, and no per-requirement evidence is recorded.
 
 | Requirement | Stratum | Discharged by (S) | Under (W) | Status |
 |---|---|---|---|---|
-| Proposal artifact records a stratum tag per capability | interface | — | — | undischarged |
-| Specs artifact applies stratum-conditional vocabulary rules | interface | — | — | undischarged |
-| Verify artifact runs non-blocking stratum checks | interface | — | — | undischarged |
-| Archive step regenerates the satisfaction projection | interface | — | — | undischarged |
-| Tasks artifact records per-task verification | interface | — | — | undischarged |
-| The stratum layer states its own trust boundary | interface | — | — | undischarged |
+| Proposal artifact records a stratum tag per capability | interface | — | — | undischarged — evidence annotation follow-up |
+| Specs artifact applies stratum-conditional vocabulary rules | interface | — | — | undischarged — evidence annotation follow-up |
+| Verify artifact runs non-blocking stratum checks | interface | — | — | undischarged — evidence annotation follow-up |
+| Archive step regenerates the satisfaction projection | interface | — | — | undischarged — evidence annotation follow-up |
+| Tasks artifact records per-task verification | interface | — | — | undischarged — evidence annotation follow-up |
+| The stratum layer states its own trust boundary | interface | — | — | undischarged — evidence annotation follow-up |
 
-## Known limits of this argument
+## third-party-plugin-dependency
 
-No `R`-side requirement in this corpus carries a `Discharged by (S)` citation: no named check, scenario execution, proof obligation, or dated manual inspection has been recorded against any of the 68 requirements at the level of an individual requirement.
-The three named checks `pi-agent-environment-structural`, `pi-agent-environment-policy`, and `pi-agent-environment-smoke` exist (see `pi-agent-environment`'s `Consolidated custom regulators` requirement) but no per-requirement mapping from any of the 25 `pi-agent-environment` requirements to a specific one of those three checks has been established in this corpus; asserting such a mapping here without that audit would reproduce the defect this regeneration corrects, so `pi-agent-environment`'s `Discharged by (S)` column stays empty pending that audit.
-Six `pi-agent-environment` requirements now name a concrete world assumption under `Under (W)`, the first non-empty `Under (W)` cells this projection has ever carried; this closes part of the gap the prior generation's own "Known limits" section named but does not by itself discharge any requirement, because `W ∧ S ⇒ R` still needs `S`.
-The nine `world-assumptions` rows are self-attested: their own truth as claims about the world is not independently checked by anything in this corpus.
-Guard level across every stratum-discipline capability (`skill-corpus-interface`, `requirements-stratification`, `satisfaction-argument-audit`, `stratified-change-authoring`) is `none`.
-Nothing here is a guarantee about the system end to end.
+Predates the stratum discipline except for CAM-41's declared interface requirement.
+
+| Requirement | Stratum | Discharged by (S) | Under (W) | Status |
+|---|---|---|---|---|
+| First-party packages declare nix-pinned apm dependencies on upstream plugins | interface | — | — | undischarged — evidence annotation follow-up |
+| Upstream plugins consumed without forking and extended additively | interface | — | — | undischarged — evidence annotation follow-up |
+| Release-aligned offline Mergify skill dependency | interface | package version evaluations; `structure-mergify-release-alignment`; `structure-mergify-release-alignment-neg`; `.#apm-skills-compose`; generated-lock revision and hashes; byte comparison; unchanged root lock | Mergify tag `2026.8.31.1` resolved to `727ce50b8fb3be8a9a24025807e159d644dbba80` in a 2026-09-02 `gh-axi` inspection | discharged at the Nix build interface; repository-local frozen delivery remains pending W4 |
+
+## world-assumptions
+
+These nine rows are the `W` side of the argument rather than requirement-side goals.
+Their truth is asserted in their requirement text but is not independently checked by a scenario execution, proof obligation, or dated inspection.
+They are therefore self-attested rather than discharged.
+
+| Requirement | Stratum | Discharges (R) | Status |
+|---|---|---|---|
+| A1 — No native permission system | world | Permission-gate reuse; Non-Bash edit and write policy; Fail-open policy | self-attested |
+| A2 — Unanswerable dialog stalls a session with UI but no human present | world | Additional shell policy; Non-Bash edit and write policy; Fail-open policy | self-attested |
+| A3 — Policy failure carries no safety evidence | world | Non-Bash edit and write policy; Git default-branch boundary; Jj diamond boundary; Fail-open policy | self-attested |
+| A4 — Refusing on ambiguity has a real cost and prevents nothing | world | Non-Bash edit and write policy; Fail-open policy | self-attested |
+| A5 — A tracked target is recoverable from repository history | world | Non-Bash edit and write policy; Git default-branch boundary; Jj diamond boundary | self-attested |
+| A6 — Atomic inherits Pi's configuration root unconditionally | world | Non-Bash edit and write policy | self-attested |
+| A7 — Pi's enumerated path forms are exhaustive | world | Non-Bash edit and write policy; Git default-branch boundary; Jj diamond boundary | self-attested |
+| A8 — Jj's outside-repository diagnostic is stable | world | Git default-branch boundary; Jj diamond boundary | self-attested |
+| Grounded vocabulary for behavioral requirements | world | Grounds behavioral content nouns; not requirement-scoped | self-attested |
+
+## CAM-41 qualifications
+
+- W1: The canonical four-direct-target scenario conflicts with the two APM targets plus later Nix fan-out.
+- W2: The canonical build-only APM statement conflicts with the intentional repository producer installer.
+- W3: The canonical census of roughly 70 absolute autoload references conflicts with the current single force-load reference.
+- W4: The root `apm.lock.yaml` remains unchanged, so a post-main generated `just agents-relock` follow-up must precede any repository-local frozen-delivery claim.
+- W5: Repository artifacts and local logs cannot establish that no external actor activated a configuration or landed a stack.
+- W6: The branch has not been pushed, its remote head is absent, and `gh-axi pr list` reports no pull request.
+- S1: Ten canonical specs retain placeholder `Purpose` text: `agentic-workflow-routing`, `first-party-skill-distribution`, `openspec-linear-sync`, `project-management-hub`, `requirements-stratification`, `satisfaction-argument-audit`, `skill-corpus-interface`, `stratified-change-authoring`, `third-party-plugin-dependency`, and `world-assumptions`.
+
+W1 through W3 require separate canonical reconciliation.
+W4 is a post-main delivery follow-up rather than a pre-publication acceptance step for CAM-41.
+W5 and W6 bound external-state claims and do not weaken the three narrow interface discharges above.
+S1 is corpus maintenance outside CAM-41.
+
+## Known limits
+
+This projection contains no formal proof discharge and no claim that an implementation is verified end to end.
+The Mergify source pin, Nix builds, composed trees, generated lock, and rendered context establish machine-visible artifacts at named boundaries only.
+They do not establish that the upstream guidance is correct, that a harness selects either skill, that a human follows the role contract, that authorization is valid, that GitHub reports are complete, or that a landing succeeds.
+
+The root lock does not contain `mergify-stack`, and the contents of an existing ignored repository-local `.agents/` tree remain unspecified.
+Fresh frozen repository-local delivery cannot be claimed until W4 is complete.
+The branch can be offered for authorized review without claiming activation, landing, or repository-local materialization.
