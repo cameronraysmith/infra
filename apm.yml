@@ -62,6 +62,18 @@ marketplace:
     - name: testing-and-quality
       source: ./modules/home/ai/plugins/testing-and-quality
       version: 0.0.0
+    - name: agent-context-core
+      source: ./modules/home/ai/plugins/agent-context-core
+      version: 0.0.0
+    - name: agent-context-vcs
+      source: ./modules/home/ai/plugins/agent-context-vcs
+      version: 0.0.0
+    - name: agent-context-vcs-jj
+      source: ./modules/home/ai/plugins/agent-context-vcs-jj
+      version: 0.0.0
+    - name: agent-context-vanixiets
+      source: ./modules/home/ai/plugins/agent-context-vanixiets
+      version: 0.0.0
 targets:
   - agent-skills
 dependencies:
@@ -84,3 +96,17 @@ dependencies:
     - cameronraysmith/vanixiets/modules/home/ai/plugins/event-modeling-workflow#main
     - cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations#main
     - cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality#main
+# Config for `apm compile`, consumed by `modules/apps/apm-context-compile.nix`
+# (via --root pointed at this repo root; CompilationConfig.from_apm_yml reads
+# the compilation: block from the --root target, never from the staging
+# $PWD apm.yml the compile app builds). Only source_attribution is set here:
+# the compiled AGENTS.md target itself is pinned by an explicit `--target
+# codex` CLI flag in the app rather than a `target:`/`targets:` key here,
+# because apm's compile target resolution (--target flag > apm.yml
+# top-level targets:/target: > auto-detect) reads the SAME top-level
+# `targets:` key above that is already pinned to `agent-skills` for the
+# pre-existing skills consumer path (apm-skills-install.sh); a nested
+# `compilation.target` key is parsed but always overwritten by the CLI's
+# resolved effective target before use, so it would have no effect.
+compilation:
+  source_attribution: true

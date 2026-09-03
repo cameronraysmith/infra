@@ -582,6 +582,16 @@ agents-install:
 agents-relock:
   {{nix_cmd}} run .#apm-skills-install -- --relock
 
+# Compose this repo's agent-context-* apm packages into the repo-root AGENTS.md (vanixiets tier only).
+[group('agents')]
+agents-context:
+  {{nix_cmd}} run .#apm-context-compile
+
+# Compose every agent-context-* tier (core + vcs + vcs-jj + vanixiets) into the repo-root AGENTS.md.
+[group('agents')]
+agents-context-full:
+  {{nix_cmd}} run .#apm-context-compile -- --full
+
 ## terraform/terranix
 
 # Run terraform via terranix flake app (init + apply, arguments not supported)
