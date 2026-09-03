@@ -1,1 +1,6 @@
-Rebased onto current main after concurrent PR landings.
+Revision history for #2934:
+
+rev 2 (rebase) 2026-09-03 23:28 UTC — Rebased onto current main after concurrent PR landings.
+rev 1 (initial) 2026-09-03 23:28 UTC
+
+<!-- mergify-revision-data: {"schema_version":1,"pull_number":2934,"entries":[{"number":1,"change_type":"initial","old_sha":null,"new_sha":"a1ce7a01d6f91b18f21d41253d3e034605ebe2aa","timestamp_iso":"2026-09-03T23:28:46Z","reason":"","replay_sha":null,"compare_url":null},{"number":2,"change_type":"rebase","old_sha":"a1ce7a01d6f91b18f21d41253d3e034605ebe2aa","new_sha":"8ed34f4aff7ab101f6a83952bf01d3cf8146b02b","timestamp_iso":"2026-09-03T23:28:46Z","reason":"Rebased onto current main after concurrent PR landings.","replay_sha":null,"compare_url":"https://github.com/cameronraysmith/vanixiets/compare/a1ce7a01d6f91b18f21d41253d3e034605ebe2aa...8ed34f4aff7ab101f6a83952bf01d3cf8146b02b"}]} -->
