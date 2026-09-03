@@ -22,3 +22,6 @@ dependencies:
     - git: github/gh-stack
       ref: 14fc42ed9b6c376a53b2f999f138d3bd26dac546
       skills: [gh-stack]
+    - git: Mergifyio/mergify-cli
+      ref: 727ce50b8fb3be8a9a24025807e159d644dbba80
+      skills: [mergify-stack]

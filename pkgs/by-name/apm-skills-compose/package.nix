@@ -3,6 +3,7 @@
   lib,
   stdenv,
   runCommandLocal,
+  ripgrep,
   writeText,
 
   # Auto-discover every apm package dir (one containing .apm/skills) under the
@@ -65,6 +66,9 @@
   ghStackSrc ? inputs.self.packages.${stdenv.hostPlatform.system}.agent-plugins-gh-stack,
   ghStackRev ? ghStackSrc.rev,
 
+  mergifyCliSrc ? inputs.self.packages.${stdenv.hostPlatform.system}.agent-plugins-mergify-cli,
+  mergifyCliRev ? mergifyCliSrc.rev,
+
   targets ? [
     "agent-skills"
     "claude"
@@ -100,7 +104,10 @@ let
 in
 runCommandLocal "apm-skills-compose"
   {
-    nativeBuildInputs = [ apm ];
+    nativeBuildInputs = [
+      apm
+      ripgrep
+    ];
     meta = {
       description = "Consumer apm compose over all auto-discovered first-party plugin packages, emitting flat .claude/skills and .agents/skills trees for the vanixiets marketplace; superpowers resolves as a regular remote apm dep offline via a pre-warmed git checkout cache.";
     };
@@ -224,6 +231,20 @@ runCommandLocal "apm-skills-compose"
       exit 1
     fi
 
+    MF_SHA=${mergifyCliRev}
+    SHARD_MF=$(printf '%s' 'https://github.com/mergifyio/mergify-cli' | sha256sum | cut -c1-16)
+    CK_MF="$APM_CACHE_DIR/git/checkouts_v1/$SHARD_MF/$MF_SHA/full"
+    mkdir -p "$CK_MF"
+    cp -RL ${mergifyCliSrc}/. "$CK_MF"/
+    chmod -R u+w "$CK_MF"
+    mkdir -p "$CK_MF/.git"
+    printf '%s\n' "$MF_SHA" > "$CK_MF/.git/HEAD"
+
+    if ! rg -q "ref: $MF_SHA" ./version-control-and-forge/apm.yml; then
+      echo "apm-skills-compose: mergify-cli SHA drift — version-control-and-forge/apm.yml does not pin $MF_SHA" >&2
+      exit 1
+    fi
+
     cp ${rootConsumerManifest} ./apm.yml
     # agent-skills,claude only: the codex/hermes/opencode/droid harnesses are
     # fanned out nix-side from this composed $out in a later task, not by apm.
@@ -250,7 +271,9 @@ runCommandLocal "apm-skills-compose"
       "$out/.claude/skills/unslop/scripts/banned_phrase_scan.py" \
       "$out/.claude/skills/gh-stack/SKILL.md" \
       "$out/.agents/skills/gh-stack/SKILL.md" \
-      "$out/.claude/skills/gh-stack/references/commands.md"; do
+      "$out/.claude/skills/gh-stack/references/commands.md" \
+      "$out/.claude/skills/mergify-stack/SKILL.md" \
+      "$out/.agents/skills/mergify-stack/SKILL.md"; do
       if [ ! -f "$expected" ]; then
         echo "apm-skills-compose assertion failed: missing $expected" >&2
         exit 1
