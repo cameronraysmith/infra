@@ -149,6 +149,6 @@ Each of these is documented with its exact assertion and file-and-line citation 
 
 ## Sources and attribution
 
-The BRIEF framework, the Rules-versus-Examples grouping, the formulation checklist, and the review process are adapted from yaks by Matt Wynne (MIT), de-branded and re-anchored on the ledger narrative; see [`NOTICE-yaks.md`](NOTICE-yaks.md) for the license and attribution, which credits yaks and the underlying work of Seb Rose ("Keep Your Scenarios BRIEF") and Liz Keogh ("Acceptance Criteria vs. Scenarios").
+The BRIEF framework, the Rules-versus-Examples grouping, the formulation checklist, and the review process are adapted from yaks by Matt Wynne, released under the MIT licence, de-branded and re-anchored on the ledger narrative; yaks itself credits the underlying work of Seb Rose ("Keep Your Scenarios BRIEF") and Liz Keogh ("Acceptance Criteria vs. Scenarios").
 The declarative-over-imperative treatment, the implementation-change litmus, the conjunction-step and feature-coupled anti-patterns, the one-thing-per-Given rule, and the Gherkin constructs are cited and paraphrased from the cucumber documentation (bdd/better-gherkin, guides/anti-patterns, bdd/who-does-what, gherkin/reference).
 The observable-outcome corpus embeds exemplars from the user's own safeadt project, cited to its source test tree.

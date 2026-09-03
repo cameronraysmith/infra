@@ -1,7 +1,8 @@
 # BRIEF and the formulation checklist
 
 This reference expands the BRIEF framework, the seven-point formulation checklist, the review loop, and the common-mistakes table.
-The material is adapted from yaks (MIT, see [`../NOTICE-yaks.md`](../NOTICE-yaks.md)), de-branded and re-anchored on the account-ledger narrative: an account is opened, deposited into, withdrawn from, and closed; it exposes a balance; it rejects an overdraft.
+The material is adapted from yaks by Matt Wynne, released under the MIT licence, de-branded and re-anchored on the account-ledger narrative: an account is opened, deposited into, withdrawn from, and closed; it exposes a balance; it rejects an overdraft.
+Yaks itself credits the underlying work of Seb Rose ("Keep Your Scenarios BRIEF") and Liz Keogh ("Acceptance Criteria vs. Scenarios").
 
 ## BRIEF, property by property
 
