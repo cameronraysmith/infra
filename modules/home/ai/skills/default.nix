@@ -49,11 +49,23 @@
       # readDir over a derivation output is import-from-derivation: evaluating the
       # skills attrset realizes aiSkills.composed.
       #
-      # mattpocock/skills is adopted whole-plugin; its bare-named `tdd` shadows our
-      # atdd-outer-loop -> test-driven-development ecosystem at model-selection time and
-      # would bypass ATDD routing, so it is withheld from delivery here. The compose
-      # still builds it; only the harness symlink is dropped. Remove the name to re-include.
-      excludedUpstreamSkills = [ "tdd" ];
+      # mattpocock/skills is adopted whole-plugin, and two of its bare-named skills
+      # shadow first-party ecosystems at model-selection time, so they are withheld
+      # from delivery here. The compose still builds them; only the harness symlink
+      # is dropped. Remove a name to re-include it.
+      #
+      # `tdd` shadows our atdd-outer-loop -> test-driven-development ecosystem and
+      # would bypass ATDD routing.
+      #
+      # `writing-for-agents` arrived in v1.2.3 as a rename of `writing-great-skills`
+      # that both dropped `disable-model-invocation: true` and broadened its scope to
+      # editing AGENTS.md and CLAUDE.md, so it became model-invocable in territory
+      # meta-skill-creator, preferences-documentation and preferences-prose-clarity
+      # already own. Same routing-bypass class as `tdd`, no name collision.
+      excludedUpstreamSkills = [
+        "tdd"
+        "writing-for-agents"
+      ];
 
       allSkills = removeAttrs (readSkillsFrom "${config.aiSkills.composed}/.claude/skills") excludedUpstreamSkills;
 
