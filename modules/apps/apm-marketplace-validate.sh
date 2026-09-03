@@ -23,7 +23,7 @@
 #            the real fetch path and is not run until the branch is pushed.
 #
 # grep-able markers: APM-VALIDATE-MARKETPLACE-ADDED, APM-VALIDATE-COVERAGE-{OK,DRIFT},
-# APM-VALIDATE-PKG-{OK,FAIL}, APM-VALIDATE-SUMMARY.
+# APM-VALIDATE-PKG-{OK,FAIL}, APM-VALIDATE-COMPOSE-FAIL, APM-VALIDATE-SUMMARY.
 set -euo pipefail
 
 usage() {
@@ -33,7 +33,9 @@ Usage: apm-marketplace-validate [--local | --remote] [--repo OWNER/REPO] [--ref 
 Registers the vanixiets apm skills marketplace in a throwaway, fully isolated
 environment (overrides $HOME and every XDG dir) and installs each published
 package the way an external apm consumer would, asserting a SKILL.md or an
-instructions/rules artifact lands per package (the marketplace publishes
+instructions/rules artifact lands per package, and for instructions packages
+additionally compiling and asserting every staged fragment's heading reached
+the composed AGENTS.md (the marketplace publishes
 both skill packages and instructions packages; see the per-package install
 loop for the distinction). Never touches the real $HOME / ~/.claude /
 ~/.config.
@@ -239,15 +241,86 @@ for i in "${!published[@]}"; do
     kind=none
   fi
 
-  if [ "${rc}" -eq 0 ] && [ "${kind}" != none ]; then
-    status[i]="OK (${kind})"
+  # instructions packages (agent-context-*) publish .apm/instructions/*.md
+  # fragments and have no skills; skills packages have no fragments to
+  # compose, so the compose check only ever runs for kind=instructions.
+  compose_ok=1
+  composed_count=0
+  expected_count=0
+  if [ "${rc}" -eq 0 ] && [ "${kind}" = instructions ]; then
+    # empirically verified (see task discovery notes): a dependency-only
+    # consumer with NO first-party .apm/instructions/ of its own composes
+    # every dependency fragment into AGENTS.md fine -- no seed fragment is
+    # required. what IS required is that apm.yml and apm_modules/ resolve
+    # from the same directory. apm compile's project-source resolution
+    # (apm.yml, .apm/) and its apm_modules/ dependency resolution both read
+    # from the source root apm pins to the pre-chdir $PWD (apm_cli's
+    # install_root_redirect: --root chdirs and redirects WRITES, but pins
+    # the original $PWD, not --root, as where apm.yml/apm_modules/ are
+    # READ from). apm install --root above wrote apm_modules/ under
+    # ${root} while apm.yml stayed in ${proj}, so `apm compile --root
+    # "${root}"` run from ${proj} reports "No APM content found to
+    # compile" even though the dependency resolved and staged correctly.
+    # copying apm.yml into ${root} and compiling there (no --root)
+    # reunites the two halves the same way a real consumer's project root
+    # naturally would.
+    cp "${proj}/apm.yml" "${root}/apm.yml"
+
+    # derive expectations entirely from the files apm actually staged: the
+    # first `## ` heading of each installed fragment must appear verbatim
+    # in the composed AGENTS.md. never hardcode fragment content here, so
+    # adding/renaming/re-tiering a fragment needs no change to this check.
+    # dotglob is required alongside globstar: the fragments live under the
+    # hidden .apm/instructions/ directory, which ** does not descend into
+    # without it.
+    shopt -s globstar nullglob dotglob
+    frag_files=("${root}"/apm_modules/**/*.instructions.md)
+    shopt -u globstar nullglob dotglob
+    expected_count=${#frag_files[@]}
+
+    set +e
+    (cd "${root}" && apm compile -t codex) >"${proj}/compile.log" 2>&1
+    compile_rc=$?
+    set -e
+
+    if [ "${compile_rc}" -ne 0 ] || [ ! -f "${root}/AGENTS.md" ]; then
+      compose_ok=0
+      echo "APM-VALIDATE-COMPOSE-FAIL: ${pkg} (apm compile rc=${compile_rc}, AGENTS.md missing at ${root})" >&2
+    else
+      for frag in "${frag_files[@]}"; do
+        heading="$(grep -m1 '^## ' "${frag}")"
+        if [ -z "${heading}" ]; then
+          compose_ok=0
+          echo "APM-VALIDATE-COMPOSE-FAIL: ${pkg} fragment has no '## ' heading: ${frag}" >&2
+          continue
+        fi
+        if grep -qF -- "${heading}" "${root}/AGENTS.md"; then
+          composed_count=$((composed_count + 1))
+        else
+          compose_ok=0
+          echo "APM-VALIDATE-COMPOSE-FAIL: ${pkg} heading missing from composed AGENTS.md: ${heading}" >&2
+        fi
+      done
+    fi
+  fi
+
+  if [ "${rc}" -eq 0 ] && [ "${kind}" != none ] && [ "${compose_ok}" -eq 1 ]; then
+    if [ "${kind}" = instructions ]; then
+      status[i]="OK (instructions, composed ${composed_count}/${expected_count})"
+    else
+      status[i]="OK (${kind})"
+    fi
     passed=$((passed + 1))
     echo "APM-VALIDATE-PKG-OK: ${pkg} kind=${kind} (claude_skills=${#claude_skills[@]} agents_skills=${#agents_skills[@]} claude_rules=${#claude_rules[@]} agents_rules=${#agents_rules[@]})"
   else
-    status[i]="FAIL (${kind})"
+    if [ "${compose_ok}" -ne 1 ]; then
+      status[i]="FAIL (instructions, not composed)"
+    else
+      status[i]="FAIL (${kind})"
+    fi
     failed=$((failed + 1))
     echo "APM-VALIDATE-PKG-FAIL: ${pkg} (rc=${rc})" >&2
-    if [ "${rc}" -eq 0 ]; then
+    if [ "${rc}" -eq 0 ] && [ "${kind}" = none ]; then
       echo "    install succeeded but no SKILL.md or rules artifact landed under ${root}" >&2
     fi
     while IFS= read -r line; do
