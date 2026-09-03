@@ -28,7 +28,7 @@
 #
 # two mutually exclusive modes:
 #   (default)  apm install --frozen   materialize from the committed lockfile.
-#   --relock   full re-resolution     rebuild the lockfile from scratch so a
+#   --relock   apm install --update    re-solve the graph in place so a
 #              newly appeared transitive dependency is discovered.
 #
 # grep-able marker: APM-SKILLS-INSTALL-OK
@@ -46,7 +46,7 @@ $HOME or APM_CACHE_DIR.
 Modes:
   (default)  apm install --frozen  — install strictly from the committed
              apm.lock.yaml; fails if manifest and lock disagree.
-  --relock   full re-resolution — rebuild the lockfile from scratch so a
+  --relock   apm install --update — re-solve the graph in place so a
              newly appeared transitive dependency is discovered.
 
 Options:
@@ -99,30 +99,39 @@ if [ "${mode}" = frozen ]; then
   fi
   apm install --frozen
 else
-  # Relock re-solves the graph from scratch rather than using --refresh,
-  # because --refresh only re-resolves pins that are ALREADY in the lockfile
-  # and silently ignores a transitive dependency that has since appeared in a
-  # package's own manifest. That is not hypothetical: a mergify-stack skill
+  # Relock re-solves the dependency graph with --update rather than --refresh.
+  # --refresh only re-resolves pins that are ALREADY in the lockfile and
+  # silently ignores a transitive dependency that has since appeared in a
+  # package's own manifest. That is not hypothetical: a mergify-stack
   # dependency added upstream stayed invisible across a --refresh whose diff
-  # was exactly 57 insertions and 57 deletions, pure substitution with no
-  # additions, until the lockfile was removed and resolution rerun.
+  # was pure substitution, 57 insertions and 57 deletions with no additions.
   #
-  # The lockfile is preserved and restored if resolution fails, so a network
-  # or upstream error cannot leave the repository without one.
-  lock_backup="$(mktemp)"
-  if [ -f apm.lock.yaml ]; then
-    cp apm.lock.yaml "${lock_backup}"
-    rm -f apm.lock.yaml
-  fi
-  if ! apm install; then
-    if [ -s "${lock_backup}" ]; then
-      cp "${lock_backup}" apm.lock.yaml
-      echo "apm-skills-install: resolution failed; restored the previous apm.lock.yaml" >&2
-    fi
-    rm -f "${lock_backup}"
+  # --update restructures the lockfile in place, so the path is never absent.
+  # That matters beyond tidiness: removing the file would make jj see a fresh
+  # 400KiB-plus path and refuse to snapshot it under
+  # snapshot.max-new-file-size, because that limit applies only to paths jj
+  # does not already track.
+  relock_log="$(mktemp)"
+  if ! apm install --update 2>&1 | tee "${relock_log}"; then
+    rm -f "${relock_log}"
     exit 1
   fi
-  rm -f "${lock_backup}"
+
+  # A skipped file means apm found deployed content it does not own and left it
+  # alone, and a skipped deployment is never recorded in the lockfile ledger.
+  # The lockfile would then describe this machine rather than the pinned
+  # sources, so fail rather than let a contaminated ledger be committed
+  # unnoticed. Deleting the named file and rerunning lets apm redeploy and
+  # record it.
+  if grep -q 'not managed by APM' "${relock_log}"; then
+    echo "" >&2
+    echo "apm-skills-install: apm skipped deployed files it does not own, so the" >&2
+    echo "  regenerated lockfile omits them. Do not commit it. Remove the files" >&2
+    echo "  apm reported under .agents/skills/ and rerun this relock." >&2
+    rm -f "${relock_log}"
+    exit 1
+  fi
+  rm -f "${relock_log}"
 fi
 echo ""
 

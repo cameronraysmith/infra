@@ -1,13 +1,13 @@
 lockfile_version: '1'
-generated_at: '2026-09-03T07:46:35.784663+00:00'
+generated_at: '2026-09-03T08:22:01.650254+00:00'
 apm_version: 0.29.0
 dependencies:
 - repo_url: cameronraysmith/vanixiets
   name: agent-orchestration-and-meta-tooling
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   is_virtual: true
   package_type: marketplace_plugin
@@ -66,8 +66,8 @@ dependencies:
   - .agents/skills/meta-skill-creator/scripts/quick_validate.py
   deployed_file_hashes:
     .agents/skills/herdr/SKILL.md: sha256:e8d43576ee2c6f909639b7628ee993da345d363fa05d0a3db7c34f514d6f8d8f
-    .agents/skills/meta-agent-teams/SKILL.md: sha256:c61442ceebd55b090f4d8c04b64ea3e17b0d3d360ef8d12cb3111d025d18634c
-    .agents/skills/meta-create-workspace-agents-md/SKILL.md: sha256:fe28f544b16962c65cc72fd59f1ee3ac088581bdc86b7fa2fcbd45929ead5e4b
+    .agents/skills/meta-agent-teams/SKILL.md: sha256:b14f379b7f476ee4a66b9d3cfed5d40906ffb8e146796404d7ba7acf0bac6d75
+    .agents/skills/meta-create-workspace-agents-md/SKILL.md: sha256:3e2939d9f3bdb904b27842b54a9a8f60bc3672909f8d9618b791c6c76209903a
     .agents/skills/meta-generate-context-test/SKILL.md: sha256:4a3762253753f9a2610f686e358c6fd3cbc8c994e72211caa7d92f5cf236179e
     .agents/skills/meta-generate-handoff-prompt/SKILL.md: sha256:be5f66a6ea6dfd40ac6f52a337bb0ccb97a039b32b0e9ce9d0fd2970bca72177
     .agents/skills/meta-list-all-agents/SKILL.md: sha256:c3b613de7d2013284110465d3b386e67273a74450dbe229c9c335ee428192df1
@@ -76,14 +76,14 @@ dependencies:
     .agents/skills/meta-load-prompting-docs/SKILL.md: sha256:5e2f3674765d1ae6c37f22fca03e18230bf76f59e262434414ab902d697e40d9
     .agents/skills/meta-optimize-prompt/SKILL.md: sha256:1b42a0f9603febbc52085306172e8c319767d5f2dab6dc033cf3c9558bf41c25
     .agents/skills/meta-orchestrate-dispatch/SKILL.md: sha256:408f730486aa9d2214f7da7ec448d5f7a15098b0bc3620d810701e40de9a1e99
-    .agents/skills/meta-orchestrator-checkpoint/01-handoff-payload-schema.md: sha256:9c361cec881f24b04cdd73a8d3cca9e97e4cce6a4ede41dfa9d3c5ad9d1dae43
-    .agents/skills/meta-orchestrator-checkpoint/SKILL.md: sha256:2b60348590f9312071e6644a0b3c4bf9c4dc9aca5d3916eb35c54c616c4802a9
-    .agents/skills/meta-orchestrator-initiate/01-discipline-and-cycle-patterns.md: sha256:070701511d536d4eda1d3427025685cec78d4ba89cb184d356efcbe367635868
-    .agents/skills/meta-orchestrator-initiate/02-tier-and-gate.md: sha256:217594e9e6958acf941620b99113953e4cf8a53cecc943d97dbca19de72ce044
-    .agents/skills/meta-orchestrator-initiate/03-operational-patterns.md: sha256:95fbc8eb765a68b120a3e8f7e6f5f0dca9493ca20a691b7844a1a693655896d2
-    .agents/skills/meta-orchestrator-initiate/04-spawn-prompt-template.md: sha256:d133dbdcf8131261458660b35173e5a68069705f4e78499da6f4e5905bddd47e
-    .agents/skills/meta-orchestrator-initiate/05-exemplar-session.md: sha256:eedd033f983119d3112ed86aa7c8c001512f86db8b797009df82767ac3311f15
-    .agents/skills/meta-orchestrator-initiate/SKILL.md: sha256:e2b83e3e4f398a7e869a205ac49ab254043f1b7c3efaccd98840a4e7232617b6
+    .agents/skills/meta-orchestrator-checkpoint/01-handoff-payload-schema.md: sha256:6f4cc20e205cc800efacaa528edc75e4a9c7894c335635750bf256cb3027e944
+    .agents/skills/meta-orchestrator-checkpoint/SKILL.md: sha256:07262588a63db7d541f2e4f1f7c6134dfa61ec782f7b235d0149b67b29b0ecd8
+    .agents/skills/meta-orchestrator-initiate/01-discipline-and-cycle-patterns.md: sha256:6673e328c8302a7ea6141bc5babd3795a710f0fc8f10616e46196af1e9547d5c
+    .agents/skills/meta-orchestrator-initiate/02-tier-and-gate.md: sha256:da41f4fd0bb32bc7d208965ecbe8029b1f45943ebe1b8690a04fef43d2d244f6
+    .agents/skills/meta-orchestrator-initiate/03-operational-patterns.md: sha256:aac0019880df6cdb8a1badb9d843c899692cd6fbd74a3ac418a37a0d9d9d0b5d
+    .agents/skills/meta-orchestrator-initiate/04-spawn-prompt-template.md: sha256:09317d5f5fd4e0ddeefdfdb123a69d4d3f88e8ee9d6857833aac697a516d2537
+    .agents/skills/meta-orchestrator-initiate/05-exemplar-session.md: sha256:9ea5ec61f022e3b9985e93ff85207d6aa1d7899b35581e75948c7dd467aad7c0
+    .agents/skills/meta-orchestrator-initiate/SKILL.md: sha256:c0b3d165eee842d4eb5a06d82045d02cc69bb9a7dfa213298ff4b7feeb4c71d0
     .agents/skills/meta-search-sessions/SKILL.md: sha256:e2409684ad148588c47d0b47d905b031906ab1486105273cb3c1417e49955bae
     .agents/skills/meta-search-sessions/scripts/search_sessions.sh: sha256:be4ea5690d7c6cc56fe679cd4c64c66e237159cbb2b97495a06a4b8d1a265266
     .agents/skills/meta-search-sessions/tests/fixtures/claude.jsonl: sha256:6a2bca37b86fcb40a7f6def5b05b72b82c1a7df0b43685a6e35859709e7326ac
@@ -93,7 +93,7 @@ dependencies:
     .agents/skills/meta-search-sessions/tests/fixtures/raw-count.jsonl: sha256:61674b0ed5ea707c3c14ad5c2ce2a09abaf31b4a276aaaf1b2025987a95efefa
     .agents/skills/meta-search-sessions/tests/fixtures/unknown.jsonl: sha256:350a6d59154b428a4c433f5b1351fa7d0931be3e4743c4c9f2a39c08bc6324b7
     .agents/skills/meta-search-sessions/tests/test_search_sessions.sh: sha256:8e5bb4d8a462d395a7b815e8d36d49ef113d0a026f72e4a006de457ccabf30a6
-    .agents/skills/meta-session-resume/SKILL.md: sha256:2f2551e856f252eb839314ff035b5b5e69cc14dd81f3d6b24bf51d738e01ad3e
+    .agents/skills/meta-session-resume/SKILL.md: sha256:7b41984f3d3fe31dd4172b1f7a322cebf1e8a1ae88ef88c6120cfa2c0ec63eb2
     .agents/skills/meta-skill-creator/LICENSE.txt: sha256:58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd
     .agents/skills/meta-skill-creator/SKILL.md: sha256:596511e21a5a30a79b1fb868f6b0bcf781aa6b314aeaf6bbb4137142d30c7753
     .agents/skills/meta-skill-creator/references/output-patterns.md: sha256:d6027800b9d8c26589edba85b42901a41ac36d753b4e9cebc7f4cbb03cdcf0a4
@@ -101,13 +101,13 @@ dependencies:
     .agents/skills/meta-skill-creator/scripts/init_skill.py: sha256:cf12790f1d4958799281920d599f56aea38fb5c26e2812a61dd740bf3d4b6b99
     .agents/skills/meta-skill-creator/scripts/package_skill.py: sha256:b31fbcb3e362d5c5308e99255ff8e83cde3a513e0636953964a648494ca10931
     .agents/skills/meta-skill-creator/scripts/quick_validate.py: sha256:67cf5703402013936c8fb75ad6a1afecd8841d45cc5e606b634eb05825fde365
-  content_hash: sha256:faac96f2d283f445073b16d258139e83fa786d3cbfe97b5eca255284ba2059a5
+  content_hash: sha256:5f4fe30ab9bf0d700c527570595a8f89d8b971b929370c708974ed986a1ebc89
 - repo_url: cameronraysmith/vanixiets
   name: beads-issue-tracking-and-session-workflow
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   is_virtual: true
   package_type: marketplace_plugin
@@ -123,18 +123,18 @@ dependencies:
   - .agents/skills/stigmergic-convention
   - .agents/skills/stigmergic-convention/SKILL.md
   deployed_file_hashes:
-    .agents/skills/session-checkpoint/SKILL.md: sha256:77229b624176dbdccacbf3e743b186c2cc3e87d4c7bc3cbab67fadb052feb876
-    .agents/skills/session-orient/SKILL.md: sha256:ebd087273b9b0bbfef16d3846901e8c43bc6e58539dbe95dd979bda3609bfdd9
-    .agents/skills/session-plan/SKILL.md: sha256:c1c5a78fa6129194f5c903f7cb7ab6d8fa3a297582f748577f14fbfbe3839d1d
-    .agents/skills/session-review/SKILL.md: sha256:4d13034e0659e0f7d51f70ddd5028a767317d00dd811d8e3457440d3824a378a
-    .agents/skills/stigmergic-convention/SKILL.md: sha256:06f2366283910fd0008d7390f8d66b56c437a9e3164c759156b9ddcbf949eb15
-  content_hash: sha256:aedd953fa8718b03ebcaea65c18f1683ae3c74605354838a37332718bfc23f96
+    .agents/skills/session-checkpoint/SKILL.md: sha256:9221eecbbc876c270793e0b5ced0a250fac0e969d3a9177e206305ba4ab2cc82
+    .agents/skills/session-orient/SKILL.md: sha256:077afc6bacfd48ed44c97389f439eca9f0bdb75a6709608861f6cdae17ef0555
+    .agents/skills/session-plan/SKILL.md: sha256:ef650c79fd142560435828ec1535559b64f90429d313f4907b0c3c28dab7e457
+    .agents/skills/session-review/SKILL.md: sha256:0f09398852d3c73a9b0a562deda41dd7390305953d3155e0540b16f27f1784dd
+    .agents/skills/stigmergic-convention/SKILL.md: sha256:ff6d55363de629cd2656ef94d400fcdd526174eb3f4642f7d22d5b2b64cbfeef
+  content_hash: sha256:e5167f89bacaab3c38d1ae87c74b0367837ba893adad1cf6b51f0a45b914aa67
 - repo_url: cameronraysmith/vanixiets
   name: document-authoring-and-visualization
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/document-authoring-and-visualization
   is_virtual: true
   package_type: marketplace_plugin
@@ -165,20 +165,20 @@ dependencies:
     .agents/skills/knowledge-graph/references/architecture.md: sha256:6192aad52bf5fe2408e062b41fa340aba795bfbf6681557616010104dad14bc9
     .agents/skills/knowledge-graph/references/cognee-cli.md: sha256:b8578cdcacbcfae5eb0eb3be63094320b497622077f309fafd149e8c0eefa1fc
     .agents/skills/knowledge-graph/references/datasets.md: sha256:72c31b07f23812379cabc76364bd657c95df2d8754a48c722c98499746c8b9af
-    .agents/skills/knowledge-graph/references/ingestion-workflow.md: sha256:93b44ba2bc5834e7af11c2709052527856d963eb2e4e16203c131b5ab3f5c529
+    .agents/skills/knowledge-graph/references/ingestion-workflow.md: sha256:d0c201922de1fbd86096a173ab3b77a48aa519360dad68c5a8a857e3c651698c
     .agents/skills/knowledge-graph/references/search-types.md: sha256:dab1dfe20913e8c878bf51e18722adff0b2978efbed53a7ae96dd05c3bf10c23
     .agents/skills/scientific-visualization/SKILL.md: sha256:b84affa84c016d57d05cb41a5e260b5fcb049eb33b82a88f423bc2cc82ed08ea
     .agents/skills/scientific-visualization/checklist.md: sha256:ee1401ab8c1db613573426f9679d662254e9db00b4911f79be392a2ea3d887b6
     .agents/skills/text-to-visual-iteration/SKILL.md: sha256:0372b1f2ad615cdd57c988e000480859a3e07ac914926a3df69e2805b2888255
     .agents/skills/text-to-visual-iteration/references/toolchains.md: sha256:ce4289d49558fb56abfc30191df7b4d28e8dc5ba539c95a694c451ffe5ce5149
     .agents/skills/web-to-markdown/SKILL.md: sha256:d17cca5925543d9b19338e09148f476752bca20362438ea3714bc602397c3812
-  content_hash: sha256:3db5ebec93e68f9f67a3e363b2475f023b26c2f060f560291812493417d4c1f6
+  content_hash: sha256:069381e152b6cae0ace15b39ae0a87f341760d1450198f73d1b14c8e3a9a3e48
 - repo_url: cameronraysmith/vanixiets
   name: event-modeling-workflow
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/event-modeling-workflow
   is_virtual: true
   package_type: marketplace_plugin
@@ -196,13 +196,13 @@ dependencies:
     .agents/skills/event-modeling-greenfield/SKILL.md: sha256:2487dcaa5f4b124304370cbe9b98cf0e92029f3e41a3c44bf549e4ea70f6c299
     .agents/skills/event-modeling-qlerify-session/SKILL.md: sha256:4b96e24484cf3bd9a10ad854cc59ff00de2c1dda4240f67a5ee3e2670280b47d
     .agents/skills/event-modeling-to-eventcatalog/SKILL.md: sha256:4ae9f8b45b2ff2810162731c2a4660ff5a45e702147d9881c0f2aed04815630f
-  content_hash: sha256:999ed672da820ccd75ffc3f776bc692a81fad998c8ff7d3753e90627e77859ee
+  content_hash: sha256:f4c01e912f5a482ab9a27c5b3c014fffdb25d13bddd93d51f562752805d4777d
 - repo_url: cameronraysmith/vanixiets
   name: formal-specification-and-refinement
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/formal-specification-and-refinement
   is_virtual: true
   package_type: marketplace_plugin
@@ -232,33 +232,33 @@ dependencies:
   - .agents/skills/satisfaction-argument-audit
   - .agents/skills/satisfaction-argument-audit/SKILL.md
   deployed_file_hashes:
-    .agents/skills/nucleus-platform/SKILL.md: sha256:60aa30651c6fc6d221e42c178a19bcca02d617350c7ff8351b7d56ae65e7ab7f
+    .agents/skills/nucleus-platform/SKILL.md: sha256:56f3570f87a42d30d599df85e6825c2271aef77197fcc7311a233b2a3dd89e7f
     .agents/skills/nucleus-platform/references/directory-tree.md: sha256:33c97266ab595eeca7b1d45f6924322b8a05e4da96ba5850aec6547aef6c0f33
     .agents/skills/nucleus-platform/references/frozen-stack.md: sha256:7f3433cb6305759bfad90a6eb57c4a6e9cb631409a0cc4ef0823097acfc7fc72
-    .agents/skills/nucleus-platform/references/linkml-data-model.md: sha256:79bdb4f54fde7858107e3cd02520b61f4d7db2e88db5c03772b0295dfd7a3ff9
+    .agents/skills/nucleus-platform/references/linkml-data-model.md: sha256:5bae8e94ee831554d76ebfb4940d51b99069b1db1d9c747eea59996730f76359
     .agents/skills/nucleus-platform/references/maturity-tiers.md: sha256:cdcf2801121f1c299a83ed09867a3af93f38e48de9050c65cd1553474024b9fa
     .agents/skills/nucleus-platform/references/nucleus-workflow.md: sha256:953feca104b3cdc6edb295fb764ee96ad623099ec55d6957b3dfaff4af3ba3d3
     .agents/skills/nucleus-platform/references/nucleus-workflow.mermaid: sha256:4756147a96d6c7fc904154b0cab96f450ecdbff7c3097bc437d466243435b287
     .agents/skills/preferences-requirements-engineering/SKILL.md: sha256:13bac364e5a6910669c8edfaf45d8cfe826d3df7f970768bcbb017f04d487acd
     .agents/skills/refinement-driven-development/SKILL.md: sha256:6438cb44eedaa2bc0b488281f87c150fe79b0bab01be000b94d4780dfb128d2f
-    .agents/skills/refinement-driven-development/references/check-translation-validation.md: sha256:170feef573c86060182e87ca6832ded281f03434ab90c09a48d3f9b9014b4c98
-    .agents/skills/refinement-driven-development/references/diagramming.md: sha256:def9c96421b7d11b1e48f849b4b1ca2850240d401677ca087a331f8558298614
-    .agents/skills/refinement-driven-development/references/lean-spec-patterns.md: sha256:236decc243cb35df1a6f15aecbab2fe92e6d34328083c74a42c9039e9850ba85
+    .agents/skills/refinement-driven-development/references/check-translation-validation.md: sha256:b7af632448bdb370be9c798c649f05408693dab186b86a14ac28bfe3be07f00e
+    .agents/skills/refinement-driven-development/references/diagramming.md: sha256:c21a7cf62907a777b414d6b49ba363e02b448f4190e74f6648f9933e84e81d55
+    .agents/skills/refinement-driven-development/references/lean-spec-patterns.md: sha256:e3e91c4dd725938689089236bf05d5674fd62dcc746501d00ca3b2a6dd3c25ec
     .agents/skills/refinement-driven-development/references/lift-charon-aeneas.md: sha256:5238dc565f6f20915fec0b7f742cc109c6c159473a9f311e115c5725aa071139
     .agents/skills/refinement-driven-development/references/mathematics.md: sha256:d2b7044ac33e018a72381fafd7172c9e5277c8ed7a5e538f883bfdab2471a4b8
     .agents/skills/refinement-driven-development/references/methodology.md: sha256:b2355aac7299791417ce75f1dfe37841eaaa8ed174bd5ac975c67d5fd6168429
-    .agents/skills/refinement-driven-development/references/prior-art-idris2.md: sha256:c344b98c28ecf6b448c95e4ab4b144c45deb8a23b375afb1daca2c8bf870f2ad
-    .agents/skills/refinement-driven-development/references/refine-and-lower.md: sha256:0ceab76e36a4cd6273d1180fe37b026587f90e8bf63b56b6dd1fc6c8e8af2428
+    .agents/skills/refinement-driven-development/references/prior-art-idris2.md: sha256:a9c2c2746d54e1f1b4f020165459f180269b853aa1482d389d8b8665ec974cab
+    .agents/skills/refinement-driven-development/references/refine-and-lower.md: sha256:9b0270b735b2590845c40cd1655ce56a65a3c6be79c1e492e4172496b746d802
     .agents/skills/refinement-driven-development/references/toolchain-setup.md: sha256:590bfcdbffe4b56a07067d68a1cec37af7eff18d3c2cf77dacd742f452eabf94
-    .agents/skills/refinement-driven-development/references/vocabulary.md: sha256:bf320c3e365599021999539c63d7905d6429240975139ce9450f8bb144c5c870
+    .agents/skills/refinement-driven-development/references/vocabulary.md: sha256:180b76bfd94696fa44fa301a95ce33faee0caa34dcce074af82671b14df33a5a
     .agents/skills/satisfaction-argument-audit/SKILL.md: sha256:b6779e3b733a84e458003e132d1cacf073fb869e2a1d28d3a13e1895d29b3279
-  content_hash: sha256:e9630a2700bb35dc55b5206d688a790a800a48dc89c1eeecb0f9ee1792328d90
+  content_hash: sha256:7dc165fdb25f989f167846e7706c10e4453565a255c666bee4fcf2db3f1156b6
 - repo_url: cameronraysmith/vanixiets
   name: nix-build-operations
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/nix-build-operations
   is_virtual: true
   package_type: marketplace_plugin
@@ -278,20 +278,20 @@ dependencies:
   - .agents/skills/worktree-sparsity-eval/scripts/update_claude_md.sh
   deployed_file_hashes:
     .agents/skills/ci-log-verification/SKILL.md: sha256:3d39b10e55ee25e8e8b178f6aa515e515be16e093b331565039de6108d706593
-    .agents/skills/nix-flake-pr-cycle/SKILL.md: sha256:6dcd86ab056f40f0fe60d5667d31a6869d9262fe261bc652e556bd9efa8443a7
+    .agents/skills/nix-flake-pr-cycle/SKILL.md: sha256:2c85196dd0b9cf94eb6afa70140b64d2e422dccda399d75946f95daa0310e49c
     .agents/skills/nixpkgs-broken-package/SKILL.md: sha256:d85e3566c7e41daacf69579568c765121846b68a58b1c2c36123eb49f104d6f6
-    .agents/skills/process-compose-init/SKILL.md: sha256:e402bbd2676adf8902ab3d334957a88b4313319645952a03590d2843790b6848
-    .agents/skills/worktree-sparsity-eval/SKILL.md: sha256:1c13431cbce572618cc3808b6c17856c573b2d5cdeffde1dd8ac3f6653a37b84
+    .agents/skills/process-compose-init/SKILL.md: sha256:e5b8add4f560cb80003676019f58e62f5703b6c26ce29b5759815d765ac47fd2
+    .agents/skills/worktree-sparsity-eval/SKILL.md: sha256:5c9284eb0cb4bdbec6a0568a3c740b2449bc7a2a3395066db56e9b956f1b4eb2
     .agents/skills/worktree-sparsity-eval/references/sparse-checkout-patterns.md: sha256:e705baaaf6b655c9655627f4f1d02fd933cd7468668b1be25f6a421401b58273
     .agents/skills/worktree-sparsity-eval/scripts/collect_metrics.sh: sha256:aba77011a293a40baeb4c8708e2644999da09d2147f7f219a1d969ea810db39f
     .agents/skills/worktree-sparsity-eval/scripts/update_claude_md.sh: sha256:d794b75c4f31487f8c0f87ceddfa543a11ce611c6556b03b1db74642619c163c
-  content_hash: sha256:5915d79c22ecb33909adb107bd0747f74f056559ac42ab64b93ed3deef4ab8b7
+  content_hash: sha256:7a5f362f338d9ac9766fb7fc57f07a03b1e1f5fd5f2e498de31ee99bc2e8953d
 - repo_url: cameronraysmith/vanixiets
   name: planning-and-development
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/planning-and-development
   is_virtual: true
   package_type: marketplace_plugin
@@ -345,20 +345,20 @@ dependencies:
   - .agents/skills/openspec-verify-change
   - .agents/skills/openspec-verify-change/SKILL.md
   deployed_file_hashes:
-    .agents/skills/agentic-planning-development-workflow/SKILL.md: sha256:5c1b5e19b9aad9a4daa4ca160292366ce3c7c37295fe3dc9a388ad4c8adcd04e
+    .agents/skills/agentic-planning-development-workflow/SKILL.md: sha256:b7ee0c52d4a665e51c57e78454049363f3666e9a3d28ac5a0799e92255f32b69
     .agents/skills/agentic-planning-development-workflow/references/board-and-gates.md: sha256:571bc62034962e5d0de2126d55b40bc57c1a86d3081575424c47d5f6c7abd56d
     .agents/skills/agentic-planning-development-workflow/references/board-state-machine.mermaid: sha256:a46877004f39b2a88b2932db7493292671ddbe077f08c9a0544f1ac186a444ed
     .agents/skills/agentic-planning-development-workflow/references/codex-review.md: sha256:751dafdc6efcc75feefe3836bcfcf53539ae0390792388fa638ba0ae8e160776
     .agents/skills/agentic-planning-development-workflow/references/collaborators.md: sha256:f4f981f5faa940335bcb7a7ee9ed83d26a31d0cb3fa95bb5a3289c6120c6e316
     .agents/skills/agentic-planning-development-workflow/references/delegation.md: sha256:97d836a06c7e71ff51ae74b910886508955b369d1e0b7beea03786d71cc113b5
     .agents/skills/agentic-planning-development-workflow/references/execution-modes.md: sha256:666175e8deb1986b656108f61907bbecfb63bc3afcbe13b1189b7c5700575135
-    .agents/skills/agentic-planning-development-workflow/references/hil-isolation.md: sha256:4b935c3f0fefd33b31202068133b2929d0267b46252dabef9c7ca15b929cfe65
+    .agents/skills/agentic-planning-development-workflow/references/hil-isolation.md: sha256:c2981667b389af2b1ed37abd8cfffd3427ef79287be6a84ba94a15e4a3391fac
     .agents/skills/linear-project-management/SKILL.md: sha256:4565d596db4332a81a4ca0abe0ff807b36e055e670e968f415f7264ba49008ab
     .agents/skills/linear-project-management/references/beads-overview.md: sha256:58108232b8cec53d9b87b63f8957e06b4bc083635ff03c53dd5ae82f42a70c2a
     .agents/skills/linear-project-management/references/github-overview.md: sha256:b5b44d224cf468f138abf4ddd834684844227421bd9cecff62b8af3dd6d12d24
     .agents/skills/linear-project-management/references/linear-conventions.md: sha256:3cc39ddfce61d6aaeb4488c4c5de218a8c48be8268ae464c288509c619dcf8b7
     .agents/skills/linear-project-management/references/linear-overview.md: sha256:828696e0e63202730d587798a0b40352d23b8530a8b36ccbee54c4008aaa3766
-    .agents/skills/linear-project-management/references/linear-workspace-safety-gate.md: sha256:85ea395cefebb7c37ee86b0751de7d79b3d065908f95bb56d908cfef97cec34d
+    .agents/skills/linear-project-management/references/linear-workspace-safety-gate.md: sha256:5bf9c6a6ffa28feaaa1ffa00a93ffe4f5ee7c4a9ea458ea4eb306b7015ab4cbc
     .agents/skills/linear-project-management/references/method-overview.md: sha256:12569cf5a63d1815584df13ad5cc33999a9126f393ce638982e042f4c11b3825
     .agents/skills/openspec-apply-change/SKILL.md: sha256:9bc2d4661cba9cb3b540a3dd5e958646b701b9575c573669938927ec93108a1b
     .agents/skills/openspec-archive-change/SKILL.md: sha256:e6364769863dbfa2ca3cc05edf127b6c535d5a136af85776fb9a34352968b475
@@ -369,21 +369,21 @@ dependencies:
     .agents/skills/openspec-ff-change/SKILL.md: sha256:e25bf72b49e2cc9d92f8a116543651df298d43b42dc961045e1678dac36170c8
     .agents/skills/openspec-linear-sync/SKILL.md: sha256:7c4df99af653ce6efb11e86dcb86c46f6d8867ec7978a6fd8eb4230cfec55830
     .agents/skills/openspec-linear-sync/references/config-and-frontmatter.md: sha256:c327910d5b57c668163a389e49b59d58c1e8e88530fa2509477f4f3ea349c959
-    .agents/skills/openspec-linear-sync/references/lifecycle.md: sha256:fd19dd309c58714c10790030339a1e0389ed5d75a5a947bec0773402f7ed9a4f
-    .agents/skills/openspec-linear-sync/references/linear-cli-mapping.md: sha256:dec82e2a2a25147d1b50542299a26e9b12294086f492ba9a59e75b0f1ede9853
+    .agents/skills/openspec-linear-sync/references/lifecycle.md: sha256:7017d1cdaf4d935b95ecd25d8129a3af1223220b164c5b61af9b5a877b290062
+    .agents/skills/openspec-linear-sync/references/linear-cli-mapping.md: sha256:10f4a5fc3b7bf5fade2e59f69a3a3c03f2c8b38fdcfed803cbd2691fe1652a8c
     .agents/skills/openspec-new-change/SKILL.md: sha256:84374cb8ab0c6e076933126f688bc7f59abdfa7aced7bb710743dd3bf72e3383
     .agents/skills/openspec-onboard/SKILL.md: sha256:12b7fbe19e2d7fbc7c8874dc281e0aab655bed72eb9e961efb8d2ac28fc1885c
     .agents/skills/openspec-propose/SKILL.md: sha256:3d993daee500c765ba93a2a5f167e3510c81dc4749e9626361c986f8d2a27f7c
     .agents/skills/openspec-sync-specs/SKILL.md: sha256:10976095976c6bb53a840f5f6ea74924c3ab2cd21b3fb7c624dc7b28411574fb
     .agents/skills/openspec-update-change/SKILL.md: sha256:82c2250f8d8ec77e98736438a71113f577e9d0d249db181fbb891f598d8533a0
     .agents/skills/openspec-verify-change/SKILL.md: sha256:6e55af9ecd207644fd7d993aa1933da30d1595880fe20b67ede7b0d9f646a291
-  content_hash: sha256:1b9730141bb3f97504dfa05eedd1bedd59da3e4d1a543d3040dc526c5a54a24c
+  content_hash: sha256:952937372a05a77ab431a52f54a10bd43536acfee60e82f1a0622759aada566a
 - repo_url: cameronraysmith/vanixiets
   name: preferences-code-and-collaboration-conventions
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   is_virtual: true
   package_type: marketplace_plugin
@@ -414,28 +414,28 @@ dependencies:
   - .agents/skills/preferences-style-and-conventions/SKILL.md
   deployed_file_hashes:
     .agents/skills/preferences-change-management/SKILL.md: sha256:89f0bf716c8877a402c3e6742e162ce1b62ac2b65cae004394ef1c3151002622
-    .agents/skills/preferences-comment-cleanup/SKILL.md: sha256:3e44066c7aa01a505e127010af35eb184371ca294e5400617df3caaa06528865
+    .agents/skills/preferences-comment-cleanup/SKILL.md: sha256:dd1eccabb9b876e8914c78067410a4dae76e7568daed5849098831291d5d36bf
     .agents/skills/preferences-comment-cleanup/uncommentrc.toml: sha256:e37d2f3ded1aa5c6816ba1145efecec83c6a753ca0bb838a4fbb1c40ba93d02b
-    .agents/skills/preferences-documentation/SKILL.md: sha256:dc11103e34e5e241c48afaa286ec6d008efa7157e57ae1a00a93ba34b00f3249
+    .agents/skills/preferences-documentation/SKILL.md: sha256:be63a54ff40e3ecf8203f7c8f115e60aad0d8e7beb8bbf9ad3a90701e17804bb
     .agents/skills/preferences-documentation/references/adr-conventions.md: sha256:73233c2348c2d83d20e0d9baef2a54d4a2a0b4f673ff9d85085e2b2f3bd3c767
     .agents/skills/preferences-essential-complexity/SKILL.md: sha256:7cdd23c677529154a403038be0f66a6ba55b226ff289033fef911de2d7a5b8ac
-    .agents/skills/preferences-git-history-cleanup/SKILL.md: sha256:cd35a0e8aae12897c74b478cba5b6e6a73478f53a634b140057c2678c1b5403c
-    .agents/skills/preferences-git-version-control/01-git-native-mode.md: sha256:5c007dcd77d78079c06e1786e4ca4f82ac76dc02b20f369c817cb935b8f34163
-    .agents/skills/preferences-git-version-control/02-gitbutler-mode.md: sha256:27fa22867c3daa7d940192c1518e1d93c826c223cf6ad9ac844afff04b940de3
-    .agents/skills/preferences-git-version-control/03-jj-mode.md: sha256:58bf858388cb22d857954e4d0dc2c9a93bca4bfedfaac6a13c907839fe4fcf7a
+    .agents/skills/preferences-git-history-cleanup/SKILL.md: sha256:caab66c123be4153c6bb05c5b9beae994fdd50f928a0de237c7a9037cce65c3a
+    .agents/skills/preferences-git-version-control/01-git-native-mode.md: sha256:62fe9dfcd1ac4892912f8c6a8d7ef7a7910fc7dc0670af0cc68b345a6c7a7dae
+    .agents/skills/preferences-git-version-control/02-gitbutler-mode.md: sha256:d03e334ed05126acf905d6c0b9518635bd0931501c54c08528d2d9ba7a044ea9
+    .agents/skills/preferences-git-version-control/03-jj-mode.md: sha256:8e5a009f17b0c90e8da2643ec8a109604def282e9d7ce61fcb82c7d02656b718
     .agents/skills/preferences-git-version-control/04-history-investigation.md: sha256:24eac9248e0412799f41b6c88f07a0921d29ac0c0afc4fb12dcb93d675039c8b
-    .agents/skills/preferences-git-version-control/05-commit-workflow.md: sha256:07c100fb3cfb49f6b2d92fd8d0935fa255a67575a82da8c16edb7300b186dbc0
+    .agents/skills/preferences-git-version-control/05-commit-workflow.md: sha256:530338d7f45f1cbfce79e8eba6bfb0ade80bb8e385a4b15a6fd215b9734b5ab8
     .agents/skills/preferences-git-version-control/06-github-pr-issue-safety.md: sha256:44b48cb9047cf57a66a0daa16fb1548b7421d39bcef30e37013344cce47611eb
-    .agents/skills/preferences-git-version-control/SKILL.md: sha256:f9c92866d249c179cc5fbb61b6a58402e4427cbde1977463ac9c98e8894a404a
+    .agents/skills/preferences-git-version-control/SKILL.md: sha256:fe9909b99d57f94450a9252ef8a042c7898f4bddd02245f0465c50b8964619ba
     .agents/skills/preferences-prose-clarity/SKILL.md: sha256:4c271b78aa7251a18c7bb1087e6f1b6a8636e9e168b7153881bafec8ff68bc48
-    .agents/skills/preferences-style-and-conventions/SKILL.md: sha256:89e617bca2e107652f5ce0008d9459fafcb125f42a8e14812fc75c009392252e
-  content_hash: sha256:fc1d165c57ee0745950e1c9e66ada3eb0aaeacd090392f9e2a07381dc47add10
+    .agents/skills/preferences-style-and-conventions/SKILL.md: sha256:4d10e946ff597cc578183a85a4d0564fe25a3e9506b9aa0ebe20601006ebd864
+  content_hash: sha256:895f09ca0dba8ef8af3b9482ab406fd2def364a3218a5841fc19feb93a85bae2
 - repo_url: cameronraysmith/vanixiets
   name: preferences-data-and-scientific-computing
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-data-and-scientific-computing
   is_virtual: true
   package_type: marketplace_plugin
@@ -465,7 +465,7 @@ dependencies:
   - .agents/skills/preferences-workflow-orchestration-algebra/03-fp-discipline-and-enforcement.md
   - .agents/skills/preferences-workflow-orchestration-algebra/SKILL.md
   deployed_file_hashes:
-    .agents/skills/preferences-data-modeling/SKILL.md: sha256:daa7e96b69e2420e2d054176c184ee9458b26d5165ca2e78ab269d68b15bff7e
+    .agents/skills/preferences-data-modeling/SKILL.md: sha256:638ef90e5468a56a8bfa26be5fdd0d2d225fff563c11f99925e857fd832e3cfd
     .agents/skills/preferences-json-querying/SKILL.md: sha256:f38f4cec2880594fc06096fac52a4d255194193b64972eaabaa8f3d7057e6d00
     .agents/skills/preferences-scalable-probabilistic-modeling-workflow/01-foundations-and-framework.md: sha256:31979d201e122b0bf98eb83ca162a92d76b862489f6eaa7dfdb8f52dfc0cd60b
     .agents/skills/preferences-scalable-probabilistic-modeling-workflow/02-phase-1-pre-model-pre-data.md: sha256:477d0a61dccf1853818ce87496178d9b56baedcf2b1c7ffff9d3cb4a05f373b7
@@ -480,17 +480,17 @@ dependencies:
     .agents/skills/preferences-scientific-inquiry-methodology/04-hierarchy-of-approaches.md: sha256:5424d86e456982c3848b6878e3d0bad45c2a17033d4339c70e9861047901d558
     .agents/skills/preferences-scientific-inquiry-methodology/05-pragmatics.md: sha256:7bf098286a7fe530760b2d0de90c79be0611f43c040a81f8768acb6bcd634fc1
     .agents/skills/preferences-scientific-inquiry-methodology/SKILL.md: sha256:0b04409ed02bbf8c59274c6e7b780094771e4290e40771943774691476fb019a
-    .agents/skills/preferences-workflow-orchestration-algebra/01-dagster-categorical-mapping.md: sha256:b2fcf0727dcfc7fab01a76f94b75e4377d6e6be764b359f9397890729e06c655
-    .agents/skills/preferences-workflow-orchestration-algebra/02-asset-vs-task-spectrum.md: sha256:d4a152cc9a78e501bf8af1a34368bb32500a3c9d90bee0ce65b70767ea3ee92a
+    .agents/skills/preferences-workflow-orchestration-algebra/01-dagster-categorical-mapping.md: sha256:6186bef577361dbac4deceb1aa5fb230aac564c87676617e7059f79de158a80b
+    .agents/skills/preferences-workflow-orchestration-algebra/02-asset-vs-task-spectrum.md: sha256:18e18a703451ccca6f19588625416eab87556d47047fb183f617b1e1af9d67c5
     .agents/skills/preferences-workflow-orchestration-algebra/03-fp-discipline-and-enforcement.md: sha256:16bf23c2fbfb9724a21794ae573e586dc73a06b8d6727748758c5ac54fe2ead5
-    .agents/skills/preferences-workflow-orchestration-algebra/SKILL.md: sha256:a234ce1a623d77fbc5fd9ce0cf5e356d9e131279b148658d97a677b5a92fa3fd
-  content_hash: sha256:9622a525ee5acb5b1b2625ba5f50880e9fda1b71c52d521dcfd19b81c81d77ef
+    .agents/skills/preferences-workflow-orchestration-algebra/SKILL.md: sha256:9c8ef2cf30caced845344c7e86e497683319aa61228d7b3cd40d73c13cc760a5
+  content_hash: sha256:6018c022551aa3191462945c6f2975d2369c717790bf8b6121d3aa97c419cd59
 - repo_url: cameronraysmith/vanixiets
   name: preferences-domain-driven-architecture
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-domain-driven-architecture
   is_virtual: true
   package_type: marketplace_plugin
@@ -529,13 +529,13 @@ dependencies:
     .agents/skills/preferences-discovery-process/SKILL.md: sha256:9cd58d5656cf307c17c3029feaa3638b1eb6030b2691306298947ba7545b96d4
     .agents/skills/preferences-domain-modeling/SKILL.md: sha256:a3ad356d43e7393f8f19d316bf7191d366375acb4860d457de6b437f596547c0
     .agents/skills/preferences-strategic-domain-analysis/SKILL.md: sha256:cf3de760af962f03955c95351a4548eafde1b0a2e36b0d5d03f50e739c19d79f
-  content_hash: sha256:37c56d385a7a0d078d1e848c47c1728c39f3142be11cfff9f16b914e3a909477
+  content_hash: sha256:8aad9898ae4baebdab6505c23b14ec511a779d3b416a137c7a420c17f7f59de4
 - repo_url: cameronraysmith/vanixiets
   name: preferences-event-driven-systems
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-event-driven-systems
   is_virtual: true
   package_type: marketplace_plugin
@@ -552,17 +552,17 @@ dependencies:
   - .agents/skills/preferences-schema-versioning/SKILL.md
   deployed_file_hashes:
     .agents/skills/preferences-event-catalog-qlerify/SKILL.md: sha256:e045a306b9b4c88b738c86ad34b4664ffdf75a1a0525ed57495fb35ae8dbd039
-    .agents/skills/preferences-event-catalog-tooling/SKILL.md: sha256:b9f2d121c5882017a13be1a6127304d412150d6815d68a5d303c959bc5ef94c4
+    .agents/skills/preferences-event-catalog-tooling/SKILL.md: sha256:0b04efcd498cdc84d98991208d6367b6195fd62f60dff466ac58c70b98f1003e
     .agents/skills/preferences-event-modeling/SKILL.md: sha256:c866c10db5845ca23491125bf681b0047dfb6d656d83377cf8895b1357fd51f7
     .agents/skills/preferences-event-sourcing/SKILL.md: sha256:f991c9198413744ad4596555f7aa8ff68303207ea5571a9b63e8046e9d5fd7ca
-    .agents/skills/preferences-schema-versioning/SKILL.md: sha256:9d20daa2cfaf9dbf5fd46f920771cab5c99fc8e619f52434d148d725605fec91
-  content_hash: sha256:6052a9f826e11dbb8e68c1ae1bd2d7e49d7879252d0e44257ae4d96481f4453e
+    .agents/skills/preferences-schema-versioning/SKILL.md: sha256:1fde18785f55fe3cffe471dd3f1359363a1a6517ada423233297b0995ba284f1
+  content_hash: sha256:e9d33a352a95d4ed0c279c0d42ed9f83784fb3e7057f549d7aac8a60b64b78d8
 - repo_url: cameronraysmith/vanixiets
   name: preferences-functional-programming-theory
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-functional-programming-theory
   is_virtual: true
   package_type: marketplace_plugin
@@ -597,11 +597,11 @@ dependencies:
   - .agents/skills/preferences-theoretical-foundations/references/worked-example/lean-toolchain
   - .agents/skills/preferences-theoretical-foundations/references/worked-example/limit.py
   deployed_file_hashes:
-    .agents/skills/preferences-algebraic-data-types/SKILL.md: sha256:71d12e12113fd1e9611a7c4e6caf6e7429343b64e2578b110a0ff777a5bd77a0
+    .agents/skills/preferences-algebraic-data-types/SKILL.md: sha256:b99fe31d4aa32e75802285b7ce735566acf3de10ba39664d6004272c16f1b6d3
     .agents/skills/preferences-algebraic-laws/SKILL.md: sha256:83436fd252cde49329e128a54d28dab2d7f9dc9d11fe4fc4855191c15fe97601
     .agents/skills/preferences-computational-system-taxonomy/SKILL.md: sha256:2a633b3594c9bf0a97ca9eecfa72ee372a09667bc24b20d9928bbc4bcfaa9048
     .agents/skills/preferences-functional-reactive-programming/SKILL.md: sha256:640a135aeb729afc3be6be7fce633482164b91b2697eb7845bccf93f966afb72
-    .agents/skills/preferences-railway-oriented-programming/SKILL.md: sha256:f9fadcd4f2d13dc004cbc6afc4549a402f4c3880f83c5ec2fc7dacb126e14c46
+    .agents/skills/preferences-railway-oriented-programming/SKILL.md: sha256:8b57f4c84f47affd09866a3111c4998722f3022bd8fe04e7391d571f28635271
     .agents/skills/preferences-theoretical-foundations/SKILL.md: sha256:1864b5acc574ad4842e92242baf15ac5b4aab57a42b14adb6e8a9f2c9b573a0e
     .agents/skills/preferences-theoretical-foundations/references/abstraction-as-adjunction.md: sha256:83c6eb153f744dc637d559ddbca7cc0f49dc025b56a25acff9fb3fca26095c40
     .agents/skills/preferences-theoretical-foundations/references/assume-guarantee-contracts.md: sha256:5770c9ef71b039c9b3c31e2ab6e605a6edb9c2bc323955aa10b0482263257c3c
@@ -620,13 +620,13 @@ dependencies:
     .agents/skills/preferences-theoretical-foundations/references/worked-example/lakefile.toml: sha256:8e2a8ff5d60117c203e743e5e35ac30b4ab0526a4b2552fa764018f2133e7146
     .agents/skills/preferences-theoretical-foundations/references/worked-example/lean-toolchain: sha256:ce4c4e3d87434b9663f46de25ce34b48a0cf0d392e0a320a0787b4674a2d7b61
     .agents/skills/preferences-theoretical-foundations/references/worked-example/limit.py: sha256:53319203a8068b79e62e3483ec260dc29adbf02224f40d33c6b0f0911d314d40
-  content_hash: sha256:f20db018aa7cd04682c34826cbdf80e4b75a72c7ad9b5e57c1352364c769a301
+  content_hash: sha256:cc56cc7523dfe5795029ac724b0c377a6f06dfda532c1b03a2b53e3b2af2e9b3
 - repo_url: cameronraysmith/vanixiets
   name: preferences-nix-and-secrets
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-nix-and-secrets
   is_virtual: true
   package_type: marketplace_plugin
@@ -650,7 +650,7 @@ dependencies:
   - .agents/skills/preferences-secrets/SKILL.md
   deployed_file_hashes:
     .agents/skills/preferences-nix-checks-architecture/SKILL.md: sha256:bd53f58bd39d0bd511194c26b180a2fa6f187b95d8832370e5815d5e041b4a24
-    .agents/skills/preferences-nix-checks-architecture/references/derivation-patterns.md: sha256:14c8d4f0874cd028016160addf0ea9782610a39fa69ad5c1dec9b3ceea990316
+    .agents/skills/preferences-nix-checks-architecture/references/derivation-patterns.md: sha256:ddea7e26e26442e741ad38e26a43942e1967f32e9e7cbf2ce0ab63aad95ebd39
     .agents/skills/preferences-nix-checks-architecture/references/nix-unit-invariants.md: sha256:fa6e312637cc8761e752f2a542deea6508a530b6340dad2f0d34e9e9b9a1667e
     .agents/skills/preferences-nix-checks-architecture/references/nixos-vm-tests.md: sha256:3ae52d94fc112f5075e3e81db020a6e1b0da10817b6c5504e9887173de9a27f6
     .agents/skills/preferences-nix-checks-architecture/references/process-compose-checks.md: sha256:80aac4508b84b06f5dd44c04de896b118ee16be95848313416ec49f02b3b3338
@@ -658,17 +658,17 @@ dependencies:
     .agents/skills/preferences-nix-ci-cd-integration/references/buildbot-nix-configuration.md: sha256:e8d491c7b6161f703a0879218f78f36e0ede212e3ec0bf9634467d0defea7526
     .agents/skills/preferences-nix-ci-cd-integration/references/caching-strategies.md: sha256:48d3fc51acbf6cbe836556ecacdfd634b1923fc72bcb2364d20df02947d08d7c
     .agents/skills/preferences-nix-ci-cd-integration/references/migration-pattern.md: sha256:9ce89a6f9e56de3e178cd8e37af0afe204a61ef38d5f6ce2bc96d8ba97d6b50f
-    .agents/skills/preferences-nix-ci-cd-integration/references/nix-native-effects.md: sha256:66bcad05898c6580a583fd3de9f7ca02b6ef7e9c30864f8d98db885b12a0afa4
-    .agents/skills/preferences-nix-development/SKILL.md: sha256:c01c96cde006f70000e6b89716f4028a9628e22b3a059be5eed510f9302251b2
+    .agents/skills/preferences-nix-ci-cd-integration/references/nix-native-effects.md: sha256:72d4ceac07665327275cbbe9e2ac3be9c17055297718bcdc1e0edbaca4f9efae
+    .agents/skills/preferences-nix-development/SKILL.md: sha256:ac4eeddb57fb66ea660e2fc0939660662376e93c503c20b44c1963f002a85205
     .agents/skills/preferences-nix-development/references/dendritic-module-composition.md: sha256:29373464d2ee8e444df266c56ecdda6259834cae976e51d28c1effdc83af61ee
-    .agents/skills/preferences-secrets/SKILL.md: sha256:8b1d23765ae2af572279fc08bc3238dc8fa3d5c8c172605969c70fc512d26514
-  content_hash: sha256:d2c6fcec8d4bc59efb935a5688ea85a828f20b46a8c347f36e437ca0a727d1c2
+    .agents/skills/preferences-secrets/SKILL.md: sha256:7a92aef91af096be1ad05c3ff1b8b7b0b1c02da030c140e7f7ee2a7cd876c2c7
+  content_hash: sha256:a82db43c555a46c1f5627851ee874c327d752c83b83d3ac216e331a7ac073e5f
 - repo_url: cameronraysmith/vanixiets
   name: preferences-operations-and-reliability
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-operations-and-reliability
   is_virtual: true
   package_type: marketplace_plugin
@@ -689,8 +689,8 @@ dependencies:
   - .agents/skills/preferences-validation-assurance
   - .agents/skills/preferences-validation-assurance/SKILL.md
   deployed_file_hashes:
-    .agents/skills/preferences-adaptive-planning/SKILL.md: sha256:fbd828f3fff10efb0932ddcf496dfbcb70ffea79f7abf364a41cd03116c9e928
-    .agents/skills/preferences-compositional-continuous-verification/SKILL.md: sha256:d31372f24813e4db4c4e0cc1aecaea4a7e9d1839e71e778dec702255dd3a379b
+    .agents/skills/preferences-adaptive-planning/SKILL.md: sha256:0ec9f8b293f70152e52c8f44a2f1f0cd9dde218e2ab7c8a32d65b6225b6c9d7d
+    .agents/skills/preferences-compositional-continuous-verification/SKILL.md: sha256:185a5488799d7ff5d78dcae65950274840cbb0aaccd0670e43bf3c3ef318fbb7
     .agents/skills/preferences-distributed-systems/SKILL.md: sha256:ed3e148857d33b529cab1b9d2034b0341f7d3e2c0bafbf5fee79cc7f2a78711b
     .agents/skills/preferences-observability-engineering/01-slo-alerting.md: sha256:456057e8223489e1e8b4fd126c38bea7d518dc89499a96232fecdcf87d9a46c7
     .agents/skills/preferences-observability-engineering/02-instrumentation-patterns.md: sha256:f46d9a75a27ed87d0966ee7808d0bebbdb5b6d64b185ef5d3e5cebea48ecb9c7
@@ -698,13 +698,13 @@ dependencies:
     .agents/skills/preferences-observability-engineering/SKILL.md: sha256:a5d0b681356f4a8af8195196c79b25af0817a821caeb7bed0204d2c6a4903ae6
     .agents/skills/preferences-production-readiness/SKILL.md: sha256:3862cefa1dbed768807edb3dbcb5a33505a6b7ddcca8d7c0042d7a7f43493715
     .agents/skills/preferences-validation-assurance/SKILL.md: sha256:b500238595e12e3b15fdff2f8a2e8f92ab30b451b2b16ab6c06ca57dcfc5b356
-  content_hash: sha256:a5bf848e366409e05b56d18722c40e816cea3c48cf497074fc6a70e11f7edad2
+  content_hash: sha256:02a5d6e32e5b112d90a751bcfcae8fa6827388517896e004275169d3f4ff2ca7
 - repo_url: cameronraysmith/vanixiets
   name: preferences-programming-languages
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-programming-languages
   is_virtual: true
   package_type: marketplace_plugin
@@ -735,11 +735,11 @@ dependencies:
   deployed_file_hashes:
     .agents/skills/preferences-haskell-development/SKILL.md: sha256:d3c13641cf2a5d6a6476901240db2a8152244e29ef844850e4a2610827ea6516
     .agents/skills/preferences-python-development/01-structured-logging-telemetry.md: sha256:f6c506df8761b902c3347ca6fdcbd25cb5d293b44717b0922a46533eafd1c9d1
-    .agents/skills/preferences-python-development/SKILL.md: sha256:1f081a7b2ce3c75cdf76d23ef5486274c9d50cb30c6c96857611c8cbccd690c0
+    .agents/skills/preferences-python-development/SKILL.md: sha256:4e7ae8065966edf91d892bc7cb454778c14f368614e2197f44346cc96b3f9f59
     .agents/skills/preferences-rust-development/01-functional-domain-modeling.md: sha256:f044c8123735a8eba43c1c6f881e3a2a7d41d120395187f92028ae8353a6e057
-    .agents/skills/preferences-rust-development/02-error-handling.md: sha256:12eca9a0517463c077f9818117e515c37f391937ab5f90520b9317460da3f7bc
+    .agents/skills/preferences-rust-development/02-error-handling.md: sha256:1588295b2ac31a5c21747a004d1f2c06dd95a60688489701e38ea640a440c813
     .agents/skills/preferences-rust-development/03-panic-semantics.md: sha256:1ae61679180ff116dc543a23a791ae3fc1ee225b96f6a16fde1f5bc3257fdd73
-    .agents/skills/preferences-rust-development/04-api-design.md: sha256:4033b3174d02ae8c9efeeb67c5601e500e151530dfbf9d70f17229246cb88fcc
+    .agents/skills/preferences-rust-development/04-api-design.md: sha256:634979be773dec83f33044f003926164db3c314f9feb22d9efbfa41cee2ac4e7
     .agents/skills/preferences-rust-development/05-testing.md: sha256:62fa807eaa9f3bd9cbf5d62715047c570f4641f82cf7c8d1f485042b7e897fb7
     .agents/skills/preferences-rust-development/06-documentation.md: sha256:36ee83af1188186c43c7fea429ce1182ffac6fcdad245778ec799db9afd82afc
     .agents/skills/preferences-rust-development/07-performance.md: sha256:c79ff7ff07de3ed65704ed41845f6301c22d6764b22966e41ba7fa1cbcaf8d12
@@ -749,16 +749,16 @@ dependencies:
     .agents/skills/preferences-rust-development/11-concurrency.md: sha256:0659e8cb4ddcbb9f98511888a55de54baed5b22bb631e57a62b3438bfdbef969
     .agents/skills/preferences-rust-development/12-distributed-systems.md: sha256:c138896d5a8778a7a22c1ea942ace591d327036080fefae2d412af8beee086f7
     .agents/skills/preferences-rust-development/13-type-level-programming.md: sha256:ae47d0b810bb8e5425404b8b72782c7f32c9ffd4d4ce4f313a8bdf5341c87923
-    .agents/skills/preferences-rust-development/SKILL.md: sha256:fe4505d95ac22295dd344555ad1e90228a72cf0eb4b7f8286d204ab29da46baa
+    .agents/skills/preferences-rust-development/SKILL.md: sha256:0b8098ea21d038e1d043726a08f81d07a625f25ecd98d24c693a661e3793c79e
     .agents/skills/preferences-typescript-nodejs-development/01-structured-logging-telemetry.md: sha256:518096258cb96d0132d744271414270e0679a46f4461e87a7f9bbd025e55273c
     .agents/skills/preferences-typescript-nodejs-development/SKILL.md: sha256:5c2f01a2ddab1addd2badc9246fb840e050dc089d03fb6999aab92b84d2e25b5
-  content_hash: sha256:7d12de599e6ff7cb2c7f0462ef894f812e5915fb71028f118177b47b777ca491
+  content_hash: sha256:39bcccb7f3b78c9613cbca9a88ccd05420de328ba17cd3dbaca929e50de4ca7b
 - repo_url: cameronraysmith/vanixiets
   name: preferences-web-platform-and-deployment
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/preferences-web-platform-and-deployment
   is_virtual: true
   package_type: marketplace_plugin
@@ -788,31 +788,31 @@ dependencies:
   - .agents/skills/preferences-web-platform-foundations
   - .agents/skills/preferences-web-platform-foundations/SKILL.md
   deployed_file_hashes:
-    .agents/skills/preferences-cloudflare-wrangler-reference/SKILL.md: sha256:82be4a188fe552ae8f01f390b0104cc54ad9c437cdba372b6181dc99eea91b20
-    .agents/skills/preferences-hypermedia-development/01-architecture.md: sha256:a2ad08667f3f7b4d2a299b79f3def9694544c2bce4693ff70a3abb9ef31f94a6
+    .agents/skills/preferences-cloudflare-wrangler-reference/SKILL.md: sha256:f06516bf38d8ffb83ba35bb866c625e4ddaff2de1135972a9afc2f559abd054f
+    .agents/skills/preferences-hypermedia-development/01-architecture.md: sha256:39329a1b51b7794057c01d91941959449607efca27a7fd8ef905829aa99c8272
     .agents/skills/preferences-hypermedia-development/02-sse-patterns.md: sha256:595da6e14658108ead8e1a4279442f724f286daa72b91dec6c8f8490b97efa1e
     .agents/skills/preferences-hypermedia-development/03-datastar.md: sha256:0e60bceda1b23a22dbc28866dcb15e81eedd69946d38702871cd0b5661a533d4
     .agents/skills/preferences-hypermedia-development/04-css-architecture.md: sha256:a6e9c09060167c8fe37641fd50c4de7a807e7b55a5512c346fdb17769effeb74
     .agents/skills/preferences-hypermedia-development/05-web-components.md: sha256:6b307131ccac3502e04014582c369aae5a09bc856c3945cacdf65b374d67e18b
     .agents/skills/preferences-hypermedia-development/06-templating.md: sha256:33815b3f6b612f26fa96b9b8b6dd469f4a926ef60decbf2856782663c1176e17
     .agents/skills/preferences-hypermedia-development/07-event-architecture.md: sha256:6d81e0b247e36be70a834780f6a1a58ef8bf98f47ae42895fce0f7e7bd6679e7
-    .agents/skills/preferences-hypermedia-development/08-analytics-data-serving.md: sha256:a6b57b029899705bae136e038f729ba1c11609031cf37dd4248979f3f8a5cd1b
-    .agents/skills/preferences-hypermedia-development/SKILL.md: sha256:babb53ef3a4fcc6e666143ee4b7addfecaef7bce00778c5163232b4fb8fc2b6e
-    .agents/skills/preferences-hypermedia-documents/01-design-system.md: sha256:c42897ed959c52b09ef244c86f7af0bbaeec18ee8f619ca2b23ab8e0d70a72b9
-    .agents/skills/preferences-hypermedia-documents/02-progressive-layers.md: sha256:dce3900e83974803a7cc18b61f6c001f0e5d76d4770643bf13f8541bff9e8aa9
+    .agents/skills/preferences-hypermedia-development/08-analytics-data-serving.md: sha256:96a071d7d17cf6882594b66dcc814884058e9326c7817a3d1d9ff0abc5335b76
+    .agents/skills/preferences-hypermedia-development/SKILL.md: sha256:26122efc034b14518463324ecb4435d8aa37737cf969187af80bd23b19faa154
+    .agents/skills/preferences-hypermedia-documents/01-design-system.md: sha256:5725d024717e6510648455659f0f1f8cc63c4604d0d62a8cdafb92f365d0c247
+    .agents/skills/preferences-hypermedia-documents/02-progressive-layers.md: sha256:d87fab648beff2b8ddd737d6178df8c68db9962cb52e5e0aa33502439ca003ad
     .agents/skills/preferences-hypermedia-documents/03-document-composition.md: sha256:4b6224f7c153dbf17aeff3d2ad6c774d077fca828df7aea6b2ae8242b45b8abb
     .agents/skills/preferences-hypermedia-documents/04-presentations.md: sha256:5384540b9a5fba6b2d268e2d1ee87052b56890497eee06405b7ef24471430e2e
-    .agents/skills/preferences-hypermedia-documents/SKILL.md: sha256:ecfdc598345e4ed4215cc7deb12e61edf588bed8c4ecd840cf23a379958b6d3a
-    .agents/skills/preferences-react-tanstack-ui-development/SKILL.md: sha256:f0573c98ffcca8504539487d4cff31b6841b6237faac917e1440760c0aa9fc13
-    .agents/skills/preferences-web-application-deployment/SKILL.md: sha256:eda86f96645970594d50a2db446de9a14567ec376521cbc5ef098fef9f4955b1
-    .agents/skills/preferences-web-platform-foundations/SKILL.md: sha256:55cd436b9e02039ba79c0d1370540e7e52c4c3ec8c9ac98c41c449865dcd3372
-  content_hash: sha256:ba2bfabc17dc862de39897c81ce8901a16c39380c03ca36f181cd8ce77c73d89
+    .agents/skills/preferences-hypermedia-documents/SKILL.md: sha256:d136e99af583a457beba7dfbb8bb49d851f24e75fc18c29a165201e76b495d94
+    .agents/skills/preferences-react-tanstack-ui-development/SKILL.md: sha256:dee434b2bfa768ddba819897f128064d7b6303d462fd24c115f71f1ea05a2b68
+    .agents/skills/preferences-web-application-deployment/SKILL.md: sha256:42592f77674f21095325f5834b36291cf9733092131fbf5a789942c7cc94ae1d
+    .agents/skills/preferences-web-platform-foundations/SKILL.md: sha256:0e4457d361689bbac7eec3e6d6537bba17988645845b6dd44ba81ca57869475e
+  content_hash: sha256:b95e9e96c71547a8c11dd7d617ae8eb8863ddfa6bbcd701b2823eb619a744838
 - repo_url: cameronraysmith/vanixiets
   name: testing-and-quality
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/testing-and-quality
   is_virtual: true
   package_type: marketplace_plugin
@@ -858,8 +858,8 @@ dependencies:
     .agents/skills/atdd-outer-loop/references/two-stream-and-mutation-firewall.md: sha256:151e37ff1fc2f98aff85bd3455817f97d7b49b374c560e70e3428db5ad05d2f5
     .agents/skills/bdd-discovery/SKILL.md: sha256:d3f1ea42c0a127079d5349141c1cffa952540737622727d81ef996e49e21f81e
     .agents/skills/bdd-formulation/SKILL.md: sha256:c33c7a71004a0358ed243ffc7b6dff32739373a323877ee96590b581f52117f3
-    .agents/skills/bdd-gherkin-formulation/SKILL.md: sha256:9ece04611cfcd65962a3b2f0d8d2ecff090a1abeb9332d6f12856d0da4ee9a28
-    .agents/skills/bdd-gherkin-formulation/references/brief-checklist.md: sha256:a08abda447df4cdc4beefb84d457221c68f29a05936f680bf6b71add3b14cf5a
+    .agents/skills/bdd-gherkin-formulation/SKILL.md: sha256:5abf91f90281271e6b34481a9b622f2b13fcd6d1bdc6a49ea69e47c3f27613d0
+    .agents/skills/bdd-gherkin-formulation/references/brief-checklist.md: sha256:df88b0f06fe507326ab5c13fe9b1e9ff8e1bbf10d3515ea61ec26a7673f2c271
     .agents/skills/bdd-gherkin-formulation/references/declarative-vs-imperative.md: sha256:65ad62316624e7b765bcd1c96cab87103656de665137f779b13b13e33db03625
     .agents/skills/bdd-gherkin-formulation/references/gherkin-constructs.md: sha256:72b5c92f7a9542c43c2908e085e595d640b9441a55f7e0aea58cb9e9352d32cf
     .agents/skills/bdd-gherkin-formulation/references/observable-outcome-discipline.md: sha256:a5230877d52f63f4a60b368476bf3b446ea0a16165e37d68674b29e02f66c343
@@ -868,18 +868,18 @@ dependencies:
     .agents/skills/bdd-step-definitions/references/cucumber-rs.md: sha256:cd6724f090fc83d394284ef74a3d69b116833f6b5e3706df8d179f27370980d8
     .agents/skills/bdd-step-definitions/references/pytest-bdd.md: sha256:f1d93b13058ef5b4dd351808f0c6803931997717f7b2aed3a4c827b3127e5469
     .agents/skills/executable-specification-testing/SKILL.md: sha256:a2e901892f7a67493e78b16634170e03055963791c16c400dae00babfaa728c5
-    .agents/skills/executable-specification-testing/references/cross-language-verification.md: sha256:75362253b989ff42002bad15ff5526aee34f9189556d2f34890f65347740879f
+    .agents/skills/executable-specification-testing/references/cross-language-verification.md: sha256:46455c2922738944c98b53c8a5139d558c6e4f0613a8ab2700c19ee1bf8d0c4c
     .agents/skills/executable-specification-testing/references/pbt-craft.md: sha256:d049b48893d36ed73f57a635fbc643b526114521aaf28c1c0d87222fa85e3d6e
     .agents/skills/executable-specification-testing/references/single-contract-hub.md: sha256:834acc1d5c75f5ff7f24542c8e69a5e9909e60f9ab1cb01900de487b753f46df
-    .agents/skills/executable-specification-testing/references/tool-integration-sharp-edges.md: sha256:4c11beabd3c554f55a258208473423886cf2f831894f76e4c3316e65da0310fe
+    .agents/skills/executable-specification-testing/references/tool-integration-sharp-edges.md: sha256:5ecd1c90edcc12aa4522c322e450b0028f92f5e6a73af35bb5d93834c79a29de
     .agents/skills/ubiquitous-language/SKILL.md: sha256:399ba2980bacfea2ce758f0b110f7a86dbcb393106dd182ed7c1501df3917bdc
-  content_hash: sha256:40dae663b8aa9a24e4b6309c3376b8564955d3a552dc22c9975e77ee96d171f0
+  content_hash: sha256:0d3af9efc7e48fc697e5e921ebf48b39a10188a10f9d2e80ef835af1870bfa70
 - repo_url: cameronraysmith/vanixiets
   name: version-control-and-forge
   host: github.com
-  resolved_commit: db90e6685498e4774c6961cbb089439815c84f2b
+  resolved_commit: fcf0253f52365b6065e8ffb3c4258d81f201e695
   resolved_ref: main
-  version: db90e66
+  version: fcf0253
   virtual_path: modules/home/ai/plugins/version-control-and-forge
   is_virtual: true
   package_type: marketplace_plugin
@@ -920,21 +920,21 @@ dependencies:
     .agents/skills/git-stacked-pr-integration/SKILL.md: sha256:3cc4bc9d5b9f07f08c8572a358493a4c0d41898d2d6bc3e3598db0ecbe2dacb4
     .agents/skills/gitbutler-but-cli/README.md: sha256:bba64a3ca1f6edf24198612765cfaab447395a2e826ef3ac2ad9949b995c4b07
     .agents/skills/gitbutler-but-cli/RESEARCH.md: sha256:8cde76007941230cc4fecdc4adcd23c220ba92a5fc4a2bae82a0d3c8c4f56d64
-    .agents/skills/gitbutler-but-cli/SKILL.md: sha256:ea02d08e6601ef98f8a46ba4680102365890fcab84ef611430c5c8f3b1b35aa3
+    .agents/skills/gitbutler-but-cli/SKILL.md: sha256:7e6d2fe8c236df4fb499881a79a70b0f6c5dc56a66dafbe802634a1e3a2ee81c
     .agents/skills/gitbutler-but-cli/references/concepts.md: sha256:83a15f56d7c0a477291981a48520a915d0633641644cde183e062db9ac8a0737
     .agents/skills/gitbutler-but-cli/references/examples.md: sha256:b5fbb3214f648fd4c5569c8f7036c13358b4985087fbfb4c38ab8b43d42284da
     .agents/skills/gitbutler-but-cli/references/reference.md: sha256:5631ccefea114ce15b92735400bc0ae7de2d6e1e430cdaff7353109e42835b38
     .agents/skills/github-browse/SKILL.md: sha256:3e6c53c3e637d8d477d3ef28e78acac4f93c6447bea74897200bb75281fbfdb0
     .agents/skills/hunk-review/SKILL.md: sha256:2214ce3205f620d1dae8b139c8748d8e5b4a4487b9aba7eae98e3fd0b3af1c74
-    .agents/skills/jj-git-interactive-rebase-to-jj/SKILL.md: sha256:7d19f032d3ff44649ea0f1d045a8c7354f1620a7cc86f8113ca3a02b07ea0e20
-    .agents/skills/jj-history-cleanup/SKILL.md: sha256:52ef5bb544754d3ec77bb45dc83117abe4e28798fa569657829b570c3ce3a281
-    .agents/skills/jj-summary/SKILL.md: sha256:26918f47d2b39e69306dd2a9c610225711c6e7fe1310f03d404d406eb2ee7f0f
-    .agents/skills/jj-version-control/SKILL.md: sha256:653f030f903f2b1c5dfe551ff5074948ae28be594bde7b4f42fbebb7f0c100f5
-    .agents/skills/jj-version-control/diamond-workflow.md: sha256:56e1728e38ea183b4fcb454cf046fab6bb6fe14a7220917991e3779e794f8093
+    .agents/skills/jj-git-interactive-rebase-to-jj/SKILL.md: sha256:eabdbc270c63cf3f0718f89a3114603baec9887df9c456ef6e525230a1c666db
+    .agents/skills/jj-history-cleanup/SKILL.md: sha256:6c680eefa63adcf84d6fd02375903384c9c52bd688dad26d0aeaf4d1f53a1ac6
+    .agents/skills/jj-summary/SKILL.md: sha256:0f91668ba68193a80e0992b30631e4fbe3686a319d98b8ca7add97babf0ecd0e
+    .agents/skills/jj-version-control/SKILL.md: sha256:302b029bd317644abbc0b90c150926d115a0586b953dd984c00c83aef5c2860a
+    .agents/skills/jj-version-control/diamond-workflow.md: sha256:14d8104f0c3241b6fd637246294abaf278cb4cf280179230f7ff8e960c587c3b
     .agents/skills/jj-version-control/hazards.md: sha256:c1a9b01f5075f4fff67450ff3d2118b8d7cfcb1b3a59f8eee203feaa015a853a
-    .agents/skills/jj-version-control/tiered-ceremony.md: sha256:a73f2994b303c444b74878b0772de3a693550164376c76c9ccc084fef40f9311
-    .agents/skills/jj-workflow/SKILL.md: sha256:dea62fea09926cb7217e5f3a208974d2295440510597e3bca2a6b595d88cef94
-  content_hash: sha256:563a926deb639cf9fbfb84aef14a07974c7bc1ffa20d77ee4d1caa4c27f9d02d
+    .agents/skills/jj-version-control/tiered-ceremony.md: sha256:69bbbd8725261e7c05738f439959071dfcf531045e884189c5f88e24394f8514
+    .agents/skills/jj-workflow/SKILL.md: sha256:9db0b7d47aebf0cc34634cb8d06263a1c994a96a4fb3585ade4636165460b784
+  content_hash: sha256:a2907be803e1315712b160c50661c77f51623615e427beb58a15603c37136551
 - repo_url: github/gh-stack
   name: gh-stack
   host: github.com
@@ -1181,6 +1181,13 @@ dependencies:
   - .agents/skills/requesting-code-review
   - .agents/skills/requesting-code-review/SKILL.md
   - .agents/skills/requesting-code-review/code-reviewer.md
+  - .agents/skills/subagent-driven-development
+  - .agents/skills/subagent-driven-development/SKILL.md
+  - .agents/skills/subagent-driven-development/implementer-prompt.md
+  - .agents/skills/subagent-driven-development/scripts/review-package
+  - .agents/skills/subagent-driven-development/scripts/sdd-workspace
+  - .agents/skills/subagent-driven-development/scripts/task-brief
+  - .agents/skills/subagent-driven-development/task-reviewer-prompt.md
   - .agents/skills/systematic-debugging
   - .agents/skills/systematic-debugging/CREATION-LOG.md
   - .agents/skills/systematic-debugging/SKILL.md
@@ -1231,6 +1238,12 @@ dependencies:
     .agents/skills/receiving-code-review/SKILL.md: sha256:647036bbdab7bf2317e14e079595e984c9030f64295e2b4c0fb57dbeb48f25dd
     .agents/skills/requesting-code-review/SKILL.md: sha256:1017ccdd5bc61fab67c654cf118cbdb520464b313073a0a6b9a6b9aa647a3ad6
     .agents/skills/requesting-code-review/code-reviewer.md: sha256:b2f2ec7596925fe52dac158fdfbca19b3a7d779d619c481e6706a6c0001662d3
+    .agents/skills/subagent-driven-development/SKILL.md: sha256:5e9e846ae67d153ddf7c5f4fd5102af78454c8f3cdaa0720331cec063fc8861a
+    .agents/skills/subagent-driven-development/implementer-prompt.md: sha256:49018b28dc11bc9f3d13a28959bb10ae1a96eabc5d8f19f4079d901f9ff2bf64
+    .agents/skills/subagent-driven-development/scripts/review-package: sha256:0c0629f6e2c46fc8bf68dcfb8a247ab24eb548b7004fe494035e6fcba9b5cdfb
+    .agents/skills/subagent-driven-development/scripts/sdd-workspace: sha256:9430befaff459ed862415b700c1a9efe45fd34838a684802a1d8320de0c3a007
+    .agents/skills/subagent-driven-development/scripts/task-brief: sha256:5380283f00bffa99ab82ae78482b7d248abe10655129c72ca7050bdc0b6a85e1
+    .agents/skills/subagent-driven-development/task-reviewer-prompt.md: sha256:2eb9d54373420de25bc0bd00635d3a3123a6c0eb30c881168e6f3348e2387331
     .agents/skills/systematic-debugging/CREATION-LOG.md: sha256:c24733a5b1821bd6bed1fc950261f0b9f4e90097e0bbb96459d8179713730789
     .agents/skills/systematic-debugging/SKILL.md: sha256:3b20719eca4f0461cb51a195221320d775dcf03b6859271066a03a5132a6ce7a
     .agents/skills/systematic-debugging/condition-based-waiting-example.ts: sha256:40ae5ebe497fdf310200e43fe986552546d0a22837c0d39e855db1cfd33eb88e
@@ -2204,7 +2217,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
-  content_hash: sha256:5c1b5e19b9aad9a4daa4ca160292366ce3c7c37295fe3dc9a388ad4c8adcd04e
+  content_hash: sha256:b7ee0c52d4a665e51c57e78454049363f3666e9a3d28ac5a0799e92255f32b69
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/agentic-planning-development-workflow/references/board-and-gates.md
@@ -2267,7 +2280,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
-  content_hash: sha256:4b935c3f0fefd33b31202068133b2929d0267b46252dabef9c7ca15b929cfe65
+  content_hash: sha256:c2981667b389af2b1ed37abd8cfffd3427ef79287be6a84ba94a15e4a3391fac
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/ask-matt
@@ -2411,7 +2424,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
-  content_hash: sha256:9ece04611cfcd65962a3b2f0d8d2ecff090a1abeb9332d6f12856d0da4ee9a28
+  content_hash: sha256:5abf91f90281271e6b34481a9b622f2b13fcd6d1bdc6a49ea69e47c3f27613d0
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/bdd-gherkin-formulation/references/brief-checklist.md
@@ -2420,7 +2433,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
-  content_hash: sha256:a08abda447df4cdc4beefb84d457221c68f29a05936f680bf6b71add3b14cf5a
+  content_hash: sha256:df88b0f06fe507326ab5c13fe9b1e9ff8e1bbf10d3515ea61ec26a7673f2c271
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/bdd-gherkin-formulation/references/declarative-vs-imperative.md
@@ -2879,7 +2892,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
-  content_hash: sha256:75362253b989ff42002bad15ff5526aee34f9189556d2f34890f65347740879f
+  content_hash: sha256:46455c2922738944c98b53c8a5139d558c6e4f0613a8ab2700c19ee1bf8d0c4c
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/executable-specification-testing/references/pbt-craft.md
@@ -2906,7 +2919,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/testing-and-quality
-  content_hash: sha256:4c11beabd3c554f55a258208473423886cf2f831894f76e4c3316e65da0310fe
+  content_hash: sha256:5ecd1c90edcc12aa4522c322e450b0028f92f5e6a73af35bb5d93834c79a29de
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/executing-plans
@@ -3077,7 +3090,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:ea02d08e6601ef98f8a46ba4680102365890fcab84ef611430c5c8f3b1b35aa3
+  content_hash: sha256:7e6d2fe8c236df4fb499881a79a70b0f6c5dc56a66dafbe802634a1e3a2ee81c
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/gitbutler-but-cli/references/concepts.md
@@ -3320,7 +3333,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:7d19f032d3ff44649ea0f1d045a8c7354f1620a7cc86f8113ca3a02b07ea0e20
+  content_hash: sha256:eabdbc270c63cf3f0718f89a3114603baec9887df9c456ef6e525230a1c666db
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/jj-history-cleanup
@@ -3338,7 +3351,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:52ef5bb544754d3ec77bb45dc83117abe4e28798fa569657829b570c3ce3a281
+  content_hash: sha256:6c680eefa63adcf84d6fd02375903384c9c52bd688dad26d0aeaf4d1f53a1ac6
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/jj-summary
@@ -3356,7 +3369,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:26918f47d2b39e69306dd2a9c610225711c6e7fe1310f03d404d406eb2ee7f0f
+  content_hash: sha256:0f91668ba68193a80e0992b30631e4fbe3686a319d98b8ca7add97babf0ecd0e
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/jj-version-control
@@ -3374,7 +3387,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:653f030f903f2b1c5dfe551ff5074948ae28be594bde7b4f42fbebb7f0c100f5
+  content_hash: sha256:302b029bd317644abbc0b90c150926d115a0586b953dd984c00c83aef5c2860a
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/jj-version-control/diamond-workflow.md
@@ -3383,7 +3396,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:56e1728e38ea183b4fcb454cf046fab6bb6fe14a7220917991e3779e794f8093
+  content_hash: sha256:14d8104f0c3241b6fd637246294abaf278cb4cf280179230f7ff8e960c587c3b
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/jj-version-control/hazards.md
@@ -3401,7 +3414,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:a73f2994b303c444b74878b0772de3a693550164376c76c9ccc084fef40f9311
+  content_hash: sha256:69bbbd8725261e7c05738f439959071dfcf531045e884189c5f88e24394f8514
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/jj-workflow
@@ -3419,7 +3432,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/version-control-and-forge
-  content_hash: sha256:dea62fea09926cb7217e5f3a208974d2295440510597e3bca2a6b595d88cef94
+  content_hash: sha256:9db0b7d47aebf0cc34634cb8d06263a1c994a96a4fb3585ade4636165460b784
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/knowledge-graph
@@ -3473,7 +3486,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/document-authoring-and-visualization
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/document-authoring-and-visualization
-  content_hash: sha256:93b44ba2bc5834e7af11c2709052527856d963eb2e4e16203c131b5ab3f5c529
+  content_hash: sha256:d0c201922de1fbd86096a173ab3b77a48aa519360dad68c5a8a857e3c651698c
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/knowledge-graph/references/search-types.md
@@ -3545,7 +3558,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
-  content_hash: sha256:85ea395cefebb7c37ee86b0751de7d79b3d065908f95bb56d908cfef97cec34d
+  content_hash: sha256:5bf9c6a6ffa28feaaa1ffa00a93ffe4f5ee7c4a9ea458ea4eb306b7015ab4cbc
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/linear-project-management/references/method-overview.md
@@ -3608,7 +3621,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:c61442ceebd55b090f4d8c04b64ea3e17b0d3d360ef8d12cb3111d025d18634c
+  content_hash: sha256:b14f379b7f476ee4a66b9d3cfed5d40906ffb8e146796404d7ba7acf0bac6d75
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-create-workspace-agents-md
@@ -3626,7 +3639,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:fe28f544b16962c65cc72fd59f1ee3ac088581bdc86b7fa2fcbd45929ead5e4b
+  content_hash: sha256:3e2939d9f3bdb904b27842b54a9a8f60bc3672909f8d9618b791c6c76209903a
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-generate-context-test
@@ -3788,7 +3801,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:9c361cec881f24b04cdd73a8d3cca9e97e4cce6a4ede41dfa9d3c5ad9d1dae43
+  content_hash: sha256:6f4cc20e205cc800efacaa528edc75e4a9c7894c335635750bf256cb3027e944
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-checkpoint/SKILL.md
@@ -3797,7 +3810,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:2b60348590f9312071e6644a0b3c4bf9c4dc9aca5d3916eb35c54c616c4802a9
+  content_hash: sha256:07262588a63db7d541f2e4f1f7c6134dfa61ec782f7b235d0149b67b29b0ecd8
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-initiate
@@ -3815,7 +3828,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:070701511d536d4eda1d3427025685cec78d4ba89cb184d356efcbe367635868
+  content_hash: sha256:6673e328c8302a7ea6141bc5babd3795a710f0fc8f10616e46196af1e9547d5c
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-initiate/02-tier-and-gate.md
@@ -3824,7 +3837,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:217594e9e6958acf941620b99113953e4cf8a53cecc943d97dbca19de72ce044
+  content_hash: sha256:da41f4fd0bb32bc7d208965ecbe8029b1f45943ebe1b8690a04fef43d2d244f6
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-initiate/03-operational-patterns.md
@@ -3833,7 +3846,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:95fbc8eb765a68b120a3e8f7e6f5f0dca9493ca20a691b7844a1a693655896d2
+  content_hash: sha256:aac0019880df6cdb8a1badb9d843c899692cd6fbd74a3ac418a37a0d9d9d0b5d
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-initiate/04-spawn-prompt-template.md
@@ -3842,7 +3855,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:d133dbdcf8131261458660b35173e5a68069705f4e78499da6f4e5905bddd47e
+  content_hash: sha256:09317d5f5fd4e0ddeefdfdb123a69d4d3f88e8ee9d6857833aac697a516d2537
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-initiate/05-exemplar-session.md
@@ -3851,7 +3864,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:eedd033f983119d3112ed86aa7c8c001512f86db8b797009df82767ac3311f15
+  content_hash: sha256:9ea5ec61f022e3b9985e93ff85207d6aa1d7899b35581e75948c7dd467aad7c0
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-orchestrator-initiate/SKILL.md
@@ -3860,7 +3873,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:e2b83e3e4f398a7e869a205ac49ab254043f1b7c3efaccd98840a4e7232617b6
+  content_hash: sha256:c0b3d165eee842d4eb5a06d82045d02cc69bb9a7dfa213298ff4b7feeb4c71d0
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-search-sessions
@@ -3968,7 +3981,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/agent-orchestration-and-meta-tooling
-  content_hash: sha256:2f2551e856f252eb839314ff035b5b5e69cc14dd81f3d6b24bf51d738e01ad3e
+  content_hash: sha256:7b41984f3d3fe31dd4172b1f7a322cebf1e8a1ae88ef88c6120cfa2c0ec63eb2
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/meta-skill-creator
@@ -4058,7 +4071,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations
-  content_hash: sha256:6dcd86ab056f40f0fe60d5667d31a6869d9262fe261bc652e556bd9efa8443a7
+  content_hash: sha256:2c85196dd0b9cf94eb6afa70140b64d2e422dccda399d75946f95daa0310e49c
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/nixpkgs-broken-package
@@ -4094,7 +4107,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:60aa30651c6fc6d221e42c178a19bcca02d617350c7ff8351b7d56ae65e7ab7f
+  content_hash: sha256:56f3570f87a42d30d599df85e6825c2271aef77197fcc7311a233b2a3dd89e7f
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/nucleus-platform/references/directory-tree.md
@@ -4121,7 +4134,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:79bdb4f54fde7858107e3cd02520b61f4d7db2e88db5c03772b0295dfd7a3ff9
+  content_hash: sha256:5bae8e94ee831554d76ebfb4940d51b99069b1db1d9c747eea59996730f76359
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/nucleus-platform/references/maturity-tiers.md
@@ -4310,7 +4323,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
-  content_hash: sha256:fd19dd309c58714c10790030339a1e0389ed5d75a5a947bec0773402f7ed9a4f
+  content_hash: sha256:7017d1cdaf4d935b95ecd25d8129a3af1223220b164c5b61af9b5a877b290062
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/openspec-linear-sync/references/linear-cli-mapping.md
@@ -4319,7 +4332,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/planning-and-development
-  content_hash: sha256:dec82e2a2a25147d1b50542299a26e9b12294086f492ba9a59e75b0f1ede9853
+  content_hash: sha256:10f4a5fc3b7bf5fade2e59f69a3a3c03f2c8b38fdcfed803cbd2691fe1652a8c
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/openspec-new-change
@@ -4445,7 +4458,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-operations-and-reliability
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-operations-and-reliability
-  content_hash: sha256:fbd828f3fff10efb0932ddcf496dfbcb70ffea79f7abf364a41cd03116c9e928
+  content_hash: sha256:0ec9f8b293f70152e52c8f44a2f1f0cd9dde218e2ab7c8a32d65b6225b6c9d7d
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-algebraic-data-types
@@ -4463,7 +4476,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-functional-programming-theory
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-functional-programming-theory
-  content_hash: sha256:71d12e12113fd1e9611a7c4e6caf6e7429343b64e2578b110a0ff777a5bd77a0
+  content_hash: sha256:b99fe31d4aa32e75802285b7ce735566acf3de10ba39664d6004272c16f1b6d3
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-algebraic-laws
@@ -4625,7 +4638,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:82be4a188fe552ae8f01f390b0104cc54ad9c437cdba372b6181dc99eea91b20
+  content_hash: sha256:f06516bf38d8ffb83ba35bb866c625e4ddaff2de1135972a9afc2f559abd054f
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-collaborative-modeling
@@ -4661,7 +4674,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:3e44066c7aa01a505e127010af35eb184371ca294e5400617df3caaa06528865
+  content_hash: sha256:dd1eccabb9b876e8914c78067410a4dae76e7568daed5849098831291d5d36bf
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-comment-cleanup/uncommentrc.toml
@@ -4688,7 +4701,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-operations-and-reliability
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-operations-and-reliability
-  content_hash: sha256:d31372f24813e4db4c4e0cc1aecaea4a7e9d1839e71e778dec702255dd3a379b
+  content_hash: sha256:185a5488799d7ff5d78dcae65950274840cbb0aaccd0670e43bf3c3ef318fbb7
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-computational-system-taxonomy
@@ -4724,7 +4737,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
-  content_hash: sha256:daa7e96b69e2420e2d054176c184ee9458b26d5165ca2e78ab269d68b15bff7e
+  content_hash: sha256:638ef90e5468a56a8bfa26be5fdd0d2d225fff563c11f99925e857fd832e3cfd
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-discovery-process
@@ -4778,7 +4791,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:dc11103e34e5e241c48afaa286ec6d008efa7157e57ae1a00a93ba34b00f3249
+  content_hash: sha256:be63a54ff40e3ecf8203f7c8f115e60aad0d8e7beb8bbf9ad3a90701e17804bb
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-documentation/references/adr-conventions.md
@@ -4859,7 +4872,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-event-driven-systems
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-event-driven-systems
-  content_hash: sha256:b9f2d121c5882017a13be1a6127304d412150d6815d68a5d303c959bc5ef94c4
+  content_hash: sha256:0b04efcd498cdc84d98991208d6367b6195fd62f60dff466ac58c70b98f1003e
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-event-modeling
@@ -4931,7 +4944,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:cd35a0e8aae12897c74b478cba5b6e6a73478f53a634b140057c2678c1b5403c
+  content_hash: sha256:caab66c123be4153c6bb05c5b9beae994fdd50f928a0de237c7a9037cce65c3a
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-git-version-control
@@ -4949,7 +4962,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:5c007dcd77d78079c06e1786e4ca4f82ac76dc02b20f369c817cb935b8f34163
+  content_hash: sha256:62fe9dfcd1ac4892912f8c6a8d7ef7a7910fc7dc0670af0cc68b345a6c7a7dae
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-git-version-control/02-gitbutler-mode.md
@@ -4958,7 +4971,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:27fa22867c3daa7d940192c1518e1d93c826c223cf6ad9ac844afff04b940de3
+  content_hash: sha256:d03e334ed05126acf905d6c0b9518635bd0931501c54c08528d2d9ba7a044ea9
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-git-version-control/03-jj-mode.md
@@ -4967,7 +4980,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:58bf858388cb22d857954e4d0dc2c9a93bca4bfedfaac6a13c907839fe4fcf7a
+  content_hash: sha256:8e5a009f17b0c90e8da2643ec8a109604def282e9d7ce61fcb82c7d02656b718
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-git-version-control/04-history-investigation.md
@@ -4985,7 +4998,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:07c100fb3cfb49f6b2d92fd8d0935fa255a67575a82da8c16edb7300b186dbc0
+  content_hash: sha256:530338d7f45f1cbfce79e8eba6bfb0ade80bb8e385a4b15a6fd215b9734b5ab8
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-git-version-control/06-github-pr-issue-safety.md
@@ -5003,7 +5016,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:f9c92866d249c179cc5fbb61b6a58402e4427cbde1977463ac9c98e8894a404a
+  content_hash: sha256:fe9909b99d57f94450a9252ef8a042c7898f4bddd02245f0465c50b8964619ba
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-haskell-development
@@ -5039,7 +5052,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:a2ad08667f3f7b4d2a299b79f3def9694544c2bce4693ff70a3abb9ef31f94a6
+  content_hash: sha256:39329a1b51b7794057c01d91941959449607efca27a7fd8ef905829aa99c8272
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-hypermedia-development/02-sse-patterns.md
@@ -5102,7 +5115,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:a6b57b029899705bae136e038f729ba1c11609031cf37dd4248979f3f8a5cd1b
+  content_hash: sha256:96a071d7d17cf6882594b66dcc814884058e9326c7817a3d1d9ff0abc5335b76
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-hypermedia-development/SKILL.md
@@ -5111,7 +5124,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:babb53ef3a4fcc6e666143ee4b7addfecaef7bce00778c5163232b4fb8fc2b6e
+  content_hash: sha256:26122efc034b14518463324ecb4435d8aa37737cf969187af80bd23b19faa154
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-hypermedia-documents
@@ -5129,7 +5142,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:c42897ed959c52b09ef244c86f7af0bbaeec18ee8f619ca2b23ab8e0d70a72b9
+  content_hash: sha256:5725d024717e6510648455659f0f1f8cc63c4604d0d62a8cdafb92f365d0c247
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-hypermedia-documents/02-progressive-layers.md
@@ -5138,7 +5151,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:dce3900e83974803a7cc18b61f6c001f0e5d76d4770643bf13f8541bff9e8aa9
+  content_hash: sha256:d87fab648beff2b8ddd737d6178df8c68db9962cb52e5e0aa33502439ca003ad
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-hypermedia-documents/03-document-composition.md
@@ -5165,7 +5178,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:ecfdc598345e4ed4215cc7deb12e61edf588bed8c4ecd840cf23a379958b6d3a
+  content_hash: sha256:d136e99af583a457beba7dfbb8bb49d851f24e75fc18c29a165201e76b495d94
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-json-querying
@@ -5210,7 +5223,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
-  content_hash: sha256:14c8d4f0874cd028016160addf0ea9782610a39fa69ad5c1dec9b3ceea990316
+  content_hash: sha256:ddea7e26e26442e741ad38e26a43942e1967f32e9e7cbf2ce0ab63aad95ebd39
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-nix-checks-architecture/references/nix-unit-invariants.md
@@ -5291,7 +5304,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
-  content_hash: sha256:66bcad05898c6580a583fd3de9f7ca02b6ef7e9c30864f8d98db885b12a0afa4
+  content_hash: sha256:72d4ceac07665327275cbbe9e2ac3be9c17055297718bcdc1e0edbaca4f9efae
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-nix-development
@@ -5309,7 +5322,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
-  content_hash: sha256:c01c96cde006f70000e6b89716f4028a9628e22b3a059be5eed510f9302251b2
+  content_hash: sha256:ac4eeddb57fb66ea660e2fc0939660662376e93c503c20b44c1963f002a85205
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-nix-development/references/dendritic-module-composition.md
@@ -5426,7 +5439,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
-  content_hash: sha256:1f081a7b2ce3c75cdf76d23ef5486274c9d50cb30c6c96857611c8cbccd690c0
+  content_hash: sha256:4e7ae8065966edf91d892bc7cb454778c14f368614e2197f44346cc96b3f9f59
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-railway-oriented-programming
@@ -5444,7 +5457,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-functional-programming-theory
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-functional-programming-theory
-  content_hash: sha256:f9fadcd4f2d13dc004cbc6afc4549a402f4c3880f83c5ec2fc7dacb126e14c46
+  content_hash: sha256:8b57f4c84f47affd09866a3111c4998722f3022bd8fe04e7391d571f28635271
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-react-tanstack-ui-development
@@ -5462,7 +5475,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:f0573c98ffcca8504539487d4cff31b6841b6237faac917e1440760c0aa9fc13
+  content_hash: sha256:dee434b2bfa768ddba819897f128064d7b6303d462fd24c115f71f1ea05a2b68
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-requirements-engineering
@@ -5507,7 +5520,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
-  content_hash: sha256:12eca9a0517463c077f9818117e515c37f391937ab5f90520b9317460da3f7bc
+  content_hash: sha256:1588295b2ac31a5c21747a004d1f2c06dd95a60688489701e38ea640a440c813
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-rust-development/03-panic-semantics.md
@@ -5525,7 +5538,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
-  content_hash: sha256:4033b3174d02ae8c9efeeb67c5601e500e151530dfbf9d70f17229246cb88fcc
+  content_hash: sha256:634979be773dec83f33044f003926164db3c314f9feb22d9efbfa41cee2ac4e7
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-rust-development/05-testing.md
@@ -5615,7 +5628,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-programming-languages
-  content_hash: sha256:fe4505d95ac22295dd344555ad1e90228a72cf0eb4b7f8286d204ab29da46baa
+  content_hash: sha256:0b8098ea21d038e1d043726a08f81d07a625f25ecd98d24c693a661e3793c79e
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-scalable-probabilistic-modeling-workflow
@@ -5705,7 +5718,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-event-driven-systems
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-event-driven-systems
-  content_hash: sha256:9d20daa2cfaf9dbf5fd46f920771cab5c99fc8e619f52434d148d725605fec91
+  content_hash: sha256:1fde18785f55fe3cffe471dd3f1359363a1a6517ada423233297b0995ba284f1
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-scientific-inquiry-methodology
@@ -5786,7 +5799,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-nix-and-secrets
-  content_hash: sha256:8b1d23765ae2af572279fc08bc3238dc8fa3d5c8c172605969c70fc512d26514
+  content_hash: sha256:7a92aef91af096be1ad05c3ff1b8b7b0b1c02da030c140e7f7ee2a7cd876c2c7
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-strategic-domain-analysis
@@ -5822,7 +5835,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:89e617bca2e107652f5ce0008d9459fafcb125f42a8e14812fc75c009392252e
+  content_hash: sha256:4d10e946ff597cc578183a85a4d0564fe25a3e9506b9aa0ebe20601006ebd864
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-theoretical-foundations
@@ -6056,7 +6069,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:eda86f96645970594d50a2db446de9a14567ec376521cbc5ef098fef9f4955b1
+  content_hash: sha256:42592f77674f21095325f5834b36291cf9733092131fbf5a789942c7cc94ae1d
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-web-platform-foundations
@@ -6074,7 +6087,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-web-platform-and-deployment
-  content_hash: sha256:55cd436b9e02039ba79c0d1370540e7e52c4c3ec8c9ac98c41c449865dcd3372
+  content_hash: sha256:0e4457d361689bbac7eec3e6d6537bba17988645845b6dd44ba81ca57869475e
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-workflow-orchestration-algebra
@@ -6092,7 +6105,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
-  content_hash: sha256:b2fcf0727dcfc7fab01a76f94b75e4377d6e6be764b359f9397890729e06c655
+  content_hash: sha256:6186bef577361dbac4deceb1aa5fb230aac564c87676617e7059f79de158a80b
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-workflow-orchestration-algebra/02-asset-vs-task-spectrum.md
@@ -6101,7 +6114,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
-  content_hash: sha256:d4a152cc9a78e501bf8af1a34368bb32500a3c9d90bee0ce65b70767ea3ee92a
+  content_hash: sha256:18e18a703451ccca6f19588625416eab87556d47047fb183f617b1e1af9d67c5
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-workflow-orchestration-algebra/03-fp-discipline-and-enforcement.md
@@ -6119,7 +6132,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
-  content_hash: sha256:a234ce1a623d77fbc5fd9ce0cf5e356d9e131279b148658d97a677b5a92fa3fd
+  content_hash: sha256:9c8ef2cf30caced845344c7e86e497683319aa61228d7b3cd40d73c13cc760a5
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/process-compose-init
@@ -6137,7 +6150,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations
-  content_hash: sha256:e402bbd2676adf8902ab3d334957a88b4313319645952a03590d2843790b6848
+  content_hash: sha256:e5b8add4f560cb80003676019f58e62f5703b6c26ce29b5759815d765ac47fd2
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/prototype
@@ -6218,7 +6231,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:170feef573c86060182e87ca6832ded281f03434ab90c09a48d3f9b9014b4c98
+  content_hash: sha256:b7af632448bdb370be9c798c649f05408693dab186b86a14ac28bfe3be07f00e
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/refinement-driven-development/references/diagramming.md
@@ -6227,7 +6240,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:def9c96421b7d11b1e48f849b4b1ca2850240d401677ca087a331f8558298614
+  content_hash: sha256:c21a7cf62907a777b414d6b49ba363e02b448f4190e74f6648f9933e84e81d55
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/refinement-driven-development/references/lean-spec-patterns.md
@@ -6236,7 +6249,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:236decc243cb35df1a6f15aecbab2fe92e6d34328083c74a42c9039e9850ba85
+  content_hash: sha256:e3e91c4dd725938689089236bf05d5674fd62dcc746501d00ca3b2a6dd3c25ec
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/refinement-driven-development/references/lift-charon-aeneas.md
@@ -6272,7 +6285,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:c344b98c28ecf6b448c95e4ab4b144c45deb8a23b375afb1daca2c8bf870f2ad
+  content_hash: sha256:a9c2c2746d54e1f1b4f020165459f180269b853aa1482d389d8b8665ec974cab
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/refinement-driven-development/references/refine-and-lower.md
@@ -6281,7 +6294,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:0ceab76e36a4cd6273d1180fe37b026587f90e8bf63b56b6dd1fc6c8e8af2428
+  content_hash: sha256:9b0270b735b2590845c40cd1655ce56a65a3c6be79c1e492e4172496b746d802
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/refinement-driven-development/references/toolchain-setup.md
@@ -6299,7 +6312,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/formal-specification-and-refinement
-  content_hash: sha256:bf320c3e365599021999539c63d7905d6429240975139ce9450f8bb144c5c870
+  content_hash: sha256:180b76bfd94696fa44fa301a95ce33faee0caa34dcce074af82671b14df33a5a
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/requesting-code-review
@@ -6407,7 +6420,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
-  content_hash: sha256:77229b624176dbdccacbf3e743b186c2cc3e87d4c7bc3cbab67fadb052feb876
+  content_hash: sha256:9221eecbbc876c270793e0b5ced0a250fac0e969d3a9177e206305ba4ab2cc82
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/session-orient
@@ -6425,7 +6438,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
-  content_hash: sha256:ebd087273b9b0bbfef16d3846901e8c43bc6e58539dbe95dd979bda3609bfdd9
+  content_hash: sha256:077afc6bacfd48ed44c97389f439eca9f0bdb75a6709608861f6cdae17ef0555
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/session-plan
@@ -6443,7 +6456,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
-  content_hash: sha256:c1c5a78fa6129194f5c903f7cb7ab6d8fa3a297582f748577f14fbfbe3839d1d
+  content_hash: sha256:ef650c79fd142560435828ec1535559b64f90429d313f4907b0c3c28dab7e457
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/session-review
@@ -6461,7 +6474,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
-  content_hash: sha256:4d13034e0659e0f7d51f70ddd5028a767317d00dd811d8e3457440d3824a378a
+  content_hash: sha256:0f09398852d3c73a9b0a562deda41dd7390305953d3155e0540b16f27f1784dd
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/setup-matt-pocock-skills
@@ -6542,7 +6555,70 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
-  content_hash: sha256:06f2366283910fd0008d7390f8d66b56c437a9e3164c759156b9ddcbf949eb15
+  content_hash: sha256:ff6d55363de629cd2656ef94d400fcdd526174eb3f4642f7d22d5b2b64cbfeef
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: null
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:5e9e846ae67d153ddf7c5f4fd5102af78454c8f3cdaa0720331cec063fc8861a
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development/implementer-prompt.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:49018b28dc11bc9f3d13a28959bb10ae1a96eabc5d8f19f4079d901f9ff2bf64
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development/scripts/review-package
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:0c0629f6e2c46fc8bf68dcfb8a247ab24eb548b7004fe494035e6fcba9b5cdfb
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development/scripts/sdd-workspace
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:9430befaff459ed862415b700c1a9efe45fd34838a684802a1d8320de0c3a007
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development/scripts/task-brief
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:5380283f00bffa99ab82ae78482b7d248abe10655129c72ca7050bdc0b6a85e1
+- kind: project-relative
+  target: agent-skills
+  value: .agents/skills/subagent-driven-development/task-reviewer-prompt.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:2eb9d54373420de25bc0bd00635d3a3123a6c0eb30c881168e6f3348e2387331
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/systematic-debugging
@@ -11006,7 +11082,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/nix-build-operations
-  content_hash: sha256:1c13431cbce572618cc3808b6c17856c573b2d5cdeffde1dd8ac3f6653a37b84
+  content_hash: sha256:5c9284eb0cb4bdbec6a0568a3c740b2449bc7a2a3395066db56e9b956f1b4eb2
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/worktree-sparsity-eval/references/sparse-checkout-patterns.md
