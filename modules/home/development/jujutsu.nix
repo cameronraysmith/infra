@@ -121,6 +121,29 @@
                   "\nJJ: ignore-rest\n" ++ diff.git(),
                 )
               '';
+
+              # mergify-cli's stack machinery and pkgs/by-name/stack-land both
+              # identify a change by its Gerrit-style Change-Id trailer, and jj runs
+              # no git hooks and pushes with --no-verify, so mergify's commit-msg
+              # hook never mints one here. The trailer has to come from this
+              # template instead. Padding to Gerrit's 40 hex is jj's own: the
+              # 32-hex change id followed by the constant 6a6a6964.
+              #
+              # The contains_key guard is load-bearing. Without it jj dedups on the
+              # whole trailer line, so a commit already carrying a differently
+              # valued Change-Id gains a second one, and stack-land asserts exactly
+              # one.
+              commit_trailers = ''
+                if(!trailers.contains_key("Change-Id"), format_gerrit_change_id_trailer(self))
+              '';
+
+              # jj duplicate copies a description verbatim onto a commit with a new
+              # change id and applies no trailer template, which would leave two
+              # live commits sharing one Change-Id and therefore one stack branch.
+              # Strip it and let the next describe mint a fresh one.
+              duplicate_description = ''
+                description.replace(regex:"Change-Id: I[0-9a-f]{40}\n?", "")
+              '';
             };
 
             template-aliases = {
