@@ -77,3 +77,14 @@ AGENTS.md
 GEMINI.md
 SOUL.md
 CRUSH.md
+
+# OpenWiki run state. The wiki is refreshed from a workstation by
+# `just openwiki-refresh`, not from CI, so these are per-clone run state
+# rather than shared repository state. `.run.json` is resumable state for an
+# interrupted run and upstream's own workflow deletes it before committing.
+# If a refresh ever runs in CI, these must become tracked so the run can tell
+# which commit it last documented.
+openwiki/.run.json
+openwiki/.last-update.json
+openwiki/.page-manifest.json
+openwiki/.claims/

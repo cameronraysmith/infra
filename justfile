@@ -592,6 +592,15 @@ agents-context:
 agents-context-full:
   {{nix_cmd}} run .#apm-context-compile -- --full
 
+# Refresh the generated openwiki wiki against the current tree via the openwiki CLI; metered against the configured model provider.
+[group('agents')]
+openwiki-refresh:
+  OPENWIKI_PROVIDER=openai-chatgpt \
+  OPENWIKI_MODEL_ID=gpt-5.6-sol \
+  OPENWIKI_REASONING_EFFORT=xhigh \
+  OPENWIKI_TELEMETRY_DISABLED=1 \
+  bunx -p openwiki@0.5.0 openwiki code --update --print
+
 ## terraform/terranix
 
 # Run terraform via terranix flake app (init + apply, arguments not supported)
