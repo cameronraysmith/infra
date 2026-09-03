@@ -1,7 +1,7 @@
 # Unified AI agent skills for claude-code, codex, opencode, droid, and hermes-agent
 #
 # First-party skills (apm packages under ../plugins/<package>/.apm/skills, e.g. the
-# 11 openspec-* skills shipped inside planning-and-development) plus superpowers — a
+# openspec-* skills shipped inside planning-and-development) plus superpowers — a
 # regular remote apm dependency resolved offline via the git-cache pre-warm (D11) —
 # are composed offline into a single flat marketplace tree by aiSkills.composed (see
 # compose.nix). This module re-globs that derivation's .claude/skills/ subtree, so
