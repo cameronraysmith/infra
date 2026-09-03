@@ -36,6 +36,20 @@
             DateFormat = "EEE d MMM HH:mm:ss";
             FlashDateSeparators = false;
           };
+          # Sparkle auto-install (SUAutomaticallyUpdate) replaces an app's own bundle
+          # mid-session, forcing a full Gatekeeper re-assessment; a Sparkle auto-install
+          # on 2026-09-03 compounded a Logi Options+ lockup. Update *checks*
+          # (SUEnableAutomaticChecks) stay on for all of these; only unattended
+          # installation is disabled.
+          "net.imput.helium" = {
+            SUAutomaticallyUpdate = false;
+          };
+          "com.openai.codex" = {
+            SUAutomaticallyUpdate = false;
+          };
+          "com.steipete.codexbar" = {
+            SUAutomaticallyUpdate = false;
+          };
         };
       };
     };

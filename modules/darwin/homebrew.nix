@@ -34,6 +34,10 @@
           "itsycal"
           "hewigovens/tap/jayjay"
           "linear"
+          # This declares which version Homebrew installs; the app's own in-app
+          # updater replaces its bundle independently of Homebrew and has no
+          # `defaults` key to disable, so that toggle must stay off by hand
+          # (a mid-session bundle swap forces a full Gatekeeper re-assessment).
           "logi-options+"
           "logseq"
           "neohtop"
