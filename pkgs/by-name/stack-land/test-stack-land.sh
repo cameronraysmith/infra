@@ -151,6 +151,32 @@ expect_failure() {
   printf 'ok - %s: %s\n' "$name" "$(tail -n 1 "$output")"
 }
 
+expect_success() {
+  local name="$1"
+  shift
+  if ! run_subject "$@"; then
+    printf 'not ok - %s: command failed:\n' "$name" >&2
+    sed 's/^/  /' "$output" >&2
+    return 1
+  fi
+  printf 'ok - %s\n' "$name"
+}
+
+expect_check_state_failure() {
+  local category="$1"
+  local pr="$2"
+  local state="$3"
+  local check="synthetic-$state"
+
+  printf '[{"name":"nixbot/nix-eval","state":"SUCCESS"},{"name":"%s","state":"%s"}]\n' \
+    "$check" "$state" >"$forge/checks/$pr.json"
+  reset_main
+  expect_failure \
+    "$category check state $state blocks landing" \
+    "PR $pr checks are not all green: $check=$state" \
+    --dry-run --tip "$tip_sha" "$pr"
+}
+
 git --git-dir="$remote" update-ref refs/heads/main "$competing_sha"
 expect_failure \
   'ancestry rejects a divergent target base' \
@@ -186,6 +212,33 @@ expect_failure \
   'a head with no checks is not green' \
   'PR 103 has no checks' \
   --dry-run --tip "$tip_sha" 103
+
+printf '[{"name":"nixbot/nix-eval","state":"SUCCESS"},{"name":"Mergify Merge Queue","state":"NEUTRAL"}]\n' \
+  >"$forge/checks/105.json"
+reset_main
+expect_success \
+  'a neutral check does not block landing' \
+  --dry-run --tip "$tip_sha" 105
+
+printf '[{"name":"nixbot/nix-eval","state":"SUCCESS"},{"name":"optional-check","state":"SKIPPED"}]\n' \
+  >"$forge/checks/106.json"
+reset_main
+expect_success \
+  'a skipped check does not block landing' \
+  --dry-run --tip "$tip_sha" 106
+
+pr=107
+for state in FAILURE TIMED_OUT ACTION_REQUIRED ERROR; do
+  expect_check_state_failure failing "$pr" "$state"
+  ((pr += 1))
+done
+
+for state in PENDING IN_PROGRESS QUEUED REQUESTED WAITING EXPECTED STARTUP_FAILURE STALE; do
+  expect_check_state_failure undecided "$pr" "$state"
+  ((pr += 1))
+done
+
+expect_check_state_failure unrecognised "$pr" BANANA
 
 reset_main
 export FAKE_ADVANCE_ON_PR=101

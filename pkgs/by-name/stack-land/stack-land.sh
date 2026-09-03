@@ -15,7 +15,8 @@ Assertions:
   The live target base is an ancestor of the stack tip.
   Every commit in target-base..tip has exactly one Change-Id matching
   ^I[0-9a-f]{40}$.
-  Every member PR has at least one check and every check state is SUCCESS.
+  Every member PR has at least one check and every check state is SUCCESS,
+  NEUTRAL, or SKIPPED.
   Target ancestry is fetched and checked again immediately before the push.
   After a real push, every member PR reaches state MERGED with mergedAt set.
 
@@ -157,7 +158,7 @@ assert_green_pr() {
   fi
   failures="$(
     printf '%s\n' "$checks_json" |
-      jq -r '[.[] | select(.state != "SUCCESS") | "\(.name)=\(.state)"] | join(", ")'
+      jq -r '[.[] | select(.state != "SUCCESS" and .state != "NEUTRAL" and .state != "SKIPPED") | "\(.name)=\(.state)"] | join(", ")'
   )"
   if [[ -n "$failures" ]]; then
     fail "PR $pr checks are not all green: $failures"
