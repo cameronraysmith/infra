@@ -1,0 +1,15 @@
+---
+description: vanixiets machine and user conventions — provisioning state, admin-username split, and where the authoritative fleet inventory lives.
+---
+
+## Machine configuration
+
+Cloud machines are declared through terranix in `modules/terranix/`, one file per provider.
+Each machine carries an `enabled` boolean: setting it to `false` and running `nix run .#terraform` removes the cloud resources while leaving the machine's full NixOS configuration, clan inventory entry, and disko layout in the repository.
+A machine present in `machines/` is therefore not necessarily provisioned, and agents should not assume any machine is reachable or attempt remote operations against one.
+
+Two admin-username conventions coexist: older machines force the username `crs58`, and newer ones use `cameron` as a home-manager alias for the same account.
+Modules that hardcode a username are following one convention or the other, and which one is a property of the machine.
+
+The authoritative fleet inventory is `modules/clan/inventory/machines.nix`, one entry per machine with its tags and description; the authoritative user list is the set of directories under `modules/home/users/`.
+This file intentionally does not reproduce either inventory as a table — consult those paths directly rather than a snapshot that will drift.
