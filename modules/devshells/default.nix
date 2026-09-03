@@ -31,20 +31,30 @@
           config.pre-commit.devShell
         ];
 
-        # Composes the repo-root AGENTS.md/CLAUDE.md from the agent-context-*
-        # apm fragments on shell entry, mirroring the git-hooks.nix precedent
-        # above of writing a git-ignored generated file from a shellHook.
-        # `lib.getExe` embeds the store path at eval time so entering the
-        # shell costs a fork+exec, not a nix evaluation; `--if-stale` makes
-        # that exec a no-op once the composed output already matches the
-        # fragments. `--auto` lets the script itself pick the repository
-        # tier vs every tier by checking for a user-level agent context file
-        # (see apm-context-compile.sh); it never fails the shell, since a
-        # missing AGENTS.md degrades an agent session but must not block a
-        # human terminal or direnv.
+        # Materializes the repo-root AGENTS.md/CLAUDE.md from the
+        # agent-context-* apm fragments once per clone; run `just
+        # agents-context` to refresh after editing the fragments. The
+        # presence check below is a bash builtin, so the common case
+        # (AGENTS.md already exists) execs nothing: the compile wrapper's
+        # runtimeInputs (apm, git, yq-go, coreutils, findutils) exec
+        # roughly 20 non-Apple binaries even just to check staleness, and
+        # each exec of non-Apple code on macOS triggers a syspolicyd
+        # Gatekeeper adjudication -- paying that cost on every shell entry
+        # and direnv reload, across every worktree, contributed to a
+        # syspolicyd lockup. `lib.getExe` embeds the store path at eval
+        # time; `--auto` lets the script itself pick the repository tier
+        # vs every tier by checking for a user-level agent context file
+        # (see apm-context-compile.sh); the `if !` guard means a failure
+        # never fails the shell, since a missing AGENTS.md degrades an
+        # agent session but must not block a human terminal or direnv.
+        # The check below is `$PWD`-relative, not repo-root-relative:
+        # entering the devShell from a subdirectory can miss an
+        # AGENTS.md that exists only at the repo root.
         shellHook = ''
-          if ! ${lib.getExe config.packages.apm-context-compile} --if-stale --auto; then
-            echo "apm-context-compile: skipped (run 'just agents-context' to regenerate AGENTS.md/CLAUDE.md manually)" >&2
+          if [[ ! -f "$PWD/AGENTS.md" ]]; then
+            if ! ${lib.getExe config.packages.apm-context-compile} --auto; then
+              echo "apm-context-compile: skipped (run 'just agents-context' to regenerate AGENTS.md/CLAUDE.md manually)" >&2
+            fi
           fi
         '';
 
