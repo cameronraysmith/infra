@@ -8,8 +8,13 @@ dependencies:
     # offline by pre-seeding apm's git checkout cache from the flake-pinned tree
     # before `apm install`, recording a remote-style resolved_commit lock with zero
     # network. The full 40-char SHA is required; a short ref forces a network fetch.
+    # Upstream's tag series is not monotonic: `apm outdated` reported v0.1.4
+    # (b08d381f...) as "latest", but that tag is an orphan not reachable from
+    # main (verify ancestry via `gh api .../compare/<sha>...main` before
+    # trusting the table on a future bump). This pin instead tracks v0.76.0,
+    # the release actually reachable from main at bump time.
     - git: max-sixty/worktrunk
-      ref: 5175153b39d2737b4c35810fc58b0fd1a58ee609
+      ref: de0052d8db917e46c1663979d376eff3f90c8119
       skills: [worktrunk, wt-switch-create]
     # gh-stack is a Go CLI repo that also ships one agent skill under
     # skills/gh-stack/. apm types it SKILL_BUNDLE (nested skills/<name>/SKILL.md,
