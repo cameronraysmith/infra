@@ -102,6 +102,18 @@
           # Document typesetting
           pkgs.typstWithPackages
           pkgs.svgo
+          # The skills apm deploys into .agents/skills/ shell out to these CLIs.
+          # Home-manager supplies them on a fleet machine and nowhere else, so
+          # on a CI runner, an agent sandbox, or a fresh checkout a skill loads
+          # and then dies on its first command. duckdb here is the CLI; the
+          # python binding above is a separate output.
+          pkgs.jujutsu
+          pkgs.ghq
+          pkgs.jaq
+          pkgs.duckdb
+          self'.packages.linear-cli
+          self'.packages.mergify-cli-bin
+          inputs'.llm-agents.packages.openspec
         ]
         # buildbot-effects CLI for local dispatch of hercules-ci-effects
         # (see buildbot-nix/docs/EFFECTS.md). Linux-only: depends on bwrap.
