@@ -163,6 +163,18 @@
             darwin, 108 on Linux); the daemon cannot bind a longer path.
           '';
         };
+
+        usageCollection = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Whether the daemon reports per-agent hook usage upstream. Off by
+            default: a minute-interval poll that starts failing silently turns
+            into pure background load, since every exec of non-Apple code on
+            macOS is a Gatekeeper adjudication, and a continuously-failing poll
+            did exactly that on 2026-09-03.
+          '';
+        };
       };
 
       config = lib.mkMerge [
@@ -175,6 +187,16 @@
             "${localBin}/moshi-hook".source = config.lib.file.mkOutOfStoreSymlink "${wrapped}/bin/moshi-hook";
             "${localBin}/moshi".source = config.lib.file.mkOutOfStoreSymlink "${wrapped}/bin/moshi";
           };
+          # `~/.config/moshi/config.toml` is upstream's only control surface for
+          # usage_collection -- there is no `moshi-hook daemon` flag and no
+          # MOSHI_* environment variable for it. Because this module now owns
+          # that file, `moshi-hook set usage-collection` will fail against a
+          # read-only store path; that is accepted, since this repository is
+          # the source of truth for the setting, not the CLI.
+          xdg.configFile."moshi/config.toml".text = ''
+            [gateway]
+            usage_collection = ${lib.boolToString cfg.usageCollection}
+          '';
 
           launchd.agents.moshi-hook = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
             enable = true;
