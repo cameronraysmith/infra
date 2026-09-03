@@ -11,7 +11,11 @@ Two boundaries here account for most wrong edits in this subtree, and neither is
 
 **Generated outputs versus their generators.** `../tools/agents-md.nix` is the single source for every user-level agent context file — `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`, and the rest, plus pi's `context` option, which is also what serves atomic through its legacy scan. Those destination files are nix-managed outputs. Edit the generator, never the generated file.
 
-**Source versus delivered.** Skills are authored under `plugins/<group>/.apm/skills/<skill>/` and delivered to `~/.claude/skills/`, `~/.factory/skills/`, and the codex and opencode equivalents as read-only nix-store symlinks. A delivered copy changes only when the build reruns, so it holds pre-change content indefinitely after the source is edited, and a nix store path reports a 1970 mtime whatever it contains. Verify an edit against the source tree; treat the delivered path as a read-only artifact.
+**Source versus delivered.** Skills are authored under `plugins/<group>/.apm/skills/<skill>/`.
+Claude Code, OpenCode, Droid, and Hermes receive read-only nix-store symlinks.
+Codex and Pi consume writable real-file copies under `~/.agents/skills`, which are materialized because Codex v0.135.0 skips symlinked skill-file leaves.
+Delivered content changes only after a build, so it can retain pre-change content indefinitely after the source is edited, and a nix store path reports a 1970 mtime whatever it contains.
+Verify an edit against the source tree and treat delivered content as generated output.
 
 ## Children
 
