@@ -28,8 +28,8 @@
 #
 # two mutually exclusive modes:
 #   (default)  apm install --frozen   materialize from the committed lockfile.
-#   --relock   apm install --refresh  re-resolve `#main` pins to current
-#              upstream tips and rewrite apm.lock.yaml.
+#   --relock   full re-resolution     rebuild the lockfile from scratch so a
+#              newly appeared transitive dependency is discovered.
 #
 # grep-able marker: APM-SKILLS-INSTALL-OK
 set -euo pipefail
@@ -46,8 +46,8 @@ $HOME or APM_CACHE_DIR.
 Modes:
   (default)  apm install --frozen  — install strictly from the committed
              apm.lock.yaml; fails if manifest and lock disagree.
-  --relock   apm install --refresh — re-resolve `#main` pins to current
-             upstream tips and rewrite apm.lock.yaml.
+  --relock   full re-resolution — rebuild the lockfile from scratch so a
+             newly appeared transitive dependency is discovered.
 
 Options:
   -h, --help  show this help and exit.
@@ -99,7 +99,30 @@ if [ "${mode}" = frozen ]; then
   fi
   apm install --frozen
 else
-  apm install --refresh
+  # Relock re-solves the graph from scratch rather than using --refresh,
+  # because --refresh only re-resolves pins that are ALREADY in the lockfile
+  # and silently ignores a transitive dependency that has since appeared in a
+  # package's own manifest. That is not hypothetical: a mergify-stack skill
+  # dependency added upstream stayed invisible across a --refresh whose diff
+  # was exactly 57 insertions and 57 deletions, pure substitution with no
+  # additions, until the lockfile was removed and resolution rerun.
+  #
+  # The lockfile is preserved and restored if resolution fails, so a network
+  # or upstream error cannot leave the repository without one.
+  lock_backup="$(mktemp)"
+  if [ -f apm.lock.yaml ]; then
+    cp apm.lock.yaml "${lock_backup}"
+    rm -f apm.lock.yaml
+  fi
+  if ! apm install; then
+    if [ -s "${lock_backup}" ]; then
+      cp "${lock_backup}" apm.lock.yaml
+      echo "apm-skills-install: resolution failed; restored the previous apm.lock.yaml" >&2
+    fi
+    rm -f "${lock_backup}"
+    exit 1
+  fi
+  rm -f "${lock_backup}"
 fi
 echo ""
 
