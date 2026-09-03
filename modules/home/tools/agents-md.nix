@@ -354,6 +354,18 @@
           ${skillsPath}/jj-version-control/diamond-workflow.md for the
           four-phase process recipe.
 
+          ## Stacked landing protocol
+
+          This user-context tier assigns stacked-delivery roles, and project context must never become a superset of the user-level context.
+          The dispatched unit remains an OpenSpec change, normally bound to one Linear story; each independently shippable delivery step is encoded as one commit and one pull request.
+          A worker prepares and verifies one step, maintains its one delivery commit, and returns its delivery commit ref and evidence without publishing or landing.
+          Corrections amend or update that same delivery commit; this narrowly overrides the generic atomic-commit and no-amend rule for the stack unit, but never permits rewriting unrelated history outside it.
+          The orchestrator alone orders the returned refs, publishes their pull-request stack through `mergify-stack`, confirms the active VCS mode and landing preconditions, and lands it through the selected landing mechanism.
+          Repository-mode detection selects local authoring and working-copy mechanics; it does not change stack identity, pull-request bookkeeping, or the landing contract.
+          In a git-native repository, consult `git-stacked-pr-integration` for fleet policy and `mergify-stack` for the upstream mechanism, then use the existing `stack-land --tip REV PR...` handler for the checked final operation.
+          In a repository containing `.jj/`, the existing development-join, shared working-copy, hazard, recovery, and worktree-interop rules remain authoritative for local operations.
+          we start with git… The `Change-Id` format is shared, so switching the orchestrator or individual workers to jj changes nothing about identity, PR bookkeeping, or landing. The signal to switch is conflict volume in the orchestrator step, not preference.
+
           ## Commit behavior override
 
           Absent this instruction, an agent defaults to waiting for explicit
