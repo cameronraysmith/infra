@@ -78,13 +78,13 @@
       # nix store; codex (v0.135.0) skips symlinked file leaves in its loader and
       # therefore sees no skills. Materializing the tree as real files via a
       # home.activation copy (below) avoids the symlink leaves. -L dereferences
-      # any symlinks so the result is real files; --no-preserve=mode makes the
-      # copies writable (store files are read-only).
+      # any symlinks so the result is real files while preserving whether each
+      # source file is executable. The activation copy below adds user write permission.
       agentsSkillsTree = pkgs.runCommandLocal "agents-skills" { } (
         lib.concatStringsSep "\n" (
           lib.mapAttrsToList (name: path: ''
             mkdir -p "$out/${name}"
-            cp -RL --no-preserve=mode ${toFileSource path}/. "$out/${name}/"
+            cp -RL ${toFileSource path}/. "$out/${name}/"
           '') fileSkills
         )
       );
@@ -131,7 +131,8 @@
         home.activation.agentsSkillsRealFiles = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           $DRY_RUN_CMD rm -rf "$HOME/.agents/skills"
           $DRY_RUN_CMD install -d "$HOME/.agents/skills"
-          $DRY_RUN_CMD cp -RL --no-preserve=mode ${agentsSkillsTree}/. "$HOME/.agents/skills/"
+          $DRY_RUN_CMD cp -RL ${agentsSkillsTree}/. "$HOME/.agents/skills/"
+          $DRY_RUN_CMD chmod -R u+w "$HOME/.agents/skills"
         '';
       };
     };
