@@ -41,6 +41,9 @@ The description is the entire trigger surface: a skill fires on what its descrip
 Skills follow a strict one-owner discipline. Each concept has exactly one owning skill, and siblings point at the owner rather than restating it, so an addition that duplicates an existing skill's material is a routing edit rather than new prose.
 Prose conventions are in `preferences-code-and-collaboration-conventions/.apm/skills/preferences-prose-clarity/`.
 
+Within `version-control-and-forge`, `mergify-stack` is an unedited upstream mechanism skill from `Mergifyio/mergify-cli`.
+`git-stacked-pr-integration` remains the first-party owner of policy, roles, VCS routing, and evidence.
+
 Groups are named for their subject: `preferences-*` packages hold conceptual foundations loaded on topic, and the remaining groups hold operational workflows.
 
 ## Corpus orientation
