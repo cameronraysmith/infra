@@ -7,11 +7,17 @@ let
     {
       # INNER: Home-manager module signature
       config,
+      lib,
       flake, # from extraSpecialArgs
       ...
     }:
     {
       home.stateVersion = "23.11";
+
+      # Devin owns ~/.bashrc and ~/.bash_profile and rewrites them at session
+      # start, and agent shells are non-interactive, so home-manager's bash
+      # configuration is unreachable here and only collides with them.
+      programs.bash.enable = lib.mkForce false;
 
       # The sandbox runs standalone home-manager with no session bus and no
       # systemd user manager, so sops-nix's user unit never starts and its

@@ -1,5 +1,14 @@
-# Flake app: seed a home-manager profile's age key and activate that profile
-# from a flake reference, with no checkout of this repository.
+# Flake app: activate a home-manager profile from a flake reference, seeding the
+# age key that decrypts its sops secrets where that key exists. No checkout of
+# this repository is required.
+#
+# The two modes are split by coeffect. Activation itself needs only network and
+# the binary cache; installing secrets additionally needs the age key, and
+# base-sops skips that step when the key file is absent. An image or snapshot
+# build has the first resource and not the second, so it runs --without-secrets
+# and the image carries the generation but nothing decrypted. A session start has
+# both, so it runs the default mode, which seeds the key and reactivates over a
+# store the earlier activation already warmed.
 #
 # This is an app rather than a home-manager activation script or a shell-profile
 # hook because it must run before any home-manager generation exists: the key it
@@ -25,10 +34,11 @@
               pkgs.gnused
               # `nix` is in runtimeInputs for the same reason as bootstrap.nix:
               # the activation step shells out to `nix run <flake>#home`, and the
-              # hermetic PATH would otherwise not carry a nix client.
+              # hermetic PATH would otherwise not carry a nix client. Both modes
+              # reach it.
               pkgs.nix
             ];
-            meta.description = "Seed a home-manager profile's age key from SOPS_AGE_KEY and activate the profile from a flake ref";
+            meta.description = "Activate a home-manager profile from a flake ref, seeding its age key from SOPS_AGE_KEY where one exists";
             text = builtins.readFile ./home-bootstrap.sh;
           }
         );

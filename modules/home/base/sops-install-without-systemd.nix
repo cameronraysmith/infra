@@ -23,6 +23,20 @@
       environment = lib.concatStringsSep " " (
         lib.mapAttrsToList (name: value: "'${name}=${value}'") config.sops.environment
       );
+
+      ageKeyFile = config.sops.age.keyFile;
+
+      # Interpolated as its own multi-line value rather than written inline in
+      # the activation string: nix strips a literal's common indentation before
+      # substitution and does not re-indent what it substitutes, so building the
+      # branch here is what lines it up with the `if` it extends.
+      # warnEcho rather than the sibling branch's verboseEcho: a profile whose
+      # secrets are not installed is worth seeing on every activation, not only a
+      # verbose one.
+      skipWhenKeyAbsent = lib.optionalString (ageKeyFile != null) ''
+        elif [[ ! -f ${lib.escapeShellArg ageKeyFile} ]]; then
+          warnEcho "sops-nix: no age key at ${ageKeyFile}; skipping secret installation until an activation runs with the key present"
+      '';
     in
     {
       options.sopsInstallWithoutSystemd.enable = lib.mkEnableOption ''
@@ -42,6 +56,13 @@
         already bootstraps its launchd agent from its own activation entry, and
         none when no secrets are declared.
 
+        An absent `sops.age.keyFile` is treated as the secrets coeffect not
+        being present: the entry reports that it skipped the install and
+        continues, so a profile can be activated where no key exists, as an
+        image or snapshot build must be. Where the key file exists the install
+        runs and any failure is fatal. Activating again once the key is in place
+        is what installs the secrets.
+
         The entry runs after `writeBoundary`. Activation entries that read the
         installed secrets should declare `entryAfter [ "sopsInstallWithoutSystemd" ]`
         rather than relying on entry order.
@@ -53,7 +74,7 @@
 
           if [[ $systemdStatus == 'running' || $systemdStatus == 'degraded' ]]; then
             verboseEcho "sops-nix: user systemd manager is $systemdStatus; the sops-nix unit installs secrets"
-          else
+          ${skipWhenKeyAbsent}else
             verboseEcho "sops-nix: no user systemd manager; installing secrets directly"
             run env ${environment} ${installScript}
           fi

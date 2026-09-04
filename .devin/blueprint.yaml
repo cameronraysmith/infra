@@ -28,14 +28,16 @@ initialize: |
   # Marks .envrc trusted so the maintenance step's `direnv exec .` calls work.
   direnv allow
 
-  # Seeds ~/.config/sops/age/keys.txt from the sandbox's SOPS_AGE_KEY secret and
-  # activates homeConfigurations."ubuntu@x86_64-linux". The key has to be in
-  # place before activation, because sops-nix decrypts the profile's secrets during
-  # it. One-shot: it exits non-zero on failure rather than retrying, so a broken
+  # Activates homeConfigurations."ubuntu@x86_64-linux" with no age key: snapshot
+  # builds run with no secrets injected, so base-sops reports that it is skipping
+  # the sops install and continues. The image therefore carries the generation's
+  # packages, files, and session variables but nothing decrypted. Secrets arrive at
+  # session start, where the profile is activated again over this warm store.
+  # One-shot: it exits non-zero on failure rather than retrying, so a broken
   # sandbox is visible here rather than in every later command.
   # `--flake .` overrides the app's published default so a branch under test
   # activates itself rather than main.
-  nix run --accept-flake-config .#home-bootstrap -- --flake .
+  nix run --accept-flake-config .#home-bootstrap -- --flake . --without-secrets
 
   # Agent commands run in non-interactive shells, which read neither
   # /etc/bash.bashrc nor /etc/profile.d/nix.sh, so nix and the home-manager
@@ -67,15 +69,19 @@ initialize: |
   sudo udevadm control --reload-rules
   sudo udevadm trigger --name-match=kvm --settle
 maintenance: |
+  # Session start is where SOPS_AGE_KEY exists, so this is where the key is seeded
+  # and the profile is activated again, which is what installs its secrets;
+  # initialize's activation deliberately installed none. The closure is already in
+  # the store, so this is a re-link plus a secret install rather than a build, and a
+  # sandbox resuming on a newer commit rebuilds only what that commit changed.
+  # Re-running is a no-op on the key file unless the secret rotated. Everything
+  # below can read the profile, so it runs first.
+  nix run --accept-flake-config .#home-bootstrap -- --flake .
+
   # Realize the devshell; its shellHook writes .pre-commit-config.yaml and installs the prek hooks.
   nix develop --accept-flake-config --command true
   # Warm the nix-direnv cache so later `direnv exec .` invocations skip flake evaluation.
   direnv allow
-
-  # A warm sandbox resumes on a newer commit than the one initialize activated, so
-  # re-run the bootstrap to bring the home-manager generation forward. Re-running is
-  # a no-op on the key file unless the secret rotated.
-  nix run --accept-flake-config .#home-bootstrap -- --flake .
 
   # `bun install` over the root workspace (packages/*), so packages/docs is covered;
   # incremental outside CI, unlike `bun run reinstall`, which maintenance forbids.
@@ -118,16 +124,19 @@ knowledge:
     contents: |
       Run everything through `direnv exec . <cmd>` (or `nix develop -c`): just/prek/bun exist only in the devshell.
       x86_64-linux only: darwinConfigurations and checks.aarch64-* cannot run here.
-      `nix run .#home-bootstrap -- --flake .` is how the image is built: it seeds
-      ~/.config/sops/age/keys.txt from the user-scoped Devin secret
-      SOPS_AGE_KEY (the only secret) and then activates
-      homeConfigurations."ubuntu@x86_64-linux", the same generation
-      `just activate-home ubuntu` would build. It runs in initialize and again in
-      maintenance; run it by hand after pulling a commit that changes the ubuntu
-      profile. `--flake .` is what makes this checkout activate itself instead of
-      the app's published default, so a branch under test is what reaches the
-      generation. Any other repository's blueprint activates the same profile with
-      no checkout of this one via
+      homeConfigurations."ubuntu@x86_64-linux" is activated twice, split by whether
+      a secret is available. The snapshot build injects none, so initialize runs
+      `nix run .#home-bootstrap -- --flake . --without-secrets`, which activates the
+      generation and leaves its sops install skipped, so the image holds nothing
+      decrypted. Session start has the user-scoped Devin secret SOPS_AGE_KEY (the
+      only secret), so maintenance runs `nix run .#home-bootstrap -- --flake .`,
+      which seeds ~/.config/sops/age/keys.txt from it and activates again, installing
+      the secrets. That is the same generation `just activate-home ubuntu` would
+      build. Run the second form by hand after pulling a commit that changes the
+      ubuntu profile. `--flake .` is what makes this checkout supply the generation
+      instead of the app's published default, so a branch under test is what reaches
+      it. Any other repository's blueprint reaches the same profile with no checkout
+      of this one via
       `nix run --accept-flake-config github:cameronraysmith/vanixiets#home-bootstrap`,
       which requires nix installed by this repo's `make bootstrap` (it sets
       trusted-users, so the flake's substituters are then honored) and SOPS_AGE_KEY
