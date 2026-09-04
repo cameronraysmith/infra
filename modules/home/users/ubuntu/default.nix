@@ -100,12 +100,15 @@ in
         esac
 
         keyFile="${keyFile}"
-        if [ -n "''${SOPS_AGE_KEY_UBUNTU:-}" ] && [ ! -s "$keyFile" ]; then
-          (
-            umask 077
-            mkdir -p "$(dirname "$keyFile")"
-            printf '%s\n' "$SOPS_AGE_KEY_UBUNTU" > "$keyFile"
-          )
+        stamp="$HOME/.local/state/vanixiets/devin-reactivated"
+        if [ -n "''${SOPS_AGE_KEY_UBUNTU:-}" ] && [ ! -e "$stamp" ]; then
+          if [ ! -s "$keyFile" ]; then
+            (
+              umask 077
+              mkdir -p "$(dirname "$keyFile")"
+              printf '%s\n' "$SOPS_AGE_KEY_UBUNTU" > "$keyFile"
+            )
+          fi
 
           logFile="$HOME/.local/state/vanixiets/devin-reactivate.log"
           mkdir -p "$(dirname "$logFile")"
@@ -121,7 +124,9 @@ in
           done
 
           if [ -n "$activate" ]; then
-            if ! "$activate" >> "$logFile" 2>&1; then
+            if "$activate" >> "$logFile" 2>&1; then
+              : > "$stamp"
+            else
               printf '%s\n' "home-manager reactivation failed; see $logFile" >&2
             fi
           else
