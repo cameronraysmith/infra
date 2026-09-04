@@ -17,6 +17,7 @@
         username = alias;
       };
       aggregates = config.flake.users.${target}.aggregates;
+      systems = config.flake.users.${target}.systems;
       contentPrivate = config.flake.users.${target}.contentPrivate;
       # mkForce on identity setters: the canonical default identity (synthesized
       # in `users/lib.nix` from the attribute key) sets

@@ -17,7 +17,7 @@ let
         value = config.flake.lib.mkHome {
           inherit user system;
         };
-      }) config.systems
+      }) config.flake.users.${user}.systems
     ) enumerableUserNames
   );
 
@@ -39,7 +39,7 @@ let
             user = aliasName;
             inherit system;
           };
-        }) config.systems
+        }) config.flake.users.${aliasName}.systems
       )
     ) (lib.attrsToList config.flake.userAliases)
   );

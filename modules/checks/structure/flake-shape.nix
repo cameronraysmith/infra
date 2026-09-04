@@ -69,7 +69,7 @@
           let
             enumerableUsers = lib.attrNames (lib.filterAttrs (_: u: u.aggregates != [ ]) config.flake.users);
             expectedKeys = lib.naturalSort (
-              lib.concatMap (u: map (s: "${u}@${s}") config.systems) enumerableUsers
+              lib.concatMap (u: map (s: "${u}@${s}") config.flake.users.${u}.systems) enumerableUsers
             );
           in
           mkCheck {

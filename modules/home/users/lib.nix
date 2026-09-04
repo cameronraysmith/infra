@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
   # Synthesize a home-manager identity module fragment from a username,
   # parameterized over whether the setters use `lib.mkDefault` (canonical
@@ -23,6 +23,8 @@ let
         if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}"
       );
     };
+
+  flakeSystems = config.systems;
 in
 {
   config.flake.lib.mkUserIdentity = mkUserIdentity;
@@ -35,7 +37,8 @@ in
       Each user provides identity metadata under `meta` and a list of
       capability-aggregate home-manager modules under `aggregates`. The
       `homeConfigurations` flake output is emitted only for users whose
-      `aggregates` is non-empty (conservative auto-discovery).
+      `aggregates` is non-empty (conservative auto-discovery), and only
+      for the systems listed in `systems`.
     '';
     default = { };
     type = lib.types.attrsOf (
@@ -78,6 +81,19 @@ in
                   `users.users.<u>.openssh.authorizedKeys.keys` setters.
                 '';
               };
+            };
+            systems = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = flakeSystems;
+              defaultText = lib.literalExpression "config.systems";
+              description = ''
+                Systems for which this user's
+                `homeConfigurations."<user>@<system>"` entry is emitted, and
+                for which the per-user home-manager activation check is
+                wired. Defaults to every system the flake builds for;
+                narrow it for a user whose profile only makes sense on a
+                subset (e.g. a Linux-only agent sandbox account).
+              '';
             };
             aggregates = lib.mkOption {
               type = lib.types.listOf lib.types.deferredModule;

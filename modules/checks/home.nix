@@ -8,9 +8,9 @@
 #
 # Iterates every user emitted into `homeConfigurations` for the current system
 # — including aliases (e.g. cameron) materialized by `aliases-fold.nix` — by
-# filtering `flake.users` to those with non-empty `aggregates`. Single source
-# of truth: drift between `configurations.nix`'s emission rule and this check
-# set is impossible.
+# filtering `flake.users` to those with non-empty `aggregates` whose `systems`
+# covers this system. Single source of truth: drift between
+# `configurations.nix`'s emission rule and this check set is impossible.
 #
 # Binds the activationPackage directly (no overrideAttrs wrapper). A prior
 # revision wrapped it with overrideAttrs to add a cosmetic meta.description,
@@ -29,7 +29,9 @@
   perSystem =
     { system, ... }:
     let
-      enumerableUsers = lib.attrNames (lib.filterAttrs (_: u: u.aggregates != [ ]) config.flake.users);
+      enumerableUsers = lib.attrNames (
+        lib.filterAttrs (_: u: u.aggregates != [ ] && lib.elem system u.systems) config.flake.users
+      );
     in
     {
       checks = lib.listToAttrs (
