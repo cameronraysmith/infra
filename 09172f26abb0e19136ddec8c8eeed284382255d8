@@ -1,1 +1,6 @@
-reordered below both secrets commits so this PR builds home-manager-ubuntu with the populated secrets file present; CI builds 257 and 258 failed on the missing file and missing keys
+Revision history for #2944:
+
+rev 2 (rebase) 2026-09-04 06:36 UTC — reordered below both secrets commits so this PR builds home-manager-ubuntu with the populated secrets file present; CI builds 257 and 258 failed on the missing file and missing keys
+rev 1 (initial) 2026-09-04 06:36 UTC
+
+<!-- mergify-revision-data: {"schema_version":1,"pull_number":2944,"entries":[{"number":1,"change_type":"initial","old_sha":null,"new_sha":"5a81a8318b6de30091dedb2961c7d52be26e0984","timestamp_iso":"2026-09-04T06:36:57Z","reason":"","replay_sha":null,"compare_url":null},{"number":2,"change_type":"rebase","old_sha":"5a81a8318b6de30091dedb2961c7d52be26e0984","new_sha":"09172f26abb0e19136ddec8c8eeed284382255d8","timestamp_iso":"2026-09-04T06:36:57Z","reason":"reordered below both secrets commits so this PR builds home-manager-ubuntu with the populated secrets file present; CI builds 257 and 258 failed on the missing file and missing keys","replay_sha":null,"compare_url":"https://github.com/cameronraysmith/vanixiets/compare/5a81a8318b6de30091dedb2961c7d52be26e0984...09172f26abb0e19136ddec8c8eeed284382255d8"}]} -->
