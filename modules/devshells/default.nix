@@ -113,6 +113,7 @@
           pkgs.duckdb
           self'.packages.linear-cli
           self'.packages.mergify-cli-bin
+          inputs'.llm-agents.packages.apm
           inputs'.llm-agents.packages.openspec
         ]
         # buildbot-effects CLI for local dispatch of hercules-ci-effects

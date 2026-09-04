@@ -24,9 +24,15 @@ initialize: |
   printf 'accept-flake-config = true\nauto-allocate-uids = true\nextra-experimental-features = auto-allocate-uids cgroups\n' | sudo tee /etc/nix/nix.custom.conf
   sudo systemctl restart nix-daemon.service
 
+  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+  nix develop --accept-flake-config --command just activate-home ubuntu
+
   # Agent commands run in non-interactive shells, which read neither
-  # /etc/bash.bashrc nor /etc/profile.d/nix.sh.
-  echo "BASH_ENV=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" >> $ENVRC
+  # /etc/bash.bashrc nor /etc/profile.d/nix.sh. The Home Manager-managed
+  # wrapper sources nix-daemon.sh and, when SOPS_AGE_KEY_UBUNTU is present,
+  # seeds the age key file and re-runs the current Home Manager generation.
+  sed -i '/^BASH_ENV=/d' "$ENVRC" 2>/dev/null || true
+  echo "BASH_ENV=$HOME/.config/vanixiets/devin-bash-env.sh" >> "$ENVRC"
 
   # QEMU-flavor NixOS tests run as a nix build user inside the sandbox, and
   # nix-daemon drops supplementary groups for those users, so adding anyone to the
@@ -53,11 +59,11 @@ maintenance: |
   # .agents/ is gitignored, so a fresh clone carries none of the repo's skills, and
   # the devshell shellHook only composes AGENTS.md/CLAUDE.md - apm-skills-install is
   # what materializes .agents/skills/, which is the only place a harness discovers
-  # them. apm rewrites apm.lock.yaml's generated_at on every run, so the tracked file
-  # is put back afterwards; the snapshot is expected to start on a clean tree.
+  # them. Frozen installs skip the lockfile write when the assembled state is
+  # semantically equal, so preserve the tracked file around the install.
   cp apm.lock.yaml /tmp/apm.lock.yaml.pre-install
+  trap 'cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml' EXIT
   direnv exec . just agents-install
-  cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml
 knowledge:
   - name: lint
     contents: |
@@ -82,8 +88,11 @@ knowledge:
   - name: notes
     contents: |
       Run everything through `direnv exec . <cmd>` (or `nix develop -c`): just/prek/bun exist only in the devshell.
-      x86_64-linux only: darwinConfigurations, checks.aarch64-*, and `just activate*` cannot run here.
-      No age/sops keys are provisioned, so sops, clan vars, and secret-decrypting recipes fail by design.
+      x86_64-linux only: darwinConfigurations and checks.aarch64-* cannot run here.
+      `just activate-home ubuntu` is how the image is built. Secrets for the
+      ubuntu profile decrypt from `~/.config/sops/age/keys.txt`, seeded at
+      session start from the user-scoped Devin secret SOPS_AGE_KEY_UBUNTU (the
+      only secret); other sops/clan recipes still fail by design.
       The nix store grows quickly on the sandbox disk; reclaim with `direnv exec . just gc`.
       AGENTS.md, CLAUDE.md and .agents/skills/ are generated and gitignored: entering the
       devshell composes the first two, `just agents-install` deploys the skills. Never edit
