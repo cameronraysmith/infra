@@ -66,23 +66,21 @@
                 fi
 
                 system="${system}"
-                # Full flake attribute path including activationPackage
-                # Format: flake#homeConfigurations."USERNAME@SYSTEM".activationPackage
-                config_path="homeConfigurations.\"$username@$system\".activationPackage"
+                config_name="$username@$system"
 
                 cat <<-EOF
                 	Activating home-manager configuration...
                 	  User:   $username
                 	  System: $system
                 	  Flake:  $flake
-                	  Config: $config_path
+                	  Config: homeConfigurations."$config_name"
 
                 	EOF
 
-                # Use full installable path (not -c flag) for nested structure
-                # Pass any additional arguments (like --dry, --verbose, etc.) to nh
-                # Always include --accept-flake-config for nh's internal nix calls
-                exec nh home switch "$flake#$config_path" --accept-flake-config "$@"
+                # nh rejects any attribute path below homeConfigurations.<name>; the
+                # configuration goes through --configuration, which nh checks against
+                # the flake and then extends to the activation package itself.
+                exec nh home switch "$flake" --configuration "$config_name" --accept-flake-config "$@"
               '';
             }
           );
