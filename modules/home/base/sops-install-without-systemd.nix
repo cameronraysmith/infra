@@ -26,6 +26,36 @@
 
       ageKeyFile = config.sops.age.keyFile;
 
+      # sops-install-secrets resolves $XDG_RUNTIME_DIR before it inspects any
+      # path and fails when it is unset, so a profile that supplies one through
+      # sops.environment is also responsible for the directory existing. Creating
+      # it here rather than in the profile keeps that obligation next to the
+      # invocation that carries the variable.
+      runtimeDir = config.sops.environment.XDG_RUNTIME_DIR or null;
+      # A runtime directory commonly sits under /dev/shm or /tmp, which are
+      # world-writable and sticky, so it is created rather than adopted and an
+      # existing one is used only when this user owns it and it is not a symlink.
+      # Written as one interpolated value because nix does not re-indent what it
+      # substitutes.
+      ensureRuntimeDir =
+        lib.optionalString (runtimeDir != null) ''
+          if [[ -L ${lib.escapeShellArg runtimeDir} ]]; then
+              errorEcho "sops-nix: ${runtimeDir} is a symlink; refusing to use it"
+              exit 1
+            elif [[ -d ${lib.escapeShellArg runtimeDir} ]]; then
+              if [[ ! -O ${lib.escapeShellArg runtimeDir} ]]; then
+                errorEcho "sops-nix: ${runtimeDir} is not owned by this user; refusing to use it"
+                exit 1
+              fi
+              run chmod 700 ${lib.escapeShellArg runtimeDir}
+            else
+              run mkdir -m 0700 ${lib.escapeShellArg runtimeDir}
+            fi
+        ''
+        # Re-indents the interpolation's last line so the install call that
+        # follows it keeps the surrounding block's indentation.
+        + "  ";
+
       # Interpolated as its own multi-line value rather than written inline in
       # the activation string: nix strips a literal's common indentation before
       # substitution and does not re-indent what it substitutes, so building the
@@ -76,7 +106,7 @@
             verboseEcho "sops-nix: user systemd manager is $systemdStatus; the sops-nix unit installs secrets"
           ${skipWhenKeyAbsent}else
             verboseEcho "sops-nix: no user systemd manager; installing secrets directly"
-            run env ${environment} ${installScript}
+            ${ensureRuntimeDir}run env ${environment} ${installScript}
           fi
 
           unset systemdStatus

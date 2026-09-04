@@ -39,22 +39,18 @@ initialize: |
   # activates itself rather than main.
   nix run --accept-flake-config .#home-bootstrap -- --flake . --without-secrets
 
-  # Agent commands run in non-interactive shells, which read neither
-  # /etc/bash.bashrc nor /etc/profile.d/nix.sh, so nix and the home-manager
-  # session variables have to be sourced from the per-shell env file.
-  # Appended only once: initialize runs per fresh sandbox, but a re-run would
-  # otherwise grow the file without bound.
-  : "${ENVRC:?ENVRC is unset; Devin normally provides it and these lines have nowhere to go}"
-  if ! grep -q 'hm-session-vars.sh' "$ENVRC" 2>/dev/null; then
-  cat >> "$ENVRC" <<'ENVRC_LINES'
-  if [ -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
-    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-  fi
-  if [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
-    . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-  fi
-  ENVRC_LINES
-  fi
+  # Devin's per-exec BASH_ENV file runs `set -a; source "$ENVRC"; set +a`, so
+  # $ENVRC is a sourced shell file rather than KEY=VALUE lines, and a BASH_ENV
+  # assignment written here would reach only nested bashes, leaving the agent's
+  # own exec shell without nix. Sourcing the home-manager-generated file instead
+  # puts nix, the session variables, and the secret install in every tool call.
+  # The -r guard keeps a missing file from breaking every shell. Written in both
+  # blocks because $ENVRC is reset on every build and a differential build runs
+  # maintenance only.
+  : "${ENVRC:?ENVRC is unset; Devin normally provides it and this line has nowhere to go}"
+  # shellcheck disable=SC2016  # $HOME resolves when Devin sources $ENVRC, not here
+  grep -q 'vanixiets/session-env.sh' "$ENVRC" 2>/dev/null \
+    || echo '[ -r "$HOME/.config/vanixiets/session-env.sh" ] && . "$HOME/.config/vanixiets/session-env.sh"' >> "$ENVRC"
 
   # QEMU-flavor NixOS tests run as a nix build user inside the sandbox, and
   # nix-daemon drops supplementary groups for those users, so adding anyone to the
@@ -77,6 +73,19 @@ maintenance: |
   # Re-running is a no-op on the key file unless the secret rotated. Everything
   # below can read the profile, so it runs first.
   nix run --accept-flake-config .#home-bootstrap -- --flake .
+
+  # Devin's per-exec BASH_ENV file runs `set -a; source "$ENVRC"; set +a`, so
+  # $ENVRC is a sourced shell file rather than KEY=VALUE lines, and a BASH_ENV
+  # assignment written here would reach only nested bashes, leaving the agent's
+  # own exec shell without nix. Sourcing the home-manager-generated file instead
+  # puts nix, the session variables, and the secret install in every tool call.
+  # The -r guard keeps a missing file from breaking every shell. Written in both
+  # blocks because $ENVRC is reset on every build and a differential build runs
+  # maintenance only.
+  : "${ENVRC:?ENVRC is unset; Devin normally provides it and this line has nowhere to go}"
+  # shellcheck disable=SC2016  # $HOME resolves when Devin sources $ENVRC, not here
+  grep -q 'vanixiets/session-env.sh' "$ENVRC" 2>/dev/null \
+    || echo '[ -r "$HOME/.config/vanixiets/session-env.sh" ] && . "$HOME/.config/vanixiets/session-env.sh"' >> "$ENVRC"
 
   # Realize the devshell; its shellHook writes .pre-commit-config.yaml and installs the prek hooks.
   nix develop --accept-flake-config --command true
@@ -142,6 +151,15 @@ knowledge:
       trusted-users, so the flake's substituters are then honored) and SOPS_AGE_KEY
       in the environment. Secrets for that profile decrypt from the seeded key;
       other sops/clan recipes still fail by design.
+      Secrets in a session do not wait for maintenance, which Devin surfaces to the
+      agent rather than running: home-manager generates
+      ~/.config/vanixiets/session-env.sh, $ENVRC sources it, and Devin sources
+      $ENVRC at the top of every exec shell. When SOPS_AGE_KEY is set it seeds
+      the key and runs the sops install once per key value, under a lock, logging to
+      /dev/shm/ubuntu-sops/session-install.log. The age key and every decrypted
+      secret live under /dev/shm/ubuntu-sops, never in $HOME and so never in the
+      image; consumers such as ~/.radicle/keys/radicle are symlinks into it, created
+      at install time.
       The nix store grows quickly on the sandbox disk; reclaim with `direnv exec . just gc`.
       AGENTS.md, CLAUDE.md and .agents/skills/ are generated and gitignored: entering the
       devshell composes the first two, `just agents-install` deploys the skills. Never edit

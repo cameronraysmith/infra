@@ -32,6 +32,9 @@
               pkgs.coreutils
               pkgs.gnugrep
               pkgs.gnused
+              # The seed step is shared with the ubuntu profile's session hook so
+              # that both normalize a rotated key the same way.
+              pkgs.seed-age-key
               # `nix` is in runtimeInputs for the same reason as bootstrap.nix:
               # the activation step shells out to `nix run <flake>#home`, and the
               # hermetic PATH would otherwise not carry a nix client. Both modes

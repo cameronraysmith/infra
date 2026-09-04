@@ -39,9 +39,9 @@ Key source in the default mode (first found):
   SOPS_AGE_KEY            environment variable
   SOPS_AGE_KEY_FILE       path to a file holding the key
 
-The key is written to ~/.config/sops/age/keys.txt at mode 0600, and only
-rewritten when its content differs, so a rotated secret is detected and a
-stable one is left alone.
+The key is written at mode 0600 to the path the target configuration's
+sops.age.keyFile names, and only rewritten when its content differs, so a
+rotated secret is detected and a stable one is left alone.
 
 Options:
   --flake REF        Flake reference to activate from
@@ -116,55 +116,15 @@ printf 'home-bootstrap: user=%s flake=%s\n' "${user}" "${flake}"
 if [ "${without_secrets}" -eq 1 ]; then
   printf 'seeding no age key (--without-secrets); the profile activates and its sops install step skips\n'
 else
-  # home-manager's xdg.configHome defaults to ${home.homeDirectory}/.config and
-  # ignores the ambient XDG_CONFIG_HOME (home-manager modules/misc/xdg/default.nix),
-  # so base-sops resolves sops.age.keyFile from HOME. Deriving it from
-  # XDG_CONFIG_HOME here would put the key somewhere sops-nix does not read.
-  key_file="${HOME}/.config/sops/age/keys.txt"
+  # The key path is read from the configuration rather than assumed: profiles
+  # differ on where sops.age.keyFile points, and a key written anywhere else is
+  # a key sops-nix will not find. `nix eval` is the whole of the coupling, so
+  # there is no path argument for a caller to get wrong.
+  system="$(nix config show system)"
+  key_file="$(nix --accept-flake-config eval --raw \
+    "${flake}#homeConfigurations.\"${user}@${system}\".config.sops.age.keyFile")"
 
-  if [ -n "${SOPS_AGE_KEY:-}" ]; then
-    key_source='SOPS_AGE_KEY'
-    key_body="${SOPS_AGE_KEY}"
-  elif [ -n "${SOPS_AGE_KEY_FILE:-}" ]; then
-    key_source="${SOPS_AGE_KEY_FILE}"
-    if [ ! -s "${SOPS_AGE_KEY_FILE}" ]; then
-      printf 'error: SOPS_AGE_KEY_FILE names a missing or empty file: %s\n\n' \
-        "${SOPS_AGE_KEY_FILE}" >&2
-      usage >&2
-      exit 1
-    fi
-    key_body="$(cat -- "${SOPS_AGE_KEY_FILE}")"
-  else
-    printf 'error: no age key source; set SOPS_AGE_KEY or SOPS_AGE_KEY_FILE\n\n' >&2
-    usage >&2
-    exit 1
-  fi
-
-  # Trailing whitespace is stripped per line, and command substitution drops the
-  # trailing newlines, so `desired` is the exact byte sequence written below minus
-  # its final newline. The comparison against the existing file is then between
-  # two identically normalized values. Comparing a raw secret against
-  # "$(cat "$key_file")" instead would report a difference on every run whenever
-  # the secret carries a trailing newline, rewriting the key each time.
-  desired="$(printf '%s\n' "${key_body}" | sed 's/[[:space:]]*$//')"
-
-  if ! printf '%s\n' "${desired}" | grep -q '^AGE-SECRET-KEY-'; then
-    printf 'error: value from %s contains no AGE-SECRET-KEY- line\n' "${key_source}" >&2
-    exit 1
-  fi
-
-  if [ -f "${key_file}" ] && [ "$(cat -- "${key_file}")" = "${desired}" ]; then
-    printf 'age key at %s already matches %s\n' "${key_file}" "${key_source}"
-  else
-    mkdir -p "$(dirname "${key_file}")"
-    (
-      umask 077
-      printf '%s\n' "${desired}" > "${key_file}.new"
-    )
-    mv -f "${key_file}.new" "${key_file}"
-    printf 'wrote age key to %s from %s\n' "${key_file}" "${key_source}"
-  fi
-  chmod 600 "${key_file}"
+  seed-age-key --key-file "${key_file}"
 fi
 
 if [ "${activate}" -eq 0 ]; then
