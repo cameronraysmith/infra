@@ -24,9 +24,35 @@ initialize: |
   printf 'accept-flake-config = true\nauto-allocate-uids = true\nextra-experimental-features = auto-allocate-uids cgroups\n' | sudo tee /etc/nix/nix.custom.conf
   sudo systemctl restart nix-daemon.service
 
+  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+  # Marks .envrc trusted so the maintenance step's `direnv exec .` calls work.
+  direnv allow
+
+  # Seeds ~/.config/sops/age/keys.txt from the sandbox's SOPS_AGE_KEY secret and
+  # activates homeConfigurations."ubuntu@x86_64-linux". The key has to be in
+  # place before activation, because sops-nix decrypts the profile's secrets during
+  # it. One-shot: it exits non-zero on failure rather than retrying, so a broken
+  # sandbox is visible here rather than in every later command.
+  # `--flake .` overrides the app's published default so a branch under test
+  # activates itself rather than main.
+  nix run --accept-flake-config .#home-bootstrap -- --flake .
+
   # Agent commands run in non-interactive shells, which read neither
-  # /etc/bash.bashrc nor /etc/profile.d/nix.sh.
-  echo "BASH_ENV=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" >> $ENVRC
+  # /etc/bash.bashrc nor /etc/profile.d/nix.sh, so nix and the home-manager
+  # session variables have to be sourced from the per-shell env file.
+  # Appended only once: initialize runs per fresh sandbox, but a re-run would
+  # otherwise grow the file without bound.
+  : "${ENVRC:?ENVRC is unset; Devin normally provides it and these lines have nowhere to go}"
+  if ! grep -q 'hm-session-vars.sh' "$ENVRC" 2>/dev/null; then
+  cat >> "$ENVRC" <<'ENVRC_LINES'
+  if [ -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+  fi
+  if [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+    . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+  fi
+  ENVRC_LINES
+  fi
 
   # QEMU-flavor NixOS tests run as a nix build user inside the sandbox, and
   # nix-daemon drops supplementary groups for those users, so adding anyone to the
@@ -45,6 +71,12 @@ maintenance: |
   nix develop --accept-flake-config --command true
   # Warm the nix-direnv cache so later `direnv exec .` invocations skip flake evaluation.
   direnv allow
+
+  # A warm sandbox resumes on a newer commit than the one initialize activated, so
+  # re-run the bootstrap to bring the home-manager generation forward. Re-running is
+  # a no-op on the key file unless the secret rotated.
+  nix run --accept-flake-config .#home-bootstrap -- --flake .
+
   # `bun install` over the root workspace (packages/*), so packages/docs is covered;
   # incremental outside CI, unlike `bun run reinstall`, which maintenance forbids.
   # Playwright browsers come from the devshell's PLAYWRIGHT_BROWSERS_PATH, not a download.
@@ -53,11 +85,14 @@ maintenance: |
   # .agents/ is gitignored, so a fresh clone carries none of the repo's skills, and
   # the devshell shellHook only composes AGENTS.md/CLAUDE.md - apm-skills-install is
   # what materializes .agents/skills/, which is the only place a harness discovers
-  # them. apm rewrites apm.lock.yaml's generated_at on every run, so the tracked file
-  # is put back afterwards; the snapshot is expected to start on a clean tree.
+  # them. `apm install --frozen` still rewrites apm.lock.yaml whenever the assembled
+  # state is not semantically equal to the file, so the tracked file is put back
+  # afterwards, on failure too; the snapshot is expected to start on a clean tree.
   cp apm.lock.yaml /tmp/apm.lock.yaml.pre-install
+  trap 'cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml' EXIT
   direnv exec . just agents-install
   cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml
+  trap - EXIT
 knowledge:
   - name: lint
     contents: |
@@ -82,8 +117,22 @@ knowledge:
   - name: notes
     contents: |
       Run everything through `direnv exec . <cmd>` (or `nix develop -c`): just/prek/bun exist only in the devshell.
-      x86_64-linux only: darwinConfigurations, checks.aarch64-*, and `just activate*` cannot run here.
-      No age/sops keys are provisioned, so sops, clan vars, and secret-decrypting recipes fail by design.
+      x86_64-linux only: darwinConfigurations and checks.aarch64-* cannot run here.
+      `nix run .#home-bootstrap -- --flake .` is how the image is built: it seeds
+      ~/.config/sops/age/keys.txt from the user-scoped Devin secret
+      SOPS_AGE_KEY (the only secret) and then activates
+      homeConfigurations."ubuntu@x86_64-linux", the same generation
+      `just activate-home ubuntu` would build. It runs in initialize and again in
+      maintenance; run it by hand after pulling a commit that changes the ubuntu
+      profile. `--flake .` is what makes this checkout activate itself instead of
+      the app's published default, so a branch under test is what reaches the
+      generation. Any other repository's blueprint activates the same profile with
+      no checkout of this one via
+      `nix run --accept-flake-config github:cameronraysmith/vanixiets#home-bootstrap`,
+      which requires nix installed by this repo's `make bootstrap` (it sets
+      trusted-users, so the flake's substituters are then honored) and SOPS_AGE_KEY
+      in the environment. Secrets for that profile decrypt from the seeded key;
+      other sops/clan recipes still fail by design.
       The nix store grows quickly on the sandbox disk; reclaim with `direnv exec . just gc`.
       AGENTS.md, CLAUDE.md and .agents/skills/ are generated and gitignored: entering the
       devshell composes the first two, `just agents-install` deploys the skills. Never edit
