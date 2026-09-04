@@ -341,7 +341,7 @@
             `id` or `tokenFile` through a default-carried registry would drop
             every other entry, and drop the `platform` of the entry it was
             editing. Definitions merge, so with the registry in the config
-            layer a caller writing `outposts."magnetite-01".tokenFile = ...`
+            layer a caller writing `outposts."magnetite".tokenFile = ...`
             adds to it. Overriding a value this module sets needs
             `lib.mkForce`, since the module's own entries are `lib.mkDefault`.
           '';
@@ -350,7 +350,7 @@
         outpost = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
           default = null;
-          example = "magnetite-01";
+          example = "magnetite";
           description = ''
             Queue this host's workers serve, named per host. Required whenever
             the service is enabled: enabling without it fails evaluation and
@@ -418,22 +418,19 @@
         # `outpost` to resolve its default, and describing a queue commits this
         # host to nothing.
         {
-          # Read from the live account through the fleet API, not assumed: the
-          # names carry an -01 suffix, and magnetite-01 was created without a
-          # platform. Addressing by id is what makes the suffix a labelling
-          # detail rather than a claim-time failure.
+          # Read from the live account through the fleet API, not assumed:
+          # both queues carry the bare machine name as their label, and both
+          # were created with a platform. Addressing by id is what makes the
+          # label a display detail rather than a claim-time failure.
           services.devin-worker.outposts = {
-            "stibnite-01" = {
-              id = lib.mkDefault "outpost_env-f47bd2ee30824fe6bc5f9330f67f3670";
+            "stibnite" = {
+              id = lib.mkDefault "outpost_env-2955ae307356487b869030ddb4fc45f7";
               platform = lib.mkDefault "macos";
               description = lib.mkDefault "Apple silicon workstation with a live desktop session for computer use";
             };
-            "magnetite-01" = {
-              id = lib.mkDefault "outpost_env-e178cc2f14f84011b05f52ea17ccdb66";
-              # Platform deliberately left null, mirroring the account: the
-              # outpost was created without one, and asserting linux here
-              # would be this module inventing a fact the account does not
-              # carry.
+            "magnetite" = {
+              id = lib.mkDefault "outpost_env-4e8894859f8443258b52e992d4f2d112";
+              platform = lib.mkDefault "linux";
               description = lib.mkDefault "x86_64 server capacity for headless sessions";
             };
           };
@@ -446,7 +443,7 @@
               message = ''
                 services.devin-worker is enabled on ${hostLabel} but services.devin-worker.outpost is
                 unset, so this host has not been told which queue it serves. Name it, e.g.
-                services.devin-worker.outpost = "magnetite-01"; known queues are
+                services.devin-worker.outpost = "magnetite"; known queues are
                 ${lib.concatStringsSep ", " (lib.attrNames cfg.outposts)}.
 
                 There is no default on purpose. Inferring the queue from this host's platform would

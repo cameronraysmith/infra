@@ -1,12 +1,12 @@
 # Structural check for `flake.modules.homeManager.devin`'s worker surface
 # (see modules/home/ai/devin/worker.nix).
 #
-# The module lands disabled on every host, so nothing in the machine
-# configurations exercises it. What the module promises when enabled is
-# checked here instead, with a dummy token path standing in for the sops-nix
-# secret the operator has yet to mint. Only names, counts, and booleans are
-# serialized into the diff, so this check evaluates and never builds a
-# worker's launcher.
+# Two hosts enable the module, but their machine configurations only assert
+# what those two deployments happen to need. What the module promises for any
+# enabled host is checked here instead, on both platforms, with a dummy token
+# path in place of the sops-nix secret so no real path is a build input. Only
+# names, counts, and booleans are serialized into the diff, so this check
+# evaluates and never builds a worker's launcher.
 #
 # Two evaluation vehicles, for two different reasons.
 #
@@ -118,8 +118,8 @@
       # partial definition merges with it instead of replacing it -- an option
       # `default` would have dropped the entries and the platforms.
       wired = {
-        "stibnite-01".tokenFile = "/run/secrets/devin-outposts-token-stibnite.dummy";
-        "magnetite-01".tokenFile = "/run/secrets/devin-outposts-token-magnetite.dummy";
+        "stibnite".tokenFile = "/run/secrets/devin-outposts-token-stibnite.dummy";
+        "magnetite".tokenFile = "/run/secrets/devin-outposts-token-magnetite.dummy";
       };
 
       darwin = evalHome {
@@ -128,7 +128,7 @@
         worker = {
           enable = true;
           workers = 2;
-          outpost = "stibnite-01";
+          outpost = "stibnite";
           outposts = wired;
         };
       };
@@ -139,7 +139,7 @@
         worker = {
           enable = true;
           workers = 2;
-          outpost = "magnetite-01";
+          outpost = "magnetite";
           outposts = wired;
         };
       };
@@ -177,10 +177,17 @@
         ) (config.warnings or [ ]);
 
       # A no-platform queue selected on a darwin host: warned, not asserted.
+      # The registry gives magnetite a platform, so the null is set here
+      # explicitly -- a plain definition outranks the registry's mkDefault.
       platformUnsetProbe = evalBare "aarch64-darwin" {
         enable = true;
-        outpost = "magnetite-01";
-        outposts = wired;
+        outpost = "magnetite";
+        outposts = wired // {
+          "magnetite" = {
+            platform = null;
+            inherit (wired."magnetite") tokenFile;
+          };
+        };
       };
 
       distinctWorkDirs = paths: paths != [ ] && lib.length (lib.unique paths) == lib.length paths;
@@ -226,16 +233,14 @@
 
           linuxSelectedPlatform =
             linux.services.devin-worker.outposts.${linux.services.devin-worker.outpost}.platform;
-          # magnetite-01 carries no platform, so agreement with a linux host is
-          # unestablished rather than confirmed. Named as its own state: not a
-          # match, not a mismatch, and deliberately not an assertion, because
-          # whether a no-platform queue can serve this worker is unproven.
+          # magnetite is registered for linux, so this is a confirmed match
+          # with the host rather than the unestablished state it used to be.
           linuxWarned = warnedClauses linux;
 
           wellFormed = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              outpost = "stibnite-01";
+              outpost = "stibnite";
               outposts = wired;
             }
           );
@@ -244,20 +249,20 @@
           tokenless = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              outpost = "stibnite-01";
+              outpost = "stibnite";
               outposts = {
-                "magnetite-01".tokenFile = wired."magnetite-01".tokenFile;
+                "magnetite".tokenFile = wired."magnetite".tokenFile;
               };
             }
           );
           idless = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              outpost = "stibnite-01";
+              outpost = "stibnite";
               outposts = wired // {
-                "stibnite-01" = {
+                "stibnite" = {
                   id = null;
-                  inherit (wired."stibnite-01") tokenFile;
+                  inherit (wired."stibnite") tokenFile;
                 };
               };
             }
@@ -267,11 +272,11 @@
           platformMismatch = firedClauses (
             evalBare "aarch64-darwin" {
               enable = true;
-              outpost = "magnetite-01";
+              outpost = "magnetite";
               outposts = wired // {
-                "magnetite-01" = {
+                "magnetite" = {
                   platform = "linux";
-                  inherit (wired."magnetite-01") tokenFile;
+                  inherit (wired."magnetite") tokenFile;
                 };
               };
             }
@@ -297,7 +302,7 @@
           secondLinuxHostBorrowing = firedClauses (
             evalBare "x86_64-linux" {
               enable = true;
-              outpost = "magnetite-01";
+              outpost = "magnetite";
             }
           );
         };
@@ -323,8 +328,8 @@
           outpostDefault = null;
           darwinSelectedPlatform = "macos";
           darwinWarned = [ ];
-          linuxSelectedPlatform = null;
-          linuxWarned = [ "platform-unset" ];
+          linuxSelectedPlatform = "linux";
+          linuxWarned = [ ];
 
           wellFormed = [ ];
           tokenless = [ "token" ];

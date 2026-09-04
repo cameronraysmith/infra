@@ -276,10 +276,26 @@ let
       imports = [
         (
           let
+            # Queue label per host. The labels coincide with the machine
+            # names because the operator named the queues after the machines,
+            # not because either is derived from the other: a host absent
+            # from this table serves no queue, which is the property that
+            # keeps the fleet's other linux machines off magnetite's queue.
             outpostByHost = {
-              stibnite = "stibnite-01";
-              magnetite = "magnetite-01";
+              stibnite = "stibnite";
+              magnetite = "magnetite";
             };
+
+            # Hosts that actually run workers, named separately from the
+            # assignment above. Which queue a host would serve is a
+            # deployment fact recorded whenever it is decided; running a
+            # worker there additionally needs that queue's token present in
+            # secrets.yaml, so the two are not the same statement and do not
+            # necessarily land together.
+            workerHosts = [
+              "stibnite"
+              "magnetite"
+            ];
 
             hostName = if osConfig == null then null else osConfig.networking.hostName;
             hostOutpost = if hostName == null then null else outpostByHost.${hostName} or null;
@@ -299,15 +315,17 @@ let
               && config.services.devin-worker.outpost == name;
           in
           {
+            services.devin-worker.enable = lib.mkIf (lib.elem hostName workerHosts) true;
+
             services.devin-worker.outpost = lib.mkIf (hostOutpost != null) (lib.mkDefault hostOutpost);
 
             sops.secrets = lib.mkMerge [
-              (lib.mkIf (serves "stibnite-01") {
+              (lib.mkIf (serves "stibnite") {
                 devin-outposts-token-stibnite = {
                   mode = "0400";
                 };
               })
-              (lib.mkIf (serves "magnetite-01") {
+              (lib.mkIf (serves "magnetite") {
                 devin-outposts-token-magnetite = {
                   mode = "0400";
                 };
@@ -315,10 +333,10 @@ let
             ];
 
             services.devin-worker.outposts = {
-              "stibnite-01".tokenFile =
-                lib.mkIf (serves "stibnite-01") config.sops.secrets.devin-outposts-token-stibnite.path;
-              "magnetite-01".tokenFile =
-                lib.mkIf (serves "magnetite-01") config.sops.secrets.devin-outposts-token-magnetite.path;
+              "stibnite".tokenFile =
+                lib.mkIf (serves "stibnite") config.sops.secrets.devin-outposts-token-stibnite.path;
+              "magnetite".tokenFile =
+                lib.mkIf (serves "magnetite") config.sops.secrets.devin-outposts-token-magnetite.path;
             };
           }
         )
