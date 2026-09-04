@@ -12,6 +12,7 @@ keys:
   - &janettesmith-user age1mqfqckczkulpne7265j5cxn0pspdlxd3d0kav368u2c2fwknnc4qe27dec  # derived from SSH key via ssh-to-age
   - &christophersmith-user age1xz7gmqx7m0pn8u2nq8x05efq6dj52ym6c9gat5xj4am6x9sauq6sfzd2fn  # derived from SSH key via ssh-to-age
   - &tara-user age1krkf4ht5r2uufp0qkj6eu7pj9j04n7lz0tjlazmqzc3lhnjqt99sam42yp  # from sops-tara-user-ssh in Bitwarden
+  - &ubuntu-user age1mg67ytvlmsyj6a7hk7v0p905jydx4vd483yqqsejf0n0vncmhy4sgu43kj  # from devin-ubuntu-ssh in Bitwarden via ssh-to-age
 
   # Host keys (generated in Bitwarden, deployed to /etc/ssh/)
   - &stibnite age1a696klqy0s36a2pzlk6kyckp60k88qxcrsdh829dtk3xtc7sfs4scg05k0     # from sops-stibnite-ssh
@@ -79,6 +80,13 @@ creation_rules:
         - *admin
         - *dev
         - *janettesmith-user
+
+  - path_regex: secrets/home-manager/users/ubuntu/.*\.yaml$
+    key_groups:
+      - age:
+        - *admin
+        - *dev
+        - *ubuntu-user
 
   - path_regex: secrets/home-manager/users/christophersmith/.*\.yaml$
     key_groups:
