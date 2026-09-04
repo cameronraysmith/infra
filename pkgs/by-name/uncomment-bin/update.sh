@@ -57,4 +57,46 @@ for platform in "${!platform_map[@]}"; do
   echo "  ${platform}: ${sri_hash}"
 done
 
+# Build-verify every flake system this package targets, intersected with the
+# systems this script already knows how to fetch hashes for, so a
+# platform-specific runtime regression (e.g. a newly required shared library)
+# fails the update instead of surviving unnoticed.
+flake_systems_json="$(nix eval --json --apply builtins.attrNames "${REPO_ROOT}#packages")"
+mapfile -t flake_systems < <(printf '%s' "$flake_systems_json" | jq -r '.[]')
+
+build_systems=()
+for system in "${flake_systems[@]}"; do
+  if [[ -v platform_map[$system] ]]; then
+    build_systems+=("$system")
+  fi
+done
+
+declare -A build_results=()
+build_failed=0
+
+for system in "${build_systems[@]}"; do
+  echo "Building uncomment-bin for ${system}..."
+  if output="$(nix build --no-link "${REPO_ROOT}#packages.${system}.uncomment-bin" 2>&1)"; then
+    build_results["$system"]="ok"
+  elif printf '%s' "$output" | grep -qE 'required system|unable to start any build'; then
+    build_results["$system"]="skipped (no builder available)"
+    echo "warning: no builder available for ${system}; skipping build verification" >&2
+  else
+    build_results["$system"]="FAILED"
+    build_failed=1
+    echo "error: build failed for ${system}:" >&2
+    echo "$output" >&2
+  fi
+done
+
+echo "Build verification summary:"
+for system in "${build_systems[@]}"; do
+  echo "  ${system}: ${build_results[$system]}"
+done
+
+if [[ "$build_failed" -eq 1 ]]; then
+  echo "error: build verification failed for one or more systems" >&2
+  exit 1
+fi
+
 echo "Updated uncomment-bin to ${latest_version}"
