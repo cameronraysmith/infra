@@ -21,7 +21,12 @@
 { ... }:
 {
   perSystem =
-    { pkgs, lib, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
     {
       apps.home-bootstrap = {
         type = "app";
@@ -33,8 +38,14 @@
               pkgs.gnugrep
               pkgs.gnused
               # The seed step is shared with the ubuntu profile's session hook so
-              # that both normalize a rotated key the same way.
-              pkgs.seed-age-key
+              # that both normalize a rotated key the same way. Reached through
+              # config.packages rather than pkgs: the perSystem pkgs is
+              # `import nixpkgs { overlays = config.nixpkgsOverlays; }`
+              # (modules/nixpkgs/per-system.nix), and pkgs/by-name reaches a
+              # package set only through flake.overlays.default
+              # (modules/nixpkgs/compose.nix), which home and machine
+              # configurations apply but perSystem does not.
+              config.packages.seed-age-key
               # `nix` is in runtimeInputs for the same reason as bootstrap.nix:
               # the activation step shells out to `nix run <flake>#home`, and the
               # hermetic PATH would otherwise not carry a nix client. Both modes
