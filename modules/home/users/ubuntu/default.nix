@@ -52,7 +52,7 @@ in
         };
       };
 
-      home.activation.sopsNixWithoutSystemd =
+      home.activation.sopsNixWithoutSystemd = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (
         lib.hm.dag.entryAfter
           [
             "sops-nix"
@@ -72,7 +72,8 @@ in
               echo "sops-nix fallback skipped: age key file is absent"
             fi
             unset systemdStatus
-          '';
+          ''
+      );
 
       xdg.configFile."vanixiets/devin-bash-env.sh".text = ''
         if [ -n "''${VANIXIETS_DEVIN_BASH_ENV:-}" ]; then
@@ -101,36 +102,39 @@ in
 
         keyFile="${keyFile}"
         stamp="$HOME/.local/state/vanixiets/devin-reactivated"
-        if [ -n "''${SOPS_AGE_KEY_UBUNTU:-}" ] && [ ! -e "$stamp" ]; then
-          if [ ! -s "$keyFile" ]; then
+        if [ -n "''${SOPS_AGE_KEY_UBUNTU:-}" ]; then
+          if [ ! -s "$keyFile" ] || [ "$(cat "$keyFile")" != "$SOPS_AGE_KEY_UBUNTU" ]; then
             (
               umask 077
               mkdir -p "$(dirname "$keyFile")"
               printf '%s\n' "$SOPS_AGE_KEY_UBUNTU" > "$keyFile"
             )
+            rm -f "$stamp"
           fi
 
-          logFile="$HOME/.local/state/vanixiets/devin-reactivate.log"
-          mkdir -p "$(dirname "$logFile")"
-          activate=""
-          for homeManagerProfile in \
-            "$HOME/.local/state/nix/profiles/home-manager" \
-            "/nix/var/nix/profiles/per-user/$USER/home-manager"
-          do
-            if [ -x "$homeManagerProfile/activate" ]; then
-              activate="$homeManagerProfile/activate"
-              break
-            fi
-          done
+          if [ ! -e "$stamp" ]; then
+            logFile="$HOME/.local/state/vanixiets/devin-reactivate.log"
+            mkdir -p "$(dirname "$logFile")"
+            activate=""
+            for homeManagerProfile in \
+              "$HOME/.local/state/nix/profiles/home-manager" \
+              "/nix/var/nix/profiles/per-user/$USER/home-manager"
+            do
+              if [ -x "$homeManagerProfile/activate" ]; then
+                activate="$homeManagerProfile/activate"
+                break
+              fi
+            done
 
-          if [ -n "$activate" ]; then
-            if "$activate" >> "$logFile" 2>&1; then
-              : > "$stamp"
+            if [ -n "$activate" ]; then
+              if "$activate" >> "$logFile" 2>&1; then
+                : > "$stamp"
+              else
+                printf '%s\n' "home-manager reactivation failed; see $logFile" >&2
+              fi
             else
-              printf '%s\n' "home-manager reactivation failed; see $logFile" >&2
+              printf '%s\n' "home-manager activation profile not found" >&2
             fi
-          else
-            printf '%s\n' "home-manager activation profile not found" >&2
           fi
         fi
       '';

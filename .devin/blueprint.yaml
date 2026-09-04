@@ -65,6 +65,8 @@ maintenance: |
   cp apm.lock.yaml /tmp/apm.lock.yaml.pre-install
   trap 'cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml' EXIT
   direnv exec . just agents-install
+  cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml
+  trap - EXIT
 knowledge:
   - name: lint
     contents: |
