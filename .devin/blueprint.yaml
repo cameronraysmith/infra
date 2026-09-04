@@ -59,8 +59,9 @@ maintenance: |
   # .agents/ is gitignored, so a fresh clone carries none of the repo's skills, and
   # the devshell shellHook only composes AGENTS.md/CLAUDE.md - apm-skills-install is
   # what materializes .agents/skills/, which is the only place a harness discovers
-  # them. Frozen installs skip the lockfile write when the assembled state is
-  # semantically equal, so preserve the tracked file around the install.
+  # them. `apm install --frozen` still rewrites apm.lock.yaml whenever the assembled
+  # state is not semantically equal to the file, so the tracked file is put back
+  # afterwards, on failure too; the snapshot is expected to start on a clean tree.
   cp apm.lock.yaml /tmp/apm.lock.yaml.pre-install
   trap 'cp /tmp/apm.lock.yaml.pre-install apm.lock.yaml' EXIT
   direnv exec . just agents-install

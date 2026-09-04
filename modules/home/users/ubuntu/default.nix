@@ -55,19 +55,19 @@
             "writeBoundary"
           ]
           ''
-             systemdStatus=$(${config.systemd.user.systemctlPath} --user is-system-running 2>&1 || true)
-             if [[ $systemdStatus == running || $systemdStatus == degraded ]]; then
-               echo "sops-nix user systemd is active; no direct activation needed"
-             elif [[ -s "${keyFile}" ]]; then
-               runtimeDir="''${XDG_RUNTIME_DIR:-${config.xdg.stateHome}/sops-nix/runtime}"
-               if [[ -z ''${XDG_RUNTIME_DIR:-} ]]; then
-                 run mkdir -p -m 0700 "$runtimeDir"
-               fi
-            run env XDG_RUNTIME_DIR="$runtimeDir" ${sopsEnvironment} ${sopsExecStart}
-             else
-               echo "sops-nix fallback skipped: age key file is absent"
-             fi
-             unset systemdStatus
+            systemdStatus=$(${config.systemd.user.systemctlPath} --user is-system-running 2>&1 || true)
+            if [[ $systemdStatus == running || $systemdStatus == degraded ]]; then
+              echo "sops-nix user systemd is active; no direct activation needed"
+            elif [[ -s "${keyFile}" ]]; then
+              runtimeDir="''${XDG_RUNTIME_DIR:-${config.xdg.stateHome}/sops-nix/runtime}"
+              if [[ -z ''${XDG_RUNTIME_DIR:-} ]]; then
+                run mkdir -p -m 0700 "$runtimeDir"
+              fi
+              run env XDG_RUNTIME_DIR="$runtimeDir" ${sopsEnvironment} ${sopsExecStart}
+            else
+              echo "sops-nix fallback skipped: age key file is absent"
+            fi
+            unset systemdStatus
           '';
 
       xdg.configFile."vanixiets/devin-bash-env.sh".text = ''
