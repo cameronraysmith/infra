@@ -10,6 +10,8 @@
         ...
       }:
       {
+        imports = [ flake.inputs.lazyvim-nix.homeManagerModules.default ];
+
         programs.lazyvim = {
           enable = true;
 
