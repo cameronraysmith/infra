@@ -196,27 +196,7 @@ let
           '';
         };
 
-        # schpet/linear-cli inline-format credentials, rendered immutably from sops.
-        # Inline format: flat `<workspace> = "<api-key>"` keys plus a top-level
-        # `default = "<workspace>"` (see schpet credentials.ts hasInlineKeys /
-        # parseInlineCredentials). schpet uses XDG on darwin too (Deno reads
-        # XDG_CONFIG_HOME, else ~/.config), so no per-platform path conditional.
-        # Read-only (0400): switch profiles via `--workspace` / a `default` change,
-        # never via mutating `linear auth` commands which would clobber this file.
-        templates."linear-credentials.toml" = {
-          mode = "0400";
-          path = "${config.xdg.configHome}/linear/credentials.toml";
-          content = ''
-            default = "${config.sops.placeholder."linear-workspace-personal"}"
-
-            ${config.sops.placeholder."linear-workspace-personal"} = "${
-              config.sops.placeholder."linear-api-key-personal"
-            }"
-            ${config.sops.placeholder."linear-workspace-work"} = "${
-              config.sops.placeholder."linear-api-key-work"
-            }"
-          '';
-        };
+        templates."linear-credentials.toml" = flake.lib.mkLinearCredentialsTemplate config;
 
         # hindsight CLI credentials, rendered immutably from sops so the CLI
         # works without a `hindsight configure` step.
