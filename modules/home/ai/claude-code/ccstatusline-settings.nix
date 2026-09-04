@@ -161,7 +161,9 @@
 
         # Base configuration structure
         statusConfig = {
-          version = 3;
+          # Must equal the packaged ccstatusline's CURRENT_VERSION: a lower value makes
+          # loadSettings migrate and write back, which fails EACCES on the store symlink.
+          version = 4;
 
           # Selected layout, dispatched by the `variant` let-binding above
           lines = if variant == "simplified" then linesSimplified else linesFull;
