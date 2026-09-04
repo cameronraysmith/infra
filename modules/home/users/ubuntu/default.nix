@@ -1,14 +1,18 @@
+{ inputs, ... }:
+let
+  nixIndexModule = inputs.nix-index-database.homeModules.nix-index;
+in
 {
   flake.users.ubuntu.contentPrivate =
     {
       config,
       pkgs,
       lib,
-      flake,
       ...
     }:
     let
       keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
+      apm = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.apm;
       sopsEnvironment = lib.concatStringsSep " " (
         lib.mapAttrsToList (
           name: value: "${name}=${lib.escapeShellArg (toString value)}"
@@ -17,7 +21,7 @@
       sopsExecStart = lib.head config.systemd.user.services.sops-nix.Service.ExecStart;
     in
     {
-      imports = [ flake.inputs.nix-index-database.homeModules.nix-index ];
+      imports = [ nixIndexModule ];
 
       home.stateVersion = "26.11";
 
@@ -26,11 +30,11 @@
         pkgs.linear-cli
       ]
       ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-        flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.apm
+        apm
       ];
 
       sops = {
-        defaultSopsFile = flake.inputs.self + "/secrets/home-manager/users/ubuntu/secrets.yaml";
+        defaultSopsFile = inputs.self + "/secrets/home-manager/users/ubuntu/secrets.yaml";
         age.keyFile = keyFile;
         secrets = {
           linear-api-key-personal = { };
