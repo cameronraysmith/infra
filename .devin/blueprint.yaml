@@ -65,14 +65,15 @@ initialize: |
   sudo udevadm control --reload-rules
   sudo udevadm trigger --name-match=kvm --settle
 maintenance: |
-  # Session start is where SOPS_AGE_KEY exists, so this is where the key is seeded
-  # and the profile is activated again, which is what installs its secrets;
-  # initialize's activation deliberately installed none. The closure is already in
-  # the store, so this is a re-link plus a secret install rather than a build, and a
-  # sandbox resuming on a newer commit rebuilds only what that commit changed.
-  # Re-running is a no-op on the key file unless the secret rotated. Everything
-  # below can read the profile, so it runs first.
-  nix run --accept-flake-config .#home-bootstrap -- --flake .
+  # --without-secrets here too. Maintenance runs only during builds, full and
+  # differential, and a build carries no personal secrets, so the key-requiring
+  # default mode would exit with "no age key source". It is never run at session
+  # start; the session hook below owns the secret install. The closure is already
+  # in the store, so a full build re-links and a differential build rebuilds only
+  # what its commit changed. Everything below can read the profile, so it runs
+  # first. home-bootstrap's default mode remains for manual and remote use, where
+  # the key is present.
+  nix run --accept-flake-config .#home-bootstrap -- --flake . --without-secrets
 
   # Devin's per-exec BASH_ENV file runs `set -a; source "$ENVRC"; set +a`, so
   # $ENVRC is a sourced shell file rather than KEY=VALUE lines, and a BASH_ENV
@@ -133,26 +134,28 @@ knowledge:
     contents: |
       Run everything through `direnv exec . <cmd>` (or `nix develop -c`): just/prek/bun exist only in the devshell.
       x86_64-linux only: darwinConfigurations and checks.aarch64-* cannot run here.
-      homeConfigurations."ubuntu@x86_64-linux" is activated twice, split by whether
-      a secret is available. The snapshot build injects none, so initialize runs
+      homeConfigurations."ubuntu@x86_64-linux" is activated by the build, never with
+      a secret. Both initialize and maintenance run
       `nix run .#home-bootstrap -- --flake . --without-secrets`, which activates the
-      generation and leaves its sops install skipped, so the image holds nothing
-      decrypted. Session start has the user-scoped Devin secret SOPS_AGE_KEY (the
-      only secret), so maintenance runs `nix run .#home-bootstrap -- --flake .`,
-      which seeds ~/.config/sops/age/keys.txt from it and activates again, installing
-      the secrets. That is the same generation `just activate-home ubuntu` would
-      build. Run the second form by hand after pulling a commit that changes the
-      ubuntu profile. `--flake .` is what makes this checkout supply the generation
-      instead of the app's published default, so a branch under test is what reaches
-      it. Any other repository's blueprint reaches the same profile with no checkout
+      generation and leaves its sops install skipped, because a build carries no
+      personal secrets in either phase. That is the same generation
+      `just activate-home ubuntu` would build. Secrets arrive separately, through the
+      session hook described below. Run that command by hand after pulling a commit
+      that changes the ubuntu profile; the key-requiring default mode,
+      `nix run .#home-bootstrap -- --flake .`, is for manual and remote use where
+      SOPS_AGE_KEY is present. `--flake .` is what makes this checkout supply the
+      generation instead of the app's published default, so a branch under test is
+      what reaches it. Any other repository's blueprint reaches the same profile with
+      no checkout
       of this one via
       `nix run --accept-flake-config github:cameronraysmith/vanixiets#home-bootstrap`,
       which requires nix installed by this repo's `make bootstrap` (it sets
       trusted-users, so the flake's substituters are then honored) and SOPS_AGE_KEY
       in the environment. Secrets for that profile decrypt from the seeded key;
       other sops/clan recipes still fail by design.
-      Secrets in a session do not wait for maintenance, which Devin surfaces to the
-      agent rather than running: home-manager generates
+      Secrets are installed only in a session, and nothing in this blueprint installs
+      them: maintenance runs during builds, not at session start. home-manager
+      generates
       ~/.config/vanixiets/session-env.sh, $ENVRC sources it, and Devin sources
       $ENVRC at the top of every exec shell. When SOPS_AGE_KEY is set it seeds
       the key and runs the sops install once per key value, under a lock, logging to
