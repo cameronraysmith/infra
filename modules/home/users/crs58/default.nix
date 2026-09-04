@@ -61,6 +61,15 @@ let
       # modules/home/ai/openspec/default.nix.
       programs.openspec.enable = true;
 
+      # The interactive CLI on PATH, with its config rendered from
+      # modules/home/ai/devin/default.nix. Unconditional and independent of
+      # services.devin-worker below: the worker runs the CLI from its own
+      # store path and needs nothing on a user's PATH, while a person driving
+      # `devin` wants it wherever this home lands. It carries no credential --
+      # the rendered config.json is a world-readable store symlink and no
+      # option feeds a secret into it.
+      programs.devin.enable = true;
+
       programs.omnigraph = {
         enable = true;
         settings = {
