@@ -13,6 +13,13 @@
       );
     in
     {
+      programs.uv.enable = true;
+      programs.ruff.enable = true;
+      programs.pylint = {
+        enable = true;
+        package = pkgs.pylint;
+      };
+
       home.packages = with pkgs; [
         # Disabled: dotnet-sdk requires Swift which has not been cached on
         # Hydra for aarch64-darwin since Dec 30, 2025. Monitor build status:
@@ -22,11 +29,8 @@
         pixi
         poethepoet
         pydeps
-        pylint
         pyright
         python
-        ruff
-        uv
       ];
     };
 }
