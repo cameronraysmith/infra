@@ -1,5 +1,21 @@
 ## ADDED Requirements
 
+### Requirement: The platform regulator boots the `<c>` core on two guests with Cilium replacing kube-proxy
+
+The platform regulator `vm-k3s-platform` SHALL boot two guests, `<c>-server` and `<c>-agent`, each importing `flake.modules.nixos.base` and `flake.modules.nixos.k3s-server` unmodified, SHALL apply the easykubenix-rendered tree of `kubernetes/clusters/<c>` and nothing from `kubernetes/clusters/local*` or `kubernetes/nixidy/`, SHALL run Cilium with `kubeProxyReplacement=true` and no kube-proxy process on either guest, and SHALL assert one pod per node can reach the other across guests.
+`local-k3d` keeps kube-proxy and ServiceLB and is not regulated by this leaf.
+Coverage bin: T3 adequacy for ADR-007 D7.16 and the F2 envelope for `<c>`; non-vacuity: the mutation below.
+
+#### Scenario: kube-proxy replacement is in effect
+
+- **WHEN** Cilium is `Ready` on both nodes
+- **THEN** `kubectl -n kube-system get cm cilium-config -o jsonpath='{.data.kube-proxy-replacement}'` prints `true`, no `kube-proxy` process exists on either guest, and a pod on the agent reaches a pod on the server by pod IP and by ClusterIP
+
+#### Scenario: kube-proxy replacement is disabled
+
+- **WHEN** the `<c>` cluster module sets `kubeProxyReplacement=false` and the regulator is rebuilt
+- **THEN** the regulator fails at the kube-proxy-replacement assertion naming the value
+
 ### Requirement: Every image and chart the platform needs is a build input
 
 The platform regulator SHALL obtain every OCI image its rendered manifests reference — including the k3s pause and CoreDNS images and every Cilium, Flux, cert-manager, step-ca, and helper image — from fixed-output derivations pinned by digest or from nix2container/nix-snapshotter outputs, passed through `services.k3s.images`, and every Helm chart from a flake input or store path, so that the regulator builds with no network.
@@ -46,7 +62,7 @@ Coverage bin: T3 adequacy for the certificate chain; non-vacuity: the DNS mutati
 #### Scenario: Certificates are issued
 
 - **WHEN** the ClusterIssuer is `Ready` and the Gateway is Programmed
-- **THEN** within the test timeout every Certificate the rendered tree declares (today `Certificate/test-cert-tls`; `Certificate/argocd-tls` is deleted with ArgoCD) reports `Ready=True`
+- **THEN** within the test timeout every Certificate the `<c>` tree declares reports `Ready=True`
 
 #### Scenario: A hostname is not answerable in the guest
 
@@ -55,14 +71,14 @@ Coverage bin: T3 adequacy for the certificate chain; non-vacuity: the DNS mutati
 
 ### Requirement: Gateway address assignment follows production's mechanism
 
-The platform regulator SHALL supply the Gateway's LoadBalancer address through a `CiliumLoadBalancerIPPool` declared by the cluster module, with ServiceLB disabled as the production module disables it, and SHALL assert `Gateway/main-gateway` reaches `Programmed=True` with all four listeners `Accepted=True`.
+The platform regulator SHALL supply the Gateway's LoadBalancer address through a `CiliumLoadBalancerIPPool` declared by the cluster module, with ServiceLB disabled as the production module disables it, and SHALL assert the `<c>` tree's `Gateway` reaches `Programmed=True` with every declared listener `Accepted=True`.
 This requirement rests on world assumption A15.
 Coverage bin: T3 adequacy for ADR-007 D7.9; non-vacuity: the mutation below.
 
 #### Scenario: The Gateway is Programmed under the production mechanism
 
 - **WHEN** Cilium is ready and the production address mechanism is applied
-- **THEN** within the test timeout `Gateway/main-gateway` reports `Programmed=True` and each of its four listeners reports `Accepted=True`
+- **THEN** within the test timeout the `<c>` `Gateway` reports `Programmed=True` and each declared listener reports `Accepted=True`
 
 #### Scenario: The address mechanism is removed
 
@@ -72,7 +88,7 @@ Coverage bin: T3 adequacy for ADR-007 D7.9; non-vacuity: the mutation below.
 ### Requirement: Secrets decrypt with a test-only key whose non-coverage is stated
 
 The platform regulator SHALL install a committed test-only age private key as the `sops-age` Secret in `flux-system` during activation and SHALL encrypt the rendered tree's SOPS-encrypted Secrets to the matching public key, so that kustomize-controller's `decryption.provider: sops` decrypts them without any host or GitHub secret; a test-only cosign keypair is installed the same way for artifact signing and verification.
-The regulator SHALL NOT be cited as evidence about production key provisioning through Clan vars generators, recipient management, key rotation, or the wiring of `SOPS_AGE_KEY` in any CI system.
+The regulator SHALL NOT be cited as evidence about production T0 key provisioning through Clan vars generators, recipient management, key rotation, delivery through `contentFrom.secret` (ADR-010 D10.4), or the wiring of `SOPS_AGE_KEY` in any CI system.
 Coverage bin: T3 adequacy for ADR-008 D8.9 and D8.14 in the test envelope only; non-vacuity: the mutation below.
 
 #### Scenario: An encrypted Secret decrypts
@@ -87,8 +103,8 @@ Coverage bin: T3 adequacy for ADR-008 D8.9 and D8.14 in the test envelope only; 
 
 ### Requirement: The Chainsaw suite is the oracle
 
-The platform regulator SHALL run the repository's Chainsaw suite for the platform inside the guest against the node's kubeconfig, SHALL fail if any Chainsaw step fails, and SHALL NOT re-implement Chainsaw's assertions in the test script.
-The suite's ArgoCD assertions SHALL be replaced by Flux `Kustomization` readiness and `lastAppliedRevision` assertions; the sops-secrets-operator assertion SHALL be replaced by the decrypted-Secret assertion above; the cert-manager, step-ca, ClusterIssuer, and Gateway assertions are unchanged.
+The platform regulator SHALL run the Chainsaw suite `kubernetes/tests/<c>` inside the server guest against the node's kubeconfig, SHALL fail if any Chainsaw step fails, and SHALL NOT re-implement Chainsaw's assertions in the test script.
+The suite SHALL be authored for `<c>` with a foundation phase (Cilium ready, Flux controllers ready, root `Kustomization` `Ready=True` at the pinned digest) and an infrastructure phase (cert-manager, step-ca, `ClusterIssuer`, `Gateway`, `Certificate`s, `HTTPRoute`); it SHALL NOT assert ArgoCD or sops-secrets-operator state, and `kubernetes/tests/local-k3d` SHALL NOT be edited or referenced by it.
 Coverage bin: T3 traceability regulator; non-vacuity: the mutation below.
 
 #### Scenario: Chainsaw runs in the guest
@@ -99,11 +115,11 @@ Coverage bin: T3 traceability regulator; non-vacuity: the mutation below.
 #### Scenario: A Chainsaw assertion is violated
 
 - **WHEN** a Chainsaw assert file is edited to expect a listener count of five
-- **THEN** the regulator fails with Chainsaw's own step failure for `infrastructure-gateway`
+- **THEN** the regulator fails with Chainsaw's own step failure for the `<c>` gateway step
 
 ### Requirement: The platform regulator is one leaf unless measured cost forces a split
 
-The platform stack SHALL be regulated by one `vm-k3s-platform` leaf; it SHALL be split into per-slice leaves only after a measured wall time exceeding fifteen minutes on the reference KVM host, and the split SHALL be recorded with the measurement.
+The `<c>` core SHALL be regulated by one `vm-k3s-platform` leaf; it SHALL be split into per-slice leaves only after a measured wall time exceeding fifteen minutes on the reference KVM host, and the split SHALL be recorded with the measurement.
 
 #### Scenario: Wall time exceeds the threshold
 

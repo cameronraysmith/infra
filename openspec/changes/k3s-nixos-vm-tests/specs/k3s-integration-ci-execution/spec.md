@@ -11,7 +11,7 @@ Each VM regulator SHALL be exposed as one `perSystem.checks.vm-<subject>` deriva
 
 #### Scenario: A VM leaf's system features are inspected
 
-- **WHEN** `nix derivation show .#checks.x86_64-linux.vm-k3s-single-node` is run
+- **WHEN** `nix derivation show .#checks.x86_64-linux.vm-k3s-substrate` is run
 - **THEN** `env.requiredSystemFeatures` contains `kvm` and `nixos-test`
 
 ### Requirement: The developer host discovers VM leaves by prefix
@@ -20,18 +20,20 @@ Each VM regulator SHALL be exposed as one `perSystem.checks.vm-<subject>` deriva
 
 #### Scenario: A new leaf is added
 
-- **WHEN** a `vm-k3s-multi-node` leaf is added and `just test-integration` is run on a KVM-capable Linux host
+- **WHEN** a `vm-k3s-snapshotter` leaf is added and `just test-integration` is run on a KVM-capable Linux host
 - **THEN** the new leaf is built without any change to the justfile
 
 ### Requirement: VM leaves gate CI only from a runner whose KVM has been probed
 
-A VM regulator SHALL be added to a GitHub Actions job only after a manually dispatched probe on the same runner label has built `vm-k3s-single-node` under `--option system-features 'kvm nixos-test benchmark big-parallel'` three consecutive times; if the probe fails, VM leaves remain developer-host regulators run through `just test-integration` until a KVM-capable runner exists, and no k3d deletion proceeds in the meantime.
+A VM regulator SHALL be added to a GitHub Actions job only after a manually dispatched probe on the same runner label has built `vm-k3s-substrate` under `--option system-features 'kvm nixos-test benchmark big-parallel'` three consecutive times; if the probe fails, VM leaves remain developer-host regulators run through `just test-integration` until a KVM-capable runner exists.
+The existing `integration` job that runs the frozen `local-k3d` prototype is not edited by either outcome.
 This requirement rests on world assumption A14.
+Coverage bin: interface (CI job outcome); non-vacuity: the probe-fails scenario is the recorded negative.
 
 #### Scenario: The probe passes
 
 - **WHEN** the probe job passes three consecutive dispatches on `ubuntu-latest`
-- **THEN** a `vm` job building the VM leaves is added to `test-cluster.yaml` on that label with the probe run links recorded in the change
+- **THEN** a `vm` job building the VM leaves is added to `test-cluster.yaml` on that label with the probe run links recorded in the change, and the `integration` job is unchanged
 
 #### Scenario: The probe fails
 
@@ -44,21 +46,22 @@ On the buildbot worker, which exposes neither `kvm` nor `nixos-test`, VM leaves 
 
 #### Scenario: A push with VM leaves reaches buildbot
 
-- **WHEN** a branch adding `vm-k3s-single-node` is pushed and buildbot evaluates the flake
+- **WHEN** a branch adding `vm-k3s-substrate` is pushed and buildbot evaluates the flake
 - **THEN** every non-VM check reports the same verdict as before the leaf existed, and the VM leaf is either absent from the schedule or reported as skipped for a missing feature, never as a failure of the branch
 
 ### Requirement: Cached CI hashing covers the VM leaves' inputs
 
-When VM leaves run in GitHub Actions through `cached-ci-job`, its `hash-sources` SHALL include `modules/checks/vm-*.nix`, `modules/nixos/k3s-server/**`, the easykubenix cluster module sources, the OCI-layout and Flux install derivation sources, and the age and cosign fixtures, so that a change to any of them invalidates the cache.
+When VM leaves run in GitHub Actions through `cached-ci-job`, its `hash-sources` SHALL include `modules/checks/vm-*.nix`, `modules/nixos/**`, `modules/kubernetes/**`, `kubernetes/clusters/<c>/**`, `kubernetes/modules/**`, `kubernetes/tests/<c>/**`, and the age and cosign fixtures, so that a change to any of them invalidates the cache.
 
 #### Scenario: A module change invalidates the cache
 
 - **WHEN** a sysctl value in `modules/nixos/k3s-server/kernel.nix` changes and the workflow runs
 - **THEN** the cached job reports a cache miss and rebuilds the VM leaves
 
-### Requirement: Registry and cloud publishing are effects, never checks
+### Requirement: Registry publishing is an effect, never a check
 
-Pushing the configuration artifact to GHCR, pushing portable images, uploading a Hetzner snapshot, and applying Cluster API objects to a real management cluster SHALL be exposed as `apps.<system>.<name>` outputs that run outside the sandbox, SHALL NOT be reachable from any `checks.<system>.*` derivation, and each SHALL fail when the remote state disagrees with the store-resident value it published (registry digest, snapshot label, applied object generation).
+Pushing the `<c>` configuration artifact to GHCR and signing it SHALL be exposed as `apps.<system>.k8s.oci-push` and `apps.<system>.k8s.cosign-sign` under `modules/apps/k8s/`, running outside the sandbox, SHALL NOT be reachable from any `checks.<system>.*` derivation, and the push SHALL fail when the registry's reported digest differs from the store-resident layout digest it published.
+The Hetzner snapshot effect and the Cluster API effects are specified by `openspec/changes/capi-hetzner-cluster/` under the same rule.
 Coverage bin: E; non-vacuity: the digest-mismatch scenario in `k3s-manifest-purity-regulator` and the scenario below.
 
 #### Scenario: A check reaches for an effect
@@ -66,36 +69,17 @@ Coverage bin: E; non-vacuity: the digest-mismatch scenario in `k3s-manifest-puri
 - **WHEN** a derivation under `checks.<system>` references the store path of an `apps` publishing script or opens a network connection
 - **THEN** the sandbox build fails, and review rejects any change that relaxes the sandbox to make it pass
 
-#### Scenario: The snapshot label disagrees
+#### Scenario: The effect is absent from the checks closure
 
-- **WHEN** `nix run .#apps.x86_64-linux.upload-node-snapshot` finishes and the Hetzner API reports a snapshot whose `caph-image-name` label differs from the flake-revision-derived value the derivation recorded
-- **THEN** the effect exits non-zero naming both values
+- **WHEN** `nix path-info -r` is run over every `checks.x86_64-linux.*` output
+- **THEN** no store path under `modules/apps/k8s/` appears
 
-### Requirement: Management-cluster handlers satisfy one contract from every developer platform
+### Requirement: The frozen prototypes' execution path is not edited
 
-The management cluster SHALL be reachable from `aarch64-darwin`, `x86_64-linux` with KVM, and `x86_64-linux` without KVM through the same contract — a kubeconfig plus CAPI core, CAPH, and cluster-api-k3s providers installed from Nix-rendered manifests via a `clusterctl.yaml` override — by handler A (the NixOS k3s node closure as a QEMU VM through `virtualisation.host.pkgs`) or handler B (k3d via the existing ctlptl recipes stripped to CAPI controllers); a `just` recipe SHALL select the handler, and the rendered CRs applied afterwards SHALL be identical.
-Coverage bin: T3 for handler A (`vm-capi-management`), K for handler B (recipe, not a check); non-vacuity: the scenario below.
+Stages S0–S2 SHALL NOT edit, disable, or delete the `integration` job, its `SOPS_AGE_KEY` wiring, the k3d scripts under `modules/apps/cluster/`, the `local-k3d-ci` nixidy environment, `modules/nixidy.nix`, `kubernetes/nixidy/`, or `kubernetes/tests/local-k3d/`; any migration or retirement of the `local-k3d` path is a separately authorized later change, which SHOULD not delete the k3d path before `vm-k3s-platform` has passed on the chosen runner.
+Coverage bin: interface (review rule with a `git diff --stat` witness); non-vacuity: the scenario below.
 
-#### Scenario: The provider set is inspected on either handler
+#### Scenario: A stage touches a frozen path
 
-- **WHEN** `kubectl get providers -A` is run against a management cluster produced by handler A or handler B
-- **THEN** the same three provider names and versions are listed, and `kubectl apply --dry-run=server` of the rendered `Cluster` CRs succeeds on both
-
-#### Scenario: The provider manifests are not Nix-rendered
-
-- **WHEN** a handler recipe runs `clusterctl init` without the `clusterctl.yaml` override pointing at store paths
-- **THEN** the recipe fails before contacting the cluster, because the override file is a required argument
-
-### Requirement: The k3d integration path is deleted only after the platform leaf is green
-
-`modules/apps/cluster/k3d-integration-ci.sh`, `k3d-full.sh`, `k3d-wait-ready.sh`, `k3d-wait-argocd-sync.sh`, `k3d-bootstrap-secrets.sh`, `k3d-configure-dns.sh`, `k3d-test-coverage.sh`, `scripts/k3d-test-coverage.sh`, the `integration` job and `SOPS_AGE_KEY` line in `test-cluster.yaml`, the `local-k3d-ci` nixidy environment, `modules/nixidy.nix`, `kubernetes/nixidy/`, the ArgoCD and sops-secrets-operator manifests, and the k3d justfile recipes that only the CI path used SHALL be deleted in one commit that is separate from the commit promoting the VM job, and only after `vm-k3s-platform` has passed in CI on the chosen runner and the first Flux SOPS cutover has converged; `kubernetes/clusters/local-k3d/` and the ctlptl recipes SHALL survive as management handler B.
-
-#### Scenario: Deletion is proposed before the platform leaf is green
-
-- **WHEN** a change deleting any listed k3d file is opened while `vm-k3s-platform` has not passed on the chosen CI runner
+- **WHEN** a change implementing S0, S1, S2, or the execution wiring shows any path under `kubernetes/clusters/local*`, `kubernetes/nixidy/`, `kubernetes/tests/local-k3d/`, or `modules/apps/cluster/` in `git diff --stat`, or edits the `integration` job
 - **THEN** review rejects the change
-
-#### Scenario: The deletion is reverted
-
-- **WHEN** the deletion commit is reverted
-- **THEN** the k3d `integration` job runs again and the `vm` job is unaffected
