@@ -13,7 +13,7 @@ Questions with recommendations.
 
 # Background
 
-`k3s-nixos-vm-tests` proves the `<c>` core in hermetic VMs and stops at the VM boundary.
+`k3s-nixos-vm-tests` proves the `cryolite` core in hermetic VMs and stops at the VM boundary.
 Its revision 1 carried stages S3–S5 (management handlers, CAPI rendering, a NoCloud bootstrap leaf, a Hetzner deployment, cloud variants) in the same change; revision 2 moved them here because they have a different modality (effects and a paid deployment, not sandbox checks), a different gate (explicit spend approval), and a different dependency direction (this change depends on that one and not the reverse).
 
 Findings this change rests on, all from ADR-009 and ADR-010.
@@ -33,7 +33,7 @@ It writes the artifacts S3–S5 implement against and touches no cloud, no money
 
 ## Q2 [given]: what is the root set of the bootstrap?
 
-L0: the repository, the Clan vars under `secrets/clusters/<c>/`, one Hetzner API token, and stibnite.
+L0: the repository, the Clan vars under `secrets/clusters/cryolite/`, one Hetzner API token, and stibnite.
 The former seed host (L1) is removed; no standing extra machine exists.
 Evidence: ADR-010 D10.2, D10.3.
 
@@ -57,18 +57,18 @@ Evidence: ADR-010 D10.4, F10.2.
 ## Q6 [given]: what does a node's own identity count for?
 
 Nothing outside the cluster: `Machine` name, host keys, Cilium WireGuard key, and `CiliumNode` are disposable; new nodes do not inherit old identities; nodes are not Clan machines.
-The parent's `k8s-node-identity-free-<c>` regulator takes the rendered `capi-<c>` tree as an input once it exists.
+The parent's `k8s-node-identity-free-cryolite` regulator takes the rendered `capi-cryolite` tree as an input once it exists.
 Evidence: ADR-010 D10.1, D10.6.
 
 ## Q7 [given]: which image path?
 
-O1: per-role NixOS snapshots from the fleet disko layout, label derived from the closure, published by an idempotent `platform.hetzner` effect that hides the throwaway server; GCP/AWS upload natively.
+O1: per-role NixOS snapshots from the fleet disko layout, label derived from the closure, published by an idempotent `platform.hetzner` effect that hides the throwaway server; the image derivation is provider-neutral and only the transport is provider-specific (GCP uploads natively through GCS and `images.insert`; AWS is not scheduled).
 O2 (stock Debian plus cloud-init `kexec` reinstall) rejected: Hetzner-special, double boot, cache credentials on nodes, CR pins `debian-12`.
 Evidence: ADR-009 D9.16.
 
 ## Q8 [decided]: how is the cloud-init bootstrap regulated before any node exists?
 
-A KVM leaf `vm-k3s-capi-bootstrap` boots the `<c>-server` image from a NoCloud seed whose `user-data` is the rendered bootstrap template with `contentFrom.secret` entries resolved against the parent's fixtures; it asserts the shim path, the T0 landing places, fresh host keys per boot under the fixture SSH CA, and no CA private key on disk.
+A KVM leaf `vm-k3s-capi-bootstrap` boots the `cryolite-server` image from a NoCloud seed whose `user-data` is the rendered bootstrap template with `contentFrom.secret` entries resolved against the parent's fixtures; it asserts the shim path, the T0 landing places, fresh host keys per boot under the fixture SSH CA, and no CA private key on disk.
 The leaf regulates the node's consumption of the data, not the provider's production of it; the provider's output is observed in S3 against Handler B.
 Evidence: ADR-009 D9.9, R9.d; ADR-010 R10.3, R10.4, R10.e.
 
@@ -82,23 +82,26 @@ Evidence: ADR-009 D9.15.
 
 M1–M6 of ADR-010 D10.5 and the CAPH load balancer, which is not a machine; Terranix, nixos-anywhere, and Clan install never touch M5 or M6.
 
-## Q11 [given]: when may S4 start?
+## Q11 [given, revised charter v1]: when may S4 start?
 
-On the owner's explicit written approval recorded in the S4 PR; never on silence, never on a green S3.
+Hetzner spend is approved in principle; each flake revision that bills is released by the operator setting `VANIXIETS_HETZNER_SPEND_APPROVED=<flake rev>` in the shell that runs the effect, and every Hetzner-calling effect refuses to run otherwise (design D10, ADR-009 D9.19).
+Never on silence, never on a green S3, never by an approval for an earlier revision.
+The billing surface is listed in the charter and marked on every S4 task.
 
 ## Q12 [decided]: how is disaster recovery done?
 
 k3s `--etcd-s3` snapshots with T0 credentials plus L0: rebuild M3, restore on a fresh M5, re-pivot; a rehearsal is separately approved after S4.
-Evidence: ADR-010 D10.7, R10.g.
+The bucket is fleet-level Terranix infrastructure that outlives the cluster; whether the `hcloud` Terraform provider can declare it is believed-unverified, with the `aws`/`minio` provider against Hetzner's S3 endpoint as the fallback.
+Evidence: ADR-010 D10.7, D10.8, R10.g; ADR-009 D9.21, R9.j.
 
 ## Q13 [decided]: what happens to S5?
 
-Its requirements stay in `capi-cluster-rendering` marked `[S5, deferred]` with no scheduled task; the `platform` sum is total today (`kubevirt` throws a distinct error), `gcp`/`aws` render-only when scheduled.
-Evidence: ADR-009 D9.10, D9.13.
+Its requirements stay in `capi-cluster-rendering` marked `[S5, deferred]` with no scheduled task; the `platform` sum is total today (`kubevirt` and `aws` throw a distinct error naming the variant), and `gcp` alone is the render-only variant when S5 is scheduled.
+Evidence: ADR-009 D9.10, D9.13, D9.20.
 
-## Q14 [open]: ambiguities
+## Q14 [resolved, charter v1]: ambiguities
 
-Listed as Q1–Q7 in design.md Open Questions with recommendations; Q1 (S4 spend) is never adopted by silence.
+Design Q1–Q7 were answered by the owner in the charter-v1 review and are recorded as resolved in design.md Open Questions; what remains open for this change is carried in `docs/notes/development/kubernetes/cryolite-charter.md`.
 
 # Design trade-offs recorded
 

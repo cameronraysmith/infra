@@ -2,14 +2,15 @@
 
 ## Status
 
-Proposed (2026-09-04; revision 1 the same day after the design review recorded in the provenance table below; revision 2 the same day after the scope review recorded in D7.15–D7.19).
+Proposed (2026-09-04; revision 1 the same day after the design review recorded in the provenance table below; revision 2 the same day after the scope review recorded in D7.15–D7.19; charter v1 the same day, naming the cluster and recording D7.20–D7.22).
+The programme-level view that binds this record to ADR-008, ADR-009, ADR-010, and both OpenSpec changes is `../cryolite-charter.md`; the charter cites, the ADRs decide.
 Research and design only; no VM test, check leaf, flake input, production module change, or workflow change lands with this record.
 The staged plan that implements stages S0–S2 is the OpenSpec change `openspec/changes/k3s-nixos-vm-tests/`; stages S3, S4, S4b, and the deferred S5 are the sibling change `openspec/changes/capi-hetzner-cluster/`, which depends on the first.
 
 The first revision of this record proposed ArgoCD synced from a nixidy-rendered tree as the platform path, a VM-specific nixidy environment, and a four-stage migration.
 Revision 1 replaced that with Flux consuming a digest-pinned OCI artifact (ADR-008), easykubenix rendering, Cluster API node management (ADR-009), and a six-stage plan S0–S5 that ended by deleting the k3d workflow, nixidy, ArgoCD, and sops-secrets-operator.
-Revision 2 narrows the target: every new property belongs to one new sibling cloud cluster, `kubernetes/clusters/<c>` (name pending, open question OQ7.1), while `kubernetes/clusters/local` and `kubernetes/clusters/local-k3d` are frozen prototypes that this plan does not migrate, delete, or edit.
-The retirement of nixidy, the reversal of ADR-006, the retirement of sops-secrets-operator, and the deletion of the k3d workflow leave this plan and become Future Work in a later, separately authorized "feedback" change; until then ArgoCD reconciles `local-k3d` and Flux reconciles `<c>`.
+Revision 2 narrows the target: every new property belongs to one new sibling cloud cluster, `kubernetes/clusters/cryolite` (named in D7.20), while `kubernetes/clusters/local` and `kubernetes/clusters/local-k3d` are frozen prototypes that this plan does not migrate, delete, or edit.
+The retirement of nixidy, the reversal of ADR-006, the retirement of sops-secrets-operator, and the deletion of the k3d workflow leave this plan and become Future Work in a later, separately authorized "feedback" change; until then ArgoCD reconciles `local-k3d` and Flux reconciles `cryolite`.
 Findings F1–F6, the assertion-to-tier table (Q1), the substrate leaf designs (Q2, Q3), the platform analysis (Q4), and every citation in Q7 stand; the leaves are renamed to the module tree of D7.17 (`vm-k3s-substrate`, `vm-k3s-snapshotter`, `vm-k3s-platform`), and Q3's two-node join path is regulated inside the two-guest `vm-k3s-platform` rather than by a standalone leaf.
 Every decision of revision 1 is retained below with a revision-2 status of kept, narrowed, or superseded; a superseded decision names the decision that replaces it and is never deleted.
 
@@ -20,10 +21,10 @@ That workflow was built when no KVM-capable host was available for NixOS VM test
 PR #2954 has since established the repository's first full QEMU/KVM regulator, `checks.x86_64-linux.vm-nixos-base` in `modules/checks/vm-nixos-base.nix`, and made `just test-integration` build every `checks.<system>.vm-*` leaf.
 The question this record answers is how the k3d workflow's coverage is re-expressed as NixOS VM tests and pure Nix checks, and what remains that genuinely cannot move.
 
-The target the plan converges on is stated once here and detailed in ADR-008, ADR-009, and ADR-010: a two-node k3s cluster on Hetzner, declared as `kubernetes/clusters/<c>`, whose nodes are NixOS closures built by this flake, managed by Cluster API (cluster-api-k3s plus the Hetzner provider CAPH), whose workloads are reconciled by Flux from an OCI artifact pinned by digest, whose identity is split into stable cluster identity and disposable node identity (ADR-010), and whose declaration is one easykubenix cluster module with a typed `platform` seam so the same declaration reaches any CAPI-compatible cloud later.
+The target the plan converges on is stated once here and detailed in ADR-008, ADR-009, and ADR-010: a two-node k3s cluster on Hetzner, declared as `kubernetes/clusters/cryolite`, whose nodes are NixOS closures built by this flake, managed by Cluster API (cluster-api-k3s plus the Hetzner provider CAPH), whose workloads are reconciled by Flux from an OCI artifact pinned by digest, whose identity is split into stable cluster identity and disposable node identity (ADR-010), and whose declaration is one easykubenix cluster module with a typed `platform` seam so the same declaration reaches any CAPI-compatible cloud later.
 Every property of that target that can be regulated without money or a network is regulated by a `checks.<system>.<name>` leaf before the first Hetzner node exists.
 The existing clusters `local` and `local-k3d` are frozen prototypes: they keep ArgoCD, nixidy, sops-secrets-operator, kube-proxy, and the k3d workflow exactly as they are, and nothing in this plan edits `kubernetes/clusters/local*`, `kubernetes/nixidy/`, `kubernetes/tests/local-k3d/`, or `modules/apps/cluster/`.
-Existing files grow only additively and default-off: `modules/kubernetes.nix` gains `<c>` in `evalCluster`; `modules/nixos/k3s-server/default.nix` gains a `snapshotter` option and loses its inert containerd block (F1); `modules/devshells/kubernetes.nix` gains `flux`, `clusterctl`, `hcloud`, `cosign`, and `crane`.
+Existing files grow only additively and default-off: `modules/kubernetes.nix` gains `cryolite` in `evalCluster`; `modules/nixos/k3s-server/default.nix` gains a `snapshotter` option and loses its inert containerd block (F1); `modules/devshells/kubernetes.nix` gains `flux`, `clusterctl`, `hcloud`, `cosign`, and `crane`.
 
 The vocabulary is the repository's compositional-continuous-verification (CCV) framing: each check is a regulator paired with a declared operating envelope; regulators are placed at the cheapest sufficient tier; every leaf is an independent, cacheable `checks.<system>.<name>`; and `nix flake check` is the closure operator over all of them.
 The four suite properties used below are existence (a regulator of the kind exists), traceability (every artifact has a regulator pointing at it), adequacy (the regulators saturate the envelope's declared bins), and integrity (the regulator would fail if its target broke, shown by mutation evidence).
@@ -96,7 +97,7 @@ The same constraint applies to the Flux configuration artifact introduced by ADR
 
 `modules/checks/nixidy-k8s.nix:24-30` exposes `k8s-manifests-local-k3d`, `k8s-manifests-local-k3d-json`, `nixidy-env-local-k3d`, and `nixidy-bootstrap-local-k3d` as build checks, for the `local-k3d` environment.
 The k3d script's phase 1 builds the sibling `local-k3d-ci` environment, which differs only in `nixidy.target.repository = "file:///manifests"` (`modules/nixidy.nix:52`; `modules/apps/cluster/k3d-integration-ci.sh:57`), and its `file:///manifests` grep at line 63 is a pure property of that build; only the runtime consumption of the rendered tree needs a cluster.
-The nixidy leaves keep regulating the frozen `local-k3d` prototype (D7.15); `<c>` has no nixidy environment, so its T1 leaves are the easykubenix render leaf and the purity, provenance, and identity leaves of S0.
+The nixidy leaves keep regulating the frozen `local-k3d` prototype (D7.15); `cryolite` has no nixidy environment, so its T1 leaves are the easykubenix render leaf and the purity, provenance, and identity leaves of S0.
 
 ### F6: k3s embeds nix-snapshotter, and its NRI plugin is enabled unless k3s runs in a user namespace
 
@@ -114,14 +115,14 @@ Tiers, cheapest first:
 - T2 — NixOS VM substrate (one or more QEMU nodes composed from `flake.modules.nixos.k3s-server`, no platform workloads). Requires `kvm nixos-test`.
 - T3 — live platform stack in a NixOS VM (Cilium, Flux, cert-manager, step-ca, Gateway API, with preloaded images and an in-guest registry serving the OCI artifact). Requires `kvm nixos-test` and the preload closure.
 - E — an `apps` effect that touches a registry or a cloud; never a check. Asserts its own postcondition (ADR-008 D8.7, ADR-009 D9.16).
-- K — stays on k3d/Docker. Used only where a concrete blocker is named; for `<c>` the only K row is the k3d management handler B on Colima (ADR-009 D9.4, D9.17). The `local-k3d` workflow is also K, and stays as it is.
+- K — stays on k3d/Docker. Used only where a concrete blocker is named; for `cryolite` the only K row is the k3d management handler B on Colima (ADR-009 D9.4, D9.17). The `local-k3d` workflow is also K, and stays as it is.
 
-Current k3d phases (`k3d-integration-ci.sh:38-45`), read as the properties the `<c>` regulators must cover; the k3d run itself continues unchanged for `local-k3d`:
+Current k3d phases (`k3d-integration-ci.sh:38-45`), read as the properties the `cryolite` regulators must cover; the k3d run itself continues unchanged for `local-k3d`:
 
 | Phase | Property | Cheapest sufficient tier | Notes |
 |---|---|---|---|
-| 1 nixidy-build `local-k3d-ci` | manifests render | T1 | for `<c>`: the easykubenix render leaf and the S0 purity leaves; the nixidy leaf stays for `local-k3d` (D7.15) |
-| 1 grep for `file:///manifests` | rendered repo URL is local | T1 | no ArgoCD in `<c>`; the analogous property is that every Flux `OCIRepository` carries `spec.ref.digest` (ADR-008 D8.3), a T1 leaf |
+| 1 nixidy-build `local-k3d-ci` | manifests render | T1 | for `cryolite`: the easykubenix render leaf and the S0 purity leaves; the nixidy leaf stays for `local-k3d` (D7.15) |
+| 1 grep for `file:///manifests` | rendered repo URL is local | T1 | no ArgoCD in `cryolite`; the analogous property is that every Flux `OCIRepository` carries `spec.ref.digest` (ADR-008 D8.3), a T1 leaf |
 | 2 stage `/tmp/k3d-manifests` as git repo | manifests are consumable by the reconciler | T3 | in a VM: the OCI layout is loaded into an in-guest registry and Flux pulls it by digest (ADR-008 D8.6) |
 | 3 `k3d-full` (ctlptl + kluctl deploy) | cluster boots; foundation applies | T2 (boot) / T3 (apply) | replaced by `services.k3s` plus `services.k3s.manifests` carrying Cilium and Flux |
 | 4 `k3d-wait-ready` | Cilium, reconciler, step-ca ready | T3 | |
@@ -131,17 +132,17 @@ Current k3d phases (`k3d-integration-ci.sh:38-45`), read as the properties the `
 | — `k3d-configure-dns` | CoreDNS forwards `sslip.io` to `1.1.1.1` | K→T3 with substitution | needs network; replaced by a CoreDNS `hosts`/`template` answer inside the VM |
 | — `k3d-bootstrap-secrets` | `sops-age-key` Secret exists | T3 with fixture | Q5; the Secret becomes `flux-system/sops-age` (ADR-008 D8.9) |
 
-Chainsaw assertions of the prototype (`kubernetes/tests/local-k3d/{foundation,infrastructure}/*.yaml`, ordered by `chainsaw-test.yaml:8-48`), with the `<c>` counterpart each gets in `kubernetes/tests/<c>` (D7.16); the `local-k3d` suite itself is not edited:
+Chainsaw assertions of the prototype (`kubernetes/tests/local-k3d/{foundation,infrastructure}/*.yaml`, ordered by `chainsaw-test.yaml:8-48`), with the `cryolite` counterpart each gets in `kubernetes/tests/cryolite` (D7.16); the `local-k3d` suite itself is not edited:
 
 | Assertion | Tier | Substrate-only variant available at T2? |
 |---|---|---|
 | Cilium DaemonSet ready | T3 | no; T2 O-a asserts the node is `NotReady` for exactly the missing-CNI reason |
 | Cilium operator ready | T3 | no |
-| ArgoCD controller/server/repo-server/redis/applicationset ready | none in `<c>` | counterpart: Flux `source-controller`, `kustomize-controller`, `notification-controller` ready (ADR-008 D8.2) |
-| ArgoCD Applications adopted/Synced | none in `<c>` | counterpart: every `Kustomization` `Ready=True` with `status.lastAppliedRevision` equal to the pinned digest; the rendered objects are T1 |
+| ArgoCD controller/server/repo-server/redis/applicationset ready | none in `cryolite` | counterpart: Flux `source-controller`, `kustomize-controller`, `notification-controller` ready (ADR-008 D8.2) |
+| ArgoCD Applications adopted/Synced | none in `cryolite` | counterpart: every `Kustomization` `Ready=True` with `status.lastAppliedRevision` equal to the pinned digest; the rendered objects are T1 |
 | cert-manager controller/cainjector/webhook ready | T3 | no |
 | step-ca StatefulSet ready | T3 | no |
-| sops-secrets-operator Deployment ready | none in `<c>` | counterpart: a Flux `Kustomization` with `spec.decryption` decrypts a fixture Secret (ADR-008 D8.9); the operator stays in `local-k3d` |
+| sops-secrets-operator Deployment ready | none in `cryolite` | counterpart: a Flux `Kustomization` with `spec.decryption` decrypts a fixture Secret (ADR-008 D8.9); the operator stays in `local-k3d` |
 | `ClusterIssuer/step-ca-acme` Ready=True | T3 | the ACME server URL and solver shape are T1 |
 | `Gateway/main-gateway` Programmed=True | T3 | needs LB address (F2, D7.9) |
 | Gateway has four listeners, each Accepted=True | T3 | listener count and hostnames are T1 over the rendered Gateway |
@@ -211,7 +212,7 @@ Both are recorded in the implementing PR body per PR #2954's convention.
 
 ## Q3: two-node join path (regulated inside `vm-k3s-platform` since revision 2)
 
-Revision 2 has no standalone multi-node substrate leaf: the module tree (D7.17) names `vm-k3s-substrate`, `vm-k3s-snapshotter`, and `vm-k3s-platform`, and the platform leaf boots the server and agent of `<c>` (D7.16), so the join path below is asserted there, with Cilium present, and its CNI-free variant is not built.
+Revision 2 has no standalone multi-node substrate leaf: the module tree (D7.17) names `vm-k3s-substrate`, `vm-k3s-snapshotter`, and `vm-k3s-platform`, and the platform leaf boots the server and agent of `cryolite` (D7.16), so the join path below is asserted there, with Cilium present, and its CNI-free variant is not built.
 The analysis stands as the specification of what the two-guest leaf asserts about the join.
 
 ### Shape
@@ -226,7 +227,7 @@ The production module does not expose `nodeIP`; if the agent needs it the leaf s
 - Clan shared var: a `clan.core.vars.generators.k3s-token` with `share = true`, generated in-sandbox by clanTest's vars executor, encrypted to the test age key (`~/ghq/git.clan.lol/clan/clan-core/lib/clanTest/vars-executor.nix:165`, `231`), and consumed on both nodes as `config.clan.core.vars.generators.k3s-token.files.token.path`.
 
 Decision (D7.12): store-path token in the two-guest platform leaf.
-Under ADR-009 the production join path for CAPI-managed nodes is the cluster-api-k3s token delivered by cloud-init from a T0 Secret (ADR-010 D10.4), not a Clan var, so the Clan generator this record once anticipated is not the shape `<c>` uses; the bootstrap-identity seam (ADR-009 D9.8) names both handlers, `vm-k3s-platform` regulates the join with a store-path stand-in, and `vm-k3s-capi-bootstrap` (`capi-hetzner-cluster`, S3) regulates the cloud-init handler.
+Under ADR-009 the production join path for CAPI-managed nodes is the cluster-api-k3s token delivered by cloud-init from a T0 Secret (ADR-010 D10.4), not a Clan var, so the Clan generator this record once anticipated is not the shape `cryolite` uses; the bootstrap-identity seam (ADR-009 D9.8) names both handlers, `vm-k3s-platform` regulates the join with a store-path stand-in, and `vm-k3s-capi-bootstrap` (`capi-hetzner-cluster`, S3) regulates the cloud-init handler.
 
 ### What it adds and costs
 
@@ -243,16 +244,16 @@ No chart is fetched at runtime; every chart is a Nix input already.
 
 Images referenced by the rendered manifests:
 
-| Image | Component | Fate in `<c>` under ADR-008 (the `local-k3d` set is untouched) |
+| Image | Component | Fate in `cryolite` under ADR-008 (the `local-k3d` set is untouched) |
 |---|---|---|
 | `quay.io/cilium/cilium:v1.18.6` | Cilium agent | stays vendor OCI, pinned by digest (D7.5) |
 | `quay.io/cilium/operator-generic:v1.18.6` | Cilium operator | stays vendor OCI, pinned by digest |
 | `quay.io/cilium/cilium-envoy:v1.35.9-…@sha256:81398e…` | Cilium Envoy (Gateway) | stays vendor OCI |
-| `quay.io/argoproj/argocd:v3.2.5` | ArgoCD (all components) | not deployed in `<c>` (D7.6); the three Flux controller images take its place there; stays in `local-k3d` |
-| `ecr-public.aws.com/docker/library/redis:8.2.2-alpine` | ArgoCD redis | not deployed in `<c>`; stays in `local-k3d` |
+| `quay.io/argoproj/argocd:v3.2.5` | ArgoCD (all components) | not deployed in `cryolite` (D7.6); the three Flux controller images take its place there; stays in `local-k3d` |
+| `ecr-public.aws.com/docker/library/redis:8.2.2-alpine` | ArgoCD redis | not deployed in `cryolite`; stays in `local-k3d` |
 | `quay.io/jetstack/cert-manager-{controller,webhook,cainjector,startupapicheck,acmesolver}:v1.21.1` | cert-manager | vendor OCI by digest now; ported to `nix-snapshotter.buildImage` in its own PR (D7.5) |
 | `cr.smallstep.com/smallstep/step-ca:0.30.0` | step-ca | vendor OCI by digest now; ported to `nix-snapshotter.buildImage` in its own PR (D7.5) |
-| `isindir/sops-secrets-operator:0.16.0` | sops-secrets-operator | not deployed in `<c>`, whose decryptor is Flux SOPS (ADR-008 D8.9); stays in `local-k3d`, its retirement is Future Work |
+| `isindir/sops-secrets-operator:0.16.0` | sops-secrets-operator | not deployed in `cryolite`, whose decryptor is Flux SOPS (ADR-008 D8.9); stays in `local-k3d`, its retirement is Future Work |
 | `alpine/curl:latest` | a Job; unpinned | fails the S0 purity leaf until pinned by digest |
 | `docker.io/rancher/mirrored-pause:3.6`, `docker.io/rancher/mirrored-coredns-coredns:1.12.3` | k3s core, in the airgap bundle | unchanged |
 
@@ -266,8 +267,8 @@ Each pulled image is a fixed-output derivation, so it is fetched once per digest
 ### Blockers to running the Chainsaw suite in a VM, and their hermetic substitutes
 
 - B1 no network: every image preloaded (F4); every chart is already a Nix input; the Flux configuration artifact is a store path loaded into an in-guest registry (ADR-008 D8.6).
-- B2 desired-state transport: the k3d run mounts a host git repo into the node for ArgoCD. Under ADR-008 the reconciler pulls an OCI artifact by digest, so the VM leaf starts a registry in the guest (a `pkgs.docker-distribution`-class service or nix-snapshotter's own push-and-pull test pattern, `~/ghq/github.com/pdtpartners/nix-snapshotter/modules/nixos/tests/push-n-pull.nix`), loads the OCI layout from the store into it, and points the root `OCIRepository` at `localhost:<port>/<name>@sha256:<digest>` with the same digest the node closure pins.
-- B3 DNS for `*.192.168.100.3.sslip.io`: the ACME HTTP-01 solver (`kubernetes/nixidy/local-k3d/apps/cluster-issuer.nix:44-62`) requires step-ca to resolve the certificate hostnames (`argocd-route.nix:22`, `gateway.nix:25`) to the Gateway address; today CoreDNS forwards `sslip.io` to `1.1.1.1` (`modules/apps/cluster/k3d-configure-dns.sh:12`). In a VM CoreDNS must answer those names itself (a `hosts` or `template` stanza) and the hostnames must embed the VM node's address rather than k3d's `192.168.100.3`. Under D7.6 this is a test variant of the `<c>` easykubenix cluster module (its `topology.nix` evaluated for the VM VLAN), not a nixidy environment and not an edit to `local-k3d`.
+- B2 desired-state transport: the k3d run mounts a host git repo into the node for ArgoCD. Under ADR-008 the reconciler pulls an OCI artifact by digest, so the VM leaf starts a registry in the guest (`services.dockerRegistry`, D7.22, following nix-snapshotter's own push-and-pull test pattern, `~/ghq/github.com/pdtpartners/nix-snapshotter/modules/nixos/tests/push-n-pull.nix`), loads the OCI layout from the store into it, and points the root `OCIRepository` at `localhost:<port>/<name>@sha256:<digest>` with the same digest the node closure pins.
+- B3 DNS for `*.192.168.100.3.sslip.io`: the ACME HTTP-01 solver (`kubernetes/nixidy/local-k3d/apps/cluster-issuer.nix:44-62`) requires step-ca to resolve the certificate hostnames (`argocd-route.nix:22`, `gateway.nix:25`) to the Gateway address; today CoreDNS forwards `sslip.io` to `1.1.1.1` (`modules/apps/cluster/k3d-configure-dns.sh:12`). In a VM CoreDNS must answer those names itself (a `hosts` or `template` stanza) and the hostnames must embed the VM node's address rather than k3d's `192.168.100.3`. Under D7.6 this is a test variant of the `cryolite` easykubenix cluster module (its `topology.nix` evaluated for the VM VLAN), not a nixidy environment and not an edit to `local-k3d`.
 - B4 LoadBalancer address for `Programmed=True` (F2): a `CiliumLoadBalancerIPPool` declared by the cluster module (D7.9); a test that re-enables ServiceLB would regulate the k3d envelope again, not production.
 - B5 secrets: `SOPS_AGE_KEY` from GitHub Secrets is replaced by the Q5 fixture, mirrored into `flux-system/sops-age`.
 - B6 Chainsaw in the guest: `pkgs.chainsaw` exists in the locked nixpkgs (`pkgs/by-name/ch/chainsaw/package.nix:9`, 2.16.2); the test directory is a store path; see Q7 for kubeconfig handling.
@@ -277,7 +278,7 @@ What is genuinely lost is the check that the rendered tree can be consumed from 
 
 ### Options
 
-- O-1: one `vm-k3s-platform` leaf boots the `<c>` core (revision 2: a server and an agent guest, D7.16) with Cilium, Flux, cert-manager, step-ca, and the Gateway, serves the OCI artifact from an in-guest registry, then runs the `kubernetes/tests/<c>` Chainsaw suite in-guest.
+- O-1: one `vm-k3s-platform` leaf boots the `cryolite` core (revision 2: a server and an agent guest, D7.16) with Cilium, Flux, cert-manager, step-ca, and the Gateway, serves the OCI artifact from an in-guest registry, then runs the `kubernetes/tests/cryolite` Chainsaw suite in-guest.
 - O-2: several leaves each preloading a slice: `vm-k3s-cilium` (Cilium + Gateway API CRDs + Gateway Programmed via B4), `vm-k3s-gitops` (Cilium + Flux reconciling from B2), `vm-k3s-pki` (Cilium + cert-manager + step-ca + ClusterIssuer + Certificates via B3), `vm-k3s-secrets` (Cilium + Flux SOPS + fixture key).
 - O-3: substrate leaves move; the platform Chainsaw suite stays on k3d/Docker permanently.
 
@@ -285,7 +286,7 @@ What is genuinely lost is the check that the rendered tree can be consumed from 
 
 The Chainsaw steps are ordered dependencies, not independent slices: Certificates need the ClusterIssuer, which needs step-ca and the Gateway solver, which needs Cilium and an LB address; Flux reconciles all of them.
 Splitting into O-2 duplicates Cilium's image closure in every leaf and re-creates the wait-for-ready scaffolding four times for the same envelope.
-O-1 is one regulator for one envelope — the `<c>` platform as deployed — and has the shape of the k3d workflow minus Docker, but its Chainsaw suite is `kubernetes/tests/<c>`, written for `<c>` (foundation: Cilium, Flux ready; infrastructure: cert-manager, step-ca, ClusterIssuer, Gateway, Certificates, HTTPRoute), not a copy of `kubernetes/tests/local-k3d`, and it asserts nothing about ArgoCD or sops-secrets-operator.
+O-1 is one regulator for one envelope — the `cryolite` platform as deployed — and has the shape of the k3d workflow minus Docker, but its Chainsaw suite is `kubernetes/tests/cryolite`, written for `cryolite` (foundation: Cilium, Flux ready; infrastructure: cert-manager, step-ca, ClusterIssuer, Gateway, Certificates, HTTPRoute), not a copy of `kubernetes/tests/local-k3d`, and it asserts nothing about ArgoCD or sops-secrets-operator.
 O-2 becomes the right shape only if O-1's measured wall time exceeds what a developer will run locally (working threshold: 15 minutes), at which point `vm-k3s-cilium` splits off first because Gateway `Programmed` is the assertion most sensitive to the production/k3d envelope difference (F2).
 O-3 is rejected because every blocker B1–B6 has a hermetic substitute; the only property that cannot move is a property of k3d itself.
 Revision 2 leaves the k3d workflow in place as the regulator of the frozen `local-k3d` prototype; whether and when it is retired is a Future Work question for the feedback change, not a consequence of O-1 turning green.
@@ -335,17 +336,17 @@ Every S0 leaf is T1 and runs on the worker; S0 therefore lands first so that the
 ### Stages (each stage one PR, each with a killed mutant; S4 requires explicit spend approval)
 
 Every stage names its KVM requirement, its CCV regulators, and the mutation that shows each regulator non-vacuous; the OpenSpec tasks carry the exact mutations.
-All leaves are scoped to `<c>`; the `-<c>` suffix on `k8s-*` leaves is written once here and elided below.
+All leaves are scoped to `cryolite`; the `-cryolite` suffix on `k8s-*` leaves is written once here and elided below.
 
 | Stage | Change | Contents | KVM | Tier | Gate |
 |---|---|---|---|---|---|
 | S0 | `k3s-nixos-vm-tests` | `k8s-purity` (no runtime `flakeRef`/`nixExpr`, no `:latest`, no tag-without-digest, images ⊆ preload set), `k8s-provenance` (`nix path-info -r` closure report with image digest inventory and the OCI-layout digest), `k8s-node-identity-free` (no CAPI CR, Flux manifest, Clan inventory entry, or Secret names a node or node key; ADR-010 D10.6), `flux-sources-pinned`, `flux-install-rendered`, `k3s-server-eval`; OCI digest equality asserted by the `apps.k8s.oci-push` effect, written here and first run in S4 | no | T1 (E for the effect) | none beyond this record |
 | S1 | `k3s-nixos-vm-tests` | `k3s-server.snapshotter` option (default `"nix"`) and `pkgs.nix` on the k3s unit path; inert containerd block deleted (D7.8); `vm-k3s-substrate` (O-a: CNI-free, `NotReady` for exactly the missing-CNI reason, NRI socket observed); `vm-k3s-snapshotter` (pod rootfs is Nix store paths) | yes | T1, T2 | S0 |
-| S2 | `k3s-nixos-vm-tests` | `vm-k3s-platform` (O-1) for the core of `<c>`: two guests (server and agent), Cilium with `kubeProxyReplacement=true`, Flux controllers preloaded in the closure, root `OCIRepository` pinned by digest and served from an in-guest registry, Flux SOPS with the fixture key, LB-IPAM pool, in-VM DNS, Chainsaw suite from `kubernetes/tests/<c>` run in-guest (D7.16) | yes | T3 | S1 |
-| S3 | `capi-hetzner-cluster` | management handler B (k3d on stibnite/Colima, `apps.k8s-mgmt-k3d`); CAPI core, CAPH, and cluster-api-k3s installed from Nix-rendered manifests through a `clusterctl.yaml` override; `capi-<c>` CR render; `k8s-capi-render` golden for `platform = hetzner` only; `vm-k3s-capi-bootstrap` (NoCloud seed → air-gapped join, T0 material delivered through `contentFrom.secret` and proven in-VM, ADR-010 D10.4) | yes (bootstrap leaf); no (render, handler B) | T1, T2, K (handler B) | S2 |
-| S4 | `capi-hetzner-cluster` | first paid action: `apps.k8s.hetzner-snapshot-publish` (per-role image and snapshot, D9.16), two-node deployment using machines M1–M6 (ADR-010 D10.5), `clusterctl move`, admin access through the CAPH load balancer and the SSH CA; no admin overlay | no | E | S3 and explicit written approval of spend from the repository owner; never inferred from silence |
+| S2 | `k3s-nixos-vm-tests` | `vm-k3s-platform` (O-1) for the core of `cryolite`: two guests (server and agent), Cilium with `kubeProxyReplacement=true`, Flux controllers preloaded in the closure, root `OCIRepository` pinned by digest and served from an in-guest registry, Flux SOPS with the fixture key, LB-IPAM pool, in-VM DNS, Chainsaw suite from `kubernetes/tests/cryolite` run in-guest (D7.16) | yes | T3 | S1 |
+| S3 | `capi-hetzner-cluster` | management handler B (k3d on stibnite/Colima, `apps.k8s.mgmt-k3d`); CAPI core, CAPH, and cluster-api-k3s installed from Nix-rendered manifests through a `clusterctl.yaml` override; `capi-cryolite` CR render; `k8s-capi-render` golden for `platform = hetzner` only; `vm-k3s-capi-bootstrap` (NoCloud seed → air-gapped join, T0 material delivered through `contentFrom.secret` and proven in-VM, ADR-010 D10.4) | yes (bootstrap leaf); no (render, handler B) | T1, T2, K (handler B) | S2 |
+| S4 | `capi-hetzner-cluster` | first paid action: `apps.k8s.hetzner-snapshot-publish` (per-role image and snapshot, D9.16), two-node deployment using machines M1–M6 (ADR-010 D10.5), `clusterctl move`, admin access through the CAPH load balancer and the SSH CA; no admin overlay | no | E | S3; spend is approved in principle and released per revision by `VANIXIETS_HETZNER_SPEND_APPROVED=<flake rev>` (D7.21, ADR-009 D9.19), never by silence |
 | S4b | `capi-hetzner-cluster` | admin overlay: one WireGuard gateway per cluster peering with the controller on the existing primary VPS (D9.15) | no | E | S4 |
-| S5 (deferred) | `capi-hetzner-cluster` | `platform = gcp` and `platform = aws` render-only goldens; platform-core render-equivalence regulator; no cloud account is touched | no | T1 | S3 (S4 is not a prerequisite) |
+| S5 (deferred) | `capi-hetzner-cluster` | `platform = gcp` render-only goldens and the platform-core render-equivalence regulator; `platform = aws` is declared and throws (ADR-009 D9.20); no cloud account is touched | no | T1 | S3 (S4 is not a prerequisite) |
 
 Nothing is deleted by either change.
 The deletion plan of revision 1 (k3d CI scripts, the `integration` job, `SOPS_AGE_KEY`, `modules/nixidy.nix`, `kubernetes/nixidy/`, `modules/checks/nixidy-k8s.nix`, the ArgoCD and sops-secrets-operator manifests, the CI-only k3d justfile recipes) is Future Work for a later, separately authorized feedback change that migrates or retires the frozen prototypes; `kubernetes/clusters/local-k3d/`, the ctlptl recipes, and the k3d `integration` job keep running unchanged until then (D7.15).
@@ -388,17 +389,17 @@ The deletion plan of revision 1 (k3d CI scripts, the `integration` job, `SOPS_AG
 
 Decisions are numbered D7.n in this record, D8.n in ADR-008, D9.n in ADR-009, and D10.n in ADR-010.
 The provenance table maps each to the design-review note that resolved it and to the earlier code it supersedes; the four notes are the authoritative record of the first review, and the revision-2 dispatch (codes D-a–D-j) is the authoritative record of the second.
-Each revision-1 decision carries a bracketed revision-2 status: kept, narrowed (the decision stands for `<c>` and no longer claims the frozen prototypes), or superseded (a named later decision replaces it; the text is retained).
+Each revision-1 decision carries a bracketed revision-2 status: kept, narrowed (the decision stands for `cryolite` and no longer claims the frozen prototypes), or superseded (a named later decision replaces it; the text is retained).
 
 - D7.1 [kept] The node's container snapshotter is nix-snapshotter through k3s's embedded `--snapshotter nix`; the production module gains `k3s-server.snapshotter` with default `"nix"` and adds `pkgs.nix` to the k3s unit path (F6). nixkube is not added as a flake input; runtime `flakeRef` and `nixExpr` are forbidden in every hermetic regulator.
 - D7.2 [kept; leaf renamed `vm-k3s-substrate`] The substrate leaf is CNI-free (O-a) and asserts the substrate rows of Q1 including the snapshotter plugin and NRI state.
 - D7.3 [kept; leaf renamed `vm-k3s-snapshotter`] A separate T2 leaf regulates one `nix-snapshotter.buildImage` pod with a test-only flannel override as glue.
-- D7.4 [narrowed by D7.16] One `vm-k3s-platform` leaf (O-1) with the preload set derived from the rendered manifests; split only on measured wall time above fifteen minutes. Revision 2 fixes its content to the two-guest `<c>` core.
+- D7.4 [narrowed by D7.16] One `vm-k3s-platform` leaf (O-1) with the preload set derived from the rendered manifests; split only on measured wall time above fifteen minutes. Revision 2 fixes its content to the two-guest `cryolite` core.
 - D7.5 [kept] Third-party operators are vendored as OCI images pinned by digest now; step-ca and cert-manager are ported to `nix-snapshotter.buildImage` one PR each; Cilium stays vendor OCI.
-- D7.6 [narrowed by D7.15] The reconciler of `<c>` is Flux and its only manifest evaluation framework is easykubenix. Revision 1 also retired nixidy, the `kubernetes/nixidy/` tree, the nixidy environments, and the Phase-3/Phase-4 adoption split, and reversed ADR-006 through ADR-008 D8.10; those retirements are Future Work for the feedback change (D7.15), nixidy and ArgoCD stay for `local-k3d`, and ADR-006 stands until then. The `local-vm` nixidy environment proposed in the first revision (D-P2) remains withdrawn.
+- D7.6 [narrowed by D7.15] The reconciler of `cryolite` is Flux and its only manifest evaluation framework is easykubenix. Revision 1 also retired nixidy, the `kubernetes/nixidy/` tree, the nixidy environments, and the Phase-3/Phase-4 adoption split, and reversed ADR-006 through ADR-008 D8.10; those retirements are Future Work for the feedback change (D7.15), nixidy and ArgoCD stay for `local-k3d`, and ADR-006 stands until then. The `local-vm` nixidy environment proposed in the first revision (D-P2) remains withdrawn.
 - D7.7 [kept] KVM-free purity and provenance regulators land first (S0) so the nixbot worker regulates the rendered tree on every push.
 - D7.8 [kept] The inert `virtualisation.containerd.settings` block (F1) is deleted in S1; `services.k3s.containerdConfigTemplate` is introduced only if the D7.2 NRI assertion shows NRI disabled. This and the `snapshotter` option are the only edits to `modules/nixos/k3s-server/default.nix`.
-- D7.9 [kept] The Gateway address mechanism of `<c>` is Cilium LB-IPAM through a `CiliumLoadBalancerIPPool` declared by the cluster module; ServiceLB stays disabled. `local-k3d` keeps its own mechanism.
+- D7.9 [kept] The Gateway address mechanism of `cryolite` is Cilium LB-IPAM through a `CiliumLoadBalancerIPPool` declared by the cluster module; ServiceLB stays disabled. `local-k3d` keeps its own mechanism.
 - D7.10 [narrowed by D7.15] If the `ubuntu-latest` KVM probe fails or flakes, VM leaves gate only on a KVM-capable runner (a larger GitHub-hosted class documented to expose it, or a self-hosted KVM host); until one exists they run through `just test-integration`. The clause "and the k3d workflow is retained as containment" is moot: the k3d workflow is retained unconditionally.
 - D7.11 [kept] Fleet k3s nodes import `base`; every k3s VM leaf imports `base` and `k3s-server`.
 - D7.12 [kept; leaf changed] The two-guest platform leaf uses a store-path token; the production join paths are named by the bootstrap-identity seam (ADR-009 D9.8) and the T0 token is delivered by `contentFrom.secret` (ADR-010 D10.4).
@@ -407,11 +408,17 @@ Each revision-1 decision carries a bracketed revision-2 status: kept, narrowed (
 
 Revision-2 decisions (codes D-a–D-j of the dispatch; D-c and D-e are ADR-010 D10.1–D10.7, D-d, D-f, and D-g are ADR-009 D9.15–D9.17, and ADR-008 D8.15 records the narrowing):
 
-- D7.15 (D-a) Scope. The plan builds one sibling cloud cluster, `kubernetes/clusters/<c>`; `kubernetes/clusters/local` and `kubernetes/clusters/local-k3d` are frozen prototypes that it does not migrate, edit, or delete. nixidy retirement, ADR-006 reversal, sops-secrets-operator retirement, k3d workflow deletion, and any edit to `kubernetes/nixidy/local-k3d` are Future Work for a later, separately authorized feedback change. ArgoCD (in `local-k3d`) and Flux (in `<c>`) coexist. Existing files change only additively through default-off options: `modules/kubernetes.nix` (`evalCluster` gains `<c>`), `modules/nixos/k3s-server/default.nix` (`snapshotter` option; dead containerd block removed), `modules/devshells/kubernetes.nix` (`flux`, `clusterctl`, `hcloud`, `cosign`, `crane`). #2955's D-C1, D-C2, and D-P2 are moot; D11 and D13 of the first review narrow to `<c>`.
-- D7.16 (D-b) `vm-k3s-platform` regulates the core of `<c>`: two guests (server and agent), Cilium with `kubeProxyReplacement=true` (which closes F2's envelope drift for `<c>` only; `local-k3d` keeps kube-proxy), Flux controllers preloaded in the closure, the root `OCIRepository` pinned by digest and served from an in-VM registry, and the `kubernetes/tests/<c>` Chainsaw suite run in-guest (foundation: Cilium, Flux ready; infrastructure: cert-manager, step-ca, ClusterIssuer, Gateway, Certificates, HTTPRoute). It is not a replica of the `local-k3d` suite and asserts nothing about ArgoCD or sops-secrets-operator.
-- D7.17 (D-h) Module layout. The target tree is recorded once, in `openspec/changes/k3s-nixos-vm-tests/design.md` §"Target module layout", with each path marked `[keep]`, `[add]`, or `[+opt]`. Its rationale: `modules/` (flake-parts exports) and `kubernetes/` (easykubenix cluster contents) are two module systems deliberately not merged, bridged only by `modules/kubernetes.nix`; the `[add]` paths are dendritically additive, so deleting them makes `<c>` disappear with no other edit; one evaluation yields one hash chain, `clusters/<c>` → `k8s-manifests-<c>` → `k8s-oci-<c>` digest → `k3s-flux.nix` pins the digest → `<c>-server` closure → snapshot label → `capi-<c>` CRs; per-cloud variance lives in `kubernetes/modules/platform/` (typed sum) on the Kubernetes side and `modules/kubernetes/<provider>/` on the NixOS side; Flux is normalized to Nix-first (the artifact contents are the Flux layout; Flux keeps fetch, SSA, prune, drift, ordering, SOPS, and notification, and loses self-install, `postBuild` substitution, and git sources); checks are leaves by kind (`vm-*` KVM runtime, `k8s-*` KVM-free eval and golden); effects live only under `modules/apps/k8s/`.
-- D7.18 (D-i) Stage plan. S0 (KVM-free: purity, provenance, node-identity-free, OCI digest equality), S1 (KVM: `vm-k3s-substrate`, `vm-k3s-snapshotter`), S2 (KVM: `vm-k3s-platform` per D7.16) in `k3s-nixos-vm-tests`; S3 (handler B, provider install rendering, `capi-<c>` render and `k8s-capi-render` golden for Hetzner only, `vm-k3s-capi-bootstrap`, T0 delivery proven in-VM), S4 (first paid action, explicit gate: Hetzner image and snapshot effect, two-node deploy with M1–M6, `clusterctl move`, admin via LB and SSH CA, no overlay), S4b (admin overlay gateway, controller on the primary VPS), and deferred S5 (GCP/AWS render-only goldens, platform-core render equivalence) in `capi-hetzner-cluster`. Every stage is tabulated in Q6 with its KVM requirement and CCV regulators, and every regulator keeps a mutation that shows it non-vacuous.
-- D7.19 (D-j) Document structure. Two OpenSpec changes, the second depending on the first; ADR-010 added for identity tiers and bootstrap; ADR-009 revised for D-d, D-f, D-g and the removed seed host; ADR-008 narrowed to `<c>`. R6 of the first review is resolved: OpenSpec stays the planning ledger and a Linear binding is added only when execution of a stage begins. Every accepted first-review decision D1–D31 carries a revision-2 status in the table below.
+- D7.15 (D-a) Scope. The plan builds one sibling cloud cluster, `kubernetes/clusters/cryolite`; `kubernetes/clusters/local` and `kubernetes/clusters/local-k3d` are frozen prototypes that it does not migrate, edit, or delete. nixidy retirement, ADR-006 reversal, sops-secrets-operator retirement, k3d workflow deletion, and any edit to `kubernetes/nixidy/local-k3d` are Future Work for a later, separately authorized feedback change. ArgoCD (in `local-k3d`) and Flux (in `cryolite`) coexist. Existing files change only additively through default-off options: `modules/kubernetes.nix` (`evalCluster` gains `cryolite`), `modules/nixos/k3s-server/default.nix` (`snapshotter` option; dead containerd block removed), `modules/devshells/kubernetes.nix` (`flux`, `clusterctl`, `hcloud`, `cosign`, `crane`). #2955's D-C1, D-C2, and D-P2 are moot; D11 and D13 of the first review narrow to `cryolite`.
+- D7.16 (D-b) `vm-k3s-platform` regulates the core of `cryolite`: two guests (server and agent), Cilium with `kubeProxyReplacement=true` (which closes F2's envelope drift for `cryolite` only; `local-k3d` keeps kube-proxy), Flux controllers preloaded in the closure, the root `OCIRepository` pinned by digest and served from an in-VM registry, and the `kubernetes/tests/cryolite` Chainsaw suite run in-guest (foundation: Cilium, Flux ready; infrastructure: cert-manager, step-ca, ClusterIssuer, Gateway, Certificates, HTTPRoute). It is not a replica of the `local-k3d` suite and asserts nothing about ArgoCD or sops-secrets-operator.
+- D7.17 (D-h) Module layout. The target tree is recorded once, in `openspec/changes/k3s-nixos-vm-tests/design.md` §"Target module layout", with each path marked `[keep]`, `[add]`, or `[+opt]`. Its rationale: `modules/` (flake-parts exports) and `kubernetes/` (easykubenix cluster contents) are two module systems deliberately not merged, bridged only by `modules/kubernetes.nix`; the `[add]` paths are dendritically additive, so deleting them makes `cryolite` disappear with no other edit; one evaluation yields one hash chain, `clusters/cryolite` → `k8s-manifests-cryolite` → `k8s-oci-cryolite` digest → `k3s-flux.nix` pins the digest → `cryolite-server` closure → snapshot label → `capi-cryolite` CRs; per-cloud variance lives in `kubernetes/modules/platform/` (typed sum) on the Kubernetes side and `modules/kubernetes/<provider>/` on the NixOS side; Flux is normalized to Nix-first (the artifact contents are the Flux layout; Flux keeps fetch, SSA, prune, drift, ordering, SOPS, and notification, and loses self-install, `postBuild` substitution, and git sources); checks are leaves by kind (`vm-*` KVM runtime, `k8s-*` KVM-free eval and golden); effects live only under `modules/apps/k8s/`.
+- D7.18 (D-i) Stage plan. S0 (KVM-free: purity, provenance, node-identity-free, OCI digest equality), S1 (KVM: `vm-k3s-substrate`, `vm-k3s-snapshotter`), S2 (KVM: `vm-k3s-platform` per D7.16) in `k3s-nixos-vm-tests`; S3 (handler B, provider install rendering, `capi-cryolite` render and `k8s-capi-render` golden for Hetzner only, `vm-k3s-capi-bootstrap`, T0 delivery proven in-VM), S4 (first paid action, explicit gate: Hetzner image and snapshot effect, two-node deploy with M1–M6, `clusterctl move`, admin via LB and SSH CA, no overlay), S4b (admin overlay gateway, controller on the primary VPS), and deferred S5 (GCP render-only goldens and platform-core render equivalence; narrowed from GCP/AWS to GCP-only by ADR-009 D9.20 in charter v1, `platform.aws` declared and throwing) in `capi-hetzner-cluster`. Every stage is tabulated in Q6 with its KVM requirement and CCV regulators, and every regulator keeps a mutation that shows it non-vacuous.
+- D7.19 (D-j) Document structure. Two OpenSpec changes, the second depending on the first; ADR-010 added for identity tiers and bootstrap; ADR-009 revised for D-d, D-f, D-g and the removed seed host; ADR-008 narrowed to `cryolite`. R6 of the first review is resolved: OpenSpec stays the planning ledger and a Linear binding is added only when execution of a stage begins. Every accepted first-review decision D1–D31 carries a revision-2 status in the table below.
+
+Charter-v1 decisions (the owner's answers to the revision-2 questions; the charter at `../cryolite-charter.md` binds them to the other records):
+
+- D7.20 Name. The sibling cluster is `cryolite` (Na₃AlF₆, the ice-stone of Ivittuut, Greenland, mined as the flux for aluminium smelting), continuing the fleet's mineral names (stibnite, magnetite, cinnabar). The machines are `cryolite-server` and `cryolite-agent`; the paths are `kubernetes/clusters/cryolite`, `kubernetes/tests/cryolite`, and `secrets/clusters/cryolite`. Resolves OQ7.1 and the parent change's A10; the name is a design constant, not a design change, and every `k8s-*` leaf carries the `-cryolite` suffix.
+- D7.21 Spend gate. Hetzner spend is approved in principle for S4 and is released one flake revision at a time: every `apps.k8s.*` effect that calls the Hetzner Cloud API refuses to run unless `VANIXIETS_HETZNER_SPEND_APPROVED` equals the flake revision it is about to act on, and the billing surface is listed in the charter, on every S4 task, and in `openspec/changes/capi-hetzner-cluster/`. The decision and its regulator are ADR-009 D9.19; this record only makes the S4 gate in Q6 refer to it. No task of `k3s-nixos-vm-tests` bills anything.
+- D7.22 In-guest registry. The S2 registry is `services.dockerRegistry` from the pinned nixpkgs (ADR-008 D8.6, verified as R8.h); it exists only inside the `vm-k3s-platform` guest. Resolves B2 of Q4 and the parent change's A4.
 
 ### Provenance
 
@@ -453,16 +460,16 @@ A superseded decision is retained in the ADR that carries it; its replacement is
 | D7 | KVM-free purity checks first | kept | D7.7, D8.11, D8.12 |
 | D8 | no nixkube input | kept | D7.1 |
 | D9 (D-S1) | fleet k3s nodes import `base` | kept | D7.11 |
-| D9 (D-S2) | no shared `k3s-token` Clan generator now | kept; the T0 join token is a Clan var for `<c>` delivered by CAPI, not a shared fleet generator | D7.12, D10.1 |
-| D9 (D-P1) | Gateway address by Cilium LB-IPAM | kept for `<c>` | D7.9 |
+| D9 (D-S2) | no shared `k3s-token` Clan generator now | kept; the T0 join token is a Clan var for `cryolite` delivered by CAPI, not a shared fleet generator | D7.12, D10.1 |
+| D9 (D-P1) | Gateway address by Cilium LB-IPAM | kept for `cryolite` | D7.9 |
 | D9 (D-P2) | `local-vm` nixidy environment | superseded by D11 in rev. 1; moot in rev. 2 (no nixidy edit) | D7.6 |
 | D9 (D-C1) | fallback runner if the KVM probe fails | narrowed; its containment clause is Superseded by D-a (rev 2, D7.15): the k3d workflow is retained unconditionally, so no fallback containment decision remains | D7.10 |
 | D9 (D-C2) | keep `local-k3d` for Darwin, delete CI scripts and workflow job | Superseded by D-a (rev 2, D7.15): nothing is deleted; `local-k3d` is frozen | D7.13 |
 | D9 (D-M1) | delete dead containerd block; `containerdConfigTemplate` only if NRI disabled | kept | D7.8 |
-| D10 | Flux via digest-pinned OCI artifact, bootstrapped from `services.k3s.manifests` | narrowed to `<c>` | D8.1, D8.3 |
-| D11 | easykubenix only; retire nixidy; reverse ADR-006 | narrowed to `<c>`: easykubenix renders `<c>`; the retirement and reversal halves are Superseded by D-a (rev 2, D7.15) and become Future Work | D7.6, D8.10 |
-| D12 | ghcr.io artifact, tag = flake rev, digest pinned in closure; in-VM registry offline | kept for `<c>` | D8.3, D8.4, D8.6 |
-| D13 | Flux SOPS with per-cluster Clan-vars age key; retire sops-secrets-operator | narrowed to `<c>`: Flux SOPS stands; the retirement half is Superseded by D-a (rev 2, D7.15) and becomes Future Work | D8.9, D10.1 |
+| D10 | Flux via digest-pinned OCI artifact, bootstrapped from `services.k3s.manifests` | narrowed to `cryolite` | D8.1, D8.3 |
+| D11 | easykubenix only; retire nixidy; reverse ADR-006 | narrowed to `cryolite`: easykubenix renders `cryolite`; the retirement and reversal halves are Superseded by D-a (rev 2, D7.15) and become Future Work | D7.6, D8.10 |
+| D12 | ghcr.io artifact, tag = flake rev, digest pinned in closure; in-VM registry offline | kept for `cryolite` | D8.3, D8.4, D8.6 |
+| D13 | Flux SOPS with per-cluster Clan-vars age key; retire sops-secrets-operator | narrowed to `cryolite`: Flux SOPS stands; the retirement half is Superseded by D-a (rev 2, D7.15) and becomes Future Work | D8.9, D10.1 |
 | D14 | `flux install --export` rendered in Nix; three controllers only | kept | D8.2 |
 | D15 | artifact split by consumer (nix-snapshotter / nix2container / OCI layout) | kept | D8.5, D8.7 |
 | D16 | nixpod layering; multi-arch index only when arm64 is real | kept | D8.8 |
@@ -478,7 +485,7 @@ A superseded decision is retained in the ADR that carries it; its replacement is
 | D26 | Timoni-style CRD validation adopted | kept | D8.13 |
 | D27 | terranix not the node manager; survives as seed-host provisioner | Superseded by D-e (rev 2, D10.3): there is no seed host; terranix stays for fleet hosts (magnetite, cinnabar) and is unrelated to k3s nodes | D9.1 |
 | D28 | one k3s NixOS module with a bootstrap-identity seam | kept | D9.8, D9.9 |
-| D29 | multi-cloud seam: cloud-invariant core plus typed `platform` sum | kept; gcp/aws variants deferred to S5 | D9.10, D9.11 |
+| D29 | multi-cloud seam: cloud-invariant core plus typed `platform` sum | kept; gcp variant deferred to S5, aws declared-but-throwing (charter v1) | D9.10, D9.11, D9.20 |
 | D30a | ZeroTier fleet network untouched; nodes never join it | kept | D9.12 |
 | D30b | dedicated Clan `wireguard` instance as admin plane, control-plane nodes as controllers, nodes as members | Superseded by D-d (rev 2, D9.15): nodes join no Clan overlay; one gateway per cluster peers with the controller on the existing primary VPS; deferred to S4b | D9.12 |
 | D30c | dataplane on Cilium WireGuard, not the Clan overlay | kept | D9.12 |
@@ -487,7 +494,7 @@ A superseded decision is retained in the ADR that carries it; its replacement is
 
 ## Open questions
 
-- OQ7.1 The name of `<c>`. Recommendation: a mineral name consistent with the fleet (the existing hosts are stibnite, magnetite, cinnabar); the placeholder `<c>` stays in every document until the owner names it, and the name is a search-and-replace, not a design change.
+- OQ7.1 Resolved by D7.20: the cluster is `cryolite`.
 - OQ7.2 Whether nixbot reports a `kvm`-requiring derivation as skipped or failed; observed in S1 (R7.8).
 - OQ7.3 Whether Cilium in the O-1 leaf needs any `pkgs.cni-plugins` binary at all in this configuration (F1's activation script).
 - OQ7.4 Exact compressed sizes of the step-ca and Cilium images; measured when the pulls are written (R7.6).
@@ -527,7 +534,7 @@ A superseded decision is retained in the ADR that carries it; its replacement is
 
 - ADR-005: local cluster architecture revision (k3d + ctlptl), the envelope of the frozen `local-k3d` prototype; its k3d pattern is reused by management handler B on Colima.
 - ADR-006: nixidy manifest distribution; stands for `local-k3d`; its reversal for the fleet is Future Work (ADR-008 D8.10).
-- ADR-008: reconciler and artifact transport for `<c>` (Flux, OCI artifact, nix-snapshotter/nix2container/OCI-layout split, signing, Timoni boundary).
+- ADR-008: reconciler and artifact transport for `cryolite` (Flux, OCI artifact, nix-snapshotter/nix2container/OCI-layout split, signing, Timoni boundary).
 - ADR-009: Cluster API node management and networking (cluster-api-k3s, CAPH, management handlers, multi-cloud seam, image path, admin overlay, ClusterMesh).
 - ADR-010: identity tiers and non-circular bootstrap (T0/T1/T2, L0–L3, machines M1–M6, T0 delivery, node-identity-free regulator).
 - `openspec/changes/k3s-nixos-vm-tests/`: stages S0–S2.

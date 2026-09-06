@@ -4,8 +4,9 @@
 
 Proposed (2026-09-04; revision 2 the same day: the seed host is removed, the admin overlay moves to S4b with the primary VPS as controller, the k3d handler comes first, the image path is fixed as O1, and the machine lifecycle is M1–M6 of ADR-010).
 Design only; no flake input, production module, workflow, Terranix, or cloud change lands with this record.
-Implemented by stages S3, S4, S4b, and the deferred S5 of `openspec/changes/capi-hetzner-cluster/`, which depends on `openspec/changes/k3s-nixos-vm-tests/`; S4 spends money and needs explicit written approval.
-Every decision governs the sibling cluster `kubernetes/clusters/<c>` (ADR-007 D7.15); revision-1 decisions are retained with a bracketed revision-2 status and the three revision-2 decisions are D9.15–D9.17.
+Implemented by stages S3, S4, S4b, and the deferred S5 of `openspec/changes/capi-hetzner-cluster/`, which depends on `openspec/changes/k3s-nixos-vm-tests/`; S4 spends money, approved in principle and released per flake revision by the gate of D9.19.
+Every decision governs the sibling cluster `kubernetes/clusters/cryolite` (ADR-007 D7.15, named in D7.20); revision-1 decisions are retained with a bracketed revision-2 status, the three revision-2 decisions are D9.15–D9.17, and the charter-v1 fold of the same day adds D9.18–D9.21 (transport versus image, spend gate, GCP-only S5, fleet-level etcd-S3).
+The programme-level view is `../cryolite-charter.md`.
 
 ## Context
 
@@ -84,7 +85,7 @@ No kubeadm anywhere: hetzkube's `KubeadmControlPlane`/`KubeadmConfigTemplate` ar
 
 The NixOS image ships a script at `/opt/install.sh` (an `environment.etc`-style symlink or `systemd.tmpfiles` entry into the store) that ignores `INSTALL_K3S_*` download semantics, copies nothing, and does two things: it verifies `/etc/rancher/k3s/config.yaml` exists (written by cloud-init `write_files` from the `KThreesConfig`) and runs `systemctl start k3s.service`.
 `services.k3s.configPath = "/etc/rancher/k3s/config.yaml"` so the unit reads the CAPI-generated config.
-`services.k3s.role` is fixed at evaluation (F9.5); the image is therefore built per role (`machines/nixos/<c>-server.nix`, `machines/nixos/<c>-agent.nix`, ADR-007 D7.17), which resolved ambiguity 2 of the first revision in favor of one snapshot per role (D9.16); the two-unit alternative is not built.
+`services.k3s.role` is fixed at evaluation (F9.5); the image is therefore built per role (`machines/nixos/cryolite-server.nix`, `machines/nixos/cryolite-agent.nix`, ADR-007 D7.17), which resolved ambiguity 2 of the first revision in favor of one snapshot per role (D9.16); the two-unit alternative is not built.
 The sentinel file the template expects (`{{ .SentinelFileCommand }}`) is written by the shim after `systemctl is-active k3s` succeeds.
 The shim, `services.k3s.configPath`, and the per-role unit live in `modules/nixos/k3s-server/capi-bootstrap.nix`.
 
@@ -93,7 +94,7 @@ The shim, `services.k3s.configPath`, and the per-role unit live in `modules/nixo
 The contract is: a kubeconfig, the CAPI core plus CAPH plus cluster-api-k3s providers installed from Nix-rendered manifests through a `clusterctl.yaml` override (F9.2), and then identical CRs applied by `kubectl apply` or `clusterctl move`.
 
 - Handler A: the NixOS k3s node closure as a QEMU VM via `virtualisation.host.pkgs` (F9.4), running on `aarch64-darwin` (HVF), `x86_64-linux` with KVM, or `x86_64-linux` under TCG (slow, correct). Revision 1 preferred it because it is the production closure; revision 2 defers it (D9.17).
-- Handler B: k3d on stibnite through Colima, a cluster that runs only the CAPI, CAPH, and cluster-api-k3s controllers, exposed as `apps.k8s-mgmt-k3d` from `modules/kubernetes/capi/management.nix`. It reuses the k3d pattern of ADR-005 but is not `kubernetes/clusters/local-k3d/`, which is a frozen prototype and is not edited.
+- Handler B: k3d on stibnite through Colima, a cluster that runs only the CAPI, CAPH, and cluster-api-k3s controllers, exposed as `apps.k8s.mgmt-k3d` from `modules/kubernetes/capi/management.nix`. It reuses the k3d pattern of ADR-005 but is not `kubernetes/clusters/local-k3d/`, which is a frozen prototype and is not edited.
 
 Revision 1 exercised both handlers in S3 and wrote that `kubernetes/clusters/local-k3d/` "survives the k3d workflow deletion in ADR-007 D7.13"; both statements are Superseded by D-g and D-a (rev 2, D9.17 and ADR-007 D7.15): S3 exercises handler B by a recipe that is not a check, no `vm-capi-management` leaf is built until handler A returns, and nothing is deleted.
 
@@ -131,7 +132,7 @@ Mutation: remove `write_files` for `/etc/rancher/k3s/config.yaml` and expect the
 The cluster module owns `Cluster`, `KThreesControlPlane`, `KThreesConfigTemplate`, `MachineDeployment`, `MachineHealthCheck`, the Flux install and root objects, and Cilium.
 `platform` is a submodule typed as a sum over `hetzner | gcp | aws | kubevirt`; the selected variant alone owns `*Cluster`, `*MachineTemplate`, the node-image reference, the cloud-controller manager, and an optional CSI.
 An unhandled provider name is an evaluation error (`throw`), not an empty render.
-Only `hetzner` is implemented in S4; `gcp` and `aws` are render-only golden variants in S5; `kubevirt` is the name reserved for a self-hosted variant and is not implemented.
+Only `hetzner` is implemented in S4; `gcp` is the render-only golden variant of the deferred S5; `aws` and `kubevirt` are declared members of the sum whose implementation `throw`s with a message that names the variant (D9.20), which is distinct from the error for a name outside the sum.
 
 ### D9.11: a per-cloud CCM is mandatory (R6)
 
@@ -172,18 +173,52 @@ The dataplane (D9.12c) and cross-cloud rules (D9.12d, D9.13) are unchanged: Clus
 ### D9.16: image path O1 — per-role NixOS snapshots from the fleet disko layout; the Hetzner upload is a provider quirk hidden in `platform.hetzner` [new, rev 2; D-f]
 
 Because CAPI is pull (Context), the node image must be complete before the node exists.
-O1, chosen: one NixOS snapshot per role (`<c>-server`, `<c>-agent`), both built from the same disko layout the fleet uses for installs, so the image is the closure and the CR's `imageName` is the closure revision; the hash chain of ADR-007 D7.17 runs unbroken from `clusters/<c>` to the snapshot label.
-GCP and AWS variants (S5) use the provider's native custom-image or AMI upload and need no throwaway server.
+O1, chosen: one NixOS snapshot per role (`cryolite-server`, `cryolite-agent`), both built from the same disko layout the fleet uses for installs, so the image is the closure and the CR's `imageName` is the closure revision; the hash chain of ADR-007 D7.17 runs unbroken from `clusters/cryolite` to the snapshot label.
+The GCP variant (S5) uses the provider's native custom-image upload and needs no throwaway server (D9.18).
 Hetzner Cloud has no image-upload API (read in CAPH docs: "it is not possible to upload your own images directly. However, a server can be created, configured, and then snapshotted", `~/ghq/github.com/syself/cluster-api-provider-hetzner/docs/caph/02-topics/03-node-image.md:22`), so its upload is the `hcloud-upload-image` pattern: a throwaway server in rescue mode, the image `dd`'d onto its disk, a snapshot taken with label `caph-image-name=<rev>`, the server deleted (machine M4 of ADR-010 D10.5).
 That sequence is hidden inside the `platform.hetzner` effect `apps.k8s.hetzner-snapshot-publish` (`modules/kubernetes/hetzner/{image,snapshot}.nix`): idempotent on the label, one snapshot per revision per role, older snapshots pruned.
+Retention is two snapshots per role, the current and the previous revision: CAPI machine templates are immutable, so an in-flight rollout or a rollback references the previous image until every `Machine` has been replaced, and pruning it earlier would leave a `MachineDeployment` unable to create the replica it is still declared to want.
+A snapshot older than the previous revision is pruned once no `HCloudMachineTemplate` in the management cluster references it.
 
 O2, rejected: boot a stock Debian image and kexec-reinstall NixOS from cloud-init. It is Hetzner-specific, double-boots every replacement (including spot replacements), needs reachable binary-cache credentials on the node at install time, and pins `debian-12` in the CR instead of a closure, which breaks the hash chain.
 
 ### D9.17: management handler B (k3d on stibnite/Colima) first; handler A (NixOS QEMU VM, Darwin/HVF) deferred [new, rev 2; D-g]
 
-S3 implements handler B only, as `apps.k8s-mgmt-k3d`.
+S3 implements handler B only, as the effect `apps.k8s.mgmt-k3d`.
+Run on stibnite (M1), the effect creates a k3d cluster under Colima (M3), runs `clusterctl init` with the pinned CAPI core, CAPH, and cluster-api-k3s providers from the Nix-rendered `clusterctl.yaml` override (F9.2), applies the T0 Secrets (ADR-010 D10.4) and the rendered `cryolite` CRs, waits for the workload control plane to report `Ready`, runs `clusterctl move` into the workload cluster, and deletes the k3d cluster.
+It is an `apps` effect and not a check because it needs Docker, network access to Hetzner and GHCR, and the Hetzner API token, none of which a sandboxed derivation has; its transcript is the evidence, and its Hetzner-calling steps are behind the gate of D9.19.
 Handler A is deferred with its contract intact: the same kubeconfig-plus-providers interface, the same CRs, the same `clusterctl move` semantics, so adding it later changes no CR and no stage.
 The management cluster is bootstrap-only in either handler (ADR-010 D10.2, level L2): it exists on stibnite until `clusterctl move` has pivoted CAPI into the workload cluster, then it is deleted.
+
+### D9.18: the node image is one pure derivation; only its transport is provider-specific [new, charter v1; Q12]
+
+The image is one derivation: the NixOS closure of `cryolite-server` or `cryolite-agent` written to a disk image through the same disko layout the fleet uses for installs, provider-neutral and built without any cloud credential.
+What differs per provider is transport, the act of making that image available under a name a `*MachineTemplate` can reference.
+On GCP the transport is an upload to GCS followed by `images.insert`; on Hetzner it is rescue mode, `dd`, snapshot, because Hetzner has no import endpoint (F9.3, R9.i).
+CAPH's only hook into a node's life is create-from-image, so any provider whose transport happens after first boot (a reinstall from cloud-init) is O2 and rejected with it; and building the image just in time inside the transport would put a Linux builder in the loop of every unattended node replacement, which D9.16 forbids.
+The Hetzner transport lives in one file, `modules/kubernetes/hetzner/snapshot.nix`, behind the effect `apps.k8s.hetzner-snapshot-publish`, and a GCP transport would be a sibling file under `modules/kubernetes/gcp/` consuming the same image derivation; `modules/kubernetes/hetzner/image.nix` holds the provider-neutral image builder until a second provider gives it a reason to move.
+
+### D9.19: every Hetzner-billing effect is gated per flake revision by `VANIXIETS_HETZNER_SPEND_APPROVED` [new, charter v1; Q1]
+
+Hetzner spend is approved in principle for S4, and every billing trigger is surfaced three ways.
+The charter (`../cryolite-charter.md` §"Billing surface") lists each action that bills the Hetzner Cloud project: snapshot publication (tasks S4.1–S4.2: throwaway-server minutes and snapshot storage, per revision per role), the CAPH-created load balancer and two servers (task S4.3), the etcd-S3 bucket (D9.21; task S4.0), and every later node cycle or rebuild (task S4.6 and after).
+Every S4 work item in `openspec/changes/capi-hetzner-cluster/tasks.md` carries a "bills Hetzner" marker and a cost line.
+And every `apps.k8s.*` effect that calls the Hetzner Cloud API refuses to run unless the environment variable `VANIXIETS_HETZNER_SPEND_APPROVED` equals the flake revision the effect is about to act on; approval is a per-revision act in the operator's shell, and silence, a stale value, or a value for another revision is a refusal.
+The gate is a regulator as well as a decision: each such effect has a dry-run path that evaluates the plan it would execute and exits before any API call, and a KVM-free T1 leaf, `k8s-spend-gate-cryolite`, runs each effect's dry-run with the variable unset, set to a wrong revision, and set to the current revision, asserting refusal, refusal, and a plan that names the flake revision and every billable resource.
+
+### D9.20: S5 is GCP-only; `platform.aws` is declared and throws [new, charter v1; Q3]
+
+The deferred S5 renders `platform = gcp` against per-object goldens and runs the platform-core render-equivalence regulator (R9.1) over `hetzner` and `gcp`.
+`aws` stays in the typed sum so that the sum's totality regulator (R9.2) and the cloud-invariant core keep the variant name, but its implementation `throw`s a message naming the variant as declared-but-unimplemented, exactly as `kubevirt` does.
+An AWS variant is not planned in this programme revision; the GCP variant is preferred because the fleet already has GCP Terranix and a GCS-backed etcd-S3 variant (D9.21) falls out of it.
+
+### D9.21: etcd-S3 storage is fleet-level and Terranix-provisioned [new, charter v1; Q3]
+
+The bucket that receives k3s `--etcd-s3` snapshots (ADR-010 D10.7) is fleet infrastructure, provisioned by Terranix beside the fleet hosts rather than by the cluster, because it must outlive the cluster it backs up: disaster recovery rebuilds L2 from L0 and restores from the bucket, so the bucket cannot be a resource the cluster owns.
+The first variant is Hetzner Object Storage in the same project the L0 token administers.
+It is believed, not verified, that the `hcloud` Terraform provider has no Object Storage bucket resource; if S4 confirms that, the fallback is the `aws` or `minio` Terraform provider pointed at Hetzner's S3 endpoint with an access key created once through the Hetzner console and stored as T0 material.
+The GCP variant is a GCS bucket from the existing GCP Terranix.
+Only the bucket and its access key are Terranix's concern; Terranix still never touches a k3s node (D9.1).
 
 ## Requirements carried into the OpenSpec delta specs
 
@@ -194,10 +229,12 @@ The management cluster is bootstrap-only in either handler (ADR-010 D10.2, level
 | R9.3 | every variant with `bootstrap = "cloud-init"` renders a CCM (R6) | `capi-ccm-present` | T1 |
 | R9.4 | ClusterMesh preconditions hold at evaluation | `clustermesh-preconditions` | T1 |
 | R9.5 | a NoCloud seed boots a `cloud-init` node through the shim into `k3s.service`, with T0 material arriving as `contentFrom.secret`-shaped files | `vm-k3s-capi-bootstrap` | T2 |
-| R9.6 | handler B runs the CAPI providers from Nix-rendered manifests through the `clusterctl.yaml` override and accepts the rendered CRs | `apps.k8s-mgmt-k3d` recipe on stibnite (K; not a check) | K |
+| R9.6 | handler B runs the CAPI providers from Nix-rendered manifests through the `clusterctl.yaml` override and accepts the rendered CRs | `apps.k8s.mgmt-k3d` recipe on stibnite (K; not a check) | K |
 | R9.7 | two Hetzner nodes are `Ready`, Flux converges, `clusterctl move` pivots, and a flake bump rolls one node | S4 runbook (not a check) | E |
-| R9.8 | the `capi-<c>` render for `platform = hetzner` matches its golden, and the golden names no node or node key | `k8s-capi-render`, `k8s-node-identity-free` | T1 |
-| R9.9 | the snapshot-publish effect is idempotent on the label and leaves exactly one snapshot per revision per role | `apps.k8s.hetzner-snapshot-publish` postcondition | E |
+| R9.8 | the `capi-cryolite` render for `platform = hetzner` matches its golden, and the golden names no node or node key | `k8s-capi-render`, `k8s-node-identity-free` | T1 |
+| R9.9 | the snapshot-publish effect is idempotent on the label and leaves exactly one snapshot per revision per role, retaining the current and previous revision | `apps.k8s.hetzner-snapshot-publish` postcondition | E |
+| R9.10 | every Hetzner-calling `apps.k8s.*` effect refuses to run unless `VANIXIETS_HETZNER_SPEND_APPROVED` equals the current flake revision, and its dry-run plan names every billable resource | `k8s-spend-gate-cryolite` | T1 |
+| R9.11 | `platform = aws` and `platform = kubevirt` evaluate to a `throw` naming the variant; `platform = gcp` renders against its goldens (S5) | `capi-platform-sum-total`, `k8s-capi-render` (S5) | T1 |
 
 ## Verified versus inferred
 
@@ -212,6 +249,8 @@ The management cluster is bootstrap-only in either handler (ADR-010 D10.2, level
 | R9.g | a one-replica `hostNetwork` WireGuard gateway on a control-plane node, peering with the primary VPS and subnet-routing the Hetzner private network, gives admin reachability to the apiserver and nodes | inferred from F9.6; the gateway-as-peer shape is not in the Clan `wireguard` README | S4b; until then S4 uses the LB endpoint and public IPs |
 | R9.h | UDP 51871 allowlist to an eval-time node set is stable under CAPI node rolls | inferred; the node set changes when a `MachineDeployment` scales | a T1 assertion that the allowlist is derived from the same `MachineDeployment` replica set, plus S4 roll observation |
 | R9.i | the Hetzner Cloud API has no image-upload endpoint | read in CAPH docs (`03-node-image.md:22`); the hcloud API reference itself was not read | none needed for the design; S4's first `hetzner-snapshot-publish` run is the behavioral check |
+| R9.j | the `hcloud` Terraform provider has no Object Storage bucket resource | believed; the provider's resource index was not read | S4 Terranix task: if a bucket resource exists it is used, otherwise the `aws`/`minio` provider fallback of D9.21 |
+| R9.k | an in-flight CAPI rollout or rollback references the previous `HCloudMachineTemplate` until every `Machine` is replaced | immutability read in source (CAPH webhook `pkg/webhook/v1beta2/hcloudmachinetemplate_webhook.go:68`, "HCloudMachineTemplate.Spec is immutable"); that a rollout keeps referencing the old template until done is inferred from CAPI's `MachineDeployment` rollout semantics, not observed | `apps.k8s.hetzner-snapshot-publish` postcondition (R9.9) and S4 roll observation |
 
 ## Provenance
 
@@ -233,12 +272,17 @@ The management cluster is bootstrap-only in either handler (ADR-010 D10.2, level
 | D9.14 | D31 | `cross-cloud-node-management.md` D31 |
 | D9.15 | D-d | revision-2 dispatch §D-d; supersedes D30b / D9.12b |
 | D9.16 | D-f | revision-2 dispatch §D-f; refines D21 / D9.6, resolves first-revision ambiguity 2 |
-| D9.17 | D-g | revision-2 dispatch §D-g; narrows D20 / D9.4 |
+| D9.17 | D-g | revision-2 dispatch §D-g; narrows D20 / D9.4; charter v1 Q8 fixes the effect name `apps.k8s.mgmt-k3d` and its steps |
+| D9.18 | Q12 | charter-v1 answers §Q12; refines D9.16 |
+| D9.19 | Q1 | charter-v1 answers §Q1; replaces the "explicit written approval" gate of revision 2 with the per-revision environment gate |
+| D9.20 | Q3 | charter-v1 answers §Q3; narrows D9.10's S5 to GCP |
+| D9.21 | Q3 | charter-v1 answers §Q3; resolves ADR-010 OQ10.1 |
 
 ## Related
 
 - ADR-007: VM regulators and stage plan; D7.11–D7.12 are constrained by D9.8; D7.15 fixes the scope and D7.17 the module tree this record's files live in.
 - ADR-008: the artifact the CAPI bootstrap delivers (D8.3, D8.4) and the Flux install it assumes in the image.
 - ADR-010: identity tiers (T0/T1/T2), bootstrap levels (L0–L3), machines M1–M6, T0 delivery through `contentFrom.secret`, and the node-identity-free regulator; D9.15–D9.17 depend on it.
-- `openspec/changes/capi-hetzner-cluster/`: S3, S4, S4b, deferred S5; its `specs/capi-cluster-rendering/spec.md` and `specs/capi-bootstrap-vm-regulator/spec.md` carry R9.1–R9.9.
+- `openspec/changes/capi-hetzner-cluster/`: S3, S4, S4b, deferred S5; its `specs/capi-cluster-rendering/spec.md`, `specs/capi-bootstrap-vm-regulator/spec.md`, and `specs/hetzner-cluster-deployment/spec.md` carry R9.1–R9.11.
+- `../cryolite-charter.md`: the programme charter that cites this record's decisions, lists the billing surface of D9.19, and carries the open questions forward.
 - `openspec/changes/k3s-nixos-vm-tests/specs/k3s-substrate-vm-regulator/spec.md`: the substrate the CAPI path inherits.

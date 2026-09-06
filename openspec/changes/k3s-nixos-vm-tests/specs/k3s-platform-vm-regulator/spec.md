@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
-### Requirement: The platform regulator boots the `<c>` core on two guests with Cilium replacing kube-proxy
+### Requirement: The platform regulator boots the `cryolite` core on two guests with Cilium replacing kube-proxy
 
-The platform regulator `vm-k3s-platform` SHALL boot two guests, `<c>-server` and `<c>-agent`, each importing `flake.modules.nixos.base` and `flake.modules.nixos.k3s-server` unmodified, SHALL apply the easykubenix-rendered tree of `kubernetes/clusters/<c>` and nothing from `kubernetes/clusters/local*` or `kubernetes/nixidy/`, SHALL run Cilium with `kubeProxyReplacement=true` and no kube-proxy process on either guest, and SHALL assert one pod per node can reach the other across guests.
+The platform regulator `vm-k3s-platform` SHALL boot two guests, `cryolite-server` and `cryolite-agent`, each importing `flake.modules.nixos.base` and `flake.modules.nixos.k3s-server` unmodified, SHALL apply the easykubenix-rendered tree of `kubernetes/clusters/cryolite` and nothing from `kubernetes/clusters/local*` or `kubernetes/nixidy/`, SHALL run Cilium with `kubeProxyReplacement=true` and no kube-proxy process on either guest, and SHALL assert one pod per node can reach the other across guests.
 `local-k3d` keeps kube-proxy and ServiceLB and is not regulated by this leaf.
-Coverage bin: T3 adequacy for ADR-007 D7.16 and the F2 envelope for `<c>`; non-vacuity: the mutation below.
+Coverage bin: T3 adequacy for ADR-007 D7.16 and the F2 envelope for `cryolite`; non-vacuity: the mutation below.
 
 #### Scenario: kube-proxy replacement is in effect
 
@@ -13,7 +13,7 @@ Coverage bin: T3 adequacy for ADR-007 D7.16 and the F2 envelope for `<c>`; non-v
 
 #### Scenario: kube-proxy replacement is disabled
 
-- **WHEN** the `<c>` cluster module sets `kubeProxyReplacement=false` and the regulator is rebuilt
+- **WHEN** the `cryolite` cluster module sets `kubeProxyReplacement=false` and the regulator is rebuilt
 - **THEN** the regulator fails at the kube-proxy-replacement assertion naming the value
 
 ### Requirement: Every image and chart the platform needs is a build input
@@ -35,7 +35,7 @@ Coverage bin: T3 integrity regulator for hermeticity; non-vacuity: the two scena
 
 ### Requirement: Flux consumes a digest-pinned, signature-verified OCI artifact from an in-guest registry
 
-The platform regulator SHALL install Flux from the manifest `services.k3s.manifests` carries in the node closure (rendered by `flux install --export` from `pkgs.fluxcd`, exactly the source, kustomize, and notification controllers), SHALL run a registry inside the guest seeded during activation from the sandbox-built OCI image layout of the rendered easykubenix tree, SHALL point the root `OCIRepository` at `oci://localhost:<port>/<name>` with `spec.ref.digest` equal to the digest the layout derivation recorded and `spec.verify.provider: cosign` with a test-only public key, and SHALL assert the root `Kustomization` reaches `Ready=True` with `status.lastAppliedRevision` ending in that digest.
+The platform regulator SHALL install Flux from the manifest `services.k3s.manifests` carries in the node closure (rendered by `flux install --export` from `pkgs.fluxcd`, exactly the source, kustomize, and notification controllers), SHALL run a registry inside the server guest (the NixOS `services.dockerRegistry` module of the pinned nixpkgs, whose package is `pkgs.distribution`) seeded during activation from the sandbox-built OCI image layout of the rendered easykubenix tree, SHALL point the root `OCIRepository` at `oci://localhost:<port>/<name>` with `spec.ref.digest` equal to the digest the layout derivation recorded and `spec.verify.provider: cosign` with a test-only public key, and SHALL assert the root `Kustomization` reaches `Ready=True` with `status.lastAppliedRevision` ending in that digest.
 No image SHALL traverse the in-guest registry; images arrive through `services.k3s.images`.
 Coverage bin: T3 adequacy regulator for ADR-008 D8.1–D8.3, D8.6, D8.14; non-vacuity: the two mutations below.
 
@@ -62,7 +62,7 @@ Coverage bin: T3 adequacy for the certificate chain; non-vacuity: the DNS mutati
 #### Scenario: Certificates are issued
 
 - **WHEN** the ClusterIssuer is `Ready` and the Gateway is Programmed
-- **THEN** within the test timeout every Certificate the `<c>` tree declares reports `Ready=True`
+- **THEN** within the test timeout every Certificate the `cryolite` tree declares reports `Ready=True`
 
 #### Scenario: A hostname is not answerable in the guest
 
@@ -71,14 +71,14 @@ Coverage bin: T3 adequacy for the certificate chain; non-vacuity: the DNS mutati
 
 ### Requirement: Gateway address assignment follows production's mechanism
 
-The platform regulator SHALL supply the Gateway's LoadBalancer address through a `CiliumLoadBalancerIPPool` declared by the cluster module, with ServiceLB disabled as the production module disables it, and SHALL assert the `<c>` tree's `Gateway` reaches `Programmed=True` with every declared listener `Accepted=True`.
+The platform regulator SHALL supply the Gateway's LoadBalancer address through a `CiliumLoadBalancerIPPool` declared by the cluster module, with ServiceLB disabled as the production module disables it, and SHALL assert the `cryolite` tree's `Gateway` reaches `Programmed=True` with every declared listener `Accepted=True`.
 This requirement rests on world assumption A15.
 Coverage bin: T3 adequacy for ADR-007 D7.9; non-vacuity: the mutation below.
 
 #### Scenario: The Gateway is Programmed under the production mechanism
 
 - **WHEN** Cilium is ready and the production address mechanism is applied
-- **THEN** within the test timeout the `<c>` `Gateway` reports `Programmed=True` and each declared listener reports `Accepted=True`
+- **THEN** within the test timeout the `cryolite` `Gateway` reports `Programmed=True` and each declared listener reports `Accepted=True`
 
 #### Scenario: The address mechanism is removed
 
@@ -103,8 +103,8 @@ Coverage bin: T3 adequacy for ADR-008 D8.9 and D8.14 in the test envelope only; 
 
 ### Requirement: The Chainsaw suite is the oracle
 
-The platform regulator SHALL run the Chainsaw suite `kubernetes/tests/<c>` inside the server guest against the node's kubeconfig, SHALL fail if any Chainsaw step fails, and SHALL NOT re-implement Chainsaw's assertions in the test script.
-The suite SHALL be authored for `<c>` with a foundation phase (Cilium ready, Flux controllers ready, root `Kustomization` `Ready=True` at the pinned digest) and an infrastructure phase (cert-manager, step-ca, `ClusterIssuer`, `Gateway`, `Certificate`s, `HTTPRoute`); it SHALL NOT assert ArgoCD or sops-secrets-operator state, and `kubernetes/tests/local-k3d` SHALL NOT be edited or referenced by it.
+The platform regulator SHALL run the Chainsaw suite `kubernetes/tests/cryolite` inside the server guest against the node's kubeconfig, SHALL fail if any Chainsaw step fails, and SHALL NOT re-implement Chainsaw's assertions in the test script.
+The suite SHALL be authored for `cryolite` with a foundation phase (Cilium ready, Flux controllers ready, root `Kustomization` `Ready=True` at the pinned digest) and an infrastructure phase (cert-manager, step-ca, `ClusterIssuer`, `Gateway`, `Certificate`s, `HTTPRoute`); it SHALL NOT assert ArgoCD or sops-secrets-operator state, and `kubernetes/tests/local-k3d` SHALL NOT be edited or referenced by it.
 Coverage bin: T3 traceability regulator; non-vacuity: the mutation below.
 
 #### Scenario: Chainsaw runs in the guest
@@ -115,11 +115,11 @@ Coverage bin: T3 traceability regulator; non-vacuity: the mutation below.
 #### Scenario: A Chainsaw assertion is violated
 
 - **WHEN** a Chainsaw assert file is edited to expect a listener count of five
-- **THEN** the regulator fails with Chainsaw's own step failure for the `<c>` gateway step
+- **THEN** the regulator fails with Chainsaw's own step failure for the `cryolite` gateway step
 
 ### Requirement: The platform regulator is one leaf unless measured cost forces a split
 
-The `<c>` core SHALL be regulated by one `vm-k3s-platform` leaf; it SHALL be split into per-slice leaves only after a measured wall time exceeding fifteen minutes on the reference KVM host, and the split SHALL be recorded with the measurement.
+The `cryolite` core SHALL be regulated by one `vm-k3s-platform` leaf; it SHALL be split into per-slice leaves only after a measured wall time exceeding fifteen minutes on the reference KVM host, and the split SHALL be recorded with the measurement.
 
 #### Scenario: Wall time exceeds the threshold
 

@@ -51,7 +51,7 @@ On the buildbot worker, which exposes neither `kvm` nor `nixos-test`, VM leaves 
 
 ### Requirement: Cached CI hashing covers the VM leaves' inputs
 
-When VM leaves run in GitHub Actions through `cached-ci-job`, its `hash-sources` SHALL include `modules/checks/vm-*.nix`, `modules/nixos/**`, `modules/kubernetes/**`, `kubernetes/clusters/<c>/**`, `kubernetes/modules/**`, `kubernetes/tests/<c>/**`, and the age and cosign fixtures, so that a change to any of them invalidates the cache.
+When VM leaves run in GitHub Actions through `cached-ci-job`, its `hash-sources` SHALL include `modules/checks/vm-*.nix`, `modules/nixos/**`, `modules/kubernetes/**`, `kubernetes/clusters/cryolite/**`, `kubernetes/modules/**`, `kubernetes/tests/cryolite/**`, and the age and cosign fixtures, so that a change to any of them invalidates the cache.
 
 #### Scenario: A module change invalidates the cache
 
@@ -60,7 +60,7 @@ When VM leaves run in GitHub Actions through `cached-ci-job`, its `hash-sources`
 
 ### Requirement: Registry publishing is an effect, never a check
 
-Pushing the `<c>` configuration artifact to GHCR and signing it SHALL be exposed as `apps.<system>.k8s.oci-push` and `apps.<system>.k8s.cosign-sign` under `modules/apps/k8s/`, running outside the sandbox, SHALL NOT be reachable from any `checks.<system>.*` derivation, and the push SHALL fail when the registry's reported digest differs from the store-resident layout digest it published.
+Pushing the `cryolite` configuration artifact to GHCR and signing it SHALL be exposed as `apps.<system>.k8s.oci-push` and `apps.<system>.k8s.cosign-sign` under `modules/apps/k8s/`, running outside the sandbox, SHALL NOT be reachable from any `checks.<system>.*` derivation, and the push SHALL fail when the registry's reported digest differs from the store-resident layout digest it published.
 The Hetzner snapshot effect and the Cluster API effects are specified by `openspec/changes/capi-hetzner-cluster/` under the same rule.
 Coverage bin: E; non-vacuity: the digest-mismatch scenario in `k3s-manifest-purity-regulator` and the scenario below.
 

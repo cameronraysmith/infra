@@ -37,8 +37,8 @@ For production deployment:
 | GitOps operations | [workflows/05-gitops-operations.md](workflows/05-gitops-operations.md) | Day-2 operations and maintenance |
 | Testing | [workflows/06-testing.md](workflows/06-testing.md) | Chainsaw integration tests and CI workflow |
 | ADR-001 | [decisions/ADR-001-local-dev-architecture.md](decisions/ADR-001-local-dev-architecture.md) | Local development architecture decision |
-| ADR-007 | [decisions/ADR-007-nixos-vm-tests-for-k3s.md](decisions/ADR-007-nixos-vm-tests-for-k3s.md) | NixOS VM tests for the k3s substrate and the sibling cluster `<c>`; local prototypes frozen (proposed) |
-| ADR-008 | [decisions/ADR-008-reconciler-and-artifact-transport.md](decisions/ADR-008-reconciler-and-artifact-transport.md) | Flux reconciler, OCI artifact transport, and image producers for `<c>` (proposed) |
+| ADR-007 | [decisions/ADR-007-nixos-vm-tests-for-k3s.md](decisions/ADR-007-nixos-vm-tests-for-k3s.md) | NixOS VM tests for the k3s substrate and the sibling cluster `cryolite`; local prototypes frozen (proposed) |
+| ADR-008 | [decisions/ADR-008-reconciler-and-artifact-transport.md](decisions/ADR-008-reconciler-and-artifact-transport.md) | Flux reconciler, OCI artifact transport, and image producers for `cryolite` (proposed) |
 | ADR-009 | [decisions/ADR-009-capi-node-management-and-networking.md](decisions/ADR-009-capi-node-management-and-networking.md) | Cluster API node management, multi-cloud seam, image path, and networking (proposed) |
 | ADR-010 | [decisions/ADR-010-identity-tiers-and-non-circular-bootstrap.md](decisions/ADR-010-identity-tiers-and-non-circular-bootstrap.md) | Identity tiers T0/T1/T2, bootstrap levels L0–L3, machines M1–M6 (proposed) |
 
@@ -87,8 +87,8 @@ See [reference architecture](architecture/reference-architecture.md) for the com
 
 - [ADR-001: Local development architecture](decisions/ADR-001-local-dev-architecture.md) - Original local development architecture (historical)
 - [ADR-005: Local cluster architecture revision](decisions/ADR-005-local-cluster-architecture-revision.md) - k3d + ctlptl via OrbStack (current approach)
-- [ADR-007: NixOS VM tests for k3s](decisions/ADR-007-nixos-vm-tests-for-k3s.md) - Proposed NixOS VM tests and pure checks for the k3s substrate and a new sibling cluster `<c>`; `local` and `local-k3d` stay frozen
-- [ADR-008: Reconciler and artifact transport](decisions/ADR-008-reconciler-and-artifact-transport.md) - Flux from a digest-pinned OCI artifact for `<c>`; ArgoCD stays for `local-k3d`
+- [ADR-007: NixOS VM tests for k3s](decisions/ADR-007-nixos-vm-tests-for-k3s.md) - Proposed NixOS VM tests and pure checks for the k3s substrate and a new sibling cluster `cryolite`; `local` and `local-k3d` stay frozen
+- [ADR-008: Reconciler and artifact transport](decisions/ADR-008-reconciler-and-artifact-transport.md) - Flux from a digest-pinned OCI artifact for `cryolite`; ArgoCD stays for `local-k3d`
 - [ADR-009: CAPI node management and networking](decisions/ADR-009-capi-node-management-and-networking.md) - cluster-api-k3s + CAPH nodes, typed platform seam, per-role snapshots, deferred admin overlay
 - [ADR-010: Identity tiers and non-circular bootstrap](decisions/ADR-010-identity-tiers-and-non-circular-bootstrap.md) - Stable cluster identity versus disposable node identity; L0–L3 bootstrap without a seed host
 

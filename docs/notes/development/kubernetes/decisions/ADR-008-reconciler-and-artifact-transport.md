@@ -2,11 +2,12 @@
 
 ## Status
 
-Proposed (2026-09-04; revision 2 the same day, narrowing every decision to the sibling cluster `<c>`).
+Proposed (2026-09-04; revision 2 the same day, narrowing every decision to the sibling cluster `cryolite`; charter v1 fold the same day, fixing the in-guest registry implementation in D8.6).
+The programme-level view that places this record among ADR-007, ADR-009, and ADR-010 is `../cryolite-charter.md`.
 Design only; no flake input, production module, or workflow changes land with this record.
 Implemented by stages S0 and S2 of `openspec/changes/k3s-nixos-vm-tests/`; the `apps.k8s.oci-push` effect first runs in S4 of `openspec/changes/capi-hetzner-cluster/`.
 
-Scope after revision 2 (ADR-007 D7.15, recorded here as D8.15): every decision below governs `kubernetes/clusters/<c>` and nothing else.
+Scope after revision 2 (ADR-007 D7.15, recorded here as D8.15): every decision below governs `kubernetes/clusters/cryolite` and nothing else.
 `local` and `local-k3d` are frozen prototypes that keep ArgoCD, nixidy, the `local-k3d-ci` environment, sops-secrets-operator, and ADR-006's manifest repository; ArgoCD and Flux coexist in the repository, one per cluster.
 Revision 1 of this record reversed ADR-006 and retired ArgoCD, nixidy, and sops-secrets-operator for the fleet; those global retirements are Future Work for a later, separately authorized feedback change, and the decisions that carried them (D8.1, D8.9, D8.10) are retained below with their revision-2 status.
 ADR-006 is not reversed by this revision.
@@ -17,9 +18,9 @@ ADR-007 re-expresses the k3d `test-cluster` workflow as NixOS VM tests and pure 
 Doing so exposed that the reconciler and the transport of desired state were the k3d workflow's least hermetic parts: ArgoCD read a git repository mounted from the Docker host, nixidy rendered it, secrets arrived through `SOPS_AGE_KEY` from GitHub Secrets, and the private manifest repository of ADR-006 existed to keep Helm-generated Secrets out of the public tree.
 None of those pieces can be expressed as a store path with a known digest, so none of them can be regulated by a `checks.<system>.<name>` leaf without a network.
 
-This record fixes how desired state reaches `<c>`, which reconciler applies it, how images and configuration are packaged, and where the only effects (registry pushes) live.
+This record fixes how desired state reaches `cryolite`, which reconciler applies it, how images and configuration are packaged, and where the only effects (registry pushes) live.
 The node-management and networking half of the design is ADR-009; the identity material this record consumes (the SOPS age key, the cosign key) is T0 cluster identity as defined in ADR-010.
-The module tree that places these pieces is ADR-007 D7.17: `modules/kubernetes/artifacts.nix` (`k8s-manifests-<c>`, `k8s-oci-<c>`), `modules/kubernetes/oci-lib.nix` (`mkOciLayout`, `mkNixSnapshotterImage`, `readDigest`), `modules/kubernetes/flux/{install,root}.nix`, `modules/nixos/k3s-flux.nix`, `kubernetes/modules/flux/`, and `modules/apps/k8s/{oci-push,cosign-sign}`.
+The module tree that places these pieces is ADR-007 D7.17: `modules/kubernetes/artifacts.nix` (`k8s-manifests-cryolite`, `k8s-oci-cryolite`), `modules/kubernetes/oci-lib.nix` (`mkOciLayout`, `mkNixSnapshotterImage`, `readDigest`), `modules/kubernetes/flux/{install,root}.nix`, `modules/nixos/k3s-flux.nix`, `kubernetes/modules/flux/`, and `modules/apps/k8s/{oci-push,cosign-sign}`.
 
 Paths under `~/ghq/` refer to the reference trees listed in ADR-007's appendix at the revisions recorded there.
 Claims read in source are stated as facts; claims that were not executed are marked as inferred and listed in the open-risk table.
@@ -59,12 +60,12 @@ Nothing in the current check set rejects a floating tag; the property is regulat
 
 ## Decisions
 
-### D8.1: Flux is the reconciler of `<c>` [narrowed, rev 2]
+### D8.1: Flux is the reconciler of `cryolite` [narrowed, rev 2]
 
-Flux (source-controller, kustomize-controller, notification-controller) is the reconciler of `<c>`.
+Flux (source-controller, kustomize-controller, notification-controller) is the reconciler of `cryolite`.
 The reasons are the three F8.1 properties: offline install from a Nixpkgs package, digest-pinned OCI sources, and signature verification with a key that can live in the node closure.
-ArgoCD has no equivalent of `.spec.ref.digest` for a git source and would require an ADR-006-style repository for `<c>`.
-The `<c>` Chainsaw suite asserts `Kustomization` readiness and `status.lastAppliedRevision` equality with the pinned digest where the `local-k3d` suite asserts ArgoCD sync.
+ArgoCD has no equivalent of `.spec.ref.digest` for a git source and would require an ADR-006-style repository for `cryolite`.
+The `cryolite` Chainsaw suite asserts `Kustomization` readiness and `status.lastAppliedRevision` equality with the pinned digest where the `local-k3d` suite asserts ArgoCD sync.
 Revision 1 wrote "replaces ArgoCD" for the fleet; ArgoCD continues to reconcile `local-k3d`, and its replacement there is Future Work (D8.15).
 
 ### D8.2: Flux is installed from `flux install --export` rendered in Nix, three controllers, images preloaded
@@ -79,7 +80,7 @@ The rendered install manifest is a T1 artifact: the S0 purity leaf inspects it l
 Flux's install manifest and the CRDs it needs are placed in the node closure through `services.k3s.manifests`, which k3s applies from `/var/lib/rancher/k3s/server/manifests` at start (`rancher/default.nix:533`).
 The root `OCIRepository` and root `Kustomization` are also rendered in Nix.
 `OCIRepository.spec.ref.digest` is the digest of the OCI layout built in the sandbox (D8.5), so the node closure names the exact configuration the cluster will converge on.
-Where the root object lives differs by target: in VM leaves it is baked into the same `services.k3s.manifests` (one hash, the VM is rebuilt anyway); on CAPI-managed nodes it is delivered per cluster through `KThreesConfig.spec.files` (ADR-009 D9.7), and the hash chain of ADR-007 D7.17 (`clusters/<c>` → `k8s-manifests-<c>` → `k8s-oci-<c>` digest → `k3s-flux.nix` → node closure) means a configuration change is a flake bump and rolls nodes; accepting that was ambiguity 1 of the first revision.
+Where the root object lives differs by target: in VM leaves it is baked into the same `services.k3s.manifests` (one hash, the VM is rebuilt anyway); on CAPI-managed nodes it is delivered per cluster through `KThreesConfig.spec.files` (ADR-009 D9.7), and the hash chain of ADR-007 D7.17 (`clusters/cryolite` → `k8s-manifests-cryolite` → `k8s-oci-cryolite` digest → `k3s-flux.nix` → node closure) means a configuration change is a flake bump and rolls nodes; accepting that was ambiguity 1 of the first revision.
 
 ### D8.4: the artifact is hosted on GHCR; the tag is the flake revision; consumers use the digest
 
@@ -103,6 +104,10 @@ The pattern is nix-snapshotter's push-and-pull test (`~/ghq/github.com/pdtpartne
 Images do not pass through the registry; they are preloaded (F8.3).
 Nothing in `checks` opens a network connection outside the VM.
 
+The registry is the NixOS module `services.dockerRegistry` (`nixos/modules/services/misc/docker-registry.nix` in the pinned nixpkgs, `044bfe75`), whose `package` option defaults to `pkgs.distribution` (CNCF Distribution 3.1.1); the older attribute name `pkgs.docker-distribution` is a throwing alias in that revision, so no artifact may name it.
+The module exists only in the S2 guest: `cryolite` on Hetzner pulls the artifact from GHCR (D8.4) or from whatever registry `openspec/changes/capi-hetzner-cluster/` selects, and no production node closure carries a registry service.
+This resolves the parent change's open question A4 (design.md) and ADR-007's B2.
+
 ### D8.7: publishing is an `apps` effect that asserts digest equality
 
 `nix run .#apps.<system>.k8s.oci-push` (the tree of ADR-007 D7.17; revision 1 called it `push-cluster-artifact`) pushes the OCI layout to GHCR and then reads back the digest of the pushed manifest.
@@ -118,15 +123,15 @@ The Crane `index append` step is adopted only when a second architecture is actu
 ### D8.9: Flux SOPS decryption with a per-cluster age key [narrowed, rev 2]
 
 The kustomize-controller decrypts SOPS-encrypted Secrets inside the artifact using `spec.decryption.provider: sops` with a `flux-system/sops-age` Secret.
-The per-cluster age key is T0 cluster identity (ADR-010 D10.1): generated once by a Clan vars generator and sops-encrypted in the repository under `secrets/clusters/<c>/`.
+The per-cluster age key is T0 cluster identity (ADR-010 D10.1): generated once by a Clan vars generator and sops-encrypted in the repository under `secrets/clusters/cryolite/`.
 On CAPI-managed nodes it reaches a server node at first boot through `KThreesConfig.spec.files[].contentFrom.secret` (ADR-010 D10.4), and the server drops the `flux-system/sops-age` Secret manifest into `/var/lib/rancher/k3s/server/manifests/`; the node closure never contains the private key, so the snapshot is secret-free.
 Revision 1 delivered the key by sops-nix and mirrored it at activation; that path is what `vm-k3s-platform` still exercises with a committed test-only age keypair in place of the Clan generator (ADR-007 Q5), and it is retained as the VM-leaf shape only.
-sops-secrets-operator is not deployed in `<c>`; revision 1's clause "deleted together with its Chainsaw assertion" referred to `local-k3d`, where the operator stays, and that retirement is Future Work (D8.15).
+sops-secrets-operator is not deployed in `cryolite`; revision 1's clause "deleted together with its Chainsaw assertion" referred to `local-k3d`, where the operator stays, and that retirement is Future Work (D8.15).
 
-### D8.10: `<c>` needs no private manifest repository; the reversal of ADR-006 is Future Work [Superseded in its global form by D-a (rev 2, D8.15)]
+### D8.10: `cryolite` needs no private manifest repository; the reversal of ADR-006 is Future Work [Superseded in its global form by D-a (rev 2, D8.15)]
 
 ADR-006 introduced a private manifest repository because nixidy rendered Helm-generated Secrets into the tree.
-With Secrets SOPS-encrypted inside the OCI artifact and decrypted only in the cluster, the `<c>` artifact can be public and needs no such repository.
+With Secrets SOPS-encrypted inside the OCI artifact and decrypted only in the cluster, the `cryolite` artifact can be public and needs no such repository.
 Revision 1 concluded from this that ADR-006 is reversed and that the `file:///manifests` pattern, the `local-k3d-ci` nixidy environment, and the T1 grep for it are retired.
 Rationale for superseding: those artifacts belong to the frozen `local-k3d` prototype, which this plan does not edit; ADR-006 stands for `local-k3d` until the feedback change decides its fate.
 
@@ -154,13 +159,13 @@ The `apps.k8s.cosign-sign` effect signs the artifact with a cosign key pair gene
 Keyless (OIDC) verification is rejected because it requires network access to Fulcio and Rekor at verification time, which the VM leaf cannot provide.
 The VM leaf signs the in-guest artifact with a test-only key pair and verifies against its public half.
 
-### D8.15: this record governs `<c>` only; ArgoCD and Flux coexist [new, rev 2]
+### D8.15: this record governs `cryolite` only; ArgoCD and Flux coexist [new, rev 2]
 
-Every decision D8.1–D8.14 is scoped to `kubernetes/clusters/<c>`.
-What stands for `<c>`: Flux from `flux install --export` with exactly source-controller, kustomize-controller, and notification-controller (D8.2); bootstrap through `services.k3s.manifests` (D8.3); the root `OCIRepository` pinned by digest (D8.3, D8.4); GHCR tagged by flake revision, consumers by digest (D8.4); nix-snapshotter images for Nix-native workloads and nix2container for portable images (D8.5); the OCI-layout derivation for Flux configuration (D8.5); in-VM registry seeding (D8.6); push as an `apps` effect asserting digest equality (D8.7); keyed cosign (D8.14); Flux SOPS with a per-cluster Clan-vars age key (D8.9); Timoni only as a digest-pinned offline ingest renderer (D8.13); no runtime `flakeRef` or `nixExpr` (D8.11).
+Every decision D8.1–D8.14 is scoped to `kubernetes/clusters/cryolite`.
+What stands for `cryolite`: Flux from `flux install --export` with exactly source-controller, kustomize-controller, and notification-controller (D8.2); bootstrap through `services.k3s.manifests` (D8.3); the root `OCIRepository` pinned by digest (D8.3, D8.4); GHCR tagged by flake revision, consumers by digest (D8.4); nix-snapshotter images for Nix-native workloads and nix2container for portable images (D8.5); the OCI-layout derivation for Flux configuration (D8.5); in-VM registry seeding (D8.6); push as an `apps` effect asserting digest equality (D8.7); keyed cosign (D8.14); Flux SOPS with a per-cluster Clan-vars age key (D8.9); Timoni only as a digest-pinned offline ingest renderer (D8.13); no runtime `flakeRef` or `nixExpr` (D8.11).
 What this record no longer claims: ArgoCD retirement, nixidy retirement, sops-secrets-operator retirement, and the reversal of ADR-006.
-ArgoCD reconciles `local-k3d` from its nixidy-rendered tree; Flux reconciles `<c>` from its easykubenix-rendered OCI artifact; `modules/nixidy.nix`, `kubernetes/nixidy/`, and `modules/checks/nixidy-k8s.nix` are `[keep]` in the module tree.
-The global retirements and the reversal are Future Work for a later, separately authorized feedback change that migrates or retires the prototypes with the evidence `<c>` produces.
+ArgoCD reconciles `local-k3d` from its nixidy-rendered tree; Flux reconciles `cryolite` from its easykubenix-rendered OCI artifact; `modules/nixidy.nix`, `kubernetes/nixidy/`, and `modules/checks/nixidy-k8s.nix` are `[keep]` in the module tree.
+The global retirements and the reversal are Future Work for a later, separately authorized feedback change that migrates or retires the prototypes with the evidence `cryolite` produces.
 
 ## Requirements carried into the OpenSpec delta specs
 
@@ -172,8 +177,8 @@ The global retirements and the reversal are Future Work for a later, separately 
 | R8.4 | every `OCIRepository` carries `spec.ref.digest` and `spec.verify` | `flux-sources-pinned` | T1 |
 | R8.5 | Flux install manifest contains exactly the three controllers | `flux-install-rendered` | T1 |
 | R8.6 | OCI-layout digest equals registry digest after push | `apps.k8s.oci-push` | E |
-| R8.7 | Flux converges from the in-guest registry with SOPS decryption and signature verification, on the two-guest `<c>` core | `vm-k3s-platform` | T3 |
-| R8.8 | the `local-k3d` rendered tree, nixidy environments, and Chainsaw suite are byte-identical before and after each `<c>` stage | `git diff --stat` over the frozen paths in each stage PR, and the existing `nixidy-k8s` leaves staying green | T1 |
+| R8.7 | Flux converges from the in-guest registry with SOPS decryption and signature verification, on the two-guest `cryolite` core | `vm-k3s-platform` | T3 |
+| R8.8 | the `local-k3d` rendered tree, nixidy environments, and Chainsaw suite are byte-identical before and after each `cryolite` stage | `git diff --stat` over the frozen paths in each stage PR, and the existing `nixidy-k8s` leaves staying green | T1 |
 
 ## Verified versus inferred
 
@@ -186,6 +191,7 @@ The global retirements and the reversal are Future Work for a later, separately 
 | R8.e | keyed cosign verification needs no network | read in docs (`ocirepositories.md:563`) | `vm-k3s-platform` (S2) |
 | R8.f | a `services.k3s.manifests` entry can mirror a sops-nix–delivered file into a Secret at activation | inferred from `rancher/default.nix:533` and sops-nix's activation ordering | `vm-k3s-platform` (S2) with the fixture key |
 | R8.g | a file written by cloud-init `write_files` into `/var/lib/rancher/k3s/server/manifests/` before `k3s.service` starts is applied by k3s like a `services.k3s.manifests` entry | inferred from `rancher/default.nix:533` (k3s reads the directory at start) | `vm-k3s-capi-bootstrap` (S3, `capi-hetzner-cluster`) |
+| R8.h | `services.dockerRegistry` exists in the pinned nixpkgs and its default package is `pkgs.distribution` | read in source (`nixos/modules/services/misc/docker-registry.nix`, `pkgs/by-name/di/distribution/package.nix`, `pkgs/top-level/aliases.nix` at `044bfe75`) | `vm-k3s-platform` (S2) |
 
 ## Provenance
 

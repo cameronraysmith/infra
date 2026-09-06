@@ -13,7 +13,7 @@ Coverage bin: T1 integrity for ADR-009 D9.2, D9.3, D9.8; non-vacuity: the scenar
 
 ### Requirement: The bootstrap regulator boots the production image from a NoCloud seed shaped as the provider emits it
 
-There SHALL be a regulator, `vm-k3s-capi-bootstrap` (`modules/checks/vm-k3s-capi-bootstrap.nix`), that boots the `<c>-server` image with `k3s-server.bootstrap = "cloud-init"` from a seed whose `user-data` is the rendered `KThreesControlPlane` bootstrap template of `capi-hetzner-cluster` (`capi-cluster-rendering`) with every `contentFrom.secret` entry resolved against the test-only fixtures under `kubernetes/tests/fixtures/`, and whose `runcmd` is cluster-api-k3s' own fixture text `INSTALL_K3S_SKIP_DOWNLOAD=true INSTALL_K3S_EXEC='server' sh /opt/install.sh`; it SHALL assert that `cloud-final.service` completed, that `k3s.service` is active with `ExecStart` reading `services.k3s.configPath`, and that the merged k3s configuration contains the token and CA paths from `/etc/rancher/k3s/config.yaml.d/`.
+There SHALL be a regulator, `vm-k3s-capi-bootstrap` (`modules/checks/vm-k3s-capi-bootstrap.nix`), that boots the `cryolite-server` image with `k3s-server.bootstrap = "cloud-init"` from a seed whose `user-data` is the rendered `KThreesControlPlane` bootstrap template of `capi-hetzner-cluster` (`capi-cluster-rendering`) with every `contentFrom.secret` entry resolved against the test-only fixtures under `kubernetes/tests/fixtures/`, and whose `runcmd` is cluster-api-k3s' own fixture text `INSTALL_K3S_SKIP_DOWNLOAD=true INSTALL_K3S_EXEC='server' sh /opt/install.sh`; it SHALL assert that `cloud-final.service` completed, that `k3s.service` is active with `ExecStart` reading `services.k3s.configPath`, and that the merged k3s configuration contains the token and CA paths from `/etc/rancher/k3s/config.yaml.d/`.
 The regulator SHALL require `kvm nixos-test` and SHALL read no host environment, GitHub Secret, or network.
 Coverage bin: T2 adequacy for ADR-009 D9.9, R9.5 and ADR-010 R10.3; non-vacuity: the mutations below.
 
@@ -29,13 +29,13 @@ Coverage bin: T2 adequacy for ADR-009 D9.9, R9.5 and ADR-010 R10.3; non-vacuity:
 
 ### Requirement: T0 material lands where the design says and is not baked into the image
 
-The bootstrap regulator SHALL assert that the Flux age-key `Secret` manifest is present under `/var/lib/rancher/k3s/server/manifests/` and applied to the cluster, that the etcd-S3 credential drop-in is present and referenced by the merged configuration, and that none of those files or their contents is present in the `<c>-server` image closure before the seed is applied.
+The bootstrap regulator SHALL assert that the Flux age-key `Secret` manifest is present under `/var/lib/rancher/k3s/server/manifests/` and applied to the cluster, that the etcd-S3 credential drop-in is present and referenced by the merged configuration, and that none of those files or their contents is present in the `cryolite-server` image closure before the seed is applied.
 Coverage bin: T2 integrity for ADR-010 D10.4, R10.3; non-vacuity: the scenario below.
 
 #### Scenario: The age key is baked into the image
 
-- **WHEN** the fixture age private key is added to `environment.etc` of `<c>-server` and the regulator is rebuilt
-- **THEN** the regulator fails at the closure assertion, and `checks.k8s-closure-secret-free-<c>` of `k3s-nixos-vm-tests` fails independently
+- **WHEN** the fixture age private key is added to `environment.etc` of `cryolite-server` and the regulator is rebuilt
+- **THEN** the regulator fails at the closure assertion, and `checks.k8s-closure-secret-free-cryolite` of `k3s-nixos-vm-tests` fails independently
 
 ### Requirement: Node identity is fresh on every boot and the CA private key does not survive
 

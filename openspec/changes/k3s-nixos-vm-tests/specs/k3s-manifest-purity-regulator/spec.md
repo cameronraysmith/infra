@@ -2,7 +2,7 @@
 
 ### Requirement: The rendered tree contains no runtime Nix evaluation and no floating image reference
 
-There SHALL be a regulator, `checks.k8s-purity-<c>` (`modules/kubernetes/purity.nix`), that scans every rendered manifest of the `<c>` easykubenix cluster module for each target and fails when any object contains a `flakeRef` or `nixExpr` field, any image reference whose tag is `latest`, any image reference with a tag and no `@sha256:` digest, or any untagged image reference; the regulator SHALL run without `kvm` or `nixos-test` system features.
+There SHALL be a regulator, `checks.k8s-purity-cryolite` (`modules/kubernetes/purity.nix`), that scans every rendered manifest of the `cryolite` easykubenix cluster module for each target and fails when any object contains a `flakeRef` or `nixExpr` field, any image reference whose tag is `latest`, any image reference with a tag and no `@sha256:` digest, or any untagged image reference; the regulator SHALL run without `kvm` or `nixos-test` system features.
 Coverage bin: T1 integrity regulator for ADR-008 D8.11; non-vacuity: the two mutations below.
 
 #### Scenario: A runtime evaluation field appears
@@ -17,7 +17,7 @@ Coverage bin: T1 integrity regulator for ADR-008 D8.11; non-vacuity: the two mut
 
 ### Requirement: Rendered image references are a subset of the preload set
 
-The same `checks.k8s-purity-<c>` regulator SHALL compute the set of image references in the rendered `<c>` tree for a target and the set of image names and digests in that target's `services.k3s.images` list (each derived from the same rendered tree by string context, not maintained by hand), and fails when the first set is not contained in the second.
+The same `checks.k8s-purity-cryolite` regulator SHALL compute the set of image references in the rendered `cryolite` tree for a target and the set of image names and digests in that target's `services.k3s.images` list (each derived from the same rendered tree by string context, not maintained by hand), and fails when the first set is not contained in the second.
 Coverage bin: T1 adequacy regulator for the platform leaf's hermeticity; non-vacuity: the mutation below.
 
 #### Scenario: A workload image is added without a preload entry
@@ -27,12 +27,12 @@ Coverage bin: T1 adequacy regulator for the platform leaf's hermeticity; non-vac
 
 ### Requirement: The closure provenance report is a pure derivation
 
-There SHALL be a derivation, `checks.k8s-provenance-<c>` (`modules/kubernetes/provenance.nix`), that writes, for a target, the `nix path-info -r` closure listing of the `<c>-server` node image, the list of every OCI image digest in the preload set with the derivation that produced it, and the OCI-layout digest of the configuration artifact, and it SHALL be built without network and be byte-identical across two builds of the same flake revision.
+There SHALL be a derivation, `checks.k8s-provenance-cryolite` (`modules/kubernetes/provenance.nix`), that writes, for a target, the `nix path-info -r` closure listing of the `cryolite-server` node image, the list of every OCI image digest in the preload set with the derivation that produced it, and the OCI-layout digest of the configuration artifact, and it SHALL be built without network and be byte-identical across two builds of the same flake revision.
 Coverage bin: T1 traceability regulator for ADR-008 D8.12; non-vacuity: a differing flake revision produces a differing report.
 
 #### Scenario: The report is reproducible
 
-- **WHEN** `nix build .#checks.x86_64-linux.k8s-provenance-<c> --rebuild` is run
+- **WHEN** `nix build .#checks.x86_64-linux.k8s-provenance-cryolite --rebuild` is run
 - **THEN** the rebuilt output is byte-identical to the cached output
 
 #### Scenario: An image is bumped
@@ -42,29 +42,29 @@ Coverage bin: T1 traceability regulator for ADR-008 D8.12; non-vacuity: a differ
 
 ### Requirement: No rendered artifact names a node or a node key
 
-There SHALL be a regulator, `checks.k8s-node-identity-free-<c>` (`modules/kubernetes/identity.nix`), that evaluates the rendered Flux artifact of `<c>`, the sops file index under `secrets/clusters/<c>/`, the Clan inventory, and, once the sibling change renders them, the `capi-<c>` Cluster API objects, and fails when any of them contains a node hostname pattern (`<c>-server-*`, `<c>-agent-*`, a CAPI `Machine` name), an SSH host key or its fingerprint, a Cilium WireGuard public key, or a `CiliumNode` name; it SHALL run without `kvm` or `nixos-test`.
+There SHALL be a regulator, `checks.k8s-node-identity-free-cryolite` (`modules/kubernetes/identity.nix`), that evaluates the rendered Flux artifact of `cryolite`, the sops file index under `secrets/clusters/cryolite/`, the Clan inventory, and, once the sibling change renders them, the `capi-cryolite` Cluster API objects, and fails when any of them contains a node hostname pattern (`cryolite-server-*`, `cryolite-agent-*`, a CAPI `Machine` name), an SSH host key or its fingerprint, a Cilium WireGuard public key, or a `CiliumNode` name; it SHALL run without `kvm` or `nixos-test`.
 T1 node identity is disposable and never referenced outside the cluster (ADR-010 D10.1, D10.6); the regulator makes that a property of the repository rather than a habit.
 Coverage bin: T1 integrity regulator for ADR-010 R10.1; non-vacuity: the two mutations below.
 
 #### Scenario: A Secret is keyed by a node name
 
-- **WHEN** a sops-encrypted file `secrets/clusters/<c>/<c>-server-0.yaml` is added and the regulator is rebuilt
+- **WHEN** a sops-encrypted file `secrets/clusters/cryolite/cryolite-server-0.yaml` is added and the regulator is rebuilt
 - **THEN** the regulator fails naming the file and the node pattern
 
 #### Scenario: The Clan inventory gains a node
 
-- **WHEN** an inventory entry `machines.<c>-agent` is added and the regulator is rebuilt
+- **WHEN** an inventory entry `machines.cryolite-agent` is added and the regulator is rebuilt
 - **THEN** the regulator fails naming the entry; k3s nodes are not Clan machines
 
 ### Requirement: The node image closure contains no T0 private material
 
-There SHALL be a regulator, `checks.k8s-closure-secret-free-<c>`, that walks the `nix path-info -r` closure of the `<c>-server` and `<c>-agent` images and fails when any path contains a sops-encrypted file from `secrets/clusters/<c>/`, a private-key fingerprint from the T0 set, or the test-only fixture private keys; public material (authorized keys, the SSH CA public key, the cosign public key) is allowed.
+There SHALL be a regulator, `checks.k8s-closure-secret-free-cryolite`, that walks the `nix path-info -r` closure of the `cryolite-server` and `cryolite-agent` images and fails when any path contains a sops-encrypted file from `secrets/clusters/cryolite/`, a private-key fingerprint from the T0 set, or the test-only fixture private keys; public material (authorized keys, the SSH CA public key, the cosign public key) is allowed.
 Snapshots are secret-free and per role (ADR-010 D10.4); T0 material reaches a node only at first boot.
 Coverage bin: T1 integrity regulator for ADR-010 R10.2; non-vacuity: the mutation below.
 
 #### Scenario: A private key is baked in
 
-- **WHEN** the test-only age private key is added to `environment.etc` of `<c>-server` and the regulator is rebuilt
+- **WHEN** the test-only age private key is added to `environment.etc` of `cryolite-server` and the regulator is rebuilt
 - **THEN** the regulator fails naming the store path that carries the key
 
 ### Requirement: Every Flux source is pinned by digest and verified

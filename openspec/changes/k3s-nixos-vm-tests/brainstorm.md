@@ -95,7 +95,7 @@ Evidence: ADR-007 F3, Q6.
 
 Originally yes, pending D-P2.
 Superseded (rev 1): nixidy is retired; the VM variant is a `target` of the easykubenix cluster module (design D9).
-Superseded by D-a (rev 2): nixidy is not retired; `kubernetes/nixidy/local-k3d` is frozen and untouched, and the VM leaf renders the new sibling cluster `<c>` with easykubenix, so no nixidy environment of any kind is added.
+Superseded by D-a (rev 2): nixidy is not retired; `kubernetes/nixidy/local-k3d` is frozen and untouched, and the VM leaf renders the new sibling cluster `cryolite` with easykubenix, so no nixidy environment of any kind is added.
 
 ## Q10 [resolved]: which decisions must the human take before stage 1?
 
@@ -104,9 +104,9 @@ Revision 2: D-C1 and D-C2 are moot (Superseded by D-a (rev 2): nothing about `lo
 
 ## Q11 [reviewed]: which reconciler and which manifest framework?
 
-Flux consuming a digest-pinned OCI artifact, bootstrapped from `services.k3s.manifests`; easykubenix is the only rendering framework for `<c>`.
+Flux consuming a digest-pinned OCI artifact, bootstrapped from `services.k3s.manifests`; easykubenix is the only rendering framework for `cryolite`.
 ArgoCD needs a git source and cannot pin by digest; Flux installs offline from `pkgs.fluxcd` and verifies signatures with a key from the closure.
-Revision 1 continued "nixidy and the Phase-3/4 adoption split are retired, ADR-006 is reversed"; that clause is Superseded by D-a (rev 2): the retirements and the ADR-006 reversal are Future Work for a later, separately authorized feedback change, and ArgoCD keeps `local-k3d` while Flux takes `<c>` (ADR-008 D8.15).
+Revision 1 continued "nixidy and the Phase-3/4 adoption split are retired, ADR-006 is reversed"; that clause is Superseded by D-a (rev 2): the retirements and the ADR-006 reversal are Future Work for a later, separately authorized feedback change, and ArgoCD keeps `local-k3d` while Flux takes `cryolite` (ADR-008 D8.15).
 Evidence: ADR-008 F8.1, D8.1, D8.10, D8.15.
 
 ## Q12 [reviewed]: how are images and configuration packaged?
@@ -138,7 +138,7 @@ Evidence: ADR-009 F9.1–F9.4, D9.1–D9.7, D9.16, D9.17; ADR-010 D10.3.
 ## Q16 [reviewed]: how is multi-cloud declared?
 
 One easykubenix cluster module: cloud-invariant core plus a `platform` sum over `hetzner | gcp | aws | kubevirt` that alone owns `*Cluster`, `*MachineTemplate`, node image, CCM, optional CSI; unhandled provider is an evaluation error; a per-cloud CCM is mandatory because cluster-api-k3s defaults `cloud-provider=external`.
-Kept in rev 2; specified by `capi-hetzner-cluster` (`capi-cluster-rendering`), with `gcp`/`aws` deferred to S5.
+Kept in rev 2; specified by `capi-hetzner-cluster` (`capi-cluster-rendering`), with `gcp` deferred to S5 and `aws` declared-but-throwing since charter v1 (ADR-009 D9.20).
 Evidence: ADR-009 D9.10, D9.11.
 
 ## Q17 [reviewed]: how are the networks arranged?
@@ -151,35 +151,36 @@ Evidence: ADR-009 F9.6, F9.7, D9.12–D9.15.
 
 Six in rev 1: S0 purity/provenance (KVM-free), S1 substrate and snapshotter leaves, S2 `vm-k3s-platform`, S3 management handlers and the NoCloud-seeded bootstrap leaf, S4 two Hetzner nodes on explicit spend approval, S5 gcp/aws render-only variants.
 Revision 2 (D-i, D-j): seven, split across two changes.
-This change owns S0 (adds `k8s-node-identity-free-<c>`), S1, and S2 (rescoped to the two-guest `<c>` core, D-b).
+This change owns S0 (adds `k8s-node-identity-free-cryolite`), S1, and S2 (rescoped to the two-guest `cryolite` core, D-b).
 `openspec/changes/capi-hetzner-cluster/` owns S3 (handler B, provider rendering, `k8s-capi-render`, `vm-k3s-capi-bootstrap`, T0 delivery), S4 (first paid action, explicit gate), S4b (admin overlay), and the deferred S5.
 Evidence: ADR-007 Q6 and the revision-2 stage table.
 
-## Q19 [open]: ambiguities found while folding the review in
+## Q19 [resolved, charter v1]: ambiguities found while folding the review in
 
 Revision 1 listed A1–A9; A1–A3, A5–A7, A9 were accepted by the owner and are recorded in design.md Decisions or moved to the sibling change.
-Still open here: A4 (in-guest registry implementation), A8 (world-assumption numbering), and the rev-2 additions A10 (name of `<c>`), A11 (copy or share the Chainsaw files), A12 (registry mirror on the agent), listed in design.md Open Questions with recommendations.
+The charter-v1 review answered the rest: A4 (`services.dockerRegistry` in the S2 guest only), A10 (the cluster is `cryolite`, ADR-007 D7.20), A11 (copy and adapt the Chainsaw steps), A12 (no registry mirror on the agent); A8 (world-assumption numbering) is settled at sync time.
+Each is recorded in design.md Open Questions with its resolution.
 
 ## Q20 [reviewed, rev 2]: what is the target of the regulators — the existing clusters or a new one?
 
-A new sibling cluster `kubernetes/clusters/<c>`; `local` and `local-k3d` are frozen prototypes that keep ArgoCD, nixidy, sops-secrets-operator, kube-proxy, and the k3d workflow, and are neither migrated nor edited.
-Existing files grow only additively through default-off options (`modules/kubernetes.nix` gains `<c>` in `evalCluster`; `modules/nixos/k3s-server/default.nix` gains `snapshotter` and loses its dead containerd block; `modules/devshells/kubernetes.nix` gains flux, clusterctl, hcloud, cosign, crane).
+A new sibling cluster `kubernetes/clusters/cryolite`; `local` and `local-k3d` are frozen prototypes that keep ArgoCD, nixidy, sops-secrets-operator, kube-proxy, and the k3d workflow, and are neither migrated nor edited.
+Existing files grow only additively through default-off options (`modules/kubernetes.nix` gains `cryolite` in `evalCluster`; `modules/nixos/k3s-server/default.nix` gains `snapshotter` and loses its dead containerd block; `modules/devshells/kubernetes.nix` gains flux, clusterctl, hcloud, cosign, crane).
 The target module layout in design.md marks every path `[keep]`, `[add]`, or `[+opt]`; deleting the `[add]` paths makes the cluster disappear with no other edit.
 Evidence: ADR-007 D7.15, D7.19; revision-2 dispatch D-a, D-h.
 
 ## Q21 [reviewed, rev 2]: whose identity is stable?
 
 The cluster's (T0: join token and CA set, Flux age key, cosign key, SSH CA, etcd-S3 credentials, generated once by Clan vars), and its endpoints (T2: the CAPH load balancer); never the node's (T1: Machine name, host keys, Cilium WireGuard key, `CiliumNode`), which is disposable and never referenced outside the cluster.
-A KVM-free regulator `k8s-node-identity-free-<c>` makes this a property of the repository (S0); the in-VM proof of T0 delivery through `contentFrom.secret` is S3 in the sibling change.
+A KVM-free regulator `k8s-node-identity-free-cryolite` makes this a property of the repository (S0); the in-VM proof of T0 delivery through `contentFrom.secret` is S3 in the sibling change.
 Evidence: ADR-010 D10.1, D10.2, D10.4, D10.6.
 
 # Design trade-offs recorded
 
 - Reusing the production deferred module unmodified means the test cannot set `nodeIP`, which the module does not expose; the two-guest platform leaf sets `services.k3s.nodeIP` directly as glue rather than adding an option speculatively.
-- Regulating a new cluster `<c>` instead of migrating `local-k3d` leaves the F2 envelope drift (kube-proxy, ServiceLB) in place for the frozen prototype; accepted because the prototype is not the production target and its retirement is Future Work, not this change.
+- Regulating a new cluster `cryolite` instead of migrating `local-k3d` leaves the F2 envelope drift (kube-proxy, ServiceLB) in place for the frozen prototype; accepted because the prototype is not the production target and its retirement is Future Work, not this change.
 - The O-a `NotReady` assertion is narrow by intent (reason and message), accepting brittleness against kubelet message wording in exchange for non-vacuity.
 - The single platform leaf trades granular failure attribution for one envelope and one image closure; Chainsaw's own step names recover most of the attribution.
 - Store-path tokens are world-readable in the store; acceptable only because the value authorizes nothing outside the sandbox, and stated as such.
-- The `platform` sum is declared from day one but only `hetzner` executes; the render-only `gcp`/`aws` variants buy a stable seam at the cost of untested runtime differences until a second cloud is deployed.
+- The `platform` sum is declared from day one but only `hetzner` executes; the render-only `gcp` variant buys a stable seam at the cost of untested runtime differences until a second cloud is deployed.
 - Delivering the root `OCIRepository` digest through `KThreesConfig.spec.files` keeps configuration changes off the snapshot at the cost of a control-plane machine rollout per digest bump (design A1).
 - Keyed cosign is chosen over keyless because verification must work in a sandbox without Fulcio or Rekor; key rotation becomes a Clan vars concern.

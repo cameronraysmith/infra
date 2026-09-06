@@ -49,5 +49,5 @@ Any requirement whose discharge depends on this fact SHALL name it explicitly, a
 
 #### Scenario: A labelled Secret is left behind
 
-- **WHEN** a `clusterctl move` completes and a `Secret` carrying `cluster.x-k8s.io/cluster-name=<c>` remains only in the source cluster
+- **WHEN** a `clusterctl move` completes and a `Secret` carrying `cluster.x-k8s.io/cluster-name=cryolite` remains only in the source cluster
 - **THEN** this assumption is void and the `capi-management-cluster` requirement `The pivot moves the cluster and its T0 Secrets, and the management cluster is then deleted` must move the T0 Secrets explicitly before deleting the management cluster

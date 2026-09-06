@@ -1,15 +1,15 @@
 ## ADDED Requirements
 
-### Requirement: The Hetzner variant of `<c>` renders to a golden Cluster API tree
+### Requirement: The Hetzner variant of `cryolite` renders to a golden Cluster API tree
 
-The `<c>` easykubenix cluster module SHALL render, from `kubernetes/modules/capi/` and `kubernetes/modules/platform/hetzner.nix`, the `Cluster`, `KThreesControlPlane`, `KThreesConfigTemplate`, `MachineDeployment`, `MachineHealthCheck`, `HetznerCluster`, and two `HCloudMachineTemplate` objects (one per role) for `<c>`; a regulator, `checks.k8s-capi-render-<c>` (`modules/checks/k8s-capi-render.nix`), SHALL compare the rendered tree against a committed golden and fail on any difference.
-Each `HCloudMachineTemplate.spec.template.spec.imageName` SHALL equal the `caph-image-name` label value the per-role snapshot derivation computes from the closure of `<c>-server` or `<c>-agent` (ADR-009 D9.6, D9.16), so the hash chain `clusters/<c> → k8s-oci-<c> → k3s-flux.nix → <c>-server closure → snapshot label → capi-<c>` closes in one evaluation.
+The `cryolite` easykubenix cluster module SHALL render, from `kubernetes/modules/capi/` and `kubernetes/modules/platform/hetzner.nix`, the `Cluster`, `KThreesControlPlane`, `KThreesConfigTemplate`, `MachineDeployment`, `MachineHealthCheck`, `HetznerCluster`, and two `HCloudMachineTemplate` objects (one per role) for `cryolite`; a regulator, `checks.k8s-capi-render-cryolite` (`modules/checks/k8s-capi-render.nix`), SHALL compare the rendered tree against a committed golden and fail on any difference.
+Each `HCloudMachineTemplate.spec.template.spec.imageName` SHALL equal the `caph-image-name` label value the per-role snapshot derivation computes from the closure of `cryolite-server` or `cryolite-agent` (ADR-009 D9.6, D9.16), so the hash chain `clusters/cryolite → k8s-oci-cryolite → k3s-flux.nix → cryolite-server closure → snapshot label → capi-cryolite` closes in one evaluation.
 `KThreesControlPlane.spec.replicas` SHALL be 1 and `MachineDeployment.spec.replicas` SHALL be 1 for the first deployment (M5, M6 of ADR-010).
 Coverage bin: T1 traceability regulator for ADR-009 D9.1, D9.6, D9.16; non-vacuity: the two mutations below.
 
 #### Scenario: The image label is the closure revision
 
-- **WHEN** `checks.k8s-capi-render-<c>` is built
+- **WHEN** `checks.k8s-capi-render-cryolite` is built
 - **THEN** both `imageName` values equal the label the snapshot derivation writes for the same closure, and the golden matches
 
 #### Scenario: A node option changes
@@ -24,19 +24,19 @@ Coverage bin: T1 traceability regulator for ADR-009 D9.1, D9.6, D9.16; non-vacui
 
 ### Requirement: The bootstrap template delivers T0 material only through `contentFrom.secret` and names no node
 
-The rendered `KThreesControlPlane.spec.kthreesConfigSpec` and `KThreesConfigTemplate.spec.template.spec` SHALL set `agentConfig.airGapped: true`, SHALL carry every T0 item a node needs (`/etc/rancher/k3s/config.yaml.d/` drop-ins for the token, the pre-provisioned CA references, and the etcd-S3 credentials on the server; the Flux SOPS age-key `Secret` manifest under `/var/lib/rancher/k3s/server/manifests/` on the server; the SSH CA and cosign public material on both) as `files[]` entries whose content is `contentFrom.secret{name,key}` referencing a management-cluster `Secret` named for `<c>` and a T0 item, never inline, and SHALL contain no node hostname, host key, or WireGuard key.
-The `k8s-node-identity-free-<c>` regulator of `k3s-nixos-vm-tests` SHALL take the rendered `capi-<c>` tree as an additional input once it exists.
+The rendered `KThreesControlPlane.spec.kthreesConfigSpec` and `KThreesConfigTemplate.spec.template.spec` SHALL set `agentConfig.airGapped: true`, SHALL carry every T0 item a node needs (`/etc/rancher/k3s/config.yaml.d/` drop-ins for the token, the pre-provisioned CA references, and the etcd-S3 credentials on the server; the Flux SOPS age-key `Secret` manifest under `/var/lib/rancher/k3s/server/manifests/` on the server; the SSH CA and cosign public material on both) as `files[]` entries whose content is `contentFrom.secret{name,key}` referencing a management-cluster `Secret` named for `cryolite` and a T0 item, never inline, and SHALL contain no node hostname, host key, or WireGuard key.
+The `k8s-node-identity-free-cryolite` regulator of `k3s-nixos-vm-tests` SHALL take the rendered `capi-cryolite` tree as an additional input once it exists.
 Coverage bin: T1 integrity regulator for ADR-010 D10.4, D10.6 and R10.1; non-vacuity: the two mutations below.
 
 #### Scenario: A T0 value is inlined
 
 - **WHEN** a `files[]` entry is changed from `contentFrom.secret` to inline `content` holding a token and the regulator is rebuilt
-- **THEN** `checks.k8s-capi-render-<c>` fails naming the path of the inlined file before the golden comparison
+- **THEN** `checks.k8s-capi-render-cryolite` fails naming the path of the inlined file before the golden comparison
 
 #### Scenario: The token drop-in is absent
 
 - **WHEN** the `files[]` entry for the token drop-in is removed from the server template and the regulator is rebuilt
-- **THEN** the regulator fails naming the missing T0 item, because the template is checked against the T0 inventory of `secrets/clusters/<c>/`
+- **THEN** the regulator fails naming the missing T0 item, because the template is checked against the T0 inventory of `secrets/clusters/cryolite/`
 
 ### Requirement: The provider install is rendered from Nix and pinned by a `clusterctl.yaml` override
 
@@ -55,14 +55,14 @@ Coverage bin: T1 existence regulator for ADR-009 D9.4 and F9.2; non-vacuity: the
 
 ### Requirement: The cloud-invariant core renders identically across platform variants [S5, deferred]
 
-The easykubenix cluster module SHALL render `Cluster`, `KThreesControlPlane`, `KThreesConfigTemplate`, `MachineDeployment`, `MachineHealthCheck`, the Flux install and root objects, and Cilium from a core that does not read the selected `platform`, except through a declared list of platform-owned fields (`Cluster.spec.infrastructureRef`, `KThreesControlPlane.spec.machineTemplate.infrastructureRef`, `MachineDeployment.spec.template.spec.infrastructureRef`, the node-image reference, and the CCM and CSI objects); a regulator, `checks.k8s-capi-render-equivalence`, SHALL render every implemented variant, mask those fields, and fail on any remaining difference.
-Until S5 lands only `hetzner` is implemented and this regulator renders one variant; it becomes non-trivial when `gcp` and `aws` are added as render-only variants.
+The easykubenix cluster module SHALL render `Cluster`, `KThreesControlPlane`, `KThreesConfigTemplate`, `MachineDeployment`, `MachineHealthCheck`, the Flux install and root objects, and Cilium from a core that does not read the selected `platform`, except through a declared list of platform-owned fields (`Cluster.spec.infrastructureRef`, `KThreesControlPlane.spec.machineTemplate.infrastructureRef`, `MachineDeployment.spec.template.spec.infrastructureRef`, the node-image reference, and the CCM and CSI objects); a regulator, `checks.k8s-capi-core-equivalence-cryolite`, SHALL render every implemented variant, mask those fields, and fail on any remaining difference.
+Until S5 lands only `hetzner` is implemented and this regulator renders one variant; it becomes non-trivial when `gcp` is added as the render-only variant (ADR-009 D9.20; `aws` is not scheduled).
 Coverage bin: T1 integrity regulator for ADR-009 D9.10; non-vacuity: the mutation below.
 
 #### Scenario: Variants agree modulo platform-owned fields
 
-- **WHEN** the module is rendered with `platform = hetzner`, `platform = gcp`, and `platform = aws` and the platform-owned fields are masked
-- **THEN** the three rendered trees are byte-identical
+- **WHEN** the module is rendered with `platform = hetzner` and `platform = gcp` and the platform-owned fields are masked
+- **THEN** the two rendered trees are byte-identical
 
 #### Scenario: A platform leaks into the core
 
@@ -71,7 +71,7 @@ Coverage bin: T1 integrity regulator for ADR-009 D9.10; non-vacuity: the mutatio
 
 ### Requirement: The platform sum is total and an unhandled provider is an evaluation error
 
-The `platform` option SHALL be a sum over `hetzner | gcp | aws | kubevirt` from day one (S3); selecting a name outside that set SHALL fail at evaluation with a message naming the set; selecting `kubevirt`, or `gcp` or `aws` before S5 implements them, SHALL fail at evaluation with a distinct "not implemented" message; a regulator, `checks.k8s-capi-platform-sum`, SHALL assert both errors through `builtins.tryEval`.
+The `platform` option SHALL be a sum over `hetzner | gcp | aws | kubevirt` from day one (S3); selecting a name outside that set SHALL fail at evaluation with a message naming the set; selecting `kubevirt` or `aws` (declared, unimplemented; ADR-009 D9.20), or `gcp` before S5 implements it, SHALL fail at evaluation with a distinct "not implemented" message naming the variant; a regulator, `checks.k8s-capi-platform-sum`, SHALL assert both errors through `builtins.tryEval`.
 Coverage bin: T1 existence regulator for ADR-009 D9.10; non-vacuity: the scenarios below are themselves the mutation.
 
 #### Scenario: An unknown provider is selected
@@ -81,8 +81,8 @@ Coverage bin: T1 existence regulator for ADR-009 D9.10; non-vacuity: the scenari
 
 #### Scenario: A reserved provider is selected
 
-- **WHEN** the module is evaluated with `platform = "kubevirt"`
-- **THEN** evaluation fails with a message stating the variant is not implemented
+- **WHEN** the module is evaluated with `platform = "kubevirt"` or `platform = "aws"`
+- **THEN** evaluation fails with a message stating that variant, by name, is not implemented
 
 ### Requirement: Every cloud-init platform variant renders a cloud-controller manager
 
