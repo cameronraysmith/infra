@@ -1,6 +1,8 @@
 { ... }:
 {
-  flake.modules.homeManager.development = {
-    programs.jjui.enable = true;
-  };
+  flake.modules.homeManager.development =
+    { ... }:
+    {
+      programs.jjui.enable = true;
+    };
 }
