@@ -19,7 +19,6 @@
         procps # mostly covered by alternatives in toybox
         procs # alternative to ps
         rename
-        ripgrep
         rsync
         sd
         sesh
