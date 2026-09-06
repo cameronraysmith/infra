@@ -36,6 +36,7 @@ For production deployment:
 | Hetzner deployment | [workflows/04-hetzner-deployment.md](workflows/04-hetzner-deployment.md) | Production deployment to Hetzner |
 | GitOps operations | [workflows/05-gitops-operations.md](workflows/05-gitops-operations.md) | Day-2 operations and maintenance |
 | Testing | [workflows/06-testing.md](workflows/06-testing.md) | Chainsaw integration tests and CI workflow |
+| Cryolite charter | [cryolite-charter.md](cryolite-charter.md) | Programme charter for the `cryolite` cluster: intent, WRSPM strata, designations, machines M1–M6 and levels L0–L3, acceptance criteria and regulators, stage plan, billing surface (proposed) |
 | ADR-001 | [decisions/ADR-001-local-dev-architecture.md](decisions/ADR-001-local-dev-architecture.md) | Local development architecture decision |
 | ADR-007 | [decisions/ADR-007-nixos-vm-tests-for-k3s.md](decisions/ADR-007-nixos-vm-tests-for-k3s.md) | NixOS VM tests for the k3s substrate and the sibling cluster `cryolite`; local prototypes frozen (proposed) |
 | ADR-008 | [decisions/ADR-008-reconciler-and-artifact-transport.md](decisions/ADR-008-reconciler-and-artifact-transport.md) | Flux reconciler, OCI artifact transport, and image producers for `cryolite` (proposed) |
