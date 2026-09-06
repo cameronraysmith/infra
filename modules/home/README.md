@@ -38,10 +38,9 @@ An untracked file is invisible to `nix flake check`, so run `git add` before eva
 
 A user's evaluated package set is a contract for that user.
 Moving a declaration between files must not change `home.packages` for any user unless the change is the point.
-`checks.structure-home-package-names` (`modules/checks/structure/home-package-names.nix`) pins the sorted package names of every `homeConfigurations` entry on the current system to the golden file `modules/checks/structure/home-package-names.json`, so such a move fails `nix flake check` unless that file changes in the same commit.
-`just home-package-names-golden` evaluates every configuration for one system, the current one by default, and replaces that system's entries in the golden while leaving the other systems' entries in place.
-A configuration that imports from a derivation can only be evaluated by a host that can realise it, so its entry is produced on such a host; today this is `crs58` and `cameron` on aarch64-darwin and aarch64-linux, through `apm-skills-compose` in the `ai` aggregate.
-A configuration for the current system with no golden entry fails the check rather than being skipped.
+No check pins these sets, because a committed manifest would need regenerating on every package change and its aarch64 entries can only be produced on a host that can evaluate those configurations.
+Instead, `just home-package-names` prints the sorted package names of every configuration for one system, the current one by default; run it on the base and on the change and diff the two outputs to review a relocation.
+A configuration that imports from a derivation can only be evaluated by a host that can realise it; today this is `crs58` and `cameron` on aarch64-darwin and aarch64-linux, through `apm-skills-compose` in the `ai` aggregate.
 
 The `<aggregate>/tools.nix` files hold raw packages that no home-manager module owns yet; they are split into per-program files as modules are adopted.
 
@@ -52,20 +51,17 @@ Modules that start user services or read sops secrets fail there and must be ove
 
 ```bash
 direnv exec . nix flake check --accept-flake-config
-direnv exec . nix build --accept-flake-config .#checks.x86_64-linux.structure-home-package-names
-direnv exec . just home-package-names-golden
+direnv exec . just home-package-names
 direnv exec . nix eval --accept-flake-config --json .#lib.homePackageNames --apply 'f: (f "aarch64-darwin")."tara@aarch64-darwin"'
 direnv exec . nix eval --accept-flake-config --json '.#homeConfigurations."crs58@x86_64-linux".config.home.packages' --apply 'ps: builtins.sort builtins.lessThan (map (p: p.name) ps)'
 direnv exec . nix build --accept-flake-config '.#homeConfigurations."ubuntu@x86_64-linux".activationPackage'
 ```
 
 The first is the closure operator every change must pass.
-The second is the per-user package contract on this host; it fails on any added or removed name until the third refreshes the golden's entries for this host's system.
-A reviewer reads the golden diff as the intended delta.
-The fourth produces one entry for another system from a host that can evaluate that configuration.
-The eight aarch64 entries in the golden were produced this way on an x86_64-linux host, one configuration at a time, and merged into the golden by hand.
-The fifth shows one user's versioned package names; compare it against the base branch when a change claims to be a relocation.
-The sixth builds the sandbox profile that the Devin snapshot activates.
+The second prints the per-user package names on this host; the diff of its output between base and change is the delta a reviewer reads.
+The third produces one user's entry for another system from a host that can evaluate that configuration.
+The fourth shows one user's versioned package names, for the case where a relocation could change a version rather than a name.
+The fifth builds the sandbox profile that the Devin snapshot activates.
 
 ## Children
 

@@ -1,7 +1,7 @@
 # homePackageNames: the sorted `lib.getName` of every `home.packages` entry,
 # keyed `user@system`, for the homeConfigurations of one system.
-# Shared by `checks.structure-home-package-names` and the
-# `just home-package-names-golden` recipe, so both read the same names.
+# Read by `just home-package-names`; diff its output across two revisions to
+# review a change that claims to relocate declarations without altering them.
 { self, lib, ... }:
 {
   flake.lib.homePackageNames =
