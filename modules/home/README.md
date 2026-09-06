@@ -75,7 +75,7 @@ The sixth builds the sandbox profile that the Devin snapshot activates.
 - `compute/` — cloud, container, and Kubernetes command-line tools (gcloud, kubectl, helm, argo, crane, lima, and others).
 - `core/` — fontconfig, XDG, Catppuccin, session variables, SSH, Bitwarden; imported by every user.
 - `database/` — database engines and clients (PostgreSQL, SQLite, DuckDB, DataFusion, Turso, Supabase).
-- `development/` — editors (LazyVim neovim, helix), version control (git, jujutsu, radicle), terminal emulators (ghostty), general and Nix development tools, and their configuration.
+- `development/` — editors (LazyVim neovim, helix), version control (git, jujutsu, radicle), terminal emulators (ghostty) and the fonts they render, general and Nix development tools, and their configuration.
 - `herdr/` — the herdr terminal multiplexer and `browser-terminal`, its ttyd front end for the sandbox; secret-free.
 - `languages/` — one file per language toolchain (Rust, TypeScript, Go, Scala, Python, Haskell, OCaml, Elixir, proof assistants) at the latest stable version nixpkgs ships.
   For quick experiments with other versions, use proto as a dynamic version manager or a reproducible language-specific flake instead of editing these files.
@@ -83,7 +83,7 @@ The sixth builds the sandbox profile that the Devin snapshot activates.
 - `publishing/` — document and media production (Quarto, ImageMagick, PDF tools, SVG tools, mermaid, asciinema).
 - `security/` — secrets and key handling (age, sops, ssh-to-age, Bitwarden CLI, YubiKey, gitleaks, aws-vault).
 - `shell/` — bash, fish, atuin, tmux, zellij, yazi, session path, shell aliases.
-- `terminal/` — terminal utilities with `programs.*` modules (bat, btop, fzf, zoxide, and others), the raw Unix, I/O, and compression tools, and fonts.
+- `terminal/` — terminal utilities with `programs.*` modules (bat, btop, fzf, zoxide, and others) and the raw Unix, I/O, and compression tools.
 - `tools/` — operator tooling (nix helpers, gpg, awscli, k9s, texlive, typst, repository sync).
 - `users/` — identity, aggregate lists, and per-user overrides; `lib.nix` declares `flake.users`.
 
