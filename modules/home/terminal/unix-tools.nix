@@ -11,12 +11,10 @@
         findutils # mostly covered by alternatives in toybox
         gnugrep # alternative in toybox
         gnupatch # alternative in toybox
-        gnupg
         gnused # alternative in toybox
         gum
         moreutils
         patchutils
-        pinentry-tty
         pipe-rename
         procps # mostly covered by alternatives in toybox
         procs # alternative to ps
