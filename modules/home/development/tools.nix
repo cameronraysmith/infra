@@ -68,7 +68,6 @@
           d2
           graphviz
           jc
-          jqp
           jjui
           just
           mkcert
