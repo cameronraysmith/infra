@@ -69,13 +69,15 @@ The sixth builds the sandbox profile that the Devin snapshot activates.
 
 ## Children
 
+- `agents/` — agent CLIs (apm, cursor-agent, droid, gemini-cli, claudebox, claude-monitor, golem, hindsight, ouroboros); secret-free like `herdr/`, because the harness supplies credentials at run time, whereas `ai/` reads sops secrets.
+  Distinct from the `agents-md` module under `modules/`, which generates the `AGENTS.md` context file.
 - `ai/` — agent tooling that needs sops secrets (cognee, opencode, moshi, devin); indexed by its own README.
 - `base/` — sops-nix wiring, including activation without systemd.
 - `bioinformatics/` — sequence alignment and SRA retrieval (minimap2, STAR, xsra).
 - `compute/` — cloud, container, and Kubernetes command-line tools (gcloud, kubectl, helm, argo, crane, lima, and others).
 - `core/` — fontconfig, XDG, Catppuccin, session variables, SSH, Bitwarden; imported by every user.
 - `database/` — database engines and clients (PostgreSQL, SQLite, DuckDB, DataFusion, Turso, Supabase).
-- `development/` — editors (LazyVim neovim, helix), version control (git, jujutsu, radicle), terminal emulators (ghostty) and the fonts they render, general and Nix development tools, and their configuration.
+- `development/` — editors (LazyVim neovim, helix), version control (git, jujutsu, radicle), terminal emulators (ghostty) and the fonts they render, general and Nix development tools, and their configuration; agent CLIs live in `agents/`.
 - `herdr/` — the herdr terminal multiplexer and `browser-terminal`, its ttyd front end for the sandbox; secret-free.
 - `languages/` — one file per language toolchain (Rust, TypeScript, Go, Scala, Python, Haskell, OCaml, Elixir, proof assistants) at the latest stable version nixpkgs ships.
   For quick experiments with other versions, use proto as a dynamic version manager or a reproducible language-specific flake instead of editing these files.

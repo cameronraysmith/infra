@@ -1,12 +1,7 @@
 { ... }:
 {
   flake.modules.homeManager.development =
-    {
-      pkgs,
-      lib,
-      flake,
-      ...
-    }:
+    { pkgs, ... }:
     let
       dvcWithOptionalRemotes = pkgs.dvc.override {
         enableGoogle = true;
@@ -38,65 +33,37 @@
           exec ${pkgs.gitmux}/bin/gitmux "$@"
         '';
       };
-      # coderabbit-cli = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.coderabbit-cli;
-      # crush = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.crush;
-      apm = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.apm;
-      cursor-agent = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.cursor-agent;
-      # opencode: disabled - bun node_modules cleanup fails during build
-      droid = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.droid;
-      gemini-cli = flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.gemini-cli;
     in
     {
-      home.packages =
-        with pkgs;
-        [
-          act
-          bazelisk
-          bazel-buildtools
-          buf
-          smithy-cli
-          claude-monitor
-          clipboard-jh
-          dvcWithOptionalRemotes
-          forgejo-cli
-          ghq
-          git-filter-repo
-          git-machete
-          git-revise
-          git-xet
-          gitmux
-          d2
-          graphviz
-          jc
-          just
-          mkcert
-          # from llm-agents
-          apm
-          cursor-agent
-          droid
-          gemini-cli
-          # from pkgs/by-name
-          golem-binary
-          hindsight
-          linear-cli
-          ouroboros
-          uncomment-bin
-          #------
-          plantuml-c4
-          ratchet
-          shellcheck
-          tea
-          tree-sitter
-          jaq
-          yq
-        ]
-        # backlog-md disabled: auto-patchelf fails on rosetta-builder (elftools issue)
-        # ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
-        #   flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.backlog-md
-        # ]
-        # claudebox requires bubblewrap which is Linux-only
-        ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-          flake.inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claudebox
-        ];
+      home.packages = with pkgs; [
+        act
+        bazelisk
+        bazel-buildtools
+        buf
+        smithy-cli
+        clipboard-jh
+        dvcWithOptionalRemotes
+        forgejo-cli
+        ghq
+        git-filter-repo
+        git-machete
+        git-revise
+        git-xet
+        gitmux
+        d2
+        graphviz
+        jc
+        just
+        mkcert
+        linear-cli
+        uncomment-bin
+        plantuml-c4
+        ratchet
+        shellcheck
+        tea
+        tree-sitter
+        jaq
+        yq
+      ];
     };
 }

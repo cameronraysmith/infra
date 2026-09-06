@@ -14,6 +14,7 @@
     };
     aggregates = with config.flake.modules.homeManager; [
       base-sops
+      agents
       ai
       bioinformatics
       compute
