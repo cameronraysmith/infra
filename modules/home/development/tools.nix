@@ -68,7 +68,6 @@
           d2
           graphviz
           jc
-          jjui
           just
           mkcert
           # from llm-agents
