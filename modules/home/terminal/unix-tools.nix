@@ -20,7 +20,6 @@
         rename
         rsync
         sd
-        sesh
         # toybox # many (non-)overlapping tools in coreutils + grep/sed/find/xargs/ps
         trash-cli
         fuc
