@@ -13,11 +13,13 @@
       );
     in
     {
-      programs.uv.enable = true;
-      programs.ruff.enable = true;
-      programs.pylint = {
-        enable = true;
-        package = pkgs.pylint;
+      programs = {
+        uv.enable = true;
+        ruff.enable = true;
+        pylint = {
+          enable = true;
+          package = pkgs.pylint;
+        };
       };
 
       home.packages = with pkgs; [
