@@ -25,6 +25,12 @@
       );
 
       ageKeyFile = config.sops.age.keyFile;
+      systemctl = config.systemd.user.systemctlPath;
+
+      # A null key file means sops decrypts with something other than an age
+      # key, so the skip branch is never taken and the install decides.
+      ageKeyAbsent =
+        if ageKeyFile == null then "false" else "[[ ! -f ${lib.escapeShellArg ageKeyFile} ]]";
 
       # sops-install-secrets resolves $XDG_RUNTIME_DIR before it inspects any
       # path and fails when it is unset, so a profile that supplies one through
@@ -56,17 +62,6 @@
         # follows it keeps the surrounding block's indentation.
         + "  ";
 
-      # Interpolated as its own multi-line value rather than written inline in
-      # the activation string: nix strips a literal's common indentation before
-      # substitution and does not re-indent what it substitutes, so building the
-      # branch here is what lines it up with the `if` it extends.
-      # warnEcho rather than the sibling branch's verboseEcho: a profile whose
-      # secrets are not installed is worth seeing on every activation, not only a
-      # verbose one.
-      skipWhenKeyAbsent = lib.optionalString (ageKeyFile != null) ''
-        elif [[ ! -f ${lib.escapeShellArg ageKeyFile} ]]; then
-          warnEcho "sops-nix: no age key at ${ageKeyFile}; skipping secret installation until an activation runs with the key present"
-      '';
     in
     {
       options.sopsInstallWithoutSystemd.enable = lib.mkEnableOption ''
@@ -80,12 +75,6 @@
         are never installed. This option runs the same sops-nix install script
         directly instead.
 
-        The entry probes `systemctl --user is-system-running` first and does
-        nothing when a user manager is present, so enabling it on a NixOS
-        workstation is harmless. It has no effect on darwin, where sops-nix
-        already bootstraps its launchd agent from its own activation entry, and
-        none when no secrets are declared.
-
         An absent `sops.age.keyFile` is treated as the secrets coeffect not
         being present: the entry reports that it skipped the install and
         continues, so a profile can be activated where no key exists, as an
@@ -93,18 +82,34 @@
         runs and any failure is fatal. Activating again once the key is in place
         is what installs the secrets.
 
+        The entry probes `systemctl --user is-system-running` and, when a user
+        manager is present, restarts the sops-nix unit as sops-nix's own entry
+        would. That entry is replaced rather than left in place because it
+        restarts unconditionally, and a restart with no key present fails the
+        unit and with it the whole activation. Enabling this on a NixOS
+        workstation therefore changes nothing but the no-key case. It has no
+        effect on darwin, where sops-nix bootstraps its launchd agent from its
+        own entry, and none when no secrets are declared.
+
         The entry runs after `writeBoundary`. Activation entries that read the
         installed secrets should declare `entryAfter [ "sopsInstallWithoutSystemd" ]`
         rather than relying on entry order.
       '';
 
       config = lib.mkIf (cfg.enable && pkgs.stdenv.hostPlatform.isLinux && config.sops.secrets != { }) {
-        home.activation.sopsInstallWithoutSystemd = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          systemdStatus=$(${config.systemd.user.systemctlPath} --user is-system-running 2>&1 || true)
+        home.activation.sops-nix = lib.mkForce "";
 
-          if [[ $systemdStatus == 'running' || $systemdStatus == 'degraded' ]]; then
-            verboseEcho "sops-nix: user systemd manager is $systemdStatus; the sops-nix unit installs secrets"
-          ${skipWhenKeyAbsent}else
+        # warnEcho on the skip: a profile whose secrets are not installed is
+        # worth seeing on every activation, not only a verbose one.
+        home.activation.sopsInstallWithoutSystemd = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          systemdStatus=$(${systemctl} --user is-system-running 2>&1 || true)
+
+          if ${ageKeyAbsent}; then
+            warnEcho "sops-nix: no age key at ${toString ageKeyFile}; skipping secret installation until an activation runs with the key present"
+          elif [[ $systemdStatus == 'running' || $systemdStatus == 'degraded' ]]; then
+            verboseEcho "sops-nix: user systemd manager is $systemdStatus; restarting the sops-nix unit"
+            run ${systemctl} restart --user sops-nix
+          else
             verboseEcho "sops-nix: no user systemd manager; installing secrets directly"
             ${ensureRuntimeDir}run env ${environment} ${installScript}
           fi

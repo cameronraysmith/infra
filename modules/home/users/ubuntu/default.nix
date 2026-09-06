@@ -46,9 +46,10 @@ let
         LC_CTYPE = lib.mkForce "C.UTF-8";
       };
 
-      # The sandbox runs standalone home-manager with no session bus and no
-      # systemd user manager, so sops-nix's user unit never starts and its
-      # secrets would never be installed.
+      # Devin's exec shells reach no systemd user manager, so sops-nix's user
+      # unit never starts there and secrets are installed directly. Its snapshot
+      # builds do run under one, with no key, and the same option keeps that
+      # activation from failing on the unit.
       sopsInstallWithoutSystemd.enable = true;
 
       sops = {

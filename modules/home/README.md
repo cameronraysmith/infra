@@ -44,8 +44,8 @@ A configuration that imports from a derivation can only be evaluated by a host t
 
 The `<aggregate>/tools.nix` files hold raw packages that no home-manager module owns yet; they are split into per-program files as modules are adopted.
 
-`users/ubuntu` is the profile activated inside a Devin sandbox VM, which has no systemd user manager and no AI secrets.
-Modules that start user services or read sops secrets fail there and must be overridable as described above.
+`users/ubuntu` is the profile activated inside a Devin sandbox VM, which has no AI secrets, and whose exec shells reach no systemd user manager while its snapshot builds do.
+Modules that start user services or read sops secrets fail there and must be overridable as described above; an activation must also succeed under a user manager with no key present, which is what `base/sops-install-without-systemd.nix` provides.
 
 ## Verification
 
