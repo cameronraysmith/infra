@@ -4,7 +4,6 @@
     { pkgs, ... }:
     {
       home.packages = with pkgs; [
-        aria2
         curl
         restic
         autorestic
