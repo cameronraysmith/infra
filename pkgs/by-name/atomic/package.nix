@@ -60,12 +60,12 @@ buildNpmPackage (finalAttrs: {
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@bastani/atomic/-/atomic-${finalAttrs.version}.tgz";
-    hash = "sha256-iuf3fE26q9gTPlz/Xc4PLx4zkI2Is9poWDNWNbQZtRk=";
+    hash = "sha256-/pyLXzhsvUWBKhIzZnsIQHyEz4A6fcIlNrL20UOIsoE=";
   };
   sourceRoot = "package";
 
   nodejs = nodejs_22;
-  npmDepsHash = "sha256-WuzvuvsJDb0QWqPLbmTHUM3yqEPVT5EL/LaRRDMjRYQ=";
+  npmDepsHash = "sha256-eTOqo5cuqdz4PkviR0GpNirxTFqjrs8QSGFi7PUChgg=";
 
   postPatch = ''
     patch -p1 < ${./npm-dist-repairs.patch}
