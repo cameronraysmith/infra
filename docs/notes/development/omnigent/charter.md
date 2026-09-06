@@ -1,12 +1,12 @@
 ---
 title: Omnigent server deployment plan charter
-status: charter v1
+status: charter v2
 date: 2026-09-06
 ---
 
 # Omnigent server deployment plan charter
 
-Charter version: v1.
+Charter version: v2.
 A revision is a version bump with a dated entry under "Revision history"; the text of an earlier version is never edited in place.
 
 ## Objective and motivation
@@ -19,11 +19,13 @@ The plan exists so that a later implementation session can proceed from file-lev
 
 | Reference | Revision | Relevant paths |
 |---|---|---|
-| `github:omnigent-ai/omnigent` | `381bf638fb31e6a51990d9dab54ea9ef4b933711` | `deploy/docker/`, `deploy/fly/`, `deploy/kubernetes/`, `deploy/README.md`, `docs/`, `omnigent/sandbox/bwrap.py`, `README.md` |
+| `github:omnigent-ai/omnigent` | `381bf638fb31e6a51990d9dab54ea9ef4b933711` | `deploy/docker/`, `deploy/fly/`, `deploy/kubernetes/`, `deploy/README.md`, `docs/`, `omnigent/inner/bwrap_sandbox.py`, `README.md` |
 | `github:Qubasa/infra` | `439ded26a84965b6c782b6277626b0d40a90f26d` | `pkgs/omnigent/`, `machines/wintux/llm.nix`, `flake.nix` |
 | `github:Lassulus/superconfig` | `afb34bfd269290c395d3cedd8a234a66e7d9ad62` | `5pkgs/omnigent/package.nix`, `2configs/omnigent.nix`, `machines/neoprism/config.nix`, `tools/covibe/` |
 | `github:fosskar/buzz-flake` | `6811fbd9bce5a4ec4889d2e6eb48fa75d1a7f4c7` | whole repository |
 | `github:cameronraysmith/vanixiets` | `590f75195cc7acbb3926d39397bf860c2c6efc65` (`main`) | `modules/nixos/{kanidm,matrix,sso-gateway,cognee}.nix`, `modules/machines/nixos/magnetite/`, `modules/clan/`, `modules/terranix/{hetzner,cloudflare}.nix`, `pkgs/by-name/`, `docs/notes/development/buzz/self-hosting.md` |
+| `github:cameronraysmith/kanidm` | `ed10baa494adc1549c2e9e3d750465cc1052a7d1` (fork of `kanidm/kanidm` at upstream tag `v1.11.0`, the deployed Kanidm version) | `server/lib/src/idm/oauth2.rs`, `server/lib/src/idm/account.rs`, `server/lib/src/valueset/`, `server/lib/src/migration_data/dl15/`, `server/core/src/https/oauth2.rs`, `proto/src/` |
+| `github:NixOS/nixpkgs` | `85f62611fa3f3eacbcfe3bc7a6d6518b443ca442` (vanixiets root `nixpkgs` lock node) | `nixos/modules/services/databases/postgresql.nix`, `nixos/modules/services/web-servers/nginx/`, `nixos/modules/services/security/kanidm.nix`, `nixos/modules/security/misc.nix`, `pkgs/by-name/bu/bubblewrap/` |
 
 Every factual claim about a reference cites `owner/repo@<short-rev>:<path>` and, where a line matters, `:<line>`.
 Reference clones live under the `ghq` root as `github.com/<owner>/<repo>`; the plan never records a machine-local path.
@@ -33,7 +35,7 @@ Reference clones live under the `ghq` root as `github.com/<owner>/<repo>`; the p
 - W1 `magnetite` is a Hetzner Cloud `cx53` VPS managed by terranix (`modules/terranix/hetzner.nix`) and runs Kanidm, matrix-synapse, the `sso-gateway` oauth2-proxy, Gitea, buildbot, and nginx.
 - W2 Kanidm on `magnetite` already provisions a per-service OIDC client for synapse (`modules/nixos/kanidm.nix`, `services.kanidm.provision.systems.oauth2.synapse`) with a clan-vars secret generator and `restartUnits`.
 - W3 No Hetzner bare-metal machine exists in the clan inventory (`modules/clan/inventory/machines.nix`); the i9-13900 KVM sandbox host named in the brief is not deployed.
-- W4 Omnigent's Linux local sandbox is bubblewrap, mandatory on Linux (`omnigent-ai/omnigent@381bf63:README.md:142`, `omnigent/sandbox/bwrap.py`); Landlock appears only in the OpenShell/Kubernetes managed-sandbox path.
+- W4 Omnigent's Linux local sandbox is bubblewrap (`omnigent-ai/omnigent@381bf63:omnigent/inner/bwrap_sandbox.py:1-10`), applied to agent types whose spec declares it; the native Claude Code, Codex, and Pi specs at the pin declare `sandbox.type: none` (`omnigent-ai/omnigent@381bf63:omnigent/claude_native.py:3189-3193`, `omnigent-ai/omnigent@381bf63:omnigent/codex_native.py:609-614`, `omnigent-ai/omnigent@381bf63:omnigent/pi_native.py:259-264`), and `README.md:142`'s "mandatory" sentence is contradicted by the code; Landlock appears only in the OpenShell/Kubernetes managed-sandbox path.
 - W5 Caddy is deployed only on `cinnabar` (ZeroTier-only virtual hosts) and inside the openclaw clan service; `magnetite` web services use nginx.
 - W6 The beads issue tracker is stale and is not evidence of service status; the deployed `modules/` tree is.
 - W7 The reference repositories `Qubasa/infra` and `Lassulus/superconfig` are personal infrastructure flakes with no stated maintenance commitment to downstream consumers.
@@ -63,8 +65,8 @@ Satisfaction argument: W1..W8 with S1..S5 discharge R1..R7; R3 additionally depe
 
 | Term | Meaning in this work |
 |---|---|
-| Omnigent server | The `omnigent serve` process that exposes the web UI and API and stores sessions in its database. |
-| Runner / host | The `omni host <server-url>` process that registers a machine with the server and executes agent sessions there. |
+| Omnigent server | The `omnigent server` process that exposes the web UI and API and stores sessions in its database. |
+| Runner / host | The `omnigent host <server-url>` process that registers a machine with the server and executes agent sessions there. |
 | Local sandbox | The bubblewrap (Linux) or seatbelt (macOS) OS-level isolation the runner applies to each session on the machine it runs on. |
 | Managed sandbox provider | A server-side provider (`modal`, `daytona`, `blaxel`, `kubernetes`, and others under `deploy/`) that provisions a remote sandbox per session. |
 | Accounts mode | Omnigent's built-in username/password authentication, bootstrapped by `OMNIGENT_ACCOUNTS_INIT_ADMIN_PASSWORD`. |
@@ -100,7 +102,7 @@ Satisfaction argument: W1..W8 with S1..S5 discharge R1..R7; R3 additionally depe
 
 - Decisions in the plan are `D1`..`D8` in the order of the brief: host, packaging, database, auth, secrets, ingress, sandbox/runner, Buzz relationship.
 - Research artifacts are `research/<reference-slug>.md` with slugs `omnigent-upstream`, `qubasa-infra`, `lassulus-superconfig`, `buzz-flake`, `vanixiets-inventory`.
-- Proposed Nix attributes follow existing names: package `omnigent` under `pkgs/by-name/om/omnigent/`, module `modules/nixos/omnigent.nix`, Kanidm client `systems.oauth2.omnigent`, generator `kanidm-oauth2-omnigent`.
+- Proposed Nix attributes follow existing names: package `omnigent` under `pkgs/by-name/omnigent/`, module `modules/nixos/omnigent.nix`, Kanidm client `systems.oauth2.omnigent`, generator `kanidm-oauth2-omnigent`.
 
 ## Acceptance criteria and regulators
 
@@ -145,3 +147,17 @@ A research or synthesis node that meets ambiguity returns it in `questions[]`; t
 ## Revision history
 
 - v1 (2026-09-06): initial charter after intake and one elicitation round; host fixed to `magnetite`, KVM runner host rejected, domain confirmed, OpenSpec rejected in favor of Linear.
+- v2 (2026-09-06): revision after five further research axes and one decision round; the body corrections below are the only edits to earlier text.
+  - The package path is the flat `pkgs/by-name/omnigent/`, because the vanixiets `pkgs/by-name` tree has no two-letter shard; the naming rule is corrected in place.
+  - The designations are the literals `omnigent server` for the server process, `omnigent host <server-url>` for the runner, and `omnigent/inner/bwrap_sandbox.py` for the Linux sandbox source; the designation table, W4, and the reference table are corrected in place.
+  - W4 is corrected in place: bubblewrap applies to agent types whose spec declares it; the native Claude Code, Codex, and Pi specs declare `sandbox.type: none` at the pin, so the README's "mandatory" sentence is not a world assumption the plan relies on.
+  - The reference table gains `github:cameronraysmith/kanidm@ed10baa494adc1549c2e9e3d750465cc1052a7d1`, the fork of `kanidm/kanidm` at upstream tag `v1.11.0` read to settle claim emission, and `github:NixOS/nixpkgs@85f62611fa3f3eacbcfe3bc7a6d6518b443ca442`, the vanixiets root `nixpkgs` lock node read for the PostgreSQL, nginx, Kanidm, and user-namespace module surfaces.
+  - The citation rule is extended: published documentation may be cited by `https://` URL followed by `(fetched 2026-09-06)` when no pinned repository holds the text.
+  - The A2 regulator exempts `https://` citations from the local resolution loop; they are checked by the fetch date and the human gate.
+  - No PostgreSQL backup, monitoring, or observability work is a precondition for the first deployment; those are deferred and are intended to be built with Omnigent itself.
+  - The runner design generalizes from `magnetite` to `pyrite` and `stibnite` through one clan instance with `server` and `host` roles.
+  - The initial harness scope is Claude Code, Codex, and Pi; other harnesses are deferred.
+  - The module shape is the O3 hybrid: plain `flake.modules.nixos.omnigent` and `flake.modules.nixos.omnigent-host` carry everything one machine needs, and a thin clan service under `modules/clan/services/omnigent/` carries inventory membership, cross-role server URL derivation, per-instance generator naming, and a future `darwinModule`.
+  - The first runner runs under the existing `cameron` user; migration to a dedicated `omnigent-host` user is deferred until Home Manager aspect PRs #2957, #2980, and #2982 merge so the runner module can be rebased on that architecture.
+  - Unsandboxed native Claude Code, Codex, and Pi sessions are accepted for the first deployment, matching the current local experience; an `enforce_sandbox` policy follows the dedicated-user migration.
+  - `fosskar/buzz-flake` is a module-shape reference only; it is not an Omnigent deployment source and not a flake input, and the plan judges no Buzz semantics beyond the D8 coexistence statement.
