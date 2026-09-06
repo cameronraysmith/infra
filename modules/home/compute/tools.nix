@@ -32,7 +32,6 @@
         kubectx
         kubernetes-helm
         kustomize
-        lazydocker
         lima
         ngrok
         skopeo-nix2container
