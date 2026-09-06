@@ -88,7 +88,6 @@
           ratchet
           shellcheck
           tea
-          tmate
           tree-sitter
           jaq
           yq
