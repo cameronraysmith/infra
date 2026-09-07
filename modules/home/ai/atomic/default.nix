@@ -73,6 +73,43 @@
             inherit (config.aiAgentSettings) theme enableInstallTelemetry hideThinkingBlock;
             packages = config.aiAgentSettings.packagesForAtomic;
             extensions = config.aiAgentSettings.extensionsForAtomic;
+
+            # Three model roles. The session default covers chat, planning, and
+            # every workflow stage that pins no model. Implementation runs on
+            # Astra because the builtin goal and ralph orchestrators pin it and
+            # `worker` is the implementation writer those orchestrators hand off
+            # to; the read-only codebase-* agents take Opus for quick research.
+            # atomic rewrites the default* keys on /model and /thinking, so an
+            # interactive switch survives only until the next activation.
+            defaultProvider = "anthropic";
+            defaultModel = "claude-fable-5-1";
+            defaultThinkingLevel = "medium";
+            modelThinkingLevels = {
+              "anthropic/claude-fable-5-1" = "medium";
+              "anthropic/claude-opus-5" = "medium";
+              "openai-codex/gpt-6-astra" = "high";
+            };
+            fallbackModels = [
+              "openai-codex/gpt-6-astra:high"
+              "anthropic/claude-opus-5:medium"
+            ];
+            subagents.agentOverrides =
+              let
+                research = {
+                  model = "anthropic/claude-opus-5:medium";
+                };
+              in
+              {
+                codebase-locator = research;
+                codebase-analyzer = research;
+                codebase-pattern-finder = research;
+                codebase-online-researcher = research;
+                codebase-research-locator = research;
+                codebase-research-analyzer = research;
+                worker = {
+                  model = "openai-codex/gpt-6-astra:medium";
+                };
+              };
           };
         };
 
