@@ -133,19 +133,64 @@
 
               direnvLoadTimeoutMs = lib.mkDefault 180000;
             };
+            # Roles are assigned by what consumes them (src/config/model-roles.ts
+            # names the nine built-ins; the greps below locate each consumer),
+            # which is how this stays comparable to the atomic and claude-code
+            # splits without pretending the three agents share a role vocabulary.
+            #
+            # Fable 5.1 orchestrates and plans; Opus 5 does delegated work; the
+            # OpenAI family reviews, so a review never shares a family with the
+            # session that produced the work. Both Anthropic roles run at medium
+            # for the same reason they do in atomic and claude-code.
             modelRoles = {
-              default = lib.mkDefault "anthropic/claude-opus-5:xhigh";
-              advisor = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
-              plan = lib.mkDefault "anthropic/claude-opus-5:xhigh";
-              designer = lib.mkDefault "anthropic/claude-opus-5:xhigh";
+              # The session model.
+              default = lib.mkDefault "anthropic/claude-fable-5-1:medium";
+              # Plan mode (src/modes/interactive-mode.ts resolveRoleModelWithThinking).
+              plan = lib.mkDefault "anthropic/claude-fable-5-1:medium";
+              # The bundled `task` subagent carries model "@task"
+              # (src/task/agents.ts), so this is the delegated-worker model.
+              task = lib.mkDefault "anthropic/claude-opus-5:medium";
+              # The `reviewer` agent carries model "@slow"
+              # (src/prompts/agents/reviewer.md), and advisor reuses the slow
+              # chain without inheriting the primary. Astra rather than Sol: the
+              # two tie on DeepSWE pass@1, but Astra takes the fewest steps of
+              # any catalog row and leads document reasoning, and atomic's
+              # builtins already review on it.
+              slow = lib.mkDefault "openai-codex/gpt-6-astra:xhigh";
+              advisor = lib.mkDefault "openai-codex/gpt-6-astra:xhigh";
+              # smol drives both `scout` and `sonic`, one exploratory and one
+              # strictly mechanical, so it stays cheap; scout is raised on its
+              # own through task.agentModelOverrides below.
               # smol = lib.mkDefault "openrouter/moonshotai/kimi-k3:high";
               smol = lib.mkDefault "zai/glm-5.3:high";
-              slow = lib.mkDefault "openai-codex/gpt-5.6-sol:xhigh";
               vision = lib.mkDefault "openrouter/google/gemini-3.7-flash:high";
               commit = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
+              # Titles, the unexpected-stop classifier, and mnemopi fact
+              # extraction, which resolve ["tiny", "smol"] in that order.
               tiny = lib.mkDefault "openai-codex/gpt-5.6-luna:medium";
-              task = lib.mkDefault "anthropic/claude-sonnet-5:high";
             };
+
+            # The per-agent analog of atomic's subagents.agentOverrides. `scout`
+            # is omp's read-only research agent, so it takes the same model as
+            # atomic's codebase-* agents rather than sonic's mechanical tier.
+            task.agentModelOverrides = {
+              scout = lib.mkDefault "anthropic/claude-opus-5:medium";
+            };
+
+            # omp's priority.json fallback chains predate Astra and still head
+            # the slow chain with Sol, so an Astra failure would fall through a
+            # chain that never names it. State the next hop for the three roles
+            # this file pins.
+            retry.fallbackChains = {
+              default = lib.mkDefault [ "anthropic/claude-opus-5" ];
+              slow = lib.mkDefault [ "openai-codex/gpt-5.6-sol" ];
+              advisor = lib.mkDefault [ "openai-codex/gpt-5.6-sol" ];
+            };
+
+            # Fable requests blocked by Anthropic's safety classifier retry on
+            # Opus 4.8 server-side. Off upstream; worth having now that the
+            # session model is a Fable.
+            providers.anthropic.serverSideFallback = lib.mkDefault true;
             # Mnemopi is omp's local memory backend: a SQLite store the agent
             # opens in-process (src/mnemopi/state.ts hands the Mnemopi library a
             # dbPath and a bank), with no service, no token and no network hop
@@ -237,12 +282,12 @@
             advisors = lib.mkDefault [
               {
                 name = "Watchdog";
-                model = "openai-codex/gpt-5.6-sol:xhigh";
+                model = "openai-codex/gpt-6-astra:xhigh";
                 instructions = "Continuous duty: wrong-direction detection, missing constraints, hallucinated APIs, plan/todo drift. Prefer concern over nit.";
               }
               {
                 name = "Fable";
-                model = "anthropic/claude-fable-5:xhigh";
+                model = "anthropic/claude-fable-5-1:xhigh";
                 instructions = "Deep-review duty: architectural soundness, subtle correctness, cross-module invariants. Invoked deliberately; be thorough.";
                 enabled = false;
               }
