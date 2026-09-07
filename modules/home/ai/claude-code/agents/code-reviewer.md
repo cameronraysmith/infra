@@ -6,7 +6,8 @@ tools:
   - Glob
   - Grep
   - Bash
-model: haiku
+model: opus
+effort: high
 ---
 
 # Code reviewer

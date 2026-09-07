@@ -38,12 +38,28 @@
                 padding = 0;
               };
 
-              model = "opus";
+              # Fable 5.1 orchestrates; Opus 5 does the worker tasks via
+              # CLAUDE_CODE_SUBAGENT_MODEL below. Both run at medium through the
+              # per-model modelSettings key, which outranks effortLevel; that
+              # key is the floor for every other model. ultracode must stay off
+              # because it pins the whole session to xhigh, which would make the
+              # medium levels below unreachable -- the cost is its dynamic
+              # workflow planning, which we run through atomic instead.
+              model = "fable";
               effortLevel = "high";
-              ultracode = true;
+              ultracode = false;
+              modelSettings = {
+                "claude-fable-5-1".effortLevel = "medium";
+                "claude-opus-5".effortLevel = "medium";
+              };
+              fallbackModel = [ "claude-opus-5" ];
               forceLoginMethod = "claudeai";
               theme = "dark";
               editorMode = "vim";
+              outputStyle = "concise";
+              tui = "fullscreen";
+              # Left on until a cross-harness memory system exists; revisit then.
+              autoMemoryEnabled = true;
               autoCompactEnabled = false;
               autoDreamEnabled = true;
               spinnerTipsEnabled = false;
@@ -166,9 +182,16 @@
                 CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "0";
                 CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1";
                 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+                # A default, not a force: subagent frontmatter and per-invocation
+                # models still win. CLAUDE_CODE_SUBAGENT_MODEL_FORCE would make it
+                # absolute, at the cost of ignoring every definition's own model.
                 CLAUDE_CODE_SUBAGENT_MODEL = "claude-opus-5";
                 DISABLE_BUG_COMMAND = "1";
-                # Disabled: also suppresses feature-flag evaluation (upstream bug).
+                ENABLE_CLAUDEAI_MCP_SERVERS = "0";
+                # Both stay disabled: DISABLE_TELEMETRY also stops feature-flag
+                # fetching, which is how the server reports Fable availability and
+                # gates remote control. The schema now documents this as the
+                # variable's behaviour rather than a bug.
                 # https://github.com/anthropics/claude-code/issues/33119#issuecomment-4052694908
                 # DISABLE_ERROR_REPORTING = "1";
                 # DISABLE_TELEMETRY = "1";
@@ -434,6 +457,12 @@
             ccds = "claude --permission-mode auto";
             ccglm = "claude-glm";
             cccb = "claude-cerebras";
+            # One-shot launches on a model other than the settings default; the
+            # --model flag is session-scoped and never rewrites the saved model.
+            ccfable = "claude --model fable";
+            ccopus = "claude --model opus";
+            ccsonnet = "claude --model sonnet";
+            cchaiku = "claude --model haiku";
           };
 
           # symlink .local/bin to satisfy claude doctor
