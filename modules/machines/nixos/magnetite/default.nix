@@ -459,6 +459,15 @@ in
       # Default is 6, but Bitwarden SSH agent may have 10+ keys loaded
       services.openssh.settings.MaxAuthTries = 20;
 
+      # nix-fast-build --remote opens one ssh connection per build, so a client
+      # with N cores offers up to N concurrent pre-auth connections. sshd's
+      # default MaxStartups of 10:30:100 starts dropping past ten, and a dropped
+      # handshake surfaces as `kex_exchange_identification: Connection reset by
+      # peer` and an exit status of 255 attributed to whichever build owned the
+      # connection -- a red check naming a package that is not at fault. An
+      # 18-core client reliably lost a random handful of checks per run this way.
+      services.openssh.settings.MaxStartups = "64:30:256";
+
       # Restricted builder user for remote nix builds (no sudo, SSH key only)
       users.users.builder = {
         isNormalUser = true;
