@@ -1,136 +1,107 @@
 # Atomic workflows
 
-Workflows in this directory are executed by `@bastani/atomic` (`/workflow <name>`).
-Only top-level `.ts` files here are discovered; `runs/` holds per-run artifacts and is git-ignored.
+Only top-level TypeScript files are discovered by Atomic's `/workflow <name>` command.
+Helpers live in subdirectories; `runs/` is git-ignored and holds observations and stage artifacts.
 
-## `bump-atomic-derivation.ts`
+## Bump derivation
 
-### The bump is easy to get subtly wrong
+`bump-derivation.ts` generalizes package bumps under `pkgs/by-name/<package>/` without letting a model invent hashes or declare its own work verified.
+Inputs are required `package`, optional `target_version` (latest when omitted), `plan_only` (false), `max_repair_attempts` (2), and `build_timeout_minutes` (45).
+In this jj repository, `splice_after` is required and identifies the change after which delivery changes are inserted.
+The workflow never moves `@`, pushes, changes bookmarks, activates a system, or runs the whole flake check surface.
+Do not run the workflow or package builds as part of slice A authoring; execution belongs to slice B.
 
-Moving `pkgs/by-name/atomic/` to a new upstream Atomic release is mechanically easy and easy to get subtly wrong.
-A second pin somewhere else in the tree keeps the old version, a hash gets copied instead of regenerated, or the change lands on top of the wrong thing.
-The work is not hard enough to need a human for every step and not safe enough to run unattended.
-The workflow's job is therefore **to make each way the bump can be wrong falsifiable by something other than a model's own report of its work.**
+`plan_only=true` resolves the release, maps and validates the derivation, writes the plan and observations, and returns before `run-updater`.
+It makes no tracked-file edits and cannot reach landing.
+Ignored artifacts under `.atomic/workflows/runs/bump-derivation/<package>/` are permitted even in plan-only mode.
 
-That framing came from a defect rather than from theory.
-The first run of this workflow returned `status: "completed"` and `landed: true` while its land stage had explicitly reported that it had created nothing.
-The output was a hardcoded literal in the `run` return, so it was structurally incapable of disagreeing with reality.
-Everything below is organised around not being able to do that again.
-
-### An assertion must be derived from a tool observation
+## An assertion must be derived from a tool observation
 
 **An output that asserts something happened must be derived from a tool node's observation of the world.**
-In the code this is the `Witness<T>` type: it is branded, `witness()` is its only constructor, and `witness()` only accepts a `ctx.tool` outcome.
-`completedRun()`, the only way to build the success result, takes `landed` as a `Witness<boolean>` rather than a boolean, so the completion path cannot be reached by typing `true`.
-The type is deliberately about twenty lines and knows nothing about this workflow; it is a seam, not a framework.
+The original Atomic-only workflow once reported `landed: true` while its land stage had explicitly created nothing.
+A hardcoded success literal could not disagree with reality.
 
-Negative claims (`landed: false` on a blocked exit) need no witness.
-Asserting that nothing happened, when nothing happened, is the safe direction of the error.
+`Witness<T>` is branded, and `witness()` constructs it only from a tool outcome and a projection of its observation.
+`completedRun()` requires both `landed: Witness<boolean>` and `changes: Witness<string[]>`; callers cannot substitute a boolean or a list of guessed identifiers.
+The external outputs contain the witnessed boolean and list, preserving the original result fields while adding `package`, `changes`, `skill_deps_verified`, and `self_maintained_repaired`.
+Blocked exits and deliberate plan-only or operator-declined exits assert no positive landing claim and carry `landed: false` and `changes: []`.
+A tool witness is evidence of what that tool checked, not an end-to-end guarantee that the specification matched intent.
 
-### Stages, and what each gate falsifies
+## The three ADTs
 
-`resolve-release` (tool) falsifies "the target release exists".
-A run that would otherwise spend forty-five minutes discovering that `0.9.18` was never published stops in a few seconds against the npm registry and the GitHub tag.
+`bump/types.ts` declares TypeBox schemas and derives their TypeScript types.
+Unrecognized structured constructors fail validation rather than falling through to a permissive default.
+Every constructor switch has an exhaustive `never` default that blocks.
 
-`map-derivation` (stage, schema-backed) falsifies "we know what to change and what covers it".
-Its prose artifact is for humans and later stages; its `schema` returns the machine-usable part: the system double and the flake attributes that actually build or check this package.
-`schema` and `output` compose, so the structured value arrives as `result.structured` while the ordinary text of that same message becomes the artifact.
+- `ReleaseSource`: `GitHubRelease { owner, repo, tagPrefix }` or `Npm { name }`.
+- `Updater`: `PassthruScript { storePathOrRepoPath, acceptsVersionArg }`, `NixUpdate { flakeAttr }`, or `Manual`.
+  Manual updating is blocked; a model never substitutes hand-written hashes.
+  Latest-only scripts accept an omitted target or an explicitly latest target, but block a specific non-latest version.
+  Explicit release lookup does not depend on latest metadata; only a discovered latest-only script triggers the additional latest check.
+- `SkillDep`: `Vendored { deliveryExpr, upstreamSubtree, pinKind }` or `SelfMaintained { skillPath, dependsOn, citedClaims }`.
+  `pinKind` distinguishes `SrcCarried`, `ApmGitDep`, and `NpmBundled`; `ApmGitDep` blocks as unsupported in slice C.
+  Self-maintained dependencies name either the package or a vendored skill and cite claims with file, lines, text, and prior verification provenance.
 
-The structured value is validated before use (`validateGateAttrs`) for shape, non-emptiness, and shell-safety, and the run stops blocked if it does not hold up.
-Before that validation existed, the attributes were prose that nothing parsed and the gate built a hardcoded `.#atomic`, so recon could name three attributes and the gate would still check one.
-A gate over the wrong attributes is green for the same reason an unrun gate is green, which is the same provenance failure as `landed: true` one layer up.
+The registry in `bump/packages.ts` contains `atomic` and `linear-cli` skill dependencies and their static release sources, not updater guesses.
+Recon discovers the updater from the derivation and verifies registry facts against the tree.
+Unknown packages use deterministic, read-only release-source discovery and recon; anything unclassifiable blocks.
+Atomic's npm distribution carries its builtin skill trees under `dist/builtin`.
+Linear's source carries `skills/linear-cli`, delivered through `${pkgs.linear-cli.src}/skills` in the user's home module.
+Its local linear-project-management and openspec-linear-sync skills are self-maintained, not vendored.
 
-`apply-bump` (stage) is not a gate.
-It is the only stage allowed to write to the derivation, and it is told to prefer the repository's own update mechanism and never to hand-write a hash it did not observe.
+## Stages and evidence
 
-`build-gate-N` (tool) falsifies "this actually builds".
-It runs a single `nix build --no-link --log-format internal-json -v <attrs…>` over every attribute recon enumerated.
-This is the gate the rest of the run rests on: a real build, run by workflow code rather than by a model reporting on itself, with its exit status read directly.
+1. `resolve-release` observes the requested release or resolves latest from the classified source.
+2. `map-derivation` returns a schema-backed manifest and a prose artifact.
+   Validation covers the whole manifest: pins, release source, updater, skill dependencies and build attributes.
+   Every pin records whether it must change.
+   Version-keyed source and release-binary hashes must change; dependency-closure FOD hashes may remain identical only when their pin names a `witnessAttr` whose build realizes that FOD.
+   Each such attribute must appear in `gateAttrs.attrs`, including cross-system attributes when required; missing witnesses block validation.
+   Pin observations follow the named source binding, including nested Nix attribute paths such as `src.hash` and `binaries.aarch64-darwin.hash`, and JSON manifest properties such as `version`.
+   Comments and other fields are not pin evidence; ambiguous or computed bindings block as unclassifiable rather than falling back to file-wide matching.
+   Pin gates return each observed literal and its expected baseline predicate (`changed` or `build-witnessed`), with the named build attribute for closure hashes; the baseline is not an independently expected new hash.
+3. `run-updater` runs the classified updater with the resolved target and checks the pin and derivation-path diff boundaries.
+4. `build` runs exactly the enumerated attributes with bounded, uniquely named repair stages only after failed builds.
+   The gate owns build execution and exit-code observations; a repair report is not a build witness.
+5. `verify-vendored-delivery` compares a built source or package subtree with upstream at the release tag or npm tarball.
+   Git archives read local upstream tags without checking out or modifying the upstream repository.
+   Vendored content is never repaired locally.
+   Each successful comparison records the upstream subtree, delivered path, compared file count and `identical: true`.
+6. `revalidate-self-maintained` plans read-only help/source/skill probes for every claim, executes them through tools, and then re-attests or minimally repairs prose and documented checks within the union of self-maintained skill directories.
+   Source probes read the built package's `.src` store path; exact-quote validation reads claim-indexed observation artifacts rather than raw text in checkpoints.
+   Contradictions receive evidence-backed fail-closed repairs, including example checks that miss accepted upstream forms; claims without a supported repair block.
+   Validated old/new claim pairs are written to `registry-updates.json` for subsequent registry catch-up, without expanding the bump's tracked edit scope.
+7. `review` uses a fresh maximum-reasoning context to falsify the bump against diffs and named tool evidence, not the worker's report.
+   The read-only reviewer has no shell: it uses compact receipts and targeted artifact excerpts, and reports insufficient evidence as a workflow finding rather than reconstructing it or asking the controller.
+   Unapproved or malformed review results block landing.
+8. `land` requires operator confirmation, captures topology, then creates one derivation change and, when prose changed, a second skill change.
+   The commands are `jj new --no-edit -A <splice_after>` followed, for change2, by `jj new --no-edit -A <change1>`.
+   Each receives only its own paths with `jj squash --from @ --into <change> --use-destination-message --keep-emptied -- <paths>`.
+   Verification requires exactly the ordered new chain, allowed path sets, unchanged `@`, preserved former children below the last new change, and no allowed paths left in `@`.
+   Unrelated leftovers are reported, never squashed.
 
-`repair-N` (stage) makes the failed build the next task rather than the end of the run, bounded by `max_repair_attempts`.
-It is given the log path and told to search it, not read it.
-It is explicitly forbidden from narrowing the attribute set or weakening a check, because the failure mode being guarded against is a model making the gate agree with the code instead of the other way round.
+Every model stage writes the model and reasoning level actually observed in stage-result metadata to the package ledger, including fallback attempts.
+Missing actual-model metadata blocks instead of being replaced with requested model pins.
+Role constraints, prohibitions, and identifiers are protected with `<keepContext>`; bulk evidence is passed through files and `reads`.
+Process callbacks use finite deadlines and forward the tool cancellation signal.
+Repairs are bounded forward-only iterations with distinct node names.
 
-`review` (stage, schema-backed) falsifies "green means correct".
-A green build cannot see a stale second pin, a copied hash, or a check that was quietly disabled.
-The stage therefore runs on a different model in a fresh context, is told it did not write the change, and must produce evidence per finding.
-It is also asked to check that the gate's attributes cover the package, since the reviewer is the only thing that can catch recon having enumerated a plausible but wrong gate.
+## Limits and operating assumptions
 
-`address-review` and its confirming gate (stage, tool) falsify "the fix did not break the build".
-Any repair after review re-runs the same gate.
+Recon's well-formed attribute list can still be incomplete; independent review must challenge its coverage.
+Topology checks compare observations, not locks; another writer changing the splice segment can make verification block.
+The workflow preserves unrelated working-copy paths rather than treating them as part of the bump.
+Scope snapshots include Git-relevant executable/file modes and symlink targets as well as file bytes; unchanged foreign paths remain outside the delta.
+A blocked run can leave a partially updated working copy; it reports the evidence and never claims a verified land.
+Local upstream repositories and the requested tags must already be available for GitHub subtree comparisons; source probes use the built `.src` store path.
 
-Human confirmation (`ctx.ui.confirm`) keeps history from being touched without a person.
-Declining is a *completed* run with `landed: false`, not a failure.
+The build gate intentionally runs `nix build` directly rather than `just build` or `just check-fast`.
+Those recipes cover a wider check surface and do not forward the selected attributes and log format needed by this bounded package loop.
+The direct gate is the narrow repeated check; repository-wide checks remain the human pre-PR lane.
+Process output is written to package-local `.log` files with companion `.log.stream.jsonl` channel-labelled chunks for live inspection.
+Each tool checkpoint separates its process receipts from domain evidence; receipts contain `command`, `exitCode`, `state`, `terminationSignal`, `logPath` and a `tail` bounded to 60 lines and 8 KB, never raw `stdout`/`stderr` fields.
+Checkpoint strings over 8 KB block; source/help observations and pin baseline files are referenced by artifact path instead of embedded.
+Cancellation or deadline interruption terminates the process group, drains its pipes, persists partial logs and a compact interruption receipt, then rethrows the process error rather than reporting success.
 
-`capture-land-topology` (tool) is not a gate on the bump.
-It takes the baseline the land verification is measured against: the change id of `@` and the set of change ids one hop from it.
-If that baseline cannot be read, the run stops blocked before touching history, because without it nothing afterwards could be verified, and an unverifiable land is exactly what this workflow exists to prevent.
-
-`land` (stage) is constrained by the fact that `@` here is a multi-parent development join that other sessions coordinate through.
-`@` must not move; the squash must be path-scoped; the change is created with an explicit `jj new --no-edit -B @` so that the change the stage makes and the change the verifier looks for have the same topology.
-It also receives the successful build log through `reads`.
-On the failing run the land stage refused to act partly because its fresh context had no way to see that anything had been built, and concluded "nobody has built it".
-
-`verify-land` (tool) falsifies "a change was landed, and only the bump was landed".
-It re-reads the change graph and asserts, from real `jj` output, that (1) `@`'s change id is unchanged, (2) exactly one change id adjacent to `@` is new, and (3) that change's diff touches only `pkgs/by-name/atomic/`.
-The `landed` output is the conjunction of those three assertions, carried through a `Witness`.
-
-Adjacency rather than the `@-` revset is the deliberate choice: `@` is a multi-parent join, so `@-` names a set, not "the change we just made".
-Comparing adjacency sets before and after says exactly what was added without assuming how many parents `@` has.
-The verifier tolerates changes *leaving* the adjacency set, because `jj new -B @` legitimately pushes `@`'s former parents one hop away.
-
-### Stop and blocked conditions
-
-The run stops blocked, neither failed nor completed, when:
-
-- the release does not exist upstream;
-- recon's structured attributes are missing or malformed;
-- the build is still red after the repair budget;
-- a post-review fix leaves it red;
-- the pre-land change graph cannot be read; or
-- `verify-land`'s assertions do not hold.
-
-Every blocked exit carries `landed: false` and the evidence it was decided from, so the reason is inspectable without rerunning.
-
-The run stops completed with `landed: false` in exactly one case: a human declined to land a verified bump.
-
-### Known limits
-
-- `internal-json` logs are for machines.
-  `--log-format internal-json` keeps the build's full structured stream on disk, which is what makes surgical `rg` over a large log useful, but it makes the `tail` that re-enters model context much less readable than the previous `--print-build-logs`.
-  The repair prompt compensates by naming the format and giving search patterns; a human tailing the log live will want `jq`.
-- `verify-land` is a snapshot comparison, not a lock.
-  Another session committing to an adjacent change between the baseline capture and the verification would show up as a second new adjacent change and block the run.
-  That is the intended direction of failure, since a false block is recoverable and a false `landed: true` is what got us here, but it does mean the land phase assumes it is briefly the only writer.
-- The landed change may only touch `pkgs/by-name/atomic/`.
-  That is what `verify-land` asserts, so a release whose bump also has to change a pin elsewhere in the tree cannot be landed as one change here.
-  The land stage is told to leave the outside file in the working copy and report it, and a human decides where it belongs.
-  Widening the assertion to "whatever recon listed" would make the check depend on the same enumeration it is supposed to be independent of.
-- The gate trusts recon's enumeration.
-  Validation checks that the attributes are well-formed and non-empty, not that they are the *right* attributes; only the review stage can catch a plausible but incomplete list.
-- Model identifiers are pinned in the file and drift with the provider catalogue.
-  `anthropic/claude-fable-5-1:medium` is the recon primary and is present in the catalogue, but the first-party anthropic route rejects this client's reported version (HTTP 400, `Claude Code 2.1.75 does not support this model`).
-  The fallback chain therefore leads with `openrouter/anthropic/claude-fable-5.1:medium`, the same model by a route without that gate, before falling back to a different family.
-  A single failing route is not evidence that a model is unavailable, and the earlier revision of this file wrongly recorded it as such.
-- The workflow never pushes, never touches a bookmark, and never runs `nix flake check`.
-  Landing means one local `jj` change and nothing more.
-
-### Deviation: the build gate does not go through `just`
-
-The gate runs `nix build` directly instead of a `just` recipe, which is against this repository's usual habit of routing commands through the justfile.
-Two concrete reasons, both checked rather than assumed:
-
-- `just build` depends on `lint check`, which runs `prek run --all-files` and a whole `nix flake check`, and it hardcodes `--print-build-logs`.
-  A gate that must run several times inside a repair loop cannot pay for the entire check surface each round, and it cannot forward the log-format flag the loop depends on.
-- `just check-fast` builds *all* checks and cannot forward flags either.
-
-These two commands are not duplicated routing.
-`just check-fast` is the broad operator a human runs before a PR: everything, no arguments, one answer.
-The gate here is the narrow operator inside a repair loop: exactly the attributes recon enumerated for one package, in a machine-readable format, run repeatedly.
-Collapsing them into one recipe would either make the pre-PR check too narrow or the repair loop too slow.
-If a `just` recipe is ever added that takes attributes and a log format as arguments, this gate should move onto it.
-
-### The graph has no fixed shape to draw
-
-The graph is materialized while `run(ctx)` executes: the repair rounds are a bounded loop, the review-repair stage is conditional, and the land phase depends on a human answer.
-A hand-drawn picture of that would be a snapshot of one possible run that stops being true the first time someone edits the control flow, so read the run body, or attach to a live run's graph overlay.
+The graph is visible in the entry file from release resolution through landing.
+Its realized shape depends on plan-only mode, bounded repairs, skill dependencies, review and human confirmation; a static diagram would describe only one possible run.
