@@ -289,12 +289,21 @@ home-package-names system="":
 
 # Validate flake checks via nix-fast-build (failure isolation, parallel eval+build, nom output)
 # --eval-workers 4: reduces SQLite eval-cache contention (harmless but noisy at default=ncpus)
+# --skip-cached: derivations already present in the binary cache are not rebuilt
 # nom=auto|on|off: auto disables nom when stdout is not a TTY (e.g., piped to tee)
 # push=off|on: on uploads built paths to the niks3 PUSH server (auth token resolved by the
 #   niks3 client from ~/.config/niks3/auth-token); the PULL substituter cache.scientistexperience.net
-#   is configured separately. Params are positional, so usage is: just check-fast auto on
+#   is configured separately. push stays opt-in on every lane, including the remote one: pushing
+#   every build would churn the cache with paths no other machine will consume, and whether a given
+#   build is worth publishing is a human judgement. Forgetting to opt in is cheap to recover from --
+#   the outputs stay in the store, so re-running with push=on pays only the upload.
+# system="": defaults to builtins.currentSystem. When system is the native system the build runs
+#   locally and results land in the local store; for any other system the build is routed with
+#   --remote magnetite.zt --no-download, so the remote store is populated and the local store does
+#   not become a staging area for another platform's closure.
+# Params are positional, so usage is: just check-fast auto on x86_64-linux
 [group('nix')]
-check-fast nom="auto" push="off":
+check-fast nom="auto" push="off" system="":
   #!/usr/bin/env bash
   set -euo pipefail
   case "{{nom}}" in
@@ -304,11 +313,17 @@ check-fast nom="auto" push="off":
     *) echo "nom must be auto|on|off" >&2; exit 1 ;;
   esac
   pushflag=""; [ "{{push}}" = "on" ] && pushflag="--niks3-server https://niks3.scientistexperience.net"
-  nix-fast-build $flag $pushflag \
+  native=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+  system="{{system}}"
+  [ -n "$system" ] || system="$native"
+  remoteflags=""
+  [ "$system" = "$native" ] || remoteflags="--remote magnetite.zt --no-download"
+  nix-fast-build $flag $pushflag $remoteflags \
     --no-link \
     --option accept-flake-config true \
     --eval-workers 4 \
-    --flake ".#checks.$(nix eval --impure --raw --expr 'builtins.currentSystem')"
+    --skip-cached \
+    --flake ".#checks.$system"
 
 # Verify system configuration builds after updates (run before activate)
 [group('nix')]
