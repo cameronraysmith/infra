@@ -127,18 +127,44 @@
               command="''${line#* }"
 
               payload=$(jq -Rn --arg c "$command" '{tool_input: {command: $c}}')
-              output=$(printf '%s' "$payload" | bash "$hook" 2>/dev/null || true)
-
-              if [ -n "$output" ]; then
-                actual=ask
+              stderr_file=$(mktemp)
+              if output=$(printf '%s' "$payload" | bash "$hook" 2>"$stderr_file"); then
+                status=0
               else
-                actual=allow
+                status=$?
               fi
 
-              if [ "$actual" != "$expected" ]; then
+              # The observation must not consult the expectation: classify the
+              # hook's behaviour on its own terms, then compare.
+              actual=error
+              if [ "$status" -eq 0 ]; then
+                if [ -z "$output" ]; then
+                  # This gate represents allow by exiting successfully and silently.
+                  actual=allow
+                else
+                  actual=$(
+                    printf '%s' "$output" \
+                      | jq -ers 'if length == 1 then .[0].hookSpecificOutput.permissionDecision | select(. == "ask" or . == "allow") else empty end'
+                  ) || actual=error
+                fi
+              fi
+
+              if [ "$actual" = error ]; then
+                echo "FAIL: hook error for: $command" >&2
+                echo "  exit status: $status" >&2
+                if [ -s "$stderr_file" ]; then
+                  echo "  stderr:" >&2
+                  sed 's/^/    /' "$stderr_file" >&2
+                else
+                  echo "  stderr: <empty>" >&2
+                fi
+                failures=$((failures + 1))
+              elif [ "$actual" != "$expected" ]; then
                 echo "FAIL: expected $expected, got $actual for: $command" >&2
                 failures=$((failures + 1))
               fi
+
+              rm -f "$stderr_file"
             done < "$caseFile"
 
             if [ "$failures" -ne 0 ]; then
