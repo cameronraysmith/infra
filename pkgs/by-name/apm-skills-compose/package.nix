@@ -6,6 +6,11 @@
   ripgrep,
   writeText,
 
+  # pkgs.apm carries the apm-skill-bundle-workaround patch (Linear CAM-55)
+  # without which the github/gh-stack skill_bundle dependency below fails to
+  # install. See modules/nixpkgs/overlays/apm.nix.
+  apm,
+
   # Auto-discover every apm package dir (one containing .apm/skills) under the
   # plugins root. readDir over a source path → no IFD. Sorted == alphabetical,
   # reproducing the prior hardcoded order.
@@ -75,9 +80,6 @@
   ],
 }:
 let
-  system = stdenv.hostPlatform.system;
-  apm = inputs.llm-agents.packages.${system}.apm;
-
   pluginsDir = ../../../modules/home/ai/plugins;
 
   consumerApmDeps = lib.concatStringsSep "\n" (

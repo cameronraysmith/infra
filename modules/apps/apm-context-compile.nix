@@ -5,7 +5,6 @@
 {
   perSystem =
     {
-      inputs',
       pkgs,
       lib,
       config,
@@ -15,7 +14,9 @@
       packages.apm-context-compile = pkgs.writeShellApplication {
         name = "apm-context-compile";
         runtimeInputs = [
-          inputs'.llm-agents.packages.apm
+          # apm-skill-bundle-workaround (Linear CAM-55): pkgs.apm is the patched
+          # build that can install skill_bundle dependencies.
+          pkgs.apm
           pkgs.git # repo root resolution
           pkgs.yq-go
           pkgs.coreutils
