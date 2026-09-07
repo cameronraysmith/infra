@@ -6,7 +6,7 @@
 #
 # Rewrites, in package.nix:
 #   1. the `version = "...";` let-binding
-#   2. the four prebuilt-binary `hash = "...";` lines (one per platform,
+#   2. the two Darwin prebuilt-binary `hash = "...";` lines (one per platform,
 #      paired to each preceding `url` line)
 #   3. the `src` fetchFromGitHub `hash = "...";` line (the hash following
 #      the `rev = "v$VERSION";` line)
@@ -100,7 +100,7 @@ deno_deps_log="$(mktemp)"
 trap 'rm -f "$deno_deps_log"' EXIT
 
 if nix build "${REPO_ROOT}#packages.x86_64-linux.linear-cli.denoDeps" \
-  --system x86_64-linux \
+  --max-jobs 0 \
   --no-link \
   -L 2>&1 | tee "$deno_deps_log"; then
   echo "error: denoDeps unexpectedly matched the probe hash" >&2
