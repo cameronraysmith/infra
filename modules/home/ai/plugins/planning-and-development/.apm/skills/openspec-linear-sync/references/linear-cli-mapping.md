@@ -10,7 +10,7 @@ Prefer file-based content flags over inline content to avoid escaping artifacts;
 Which verbs expose `--json`, a content-file flag, or `--no-interactive` is mechanics with an authoritative home: see the `linear-cli` skill's `references/issue.md` and the `linear-cli` skill's `references/document.md` for per-verb flag availability, and the `## Best Practices for Markdown Content` section of `linear-cli` for why file-based flags are preferred.
 
 Every linear-cli invocation in this overlay, reads as well as mutations, passes an explicit `--workspace <slug>`, resolved from `workspace.slug` in the openspec/linear.yaml registry.
-A command that omits `--workspace` resolves to the credentials default, which is the personal workspace in this deployment, so an unscoped read silently queries the wrong workspace exactly as an unscoped mutation would write to it.
+A command that omits `--workspace` can resolve through environment or config credentials before reaching the credentials default, so do not rely on an ambient workspace: an unscoped read can query the wrong workspace exactly as an unscoped mutation can write to it.
 
 ## Setup and selection populate the registry
 
@@ -25,7 +25,7 @@ The human may optionally choose to bind a project, but a project is never fabric
 
 Each row maps one former MCP call to a CLI command or records its unavailability under the workspace gate.
 The command help for these verbs is verified against v2.6.0.
-Every command, read or mutation, passes an explicit `--workspace <slug>` after the `linear auth whoami` gate has confirmed the workspace, because a command lacking it resolves to the credentials default (the personal workspace here).
+Every command, read or mutation, passes an explicit `--workspace <slug>` after the `linear auth whoami` gate has confirmed the workspace, because a command lacking it can resolve through environment or config credentials before reaching the credentials default, so do not rely on an ambient workspace.
 
 | Operation | Former MCP call | linear-cli verb |
 |---|---|---|
