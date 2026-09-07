@@ -1,7 +1,7 @@
 # linear-cli mapping: verbs, document UPSERT, and a worked example
 
 This reference maps every Linear operation the overlay needs onto linear-cli verbs, replacing the disabled Linear MCP entirely.
-Verbs are at linear-cli v2.0.0.
+Verbs are at linear-cli v2.6.0.
 The bundled linear-cli skill is the authoritative home for every flag spelling and JSON shape below, delegated by subfile: issue verbs in the `linear-cli` skill's `references/issue.md`, document verbs in the `linear-cli` skill's `references/document.md`, `auth whoami` and `--workspace` in the `linear-cli` skill's `references/auth.md`, the `linear api` GraphQL fallback in the `linear-cli` skill's `references/api.md`, and JSON-shape introspection in the `linear-cli` skill's `references/schema.md`.
 This file maps operations to verbs and carries the policy; it is not the source of truth for flag spellings or JSON shapes, which live in those subfiles.
 The Linear MCP is recommended against and never invoked here.
@@ -23,7 +23,8 @@ The human may optionally choose to bind a project, but a project is never fabric
 
 ## Per-operation verb mapping
 
-Each row replaces one former MCP call.
+Each row maps one former MCP call to a CLI command or records its unavailability under the workspace gate.
+The command help for these verbs is verified against v2.6.0.
 Every command, read or mutation, passes an explicit `--workspace <slug>` after the `linear auth whoami` gate has confirmed the workspace, because a command lacking it resolves to the credentials default (the personal workspace here).
 
 | Operation | Former MCP call | linear-cli verb |
@@ -31,7 +32,7 @@ Every command, read or mutation, passes an explicit `--workspace <slug>` after t
 | Confirm workspace (the safety gate) | n/a | `linear auth whoami` |
 | Setup: list teams | `list_teams` | `linear team list` |
 | Setup: list projects | `list_projects` | `linear project list` |
-| Setup: list issue labels | `list_issue_labels` | `linear label list` |
+| Setup: list issue labels | `list_issue_labels` | Unavailable under the workspace gate: `linear label list --workspace` is a boolean label filter, not a workspace selector. |
 | Backlog candidate selection | `list_issues` | `linear issue query` (never before openspec/linear.yaml exists) |
 | Read story context | `list_comments` | `linear issue view`; `linear issue comment list` |
 | Transition state | `save_issue` (id + state) | `linear issue update` (by state name) |
@@ -42,7 +43,9 @@ Every command, read or mutation, passes an explicit `--workspace <slug>` after t
 | Document create | `save_document` (create) | `linear document create` |
 | Document update | `save_document` (update) | `linear document update` |
 
-Which verb maps to which operation is the policy this table owns, and the `--workspace <slug>` rule above applies to every row; the exact flags for each verb live in the bundled skill: issue verbs in the `linear-cli` skill's `references/issue.md` (including the `linear issue update --description-file <path>` flag, documented there as preferred for markdown content, which the issue-description sync uses), document verbs in the `linear-cli` skill's `references/document.md`, and the setup reads in the `linear-cli` skill's `references/team.md`, the `linear-cli` skill's `references/project.md`, and the `linear-cli` skill's `references/label.md`.
+Which verb maps to which operation is the policy this table owns, and the `--workspace <slug>` rule above applies to every available command; the exact flags for each verb live in the bundled skill: issue verbs in the `linear-cli` skill's `references/issue.md` (including the `linear issue update --description-file <path>` flag, documented there as preferred for markdown content, which the issue-description sync uses), document verbs in the `linear-cli` skill's `references/document.md`, and the setup reads in the `linear-cli` skill's `references/team.md`, the `linear-cli` skill's `references/project.md`, and the `linear-cli` skill's `references/label.md`.
+The excluded `label list` command cannot take `--workspace <slug>` at this version; its help describes `--workspace` as "Show only workspace-level labels (not team-specific)".
+Do not run it through this overlay.
 
 Read backlog candidates with `issue query`, not `issue list`; the alias relationship and the `--state`/`--json` reasoning that forces this choice live in the `linear-cli` skill's `references/issue.md`.
 
@@ -60,6 +63,8 @@ The `planningHome`/`artifactPaths` status-JSON shape is verified against openspe
 `openspec status --change <change>` only resolves while the change is still active, so the planning root (and, if needed, the capability list from `artifactPaths.specs.existingOutputPaths[]`) is captured in the readiness step before `openspec archive` moves the change into the archive; the worked example below shows the exact single-field `jq` capture, which extracts only the field needed rather than dumping the full status payload.
 The capture guards on repo mode (`select(.planningHome.kind=="repo")`): in workspace mode there is no single main specs dir, the select yields empty, and the spec-mirror is skipped and logged rather than guessed — the same non-blocking, single-openspec-root-per-repo degradation as a missing `linear_project`.
 
+The document commands and `.nodes[]` connection shape in this recipe are verified against v2.6.0 using command help and `listCommand` in `src/commands/document/document-list.ts`.
+
 For each capability the change produces:
 
 1. Look up the stored document id first: read `projects."<project-slug>".archive_documents."<capability>".id` from openspec/linear.yaml, where `<project-slug>` is the change's `linear_project`.
@@ -74,10 +79,11 @@ The body mirrors only the canonical folded main-spec content at `<planning-root>
 
 ## The narrow `linear api` GraphQL fallback
 
-Escalate to GraphQL only for fields the document subcommand cannot set, because most create and update paths lack `--json`.
-The two sanctioned uses are reparenting an existing document (`document update` has no `--project`, so moving a document to a different project requires GraphQL) and reading back the structured id of a freshly created entity when stdout parsing of the create output is insufficient.
+Escalate to GraphQL only for fields the document subcommand cannot set or for structured readback when stdout parsing of the create output is insufficient; document create and update lack `--json`.
+Reparenting uses `linear document update <id> --project <p> --workspace <slug>`; its help describes `--project` as "Re-point to project (UUID, slug ID, or name); replaces the current attachment".
 Do not route routine create or update paths through GraphQL; the document and issue subcommands cover them.
-The CLI surface for the escalation — `linear api` for raw GraphQL requests and `linear schema -o <file>` for type discovery — is documented in the `linear-cli` skill's `references/api.md` and the `linear-cli` skill's `references/schema.md`; the no-`--project` premise for `document update` is in the `linear-cli` skill's `references/document.md`.
+The `linear api` and `linear schema -o <file>` commands, document create/update's lack of `--json`, and `document update --project` are verified against v2.6.0 using command help.
+The corresponding CLI references are the `linear-cli` skill's `references/api.md`, `references/schema.md`, and `references/document.md`.
 
 ## End-to-end worked example: one HIL issue Backlog to Done
 

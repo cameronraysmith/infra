@@ -9,9 +9,10 @@ Never propose a Linear mutation until the correct personal-versus-work workspace
 Confirm explicitly which workspace `whoami` reports before any create, update, transition, comment, or document write.
 Optionally scope the check to a candidate workspace with `linear auth whoami --workspace <slug>`.
 
-Every linear-cli invocation, reads as well as mutations, passes an explicit `--workspace <slug>`.
-A command that omits `--workspace`, including a read such as `team list`, `project list`, `label list`, `issue query`, `issue view`, or `document list`, silently resolves to the credentials default, which is the personal workspace in this deployment.
-Do not let any command run against whatever workspace happens to be ambient; name the workspace on every command.
+Every linear-cli read or mutation must pass an explicit workspace-selecting `--workspace <slug>`; refuse commands that do not expose that selector.
+The command help was verified against v2.6.0 for `auth whoami`, `team list`, `project list`, `issue query`, `issue view`, `document list`, `issue create`, and `issue update`.
+For `label list`, `--workspace` is a boolean label filter, described as "Show only workspace-level labels (not team-specific)", not a workspace selector; do not run `label list` under this gate.
+Omitting the selector can resolve through environment or config credentials before reaching the credentials default, so do not rely on an ambient workspace.
 
 Never run mutating `linear auth` commands (`linear auth login`, `linear auth logout`, or any auth subcommand that writes credentials).
 Credentials are nix-managed and immutable here, rendered from sops into a read-only (0400) inline `credentials.toml` (flat `<workspace> = "<api-key>"` keys plus a top-level `default = "<workspace>"`), so a mutating `linear auth` would fail against the read-only file and is in any case ineffective and dangerous.
@@ -25,14 +26,14 @@ Do not key the gate on `LINEAR_WORKSPACE`.
 It is the wrong lever because it is env-overridable and silently outranked by `--workspace` and the API-key tiers, not because of where it sits relative to the credentials default.
 
 The credential precedence and the conflict-throw below are derived from linear-cli upstream source, not from the bundled skill, which does not document them: the resolution chain and the throw live in `src/utils/graphql.ts` (plus the config resolution in `src/config.ts`) in the upstream schpet/linear-cli repository.
-These were verified against v2.0.0; re-check them against the pinned version on any linear-cli bump, since a reordering of the tiers would silently change which workspace a mutation hits.
+These were verified against v2.6.0; re-check them against the pinned version on any linear-cli bump, since a reordering of the tiers would silently change which workspace a mutation hits.
 
-The credential precedence has five tiers, highest first:
+The credential precedence has five tiers, highest first, verified against v2.6.0 in `getResolvedApiKey` and `resolveRawOption`:
 
-1. `LINEAR_API_KEY` env, or an `api_key` resolved from the highest-priority config.
-2. A project-config `api_key` (in `.linear.toml`).
-3. The `--workspace <slug>` flag, which selects which stored credential set to use via a keyring lookup.
-4. `getOption("workspace")`, which reads the `LINEAR_WORKSPACE` env var first, then a project-config workspace, then resolves the result through `getCredentialApiKey()`, which abstracts over either the OS keyring or the inline `credentials.toml` file (the latter being this deployment's mode).
+1. A nonempty `LINEAR_API_KEY` environment variable.
+2. `getOption("api_key")`, which checks the environment, then project config, then global config.
+3. The `--workspace <slug>` flag, resolved through `getCredentialApiKey()`; an unknown explicit workspace throws rather than falling back.
+4. `getOption("workspace")`, which checks `LINEAR_WORKSPACE`, then project config, then global config, and resolves a nonempty result through `getCredentialApiKey()`.
 5. The `credentials.toml` `default` key.
 
 `LINEAR_WORKSPACE` resolves at tier 4 — above the `credentials.toml` default but below `--workspace` and below the API-key tiers.
@@ -45,21 +46,22 @@ The safe gate keys on `linear auth whoami` plus an explicit `--workspace`.
 ## Pre-gate environment assertion
 
 Before running the `linear auth whoami` gate, assert that both `LINEAR_API_KEY` and `LINEAR_WORKSPACE` are unset.
-`LINEAR_API_KEY` is tier 1 and silently outranks the gate: if it is set, the resolved workspace is whatever that key authenticates against regardless of what `whoami` is scoped to, so refuse to proceed while it is present.
-Furthermore, linear-cli throws when both `LINEAR_API_KEY` and a `--workspace` flag are set (verified in upstream `src/utils/graphql.ts`, v2.0.0; re-verify on a version bump), so an ambient `LINEAR_API_KEY` would also break the mandatory `--workspace` on every command.
-`LINEAR_WORKSPACE` is tier 4 and env-overridable, so it too must be unset to keep the resolution path deterministic and keyed on the confirmed credentials default.
-The shell-env assertion is necessary but not sufficient: linear-cli's own loadEnvFiles reads a `./.env` or git-root `.env` and injects `LINEAR_*` keys into its process (resolving at tiers 1 and 4), invisible to a shell check, so the assertion below also rejects such a `.env`.
+`LINEAR_API_KEY` is tier 1; without the selector it chooses the credentials, and with the selector it causes an error, so refuse to proceed while it is present.
+linear-cli throws when both `LINEAR_API_KEY` and a `--workspace` flag are nonempty, verified against v2.6.0 in upstream `getResolvedApiKey` in `src/utils/graphql.ts`; re-verify on a version bump.
+`LINEAR_WORKSPACE` is tier 4 and env-overridable, so it too must be unset to keep the gate keyed on the explicit workspace and confirmed credentials.
+The shell-env assertion is necessary but not sufficient: `loadEnvFiles` can read a `./.env` or git-root `.env` and inject `LINEAR_*` keys into its process, invisible to a shell check.
+This behavior and `ENV_ASSIGNMENT` accepting optional `export` and whitespace before `=` were verified against v2.6.0 in `src/config.ts`; the assertion below rejects those forms for both credential variables.
 
 ```bash
 [ -z "${LINEAR_API_KEY:-}" ] || { echo "refuse: LINEAR_API_KEY is set and outranks the gate; unset it first" >&2; exit 1; }
 [ -z "${LINEAR_WORKSPACE:-}" ] || { echo "refuse: LINEAR_WORKSPACE is set; unset it before the gate" >&2; exit 1; }
 git_root=$(git rev-parse --show-toplevel 2>/dev/null || echo .)
-for envfile in ./.env "$git_root/.env"; do [ -f "$envfile" ] && grep -Eq '^[[:space:]]*(LINEAR_API_KEY|LINEAR_WORKSPACE)=' "$envfile" && { echo "refuse: $envfile defines LINEAR_API_KEY/LINEAR_WORKSPACE; linear-cli reads it into its own process" >&2; exit 1; }; done
+for envfile in ./.env "$git_root/.env"; do [ -f "$envfile" ] && grep -Eq '^[[:space:]]*(export[[:space:]]+)?(LINEAR_API_KEY|LINEAR_WORKSPACE)[[:space:]]*=' "$envfile" && { echo "refuse: $envfile defines LINEAR_API_KEY/LINEAR_WORKSPACE; linear-cli reads it into its own process" >&2; exit 1; }; done
 ```
 
 ## Checklist before any mutation
 
 Assert `LINEAR_API_KEY` and `LINEAR_WORKSPACE` are unset (the pre-gate assertion above); refuse to proceed if `LINEAR_API_KEY` is present.
 Run `linear auth whoami --workspace <slug>` and confirm the reported workspace is the intended personal-versus-work workspace.
-Pass `--workspace <slug>` on every command, reads as well as mutations.
+Pass the workspace-selecting `--workspace <slug>` on every read or mutation; refuse commands without that selector, including `label list`, whose boolean filter was verified against v2.6.0.
 Never reach for `LINEAR_WORKSPACE` and never run a mutating `linear auth` subcommand.

@@ -20,6 +20,7 @@ Use the SYNC/NOSYNC section markers (see linear-overview.md) so only the team-fa
 ## Assignee and labels at creation
 
 A created issue is assigned to the workspace owner: both `linear issue create` and `linear issue update` accept `-a self` (or `--assignee self`), which linear-cli resolves against the confirmed workspace identity, and this flag is set at creation time rather than backfilled afterward.
+The `-a self` and `--assignee self` options were verified against v2.6.0 in both commands' help and their `lookupUserId(assignee)` call sites.
 A created issue's labels are drawn from the pre-existing workspace label taxonomy rather than invented per issue: `repo:<name>` names the target repository, `type:development` marks implementation work, and the three assessment families `cynefin:*`, `confidence:*`, and `guard:*` record the Cynefin domain, the confidence level, and the regression-guard status.
 This taxonomy is newly adopted rather than long-standing: the pre-existing issue CAM-33 carries no labels.
 
