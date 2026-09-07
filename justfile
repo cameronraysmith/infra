@@ -300,7 +300,12 @@ home-package-names system="":
 # system="": defaults to builtins.currentSystem. When system is the native system the build runs
 #   locally and results land in the local store; for any other system the build is routed with
 #   --remote magnetite.zt --no-download, so the remote store is populated and the local store does
-#   not become a staging area for another platform's closure.
+#   not become a staging area for another platform's closure. The remote lane also gets
+#   --retries 2, because --remote opens one ssh connection per build and a dropped handshake
+#   exits 255 and reds a check that names a package which is not at fault. Retries are scoped to
+#   that lane on purpose: retrying local builds would hide a genuinely flaky check instead of
+#   surfacing it. The underlying limit is magnetite's sshd MaxStartups, raised in its machine
+#   config; these retries absorb the residue rather than substituting for that fix.
 # Params are positional, so usage is: just check-fast auto on x86_64-linux
 [group('nix')]
 check-fast nom="auto" push="off" system="":
@@ -317,7 +322,7 @@ check-fast nom="auto" push="off" system="":
   system="{{system}}"
   [ -n "$system" ] || system="$native"
   remoteflags=""
-  [ "$system" = "$native" ] || remoteflags="--remote magnetite.zt --no-download"
+  [ "$system" = "$native" ] || remoteflags="--remote magnetite.zt --no-download --retries 2"
   nix-fast-build $flag $pushflag $remoteflags \
     --no-link \
     --option accept-flake-config true \
