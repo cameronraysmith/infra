@@ -12,18 +12,18 @@
 }:
 
 let
-  version = "2.5.0";
+  version = "2.6.0";
 
   # Prebuilt deno-compile binaries published per tag by cargo-dist. Only the
   # Darwin artifacts are usable (see the Linux note below).
   binaries = {
     aarch64-darwin = {
       url = "https://github.com/schpet/linear-cli/releases/download/v${version}/linear-aarch64-apple-darwin.tar.xz";
-      hash = "sha256-bRHrWg7iqhDSRiXSPGBb9WmHqUdB5gu5gX+HsSOpoAs=";
+      hash = "sha256-uavdS1rsFEWeQ0oomSA3V96K6EfwVerk8frue7H7wHg=";
     };
     x86_64-darwin = {
       url = "https://github.com/schpet/linear-cli/releases/download/v${version}/linear-x86_64-apple-darwin.tar.xz";
-      hash = "sha256-9Xx6zJdMG8AcCsFBZYov04DjZ3a4XxXan8vy6CTAgjw=";
+      hash = "sha256-CKuhmvTwBinl6JqwQBfTHRhXP7ydySIoCChwL9riej8=";
     };
   };
 
@@ -35,7 +35,7 @@ let
     owner = "schpet";
     repo = "linear-cli";
     rev = "v${version}";
-    hash = "sha256-iNAJ0vaEMkPkYq0I9SLEl3GJY/B0MazOgAm3PgkIb/o=";
+    hash = "sha256-wInqzwamLoWgIU6qDaOjgblBuqUJRQmhs5xg4+Npabo=";
   };
 
   # Darwin: the upstream prebuilt deno-compile single-file executable.
@@ -112,7 +112,7 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-eYm8+y/l4X2NFLIjny1r86Wf88gXq+m4TN53DI9fuiQ=";
+    outputHash = "sha256-GLU6adDR+D+wfhmzKpjdIx8yqUTy406Wn1u5+pUUCj4=";
   };
 in
 stdenv.mkDerivation (finalAttrs: {
