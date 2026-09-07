@@ -19,8 +19,10 @@
 # dependency requirements alone will not show it.
 #
 # Remove this package once nixpkgs ships a lancedb whose vendored ethnum is
-# >= 1.5.3, and route python3Packages.lancedb back to nixpkgs by dropping the
-# cross-reference in modules/nixpkgs/overlays/python-overrides.nix.
+# >= 1.5.3. The python3Packages.lancedb cross-reference this note referred to
+# lived in modules/nixpkgs/overlays/python-overrides.nix, which no longer
+# exists (deleted 2026-09-06 once its last binding was inert), so nothing
+# routes lancedb away from nixpkgs today.
 #
 # Source: https://github.com/lancedb/lancedb
 {
