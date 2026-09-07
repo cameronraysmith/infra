@@ -1,16 +1,16 @@
 lockfile_version: '1'
-generated_at: '2026-09-03T23:43:52.125398+00:00'
-apm_version: 0.29.0
+generated_at: '2026-09-07T14:39:28.582404+00:00'
+apm_version: 0.30.0
 dependencies:
 - repo_url: cameronraysmith/vanixiets
   name: agent-orchestration-and-meta-tooling
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/agent-orchestration-and-meta-tooling
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/herdr
   - .agents/skills/herdr/SKILL.md
@@ -101,16 +101,16 @@ dependencies:
     .agents/skills/meta-skill-creator/scripts/init_skill.py: sha256:cf12790f1d4958799281920d599f56aea38fb5c26e2812a61dd740bf3d4b6b99
     .agents/skills/meta-skill-creator/scripts/package_skill.py: sha256:b31fbcb3e362d5c5308e99255ff8e83cde3a513e0636953964a648494ca10931
     .agents/skills/meta-skill-creator/scripts/quick_validate.py: sha256:67cf5703402013936c8fb75ad6a1afecd8841d45cc5e606b634eb05825fde365
-  content_hash: sha256:0c3d2c03e481584b7c1c035185eed3ce3448677e9fcf07c579586d39b3f1e513
+  content_hash: sha256:fb75e8ec449221712c311c2dd0b634871808b2677897a6224ae41ee800e8d99d
 - repo_url: cameronraysmith/vanixiets
   name: beads-issue-tracking-and-session-workflow
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/beads-issue-tracking-and-session-workflow
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/session-checkpoint
   - .agents/skills/session-checkpoint/SKILL.md
@@ -128,16 +128,16 @@ dependencies:
     .agents/skills/session-plan/SKILL.md: sha256:ef650c79fd142560435828ec1535559b64f90429d313f4907b0c3c28dab7e457
     .agents/skills/session-review/SKILL.md: sha256:0f09398852d3c73a9b0a562deda41dd7390305953d3155e0540b16f27f1784dd
     .agents/skills/stigmergic-convention/SKILL.md: sha256:ff6d55363de629cd2656ef94d400fcdd526174eb3f4642f7d22d5b2b64cbfeef
-  content_hash: sha256:5671fef8dd9d58beb2e82c7c85dd9536bab03dad38544db69ab714126d3100f4
+  content_hash: sha256:d0fe5ca1c7b29b1733e24d3abd1e32eb1b741b56fd1158f77ae1f3ab6b70a661
 - repo_url: cameronraysmith/vanixiets
   name: document-authoring-and-visualization
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/document-authoring-and-visualization
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/doc-to-md
   - .agents/skills/doc-to-md-cmd
@@ -172,16 +172,16 @@ dependencies:
     .agents/skills/text-to-visual-iteration/SKILL.md: sha256:0372b1f2ad615cdd57c988e000480859a3e07ac914926a3df69e2805b2888255
     .agents/skills/text-to-visual-iteration/references/toolchains.md: sha256:ce4289d49558fb56abfc30191df7b4d28e8dc5ba539c95a694c451ffe5ce5149
     .agents/skills/web-to-markdown/SKILL.md: sha256:d17cca5925543d9b19338e09148f476752bca20362438ea3714bc602397c3812
-  content_hash: sha256:fe926d83976cd4e4fc7d83dc689c505ba693c60c6d24a3a5dff9e53188e9d1c9
+  content_hash: sha256:e6e1e31c5d9a24c9c52aabc59be4d80dc6b1c9307b87754261dc025d7aa4147a
 - repo_url: cameronraysmith/vanixiets
   name: event-modeling-workflow
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/event-modeling-workflow
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/event-modeling-brownfield
   - .agents/skills/event-modeling-brownfield/SKILL.md
@@ -196,16 +196,16 @@ dependencies:
     .agents/skills/event-modeling-greenfield/SKILL.md: sha256:2487dcaa5f4b124304370cbe9b98cf0e92029f3e41a3c44bf549e4ea70f6c299
     .agents/skills/event-modeling-qlerify-session/SKILL.md: sha256:4b96e24484cf3bd9a10ad854cc59ff00de2c1dda4240f67a5ee3e2670280b47d
     .agents/skills/event-modeling-to-eventcatalog/SKILL.md: sha256:4ae9f8b45b2ff2810162731c2a4660ff5a45e702147d9881c0f2aed04815630f
-  content_hash: sha256:0066dc6c6988a12d2f3981671aa393c1ad43bbe15905d2ea051be78efb3ae1aa
+  content_hash: sha256:3b7de65b2c9d45b41678f4c174d967cc9de89f7ce6265a01e8bd9c46bac964cf
 - repo_url: cameronraysmith/vanixiets
   name: formal-specification-and-refinement
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/formal-specification-and-refinement
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/nucleus-platform
   - .agents/skills/nucleus-platform/SKILL.md
@@ -252,16 +252,16 @@ dependencies:
     .agents/skills/refinement-driven-development/references/toolchain-setup.md: sha256:590bfcdbffe4b56a07067d68a1cec37af7eff18d3c2cf77dacd742f452eabf94
     .agents/skills/refinement-driven-development/references/vocabulary.md: sha256:180b76bfd94696fa44fa301a95ce33faee0caa34dcce074af82671b14df33a5a
     .agents/skills/satisfaction-argument-audit/SKILL.md: sha256:b6779e3b733a84e458003e132d1cacf073fb869e2a1d28d3a13e1895d29b3279
-  content_hash: sha256:d5a90f8e2c78a897fd422aad3d3d018e70b03dce132a30036b1e892c5052a9ab
+  content_hash: sha256:237cd4ba1a5366a87e2c8ef824761f8b00a06c6394ff9ba09d712c09e7e64abb
 - repo_url: cameronraysmith/vanixiets
   name: nix-build-operations
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/nix-build-operations
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/ci-log-verification
   - .agents/skills/ci-log-verification/SKILL.md
@@ -285,16 +285,16 @@ dependencies:
     .agents/skills/worktree-sparsity-eval/references/sparse-checkout-patterns.md: sha256:e705baaaf6b655c9655627f4f1d02fd933cd7468668b1be25f6a421401b58273
     .agents/skills/worktree-sparsity-eval/scripts/collect_metrics.sh: sha256:aba77011a293a40baeb4c8708e2644999da09d2147f7f219a1d969ea810db39f
     .agents/skills/worktree-sparsity-eval/scripts/update_claude_md.sh: sha256:d794b75c4f31487f8c0f87ceddfa543a11ce611c6556b03b1db74642619c163c
-  content_hash: sha256:f6711ba313d679783d62f4127141bb11628e3c45c15b2baef4b225f1b33b3320
+  content_hash: sha256:e4d3a3965e3718470a197c682c86652f15f9e076c026326549012d8463437f7d
 - repo_url: cameronraysmith/vanixiets
   name: planning-and-development
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/planning-and-development
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/agentic-planning-development-workflow
   - .agents/skills/agentic-planning-development-workflow/SKILL.md
@@ -377,16 +377,16 @@ dependencies:
     .agents/skills/openspec-sync-specs/SKILL.md: sha256:10976095976c6bb53a840f5f6ea74924c3ab2cd21b3fb7c624dc7b28411574fb
     .agents/skills/openspec-update-change/SKILL.md: sha256:82c2250f8d8ec77e98736438a71113f577e9d0d249db181fbb891f598d8533a0
     .agents/skills/openspec-verify-change/SKILL.md: sha256:6e55af9ecd207644fd7d993aa1933da30d1595880fe20b67ede7b0d9f646a291
-  content_hash: sha256:d7552dcbb8e0ae79f8f661d9c13d48df20408b1caead5ba903c743d3f10bfa86
+  content_hash: sha256:93847df37a59a7b537077fd2f9e450d8338759d011ada0ff999dfc522f23f5e5
 - repo_url: cameronraysmith/vanixiets
   name: preferences-code-and-collaboration-conventions
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-change-management
   - .agents/skills/preferences-change-management/SKILL.md
@@ -414,8 +414,8 @@ dependencies:
   - .agents/skills/preferences-style-and-conventions/SKILL.md
   deployed_file_hashes:
     .agents/skills/preferences-change-management/SKILL.md: sha256:89f0bf716c8877a402c3e6742e162ce1b62ac2b65cae004394ef1c3151002622
-    .agents/skills/preferences-comment-cleanup/SKILL.md: sha256:dd1eccabb9b876e8914c78067410a4dae76e7568daed5849098831291d5d36bf
-    .agents/skills/preferences-comment-cleanup/uncommentrc.toml: sha256:e37d2f3ded1aa5c6816ba1145efecec83c6a753ca0bb838a4fbb1c40ba93d02b
+    .agents/skills/preferences-comment-cleanup/SKILL.md: sha256:448f85cd1e82466cc1d0b90342a54f5f80db96049f1e254f301a0c4b541c8d47
+    .agents/skills/preferences-comment-cleanup/uncommentrc.toml: sha256:b663d4da18e38a6c35f812b3a634610f0dd35d7b99aa8e01ab5be3268980ff98
     .agents/skills/preferences-documentation/SKILL.md: sha256:be63a54ff40e3ecf8203f7c8f115e60aad0d8e7beb8bbf9ad3a90701e17804bb
     .agents/skills/preferences-documentation/references/adr-conventions.md: sha256:73233c2348c2d83d20e0d9baef2a54d4a2a0b4f673ff9d85085e2b2f3bd3c767
     .agents/skills/preferences-essential-complexity/SKILL.md: sha256:7cdd23c677529154a403038be0f66a6ba55b226ff289033fef911de2d7a5b8ac
@@ -429,16 +429,16 @@ dependencies:
     .agents/skills/preferences-git-version-control/SKILL.md: sha256:fe9909b99d57f94450a9252ef8a042c7898f4bddd02245f0465c50b8964619ba
     .agents/skills/preferences-prose-clarity/SKILL.md: sha256:4c271b78aa7251a18c7bb1087e6f1b6a8636e9e168b7153881bafec8ff68bc48
     .agents/skills/preferences-style-and-conventions/SKILL.md: sha256:4d10e946ff597cc578183a85a4d0564fe25a3e9506b9aa0ebe20601006ebd864
-  content_hash: sha256:0c36193e10c643266953f601742590f5bd942e019874a3a75891d2e869ca026d
+  content_hash: sha256:dea4cf02874c95bb4a620e30a909362734fd8399b2c7305053036a19049f1bba
 - repo_url: cameronraysmith/vanixiets
   name: preferences-data-and-scientific-computing
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-data-and-scientific-computing
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-data-modeling
   - .agents/skills/preferences-data-modeling/SKILL.md
@@ -466,7 +466,7 @@ dependencies:
   - .agents/skills/preferences-workflow-orchestration-algebra/SKILL.md
   deployed_file_hashes:
     .agents/skills/preferences-data-modeling/SKILL.md: sha256:638ef90e5468a56a8bfa26be5fdd0d2d225fff563c11f99925e857fd832e3cfd
-    .agents/skills/preferences-json-querying/SKILL.md: sha256:f38f4cec2880594fc06096fac52a4d255194193b64972eaabaa8f3d7057e6d00
+    .agents/skills/preferences-json-querying/SKILL.md: sha256:3ac38dd9c696cf644ce9b672bae477ea4662385e06a1461b1b307bbf5c6b2412
     .agents/skills/preferences-scalable-probabilistic-modeling-workflow/01-foundations-and-framework.md: sha256:31979d201e122b0bf98eb83ca162a92d76b862489f6eaa7dfdb8f52dfc0cd60b
     .agents/skills/preferences-scalable-probabilistic-modeling-workflow/02-phase-1-pre-model-pre-data.md: sha256:477d0a61dccf1853818ce87496178d9b56baedcf2b1c7ffff9d3cb4a05f373b7
     .agents/skills/preferences-scalable-probabilistic-modeling-workflow/03-phase-2-post-model-pre-data.md: sha256:acb73ce6b632be196157e7d0fe61d4fda1f4bd20e9acb607794178c78e426867
@@ -484,16 +484,16 @@ dependencies:
     .agents/skills/preferences-workflow-orchestration-algebra/02-asset-vs-task-spectrum.md: sha256:18e18a703451ccca6f19588625416eab87556d47047fb183f617b1e1af9d67c5
     .agents/skills/preferences-workflow-orchestration-algebra/03-fp-discipline-and-enforcement.md: sha256:16bf23c2fbfb9724a21794ae573e586dc73a06b8d6727748758c5ac54fe2ead5
     .agents/skills/preferences-workflow-orchestration-algebra/SKILL.md: sha256:9c8ef2cf30caced845344c7e86e497683319aa61228d7b3cd40d73c13cc760a5
-  content_hash: sha256:404c318c16f8dd30c0e3eb67158e34d4fe10f0aaaf4fdad60feb184f0f349d25
+  content_hash: sha256:fd2029cf8496c01acbad28690c19700b06787abcff542a1a9d884d4c606bcdc6
 - repo_url: cameronraysmith/vanixiets
   name: preferences-domain-driven-architecture
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-domain-driven-architecture
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-architectural-patterns
   - .agents/skills/preferences-architectural-patterns/SKILL.md
@@ -529,16 +529,16 @@ dependencies:
     .agents/skills/preferences-discovery-process/SKILL.md: sha256:9cd58d5656cf307c17c3029feaa3638b1eb6030b2691306298947ba7545b96d4
     .agents/skills/preferences-domain-modeling/SKILL.md: sha256:a3ad356d43e7393f8f19d316bf7191d366375acb4860d457de6b437f596547c0
     .agents/skills/preferences-strategic-domain-analysis/SKILL.md: sha256:cf3de760af962f03955c95351a4548eafde1b0a2e36b0d5d03f50e739c19d79f
-  content_hash: sha256:d3002466035dd230d5108552be4e16afa3689224746219906df5f625b594294c
+  content_hash: sha256:12854817afdd34782c2a0c176ebdbe28f64e2fefea8afb477828b49b1f62c270
 - repo_url: cameronraysmith/vanixiets
   name: preferences-event-driven-systems
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-event-driven-systems
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-event-catalog-qlerify
   - .agents/skills/preferences-event-catalog-qlerify/SKILL.md
@@ -556,16 +556,16 @@ dependencies:
     .agents/skills/preferences-event-modeling/SKILL.md: sha256:c866c10db5845ca23491125bf681b0047dfb6d656d83377cf8895b1357fd51f7
     .agents/skills/preferences-event-sourcing/SKILL.md: sha256:f991c9198413744ad4596555f7aa8ff68303207ea5571a9b63e8046e9d5fd7ca
     .agents/skills/preferences-schema-versioning/SKILL.md: sha256:1fde18785f55fe3cffe471dd3f1359363a1a6517ada423233297b0995ba284f1
-  content_hash: sha256:915684b2bbb5cda1e5c641137cf3a910eead569dd31c77bade7940c24a610ea8
+  content_hash: sha256:90a35473aa0c58b8112cc9d94d55dc9c470ea0c2f6865c6b64cdeb55fb2bcfb2
 - repo_url: cameronraysmith/vanixiets
   name: preferences-functional-programming-theory
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-functional-programming-theory
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-algebraic-data-types
   - .agents/skills/preferences-algebraic-data-types/SKILL.md
@@ -620,16 +620,16 @@ dependencies:
     .agents/skills/preferences-theoretical-foundations/references/worked-example/lakefile.toml: sha256:8e2a8ff5d60117c203e743e5e35ac30b4ab0526a4b2552fa764018f2133e7146
     .agents/skills/preferences-theoretical-foundations/references/worked-example/lean-toolchain: sha256:ce4c4e3d87434b9663f46de25ce34b48a0cf0d392e0a320a0787b4674a2d7b61
     .agents/skills/preferences-theoretical-foundations/references/worked-example/limit.py: sha256:53319203a8068b79e62e3483ec260dc29adbf02224f40d33c6b0f0911d314d40
-  content_hash: sha256:71896d5ee43f37fb8f9b5e9412791fb5109987a44baf1169d3ebe47e2ab5a483
+  content_hash: sha256:a5c5742c703b8e1076a7314e53fc5a4a6e36471f58f24cdacfa60e7ae6f52e29
 - repo_url: cameronraysmith/vanixiets
   name: preferences-nix-and-secrets
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-nix-and-secrets
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-nix-checks-architecture
   - .agents/skills/preferences-nix-checks-architecture/SKILL.md
@@ -662,16 +662,16 @@ dependencies:
     .agents/skills/preferences-nix-development/SKILL.md: sha256:ac4eeddb57fb66ea660e2fc0939660662376e93c503c20b44c1963f002a85205
     .agents/skills/preferences-nix-development/references/dendritic-module-composition.md: sha256:29373464d2ee8e444df266c56ecdda6259834cae976e51d28c1effdc83af61ee
     .agents/skills/preferences-secrets/SKILL.md: sha256:7a92aef91af096be1ad05c3ff1b8b7b0b1c02da030c140e7f7ee2a7cd876c2c7
-  content_hash: sha256:e5cdeb96b5d1d692256b3046e71c5edbf47f6a7bee00db2a61ec66b70d7f2318
+  content_hash: sha256:e97fe721bf8a6df03a2d5399b6521bb67d75c803c09cb66ef732a67070d86751
 - repo_url: cameronraysmith/vanixiets
   name: preferences-operations-and-reliability
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-operations-and-reliability
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-adaptive-planning
   - .agents/skills/preferences-adaptive-planning/SKILL.md
@@ -698,16 +698,16 @@ dependencies:
     .agents/skills/preferences-observability-engineering/SKILL.md: sha256:a5d0b681356f4a8af8195196c79b25af0817a821caeb7bed0204d2c6a4903ae6
     .agents/skills/preferences-production-readiness/SKILL.md: sha256:3862cefa1dbed768807edb3dbcb5a33505a6b7ddcca8d7c0042d7a7f43493715
     .agents/skills/preferences-validation-assurance/SKILL.md: sha256:b500238595e12e3b15fdff2f8a2e8f92ab30b451b2b16ab6c06ca57dcfc5b356
-  content_hash: sha256:f4955f67639129625995b3c5cbb8a222e2c356d41be47e0053ae931d63856eb8
+  content_hash: sha256:96ccd79fff03b4aa64f4c4f4b6027dd050f50619fdc863f46e5c660ed3d753e3
 - repo_url: cameronraysmith/vanixiets
   name: preferences-programming-languages
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-programming-languages
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-haskell-development
   - .agents/skills/preferences-haskell-development/SKILL.md
@@ -752,16 +752,16 @@ dependencies:
     .agents/skills/preferences-rust-development/SKILL.md: sha256:0b8098ea21d038e1d043726a08f81d07a625f25ecd98d24c693a661e3793c79e
     .agents/skills/preferences-typescript-nodejs-development/01-structured-logging-telemetry.md: sha256:518096258cb96d0132d744271414270e0679a46f4461e87a7f9bbd025e55273c
     .agents/skills/preferences-typescript-nodejs-development/SKILL.md: sha256:5c2f01a2ddab1addd2badc9246fb840e050dc089d03fb6999aab92b84d2e25b5
-  content_hash: sha256:b6ac2e7ecd3dae16d15031ace60cfcd95af8ec6cee665a38311f4c7918d9cb9f
+  content_hash: sha256:756d4309f398e1a7ee148b4555c421024e5000ef7d0ecadf6740ca1249d41bf7
 - repo_url: cameronraysmith/vanixiets
   name: preferences-web-platform-and-deployment
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/preferences-web-platform-and-deployment
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/preferences-cloudflare-wrangler-reference
   - .agents/skills/preferences-cloudflare-wrangler-reference/SKILL.md
@@ -806,16 +806,16 @@ dependencies:
     .agents/skills/preferences-react-tanstack-ui-development/SKILL.md: sha256:dee434b2bfa768ddba819897f128064d7b6303d462fd24c115f71f1ea05a2b68
     .agents/skills/preferences-web-application-deployment/SKILL.md: sha256:42592f77674f21095325f5834b36291cf9733092131fbf5a789942c7cc94ae1d
     .agents/skills/preferences-web-platform-foundations/SKILL.md: sha256:0e4457d361689bbac7eec3e6d6537bba17988645845b6dd44ba81ca57869475e
-  content_hash: sha256:294dbb0f923395b492a3e78c28271d4c49e1e3ab6bb6420e055718c343d35562
+  content_hash: sha256:f9198dc2b377663add9ccd1d04093070afcb69b37461407ee187f5ca3ef1eb9e
 - repo_url: cameronraysmith/vanixiets
   name: testing-and-quality
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/testing-and-quality
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/atdd-outer-loop
   - .agents/skills/atdd-outer-loop/SKILL.md
@@ -873,16 +873,16 @@ dependencies:
     .agents/skills/executable-specification-testing/references/single-contract-hub.md: sha256:834acc1d5c75f5ff7f24542c8e69a5e9909e60f9ab1cb01900de487b753f46df
     .agents/skills/executable-specification-testing/references/tool-integration-sharp-edges.md: sha256:5ecd1c90edcc12aa4522c322e450b0028f92f5e6a73af35bb5d93834c79a29de
     .agents/skills/ubiquitous-language/SKILL.md: sha256:399ba2980bacfea2ce758f0b110f7a86dbcb393106dd182ed7c1501df3917bdc
-  content_hash: sha256:9866b59a666606806b5c4e052308a800a80f0d82bc317de49502f230cfef9a83
+  content_hash: sha256:3acda3fa1fac498cc125dbe34c564beb404327ce16a8f043c70d969dab1abcfb
 - repo_url: cameronraysmith/vanixiets
   name: version-control-and-forge
   host: github.com
-  resolved_commit: 7b581ea834ecc0427ef7aef81d32acc8b48dbab5
+  resolved_commit: 59e184a5e1e3f4e8115bb8b980eaccbfb4e11538
   resolved_ref: main
-  version: 7b581ea
+  version: 0.0.0
   virtual_path: modules/home/ai/plugins/version-control-and-forge
   is_virtual: true
-  package_type: marketplace_plugin
+  package_type: apm_package
   deployed_files:
   - .agents/skills/dependency-source-acquisition
   - .agents/skills/dependency-source-acquisition/SKILL.md
@@ -934,7 +934,7 @@ dependencies:
     .agents/skills/jj-version-control/hazards.md: sha256:c1a9b01f5075f4fff67450ff3d2118b8d7cfcb1b3a59f8eee203feaa015a853a
     .agents/skills/jj-version-control/tiered-ceremony.md: sha256:69bbbd8725261e7c05738f439959071dfcf531045e884189c5f88e24394f8514
     .agents/skills/jj-workflow/SKILL.md: sha256:9db0b7d47aebf0cc34634cb8d06263a1c994a96a4fb3585ade4636165460b784
-  content_hash: sha256:db76c0dcd1b5c6d4832c6f7922e92e28be81cbc53b820595e6486022d356b6ca
+  content_hash: sha256:bb1c50b28b1fff87db6cb030a2435dc3875788ddfa0ce86c65866fc7afef7d8e
 - repo_url: github/gh-stack
   name: gh-stack
   host: github.com
@@ -1197,7 +1197,7 @@ dependencies:
     .agents/skills/worktrunk/reference/worktrunk.md: sha256:8d3c83ff1ddc98ac048d91c7ec86959003901da6f286dd2cca97de7edc0cf0b7
     .agents/skills/wt-switch-create/SKILL.md: sha256:9e0873e1480c5c276572e5cbb744e1edb470cac929aa1d61aa82bd5cf2f4f61a
     .agents/skills/wt-switch-create/rationale.md: sha256:a842f00d39d77d4a28fe697e6690e75be147f23c21fc98f79f5d812d798bdd87
-  content_hash: sha256:fada722718e8af641afdb20f3f99bb1cb7f6979493d74b834b1772245a187de6
+  content_hash: sha256:1176ed55b2d1f0c5ddec23ebcd040115666110036223b7c01861a2cc36a49cfc
   skill_subset:
   - worktrunk
   - wt-switch-create
@@ -4857,7 +4857,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:dd1eccabb9b876e8914c78067410a4dae76e7568daed5849098831291d5d36bf
+  content_hash: sha256:448f85cd1e82466cc1d0b90342a54f5f80db96049f1e254f301a0c4b541c8d47
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-comment-cleanup/uncommentrc.toml
@@ -4866,7 +4866,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-code-and-collaboration-conventions
-  content_hash: sha256:e37d2f3ded1aa5c6816ba1145efecec83c6a753ca0bb838a4fbb1c40ba93d02b
+  content_hash: sha256:b663d4da18e38a6c35f812b3a634610f0dd35d7b99aa8e01ab5be3268980ff98
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-compositional-continuous-verification
@@ -5379,7 +5379,7 @@ deployments:
   owners:
   - cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
   active_owner: cameronraysmith/vanixiets/modules/home/ai/plugins/preferences-data-and-scientific-computing
-  content_hash: sha256:f38f4cec2880594fc06096fac52a4d255194193b64972eaabaa8f3d7057e6d00
+  content_hash: sha256:3ac38dd9c696cf644ce9b672bae477ea4662385e06a1461b1b307bbf5c6b2412
 - kind: project-relative
   target: agent-skills
   value: .agents/skills/preferences-nix-checks-architecture
