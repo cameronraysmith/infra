@@ -108,15 +108,21 @@ flake-info:
   {{nix_cmd}} flake metadata
   {{nix_cmd}} flake show --legacy --all-systems
 
+# system="": which system the per-system attrsets (checks, packages, devShells, apps, formatter)
+#   are listed for; defaults to builtins.currentSystem. Answering "what checks exist on
+#   x86_64-linux" from a darwin machine otherwise requires hand-writing the eval. The `systems`
+#   array below is separate and stays fixed: nixidyEnvs and legacyPackages are reported across
+#   all three regardless.
 # Enumerate flake output surface by category (all 20 top-level outputs)
 [group('nix')]
-nix-flake-io:
+nix-flake-io system="":
   #!/usr/bin/env bash
   set -euo pipefail
-  sys=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+  sys="{{system}}"
+  [ -n "$sys" ] || sys=$(nix eval --impure --raw --expr 'builtins.currentSystem')
   systems=(aarch64-darwin aarch64-linux x86_64-linux)
 
-  # Per-system attrsets (members listed for current system)
+  # Per-system attrsets (members listed for the selected system)
   printf "## checks\n"
   nix eval ".#checks.${sys}" --apply builtins.attrNames --json 2>/dev/null | jq -r '.[]' || echo "(empty)"
   printf "\n## packages\n"
